@@ -1,0 +1,1325 @@
+   1              		.syntax unified
+   2              		.cpu cortex-m4
+   3              		.eabi_attribute 27, 3
+   4              		.fpu fpv4-sp-d16
+   5              		.eabi_attribute 20, 1
+   6              		.eabi_attribute 21, 1
+   7              		.eabi_attribute 23, 3
+   8              		.eabi_attribute 24, 1
+   9              		.eabi_attribute 25, 1
+  10              		.eabi_attribute 26, 1
+  11              		.eabi_attribute 30, 6
+  12              		.eabi_attribute 34, 1
+  13              		.eabi_attribute 18, 4
+  14              		.thumb
+  15              		.file	"stm32f30x_opamp.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.align	2
+  20              		.global	OPAMP_DeInit
+  21              		.thumb
+  22              		.thumb_func
+  24              	OPAMP_DeInit:
+  25              	.LFB111:
+  26              		.file 1 "../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c"
+   1:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** /**
+   2:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   ******************************************************************************
+   3:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @file    stm32f30x_opamp.c
+   4:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @author  MCD Application Team
+   5:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @version V1.0.1
+   6:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @date    23-October-2012
+   7:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @brief   This file provides firmware functions to manage the following 
+   8:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *          functionalities of the operational amplifiers (OPAMP1,...OPAMP4) peripheral: 
+   9:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *           + OPAMP Configuration
+  10:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *           + OPAMP calibration
+  11:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *
+  12:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   @verbatim
+  13:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   
+  14:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   ==============================================================================
+  15:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****                         ##### OPAMP Peripheral Features #####
+  16:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   ==============================================================================
+  17:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****                    
+  18:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   [..]
+  19:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****       The device integrates 4 operational amplifiers OPAMP1, OPAMP2, OPAMP3 and OPAMP4:
+  20:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****               
+  21:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****       (+) The OPAMPs non inverting input can be selected among the list shown by
+  22:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****           table below.
+  23:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   
+  24:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****       (+) The OPAMPs inverting input can be selected among the list shown by
+  25:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****           table below.
+  26:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   
+  27:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****       (+) The OPAMPs outputs can be internally connected to the inverting input 
+  28:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****           (follower mode)
+  29:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****       (+) The OPAMPs outputs can be internally connected to resistor feedback
+  30:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****           output (Programmable Gain Amplifier mode)
+  31:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   
+  32:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****       (+) The OPAMPs outputs can be internally connected to ADC
+  33:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   
+  34:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****       (+) The OPAMPs can be calibrated to compensate the offset compensation
+  35:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   
+  36:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****       (+) Timer-controlled Mux for automatic switch of inverting and
+  37:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****           non-inverting input
+  38:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   
+  39:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   OPAMPs inverting/non-inverting inputs:
+  40:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****     +--------------------------------------------------------------+     
+  41:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****     |                 |        | OPAMP1 | OPAMP2 | OPAMP3 | OPAMP4 |
+  42:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****     |-----------------|--------|--------|--------|--------|--------|
+  43:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****     |                 | PGA    |  OK    |  OK    |  OK    |  OK    |
+  44:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****     | Inverting Input | Vout   |  OK    |  OK    |  OK    |  OK    |
+  45:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****     |                 | IO1    |  PC5   |  PC5   |  PB10  |  PB10  |
+  46:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****     |                 | IO2    |  PA3   |  PA5   |  PB2   |  PD8   |
+  47:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****     |-----------------|--------|--------|--------|--------|--------|
+  48:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****     |                 | IO1    |  PA7   |  PD14  |  PB13  |  PD11  |
+  49:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****     |  Non Inverting  | IO2    |  PA5   |  PB14  |  PA5   |  PB11  |
+  50:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****     |    Input        | IO3    |  PA3   |  PB0   |  PA1   |  PA4   |
+  51:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****     |                 | IO4    |  PA1   |  PA7   |  PB0   |  PB13  |
+  52:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****     +--------------------------------------------------------------+  
+  53:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   
+  54:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****                         ##### How to use this driver #####
+  55:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   ==============================================================================
+  56:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   [..]
+  57:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   This driver provides functions to configure and program the OPAMP 
+  58:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   of all STM32F30x devices.
+  59:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   
+  60:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   To use the OPAMP, perform the following steps:
+  61:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****  
+  62:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   (#) Enable the SYSCFG APB clock to get write access to OPAMP
+  63:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****       register using RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE);
+  64:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   
+  65:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   (#) Configure the OPAMP input in analog mode using GPIO_Init()
+  66:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   
+  67:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   (#) Configure the OPAMP using OPAMP_Init() function:
+  68:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****       (++) Select the inverting input
+  69:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****       (++) Select the non-inverting inverting input
+  70:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****     
+  71:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   (#) Enable the OPAMP using OPAMP_Cmd() function
+  72:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****     
+  73:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   @endverbatim
+  74:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****       
+  75:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   ******************************************************************************
+  76:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @attention
+  77:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *
+  78:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * <h2><center>&copy; COPYRIGHT 2012 STMicroelectronics</center></h2>
+  79:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *
+  80:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * Licensed under MCD-ST Liberty SW License Agreement V2, (the "License");
+  81:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * You may not use this file except in compliance with the License.
+  82:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * You may obtain a copy of the License at:
+  83:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *
+  84:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *        http://www.st.com/software_license_agreement_liberty_v2
+  85:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *
+  86:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * Unless required by applicable law or agreed to in writing, software 
+  87:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * distributed under the License is distributed on an "AS IS" BASIS, 
+  88:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  89:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * See the License for the specific language governing permissions and
+  90:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * limitations under the License.
+  91:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *
+  92:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   ******************************************************************************
+  93:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   */ 
+  94:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+  95:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** /* Includes ------------------------------------------------------------------*/
+  96:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** #include "stm32f30x_opamp.h"
+  97:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+  98:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** /** @addtogroup STM32F30x_StdPeriph_Driver
+  99:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @{
+ 100:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   */
+ 101:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 102:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** /** @defgroup OPAMP 
+ 103:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @brief OPAMP driver modules
+ 104:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @{
+ 105:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   */ 
+ 106:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 107:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** /* Private typedef -----------------------------------------------------------*/
+ 108:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** /* Private define ------------------------------------------------------------*/
+ 109:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** #define OPAMP_CSR_DEFAULT_MASK                    ((uint32_t)0xFFFFFF93)
+ 110:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** #define OPAMP_CSR_TIMERMUX_MASK                   ((uint32_t)0xFFFFF8FF)
+ 111:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** #define OPAMP_CSR_TRIMMING_MASK                   ((uint32_t)0x0000001F)
+ 112:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 113:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** /* Private macro -------------------------------------------------------------*/
+ 114:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** /* Private variables ---------------------------------------------------------*/
+ 115:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** /* Private function prototypes -----------------------------------------------*/
+ 116:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** /* Private functions ---------------------------------------------------------*/
+ 117:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 118:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** /** @defgroup OPAMP_Private_Functions
+ 119:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @{
+ 120:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   */
+ 121:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 122:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** /** @defgroup OPAMP_Group1 Initialization and Configuration functions
+ 123:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****  *  @brief   Initialization and Configuration functions 
+ 124:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****  *
+ 125:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** @verbatim   
+ 126:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****  ===============================================================================
+ 127:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****              ##### Initialization and Configuration functions #####
+ 128:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****  ===============================================================================  
+ 129:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 130:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** @endverbatim
+ 131:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @{
+ 132:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   */
+ 133:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****    
+ 134:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** /**
+ 135:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @brief  Deinitializes OPAMP peripheral registers to their default reset values.
+ 136:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @note   Deinitialization can't be performed if the OPAMP configuration is locked.
+ 137:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *         To unlock the configuration, perform a system reset.
+ 138:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @param  OPAMP_Selection: the selected OPAMP. 
+ 139:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *          This parameter can be OPAMP_Selection_OPAMPx where x can be 1 to 4
+ 140:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *          to select the OPAMP peripheral.
+ 141:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @param  None
+ 142:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @retval None
+ 143:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   */
+ 144:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** void OPAMP_DeInit(uint32_t OPAMP_Selection)
+ 145:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** {
+  27              		.loc 1 145 0
+  28              		.cfi_startproc
+  29              		@ args = 0, pretend = 0, frame = 8
+  30              		@ frame_needed = 0, uses_anonymous_args = 0
+  31              		@ link register save eliminated.
+  32 0000 82B0     		sub	sp, sp, #8
+  33              	.LCFI0:
+  34              		.cfi_def_cfa_offset 8
+  35 0002 0190     		str	r0, [sp, #4]
+ 146:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   /*!< Set OPAMP_CSR register to reset value */
+ 147:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *(__IO uint32_t *) (OPAMP_BASE + OPAMP_Selection) = ((uint32_t)0x00000000);
+  36              		.loc 1 147 0
+  37 0004 019A     		ldr	r2, [sp, #4]
+  38 0006 4FF03803 		mov	r3, #56
+  39 000a C4F20103 		movt	r3, 16385
+  40 000e D318     		adds	r3, r2, r3
+  41 0010 4FF00002 		mov	r2, #0
+  42 0014 1A60     		str	r2, [r3, #0]
+ 148:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** }
+  43              		.loc 1 148 0
+  44 0016 02B0     		add	sp, sp, #8
+  45 0018 7047     		bx	lr
+  46              		.cfi_endproc
+  47              	.LFE111:
+  49 001a 00BF     		.align	2
+  50              		.global	OPAMP_Init
+  51              		.thumb
+  52              		.thumb_func
+  54              	OPAMP_Init:
+  55              	.LFB112:
+ 149:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 150:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** /**
+ 151:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @brief  Initializes the OPAMP peripheral according to the specified parameters
+ 152:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *         in OPAMP_InitStruct
+ 153:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @note   If the selected OPAMP is locked, initialization can't be performed.
+ 154:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *         To unlock the configuration, perform a system reset.
+ 155:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @param  OPAMP_Selection: the selected OPAMP. 
+ 156:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *          This parameter can be OPAMP_Selection_OPAMPx where x can be 1 to 4
+ 157:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *          to select the OPAMP peripheral.
+ 158:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @param  OPAMP_InitStruct: pointer to an OPAMP_InitTypeDef structure that contains 
+ 159:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *         the configuration information for the specified OPAMP peripheral.
+ 160:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *           - OPAMP_InvertingInput specifies the inverting input of OPAMP
+ 161:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *           - OPAMP_NonInvertingInput specifies the non inverting input of OPAMP
+ 162:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @retval None
+ 163:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   */
+ 164:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** void OPAMP_Init(uint32_t OPAMP_Selection, OPAMP_InitTypeDef* OPAMP_InitStruct)
+ 165:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** {
+  56              		.loc 1 165 0
+  57              		.cfi_startproc
+  58              		@ args = 0, pretend = 0, frame = 16
+  59              		@ frame_needed = 0, uses_anonymous_args = 0
+  60              		@ link register save eliminated.
+  61 001c 84B0     		sub	sp, sp, #16
+  62              	.LCFI1:
+  63              		.cfi_def_cfa_offset 16
+  64 001e 0190     		str	r0, [sp, #4]
+  65 0020 0091     		str	r1, [sp, #0]
+ 166:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   uint32_t tmpreg = 0;
+  66              		.loc 1 166 0
+  67 0022 4FF00003 		mov	r3, #0
+  68 0026 0393     		str	r3, [sp, #12]
+ 167:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 168:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   /* Check the parameters */
+ 169:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   assert_param(IS_OPAMP_ALL_PERIPH(OPAMP_Selection));
+ 170:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   assert_param(IS_OPAMP_INVERTING_INPUT(OPAMP_InitStruct->OPAMP_InvertingInput));
+ 171:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   assert_param(IS_OPAMP_NONINVERTING_INPUT(OPAMP_InitStruct->OPAMP_NonInvertingInput));
+ 172:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 173:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   /*!< Get the OPAMPx_CSR register value */
+ 174:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   tmpreg = *(__IO uint32_t *) (OPAMP_BASE + OPAMP_Selection);
+  69              		.loc 1 174 0
+  70 0028 019A     		ldr	r2, [sp, #4]
+  71 002a 4FF03803 		mov	r3, #56
+  72 002e C4F20103 		movt	r3, 16385
+  73 0032 D318     		adds	r3, r2, r3
+  74 0034 1B68     		ldr	r3, [r3, #0]
+  75 0036 0393     		str	r3, [sp, #12]
+ 175:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 176:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   /*!< Clear the inverting and non inverting bits selection bits */
+ 177:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   tmpreg &= (uint32_t) (OPAMP_CSR_DEFAULT_MASK);
+  76              		.loc 1 177 0
+  77 0038 039B     		ldr	r3, [sp, #12]
+  78 003a 23F06C03 		bic	r3, r3, #108
+  79 003e 0393     		str	r3, [sp, #12]
+ 178:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 179:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   /*!< Configure OPAMP: inverting and non inverting inputs */
+ 180:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   tmpreg |= (uint32_t)(OPAMP_InitStruct->OPAMP_InvertingInput | OPAMP_InitStruct->OPAMP_NonInvertin
+  80              		.loc 1 180 0
+  81 0040 009B     		ldr	r3, [sp, #0]
+  82 0042 1A68     		ldr	r2, [r3, #0]
+  83 0044 009B     		ldr	r3, [sp, #0]
+  84 0046 5B68     		ldr	r3, [r3, #4]
+  85 0048 1343     		orrs	r3, r3, r2
+  86 004a 039A     		ldr	r2, [sp, #12]
+  87 004c 1343     		orrs	r3, r3, r2
+  88 004e 0393     		str	r3, [sp, #12]
+ 181:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 182:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   /*!< Write to OPAMPx_CSR register */
+ 183:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *(__IO uint32_t *) (OPAMP_BASE + OPAMP_Selection) = tmpreg;
+  89              		.loc 1 183 0
+  90 0050 019A     		ldr	r2, [sp, #4]
+  91 0052 4FF03803 		mov	r3, #56
+  92 0056 C4F20103 		movt	r3, 16385
+  93 005a D318     		adds	r3, r2, r3
+  94 005c 039A     		ldr	r2, [sp, #12]
+  95 005e 1A60     		str	r2, [r3, #0]
+ 184:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** }
+  96              		.loc 1 184 0
+  97 0060 04B0     		add	sp, sp, #16
+  98 0062 7047     		bx	lr
+  99              		.cfi_endproc
+ 100              	.LFE112:
+ 102              		.align	2
+ 103              		.global	OPAMP_StructInit
+ 104              		.thumb
+ 105              		.thumb_func
+ 107              	OPAMP_StructInit:
+ 108              	.LFB113:
+ 185:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 186:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** /**
+ 187:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @brief  Fills each OPAMP_InitStruct member with its default value.
+ 188:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @param  OPAMP_InitStruct: pointer to an OPAMP_InitTypeDef structure which will 
+ 189:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *         be initialized.
+ 190:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @retval None
+ 191:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   */
+ 192:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** void OPAMP_StructInit(OPAMP_InitTypeDef* OPAMP_InitStruct)
+ 193:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** {
+ 109              		.loc 1 193 0
+ 110              		.cfi_startproc
+ 111              		@ args = 0, pretend = 0, frame = 8
+ 112              		@ frame_needed = 0, uses_anonymous_args = 0
+ 113              		@ link register save eliminated.
+ 114 0064 82B0     		sub	sp, sp, #8
+ 115              	.LCFI2:
+ 116              		.cfi_def_cfa_offset 8
+ 117 0066 0190     		str	r0, [sp, #4]
+ 194:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   OPAMP_InitStruct->OPAMP_NonInvertingInput = OPAMP_NonInvertingInput_IO1;
+ 118              		.loc 1 194 0
+ 119 0068 019B     		ldr	r3, [sp, #4]
+ 120 006a 4FF00002 		mov	r2, #0
+ 121 006e 5A60     		str	r2, [r3, #4]
+ 195:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   OPAMP_InitStruct->OPAMP_InvertingInput = OPAMP_InvertingInput_IO1;
+ 122              		.loc 1 195 0
+ 123 0070 019B     		ldr	r3, [sp, #4]
+ 124 0072 4FF00002 		mov	r2, #0
+ 125 0076 1A60     		str	r2, [r3, #0]
+ 196:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** }
+ 126              		.loc 1 196 0
+ 127 0078 02B0     		add	sp, sp, #8
+ 128 007a 7047     		bx	lr
+ 129              		.cfi_endproc
+ 130              	.LFE113:
+ 132              		.align	2
+ 133              		.global	OPAMP_PGAConfig
+ 134              		.thumb
+ 135              		.thumb_func
+ 137              	OPAMP_PGAConfig:
+ 138              	.LFB114:
+ 197:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 198:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** /**
+ 199:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @brief  Configure the feedback resistor gain.
+ 200:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @note   If the selected OPAMP is locked, gain configuration can't be performed.
+ 201:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *         To unlock the configuration, perform a system reset.
+ 202:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @param  OPAMP_Selection: the selected OPAMP. 
+ 203:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *          This parameter can be OPAMP_Selection_OPAMPx where x can be 1 to 4
+ 204:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *          to select the OPAMP peripheral.
+ 205:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @param  NewState: new state of the OPAMP peripheral.
+ 206:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *         This parameter can be: ENABLE or DISABLE.
+ 207:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @retval None
+ 208:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   */
+ 209:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** void OPAMP_PGAConfig(uint32_t OPAMP_Selection, uint32_t OPAMP_PGAGain, uint32_t OPAMP_PGAConnect)
+ 210:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** {
+ 139              		.loc 1 210 0
+ 140              		.cfi_startproc
+ 141              		@ args = 0, pretend = 0, frame = 16
+ 142              		@ frame_needed = 0, uses_anonymous_args = 0
+ 143              		@ link register save eliminated.
+ 144 007c 84B0     		sub	sp, sp, #16
+ 145              	.LCFI3:
+ 146              		.cfi_def_cfa_offset 16
+ 147 007e 0390     		str	r0, [sp, #12]
+ 148 0080 0291     		str	r1, [sp, #8]
+ 149 0082 0192     		str	r2, [sp, #4]
+ 211:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   /* Check the parameters */
+ 212:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   assert_param(IS_OPAMP_ALL_PERIPH(OPAMP_Selection));
+ 213:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   assert_param(IS_OPAMP_PGAGAIN(OPAMP_PGAGain));
+ 214:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   assert_param(IS_OPAMP_PGACONNECT(OPAMP_PGAConnect));
+ 215:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 216:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   /* Reset the configuration bits */
+ 217:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *(__IO uint32_t *) (OPAMP_BASE + OPAMP_Selection) &= (uint32_t)(~OPAMP_CSR_PGGAIN);
+ 150              		.loc 1 217 0
+ 151 0084 039A     		ldr	r2, [sp, #12]
+ 152 0086 4FF03803 		mov	r3, #56
+ 153 008a C4F20103 		movt	r3, 16385
+ 154 008e D318     		adds	r3, r2, r3
+ 155 0090 1A46     		mov	r2, r3
+ 156 0092 0399     		ldr	r1, [sp, #12]
+ 157 0094 4FF03803 		mov	r3, #56
+ 158 0098 C4F20103 		movt	r3, 16385
+ 159 009c CB18     		adds	r3, r1, r3
+ 160 009e 1B68     		ldr	r3, [r3, #0]
+ 161 00a0 23F47033 		bic	r3, r3, #245760
+ 162 00a4 1360     		str	r3, [r2, #0]
+ 218:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 219:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   /* Set the new configuration */
+ 220:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *(__IO uint32_t *) (OPAMP_BASE + OPAMP_Selection) |= (uint32_t) (OPAMP_PGAGain | OPAMP_PGAConnect
+ 163              		.loc 1 220 0
+ 164 00a6 039A     		ldr	r2, [sp, #12]
+ 165 00a8 4FF03803 		mov	r3, #56
+ 166 00ac C4F20103 		movt	r3, 16385
+ 167 00b0 D318     		adds	r3, r2, r3
+ 168 00b2 1A46     		mov	r2, r3
+ 169 00b4 0399     		ldr	r1, [sp, #12]
+ 170 00b6 4FF03803 		mov	r3, #56
+ 171 00ba C4F20103 		movt	r3, 16385
+ 172 00be CB18     		adds	r3, r1, r3
+ 173 00c0 1968     		ldr	r1, [r3, #0]
+ 174 00c2 0298     		ldr	r0, [sp, #8]
+ 175 00c4 019B     		ldr	r3, [sp, #4]
+ 176 00c6 0343     		orrs	r3, r3, r0
+ 177 00c8 0B43     		orrs	r3, r3, r1
+ 178 00ca 1360     		str	r3, [r2, #0]
+ 221:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** }
+ 179              		.loc 1 221 0
+ 180 00cc 04B0     		add	sp, sp, #16
+ 181 00ce 7047     		bx	lr
+ 182              		.cfi_endproc
+ 183              	.LFE114:
+ 185              		.align	2
+ 186              		.global	OPAMP_VrefConfig
+ 187              		.thumb
+ 188              		.thumb_func
+ 190              	OPAMP_VrefConfig:
+ 191              	.LFB115:
+ 222:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 223:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** /**
+ 224:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @brief  Configure the OPAMP's internal reference.
+ 225:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @note   This feature is used when calibration enabled or OPAMP's reference
+ 226:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *         connected to the non inverting input.
+ 227:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @note   If the selected OPAMP is locked, Vref configuration can't be performed.
+ 228:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *         To unlock the configuration, perform a system reset.  
+ 229:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @param  OPAMP_Selection: the selected OPAMP. 
+ 230:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *          This parameter can be OPAMP_Selection_OPAMPx where x can be 1 to 4
+ 231:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *          to select the OPAMP peripheral.
+ 232:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @param  OPAMP_Vref: This parameter can be:
+ 233:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *           OPAMP_Vref_3VDDA: OPMAP Vref = 3.3% VDDA
+ 234:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *           OPAMP_Vref_10VDDA: OPMAP Vref = 10% VDDA
+ 235:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *           OPAMP_Vref_50VDDA: OPMAP Vref = 50% VDDA
+ 236:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *           OPAMP_Vref_90VDDA: OPMAP Vref = 90% VDDA
+ 237:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @retval None
+ 238:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   */
+ 239:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** void OPAMP_VrefConfig(uint32_t OPAMP_Selection, uint32_t OPAMP_Vref)
+ 240:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** {
+ 192              		.loc 1 240 0
+ 193              		.cfi_startproc
+ 194              		@ args = 0, pretend = 0, frame = 16
+ 195              		@ frame_needed = 0, uses_anonymous_args = 0
+ 196              		@ link register save eliminated.
+ 197 00d0 84B0     		sub	sp, sp, #16
+ 198              	.LCFI4:
+ 199              		.cfi_def_cfa_offset 16
+ 200 00d2 0190     		str	r0, [sp, #4]
+ 201 00d4 0091     		str	r1, [sp, #0]
+ 241:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   uint32_t tmpreg = 0;
+ 202              		.loc 1 241 0
+ 203 00d6 4FF00003 		mov	r3, #0
+ 204 00da 0393     		str	r3, [sp, #12]
+ 242:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 243:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   /* Check the parameters */
+ 244:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   assert_param(IS_OPAMP_ALL_PERIPH(OPAMP_Selection));
+ 245:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   assert_param(IS_OPAMP_VREF(OPAMP_Vref));
+ 246:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 247:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   /*!< Get the OPAMPx_CSR register value */
+ 248:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   tmpreg = *(__IO uint32_t *) (OPAMP_BASE + OPAMP_Selection);
+ 205              		.loc 1 248 0
+ 206 00dc 019A     		ldr	r2, [sp, #4]
+ 207 00de 4FF03803 		mov	r3, #56
+ 208 00e2 C4F20103 		movt	r3, 16385
+ 209 00e6 D318     		adds	r3, r2, r3
+ 210 00e8 1B68     		ldr	r3, [r3, #0]
+ 211 00ea 0393     		str	r3, [sp, #12]
+ 249:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 250:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   /*!< Clear the CALSEL bits */
+ 251:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   tmpreg &= (uint32_t) (~OPAMP_CSR_CALSEL);
+ 212              		.loc 1 251 0
+ 213 00ec 039B     		ldr	r3, [sp, #12]
+ 214 00ee 23F44053 		bic	r3, r3, #12288
+ 215 00f2 0393     		str	r3, [sp, #12]
+ 252:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 253:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   /*!< Configure OPAMP reference */
+ 254:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   tmpreg |= (uint32_t)(OPAMP_Vref);
+ 216              		.loc 1 254 0
+ 217 00f4 039A     		ldr	r2, [sp, #12]
+ 218 00f6 009B     		ldr	r3, [sp, #0]
+ 219 00f8 1343     		orrs	r3, r3, r2
+ 220 00fa 0393     		str	r3, [sp, #12]
+ 255:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 256:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   /*!< Write to OPAMPx_CSR register */
+ 257:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *(__IO uint32_t *) (OPAMP_BASE + OPAMP_Selection) = tmpreg;
+ 221              		.loc 1 257 0
+ 222 00fc 019A     		ldr	r2, [sp, #4]
+ 223 00fe 4FF03803 		mov	r3, #56
+ 224 0102 C4F20103 		movt	r3, 16385
+ 225 0106 D318     		adds	r3, r2, r3
+ 226 0108 039A     		ldr	r2, [sp, #12]
+ 227 010a 1A60     		str	r2, [r3, #0]
+ 258:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** }
+ 228              		.loc 1 258 0
+ 229 010c 04B0     		add	sp, sp, #16
+ 230 010e 7047     		bx	lr
+ 231              		.cfi_endproc
+ 232              	.LFE115:
+ 234              		.align	2
+ 235              		.global	OPAMP_VrefConnectNonInvertingInput
+ 236              		.thumb
+ 237              		.thumb_func
+ 239              	OPAMP_VrefConnectNonInvertingInput:
+ 240              	.LFB116:
+ 259:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 260:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** /**
+ 261:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @brief  Connnect the internal reference to the OPAMP's non inverting input.
+ 262:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @note   If the selected OPAMP is locked, Vref configuration can't be performed.
+ 263:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *         To unlock the configuration, perform a system reset.  
+ 264:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @param  OPAMP_Selection: the selected OPAMP. 
+ 265:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *          This parameter can be OPAMP_Selection_OPAMPx where x can be 1 to 4
+ 266:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *          to select the OPAMP peripheral.
+ 267:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @param  NewState: new state of the OPAMP peripheral.
+ 268:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *         This parameter can be: ENABLE or DISABLE.
+ 269:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @retval None
+ 270:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   */
+ 271:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** void OPAMP_VrefConnectNonInvertingInput(uint32_t OPAMP_Selection, FunctionalState NewState)
+ 272:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** {
+ 241              		.loc 1 272 0
+ 242              		.cfi_startproc
+ 243              		@ args = 0, pretend = 0, frame = 8
+ 244              		@ frame_needed = 0, uses_anonymous_args = 0
+ 245              		@ link register save eliminated.
+ 246 0110 82B0     		sub	sp, sp, #8
+ 247              	.LCFI5:
+ 248              		.cfi_def_cfa_offset 8
+ 249 0112 0190     		str	r0, [sp, #4]
+ 250 0114 0B46     		mov	r3, r1
+ 251 0116 8DF80330 		strb	r3, [sp, #3]
+ 273:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   /* Check the parameters */
+ 274:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   assert_param(IS_OPAMP_ALL_PERIPH(OPAMP_Selection));
+ 275:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   assert_param(IS_FUNCTIONAL_STATE(NewState));
+ 276:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 277:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   if (NewState != DISABLE)
+ 252              		.loc 1 277 0
+ 253 011a 9DF80330 		ldrb	r3, [sp, #3]	@ zero_extendqisi2
+ 254 011e 002B     		cmp	r3, #0
+ 255 0120 11D0     		beq	.L7
+ 278:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   {
+ 279:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****     /* Connnect the internal reference to the OPAMP's non inverting input */
+ 280:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****     *(__IO uint32_t *) (OPAMP_BASE + OPAMP_Selection) |= (uint32_t) (OPAMP_CSR_FORCEVP);
+ 256              		.loc 1 280 0
+ 257 0122 019A     		ldr	r2, [sp, #4]
+ 258 0124 4FF03803 		mov	r3, #56
+ 259 0128 C4F20103 		movt	r3, 16385
+ 260 012c D318     		adds	r3, r2, r3
+ 261 012e 1A46     		mov	r2, r3
+ 262 0130 0199     		ldr	r1, [sp, #4]
+ 263 0132 4FF03803 		mov	r3, #56
+ 264 0136 C4F20103 		movt	r3, 16385
+ 265 013a CB18     		adds	r3, r1, r3
+ 266 013c 1B68     		ldr	r3, [r3, #0]
+ 267 013e 43F00203 		orr	r3, r3, #2
+ 268 0142 1360     		str	r3, [r2, #0]
+ 269 0144 10E0     		b	.L6
+ 270              	.L7:
+ 281:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   }
+ 282:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   else
+ 283:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   {
+ 284:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****     /* Disconnnect the internal reference to the OPAMP's non inverting input */
+ 285:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****     *(__IO uint32_t *) (OPAMP_BASE + OPAMP_Selection) &= (uint32_t)(~OPAMP_CSR_FORCEVP);
+ 271              		.loc 1 285 0
+ 272 0146 019A     		ldr	r2, [sp, #4]
+ 273 0148 4FF03803 		mov	r3, #56
+ 274 014c C4F20103 		movt	r3, 16385
+ 275 0150 D318     		adds	r3, r2, r3
+ 276 0152 1A46     		mov	r2, r3
+ 277 0154 0199     		ldr	r1, [sp, #4]
+ 278 0156 4FF03803 		mov	r3, #56
+ 279 015a C4F20103 		movt	r3, 16385
+ 280 015e CB18     		adds	r3, r1, r3
+ 281 0160 1B68     		ldr	r3, [r3, #0]
+ 282 0162 23F00203 		bic	r3, r3, #2
+ 283 0166 1360     		str	r3, [r2, #0]
+ 284              	.L6:
+ 286:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   }
+ 287:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** }
+ 285              		.loc 1 287 0
+ 286 0168 02B0     		add	sp, sp, #8
+ 287 016a 7047     		bx	lr
+ 288              		.cfi_endproc
+ 289              	.LFE116:
+ 291              		.align	2
+ 292              		.global	OPAMP_VrefConnectADCCmd
+ 293              		.thumb
+ 294              		.thumb_func
+ 296              	OPAMP_VrefConnectADCCmd:
+ 297              	.LFB117:
+ 288:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 289:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** /**
+ 290:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @brief  Enables or disables connecting the OPAMP's internal reference to ADC.
+ 291:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @note   If the selected OPAMP is locked, Vref connection can't be performed.
+ 292:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *         To unlock the configuration, perform a system reset.  
+ 293:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @param  NewState: new state of the Vrefint output.
+ 294:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *         This parameter can be: ENABLE or DISABLE.
+ 295:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @retval None
+ 296:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   */
+ 297:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** void OPAMP_VrefConnectADCCmd(uint32_t OPAMP_Selection, FunctionalState NewState)
+ 298:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** {
+ 298              		.loc 1 298 0
+ 299              		.cfi_startproc
+ 300              		@ args = 0, pretend = 0, frame = 8
+ 301              		@ frame_needed = 0, uses_anonymous_args = 0
+ 302              		@ link register save eliminated.
+ 303 016c 82B0     		sub	sp, sp, #8
+ 304              	.LCFI6:
+ 305              		.cfi_def_cfa_offset 8
+ 306 016e 0190     		str	r0, [sp, #4]
+ 307 0170 0B46     		mov	r3, r1
+ 308 0172 8DF80330 		strb	r3, [sp, #3]
+ 299:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   /* Check the parameters */
+ 300:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   assert_param(IS_OPAMP_ALL_PERIPH(OPAMP_Selection));
+ 301:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   assert_param(IS_FUNCTIONAL_STATE(NewState));
+ 302:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 303:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   if (NewState != DISABLE)
+ 309              		.loc 1 303 0
+ 310 0176 9DF80330 		ldrb	r3, [sp, #3]	@ zero_extendqisi2
+ 311 017a 002B     		cmp	r3, #0
+ 312 017c 11D0     		beq	.L10
+ 304:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   {
+ 305:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****     /* Enable output internal reference */
+ 306:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****     *(__IO uint32_t *) (OPAMP_BASE + OPAMP_Selection) |= (uint32_t) (OPAMP_CSR_TSTREF);
+ 313              		.loc 1 306 0
+ 314 017e 019A     		ldr	r2, [sp, #4]
+ 315 0180 4FF03803 		mov	r3, #56
+ 316 0184 C4F20103 		movt	r3, 16385
+ 317 0188 D318     		adds	r3, r2, r3
+ 318 018a 1A46     		mov	r2, r3
+ 319 018c 0199     		ldr	r1, [sp, #4]
+ 320 018e 4FF03803 		mov	r3, #56
+ 321 0192 C4F20103 		movt	r3, 16385
+ 322 0196 CB18     		adds	r3, r1, r3
+ 323 0198 1B68     		ldr	r3, [r3, #0]
+ 324 019a 43F00053 		orr	r3, r3, #536870912
+ 325 019e 1360     		str	r3, [r2, #0]
+ 326 01a0 10E0     		b	.L9
+ 327              	.L10:
+ 307:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   }
+ 308:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   else
+ 309:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   {
+ 310:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****     /* Disable output internal reference */
+ 311:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****     *(__IO uint32_t *) (OPAMP_BASE + OPAMP_Selection) &= (uint32_t)(~OPAMP_CSR_TSTREF);
+ 328              		.loc 1 311 0
+ 329 01a2 019A     		ldr	r2, [sp, #4]
+ 330 01a4 4FF03803 		mov	r3, #56
+ 331 01a8 C4F20103 		movt	r3, 16385
+ 332 01ac D318     		adds	r3, r2, r3
+ 333 01ae 1A46     		mov	r2, r3
+ 334 01b0 0199     		ldr	r1, [sp, #4]
+ 335 01b2 4FF03803 		mov	r3, #56
+ 336 01b6 C4F20103 		movt	r3, 16385
+ 337 01ba CB18     		adds	r3, r1, r3
+ 338 01bc 1B68     		ldr	r3, [r3, #0]
+ 339 01be 23F00053 		bic	r3, r3, #536870912
+ 340 01c2 1360     		str	r3, [r2, #0]
+ 341              	.L9:
+ 312:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   }
+ 313:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** }
+ 342              		.loc 1 313 0
+ 343 01c4 02B0     		add	sp, sp, #8
+ 344 01c6 7047     		bx	lr
+ 345              		.cfi_endproc
+ 346              	.LFE117:
+ 348              		.align	2
+ 349              		.global	OPAMP_TimerControlledMuxConfig
+ 350              		.thumb
+ 351              		.thumb_func
+ 353              	OPAMP_TimerControlledMuxConfig:
+ 354              	.LFB118:
+ 314:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 315:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** /**
+ 316:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @brief  Configure the OPAMP peripheral (secondary inputs) for timer-controlled
+ 317:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *          mux mode according to the specified parameters in OPAMP_InitStruct.
+ 318:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @note   If the selected OPAMP is locked, timer-controlled mux configuration
+ 319:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *         can't be performed.
+ 320:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *         To unlock the configuration, perform a system reset.
+ 321:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @param  OPAMP_Selection: the selected OPAMP. 
+ 322:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *          This parameter can be OPAMP_Selection_OPAMPx where x can be 1 to 4
+ 323:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *          to select the OPAMP peripheral.
+ 324:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @param  OPAMP_InitStruct: pointer to an OPAMP_InitTypeDef structure that contains 
+ 325:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *         the configuration information for the specified OPAMP peripheral.
+ 326:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *           - OPAMP_InvertingInput specifies the inverting input of OPAMP
+ 327:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *           - OPAMP_NonInvertingInput specifies the non inverting input of OPAMP
+ 328:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @note   PGA and Vout can't be selected as seconadry inverting input.
+ 329:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @retval None
+ 330:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   */
+ 331:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** void OPAMP_TimerControlledMuxConfig(uint32_t OPAMP_Selection, OPAMP_InitTypeDef* OPAMP_InitStruct)
+ 332:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** {
+ 355              		.loc 1 332 0
+ 356              		.cfi_startproc
+ 357              		@ args = 0, pretend = 0, frame = 16
+ 358              		@ frame_needed = 0, uses_anonymous_args = 0
+ 359              		@ link register save eliminated.
+ 360 01c8 84B0     		sub	sp, sp, #16
+ 361              	.LCFI7:
+ 362              		.cfi_def_cfa_offset 16
+ 363 01ca 0190     		str	r0, [sp, #4]
+ 364 01cc 0091     		str	r1, [sp, #0]
+ 333:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   uint32_t tmpreg = 0;
+ 365              		.loc 1 333 0
+ 366 01ce 4FF00003 		mov	r3, #0
+ 367 01d2 0393     		str	r3, [sp, #12]
+ 334:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 335:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   /* Check the parameters */
+ 336:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   assert_param(IS_OPAMP_ALL_PERIPH(OPAMP_Selection));
+ 337:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   assert_param(IS_OPAMP_SECONDARY_INVINPUT(OPAMP_InitStruct->OPAMP_InvertingInput));
+ 338:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   assert_param(IS_OPAMP_NONINVERTING_INPUT(OPAMP_InitStruct->OPAMP_NonInvertingInput));
+ 339:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 340:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   /*!< Get the OPAMPx_CSR register value */
+ 341:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   tmpreg = *(__IO uint32_t *) (OPAMP_BASE + OPAMP_Selection);
+ 368              		.loc 1 341 0
+ 369 01d4 019A     		ldr	r2, [sp, #4]
+ 370 01d6 4FF03803 		mov	r3, #56
+ 371 01da C4F20103 		movt	r3, 16385
+ 372 01de D318     		adds	r3, r2, r3
+ 373 01e0 1B68     		ldr	r3, [r3, #0]
+ 374 01e2 0393     		str	r3, [sp, #12]
+ 342:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 343:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   /*!< Clear the secondary inverting bit, secondary non inverting bit and TCMEN bits */
+ 344:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   tmpreg &= (uint32_t) (OPAMP_CSR_TIMERMUX_MASK);
+ 375              		.loc 1 344 0
+ 376 01e4 039B     		ldr	r3, [sp, #12]
+ 377 01e6 23F4E063 		bic	r3, r3, #1792
+ 378 01ea 0393     		str	r3, [sp, #12]
+ 345:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 346:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   /*!< Configure OPAMP: secondary inverting and non inverting inputs */
+ 347:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   tmpreg |= (uint32_t)((uint32_t)(OPAMP_InitStruct->OPAMP_InvertingInput<<3) | (uint32_t)(OPAMP_Ini
+ 379              		.loc 1 347 0
+ 380 01ec 009B     		ldr	r3, [sp, #0]
+ 381 01ee 1B68     		ldr	r3, [r3, #0]
+ 382 01f0 4FEAC302 		lsl	r2, r3, #3
+ 383 01f4 009B     		ldr	r3, [sp, #0]
+ 384 01f6 5B68     		ldr	r3, [r3, #4]
+ 385 01f8 4FEAC313 		lsl	r3, r3, #7
+ 386 01fc 1343     		orrs	r3, r3, r2
+ 387 01fe 039A     		ldr	r2, [sp, #12]
+ 388 0200 1343     		orrs	r3, r3, r2
+ 389 0202 0393     		str	r3, [sp, #12]
+ 348:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 349:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   /*!< Write to OPAMPx_CSR register */
+ 350:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *(__IO uint32_t *) (OPAMP_BASE + OPAMP_Selection) = tmpreg;
+ 390              		.loc 1 350 0
+ 391 0204 019A     		ldr	r2, [sp, #4]
+ 392 0206 4FF03803 		mov	r3, #56
+ 393 020a C4F20103 		movt	r3, 16385
+ 394 020e D318     		adds	r3, r2, r3
+ 395 0210 039A     		ldr	r2, [sp, #12]
+ 396 0212 1A60     		str	r2, [r3, #0]
+ 351:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** }
+ 397              		.loc 1 351 0
+ 398 0214 04B0     		add	sp, sp, #16
+ 399 0216 7047     		bx	lr
+ 400              		.cfi_endproc
+ 401              	.LFE118:
+ 403              		.align	2
+ 404              		.global	OPAMP_TimerControlledMuxCmd
+ 405              		.thumb
+ 406              		.thumb_func
+ 408              	OPAMP_TimerControlledMuxCmd:
+ 409              	.LFB119:
+ 352:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 353:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** /**
+ 354:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @brief  Enable or disable the timer-controlled mux mode.
+ 355:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @note   If the selected OPAMP is locked, enable/disable can't be performed.
+ 356:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *         To unlock the configuration, perform a system reset.
+ 357:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @param  OPAMP_Selection: the selected OPAMP. 
+ 358:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *          This parameter can be OPAMP_Selection_OPAMPx where x can be 1 to 4
+ 359:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *          to select the OPAMP peripheral.
+ 360:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @param  NewState: new state of the OPAMP peripheral.
+ 361:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *         This parameter can be: ENABLE or DISABLE.
+ 362:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @retval None
+ 363:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   */
+ 364:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** void OPAMP_TimerControlledMuxCmd(uint32_t OPAMP_Selection, FunctionalState NewState)
+ 365:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** {
+ 410              		.loc 1 365 0
+ 411              		.cfi_startproc
+ 412              		@ args = 0, pretend = 0, frame = 8
+ 413              		@ frame_needed = 0, uses_anonymous_args = 0
+ 414              		@ link register save eliminated.
+ 415 0218 82B0     		sub	sp, sp, #8
+ 416              	.LCFI8:
+ 417              		.cfi_def_cfa_offset 8
+ 418 021a 0190     		str	r0, [sp, #4]
+ 419 021c 0B46     		mov	r3, r1
+ 420 021e 8DF80330 		strb	r3, [sp, #3]
+ 366:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   /* Check the parameters */
+ 367:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   assert_param(IS_OPAMP_ALL_PERIPH(OPAMP_Selection));
+ 368:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   assert_param(IS_FUNCTIONAL_STATE(NewState));
+ 369:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 370:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   if (NewState != DISABLE)
+ 421              		.loc 1 370 0
+ 422 0222 9DF80330 		ldrb	r3, [sp, #3]	@ zero_extendqisi2
+ 423 0226 002B     		cmp	r3, #0
+ 424 0228 11D0     		beq	.L14
+ 371:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   {
+ 372:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****     /* Enable the timer-controlled Mux mode */
+ 373:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****     *(__IO uint32_t *) (OPAMP_BASE + OPAMP_Selection) |= (uint32_t) (OPAMP_CSR_TCMEN);
+ 425              		.loc 1 373 0
+ 426 022a 019A     		ldr	r2, [sp, #4]
+ 427 022c 4FF03803 		mov	r3, #56
+ 428 0230 C4F20103 		movt	r3, 16385
+ 429 0234 D318     		adds	r3, r2, r3
+ 430 0236 1A46     		mov	r2, r3
+ 431 0238 0199     		ldr	r1, [sp, #4]
+ 432 023a 4FF03803 		mov	r3, #56
+ 433 023e C4F20103 		movt	r3, 16385
+ 434 0242 CB18     		adds	r3, r1, r3
+ 435 0244 1B68     		ldr	r3, [r3, #0]
+ 436 0246 43F08003 		orr	r3, r3, #128
+ 437 024a 1360     		str	r3, [r2, #0]
+ 438 024c 10E0     		b	.L13
+ 439              	.L14:
+ 374:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   }
+ 375:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   else
+ 376:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   {
+ 377:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****     /* Disable the timer-controlled Mux mode */
+ 378:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****     *(__IO uint32_t *) (OPAMP_BASE + OPAMP_Selection) &= (uint32_t)(~OPAMP_CSR_TCMEN);
+ 440              		.loc 1 378 0
+ 441 024e 019A     		ldr	r2, [sp, #4]
+ 442 0250 4FF03803 		mov	r3, #56
+ 443 0254 C4F20103 		movt	r3, 16385
+ 444 0258 D318     		adds	r3, r2, r3
+ 445 025a 1A46     		mov	r2, r3
+ 446 025c 0199     		ldr	r1, [sp, #4]
+ 447 025e 4FF03803 		mov	r3, #56
+ 448 0262 C4F20103 		movt	r3, 16385
+ 449 0266 CB18     		adds	r3, r1, r3
+ 450 0268 1B68     		ldr	r3, [r3, #0]
+ 451 026a 23F08003 		bic	r3, r3, #128
+ 452 026e 1360     		str	r3, [r2, #0]
+ 453              	.L13:
+ 379:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   }
+ 380:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** }
+ 454              		.loc 1 380 0
+ 455 0270 02B0     		add	sp, sp, #8
+ 456 0272 7047     		bx	lr
+ 457              		.cfi_endproc
+ 458              	.LFE119:
+ 460              		.align	2
+ 461              		.global	OPAMP_Cmd
+ 462              		.thumb
+ 463              		.thumb_func
+ 465              	OPAMP_Cmd:
+ 466              	.LFB120:
+ 381:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 382:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** /**
+ 383:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @brief  Enable or disable the OPAMP peripheral.
+ 384:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @note   If the selected OPAMP is locked, enable/disable can't be performed.
+ 385:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *         To unlock the configuration, perform a system reset.
+ 386:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @param  OPAMP_Selection: the selected OPAMP. 
+ 387:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *          This parameter can be OPAMP_Selection_OPAMPx where x can be 1 to 4
+ 388:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *          to select the OPAMP peripheral.
+ 389:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @param  NewState: new state of the OPAMP peripheral.
+ 390:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *         This parameter can be: ENABLE or DISABLE.
+ 391:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @retval None
+ 392:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   */
+ 393:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** void OPAMP_Cmd(uint32_t OPAMP_Selection, FunctionalState NewState)
+ 394:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** {
+ 467              		.loc 1 394 0
+ 468              		.cfi_startproc
+ 469              		@ args = 0, pretend = 0, frame = 8
+ 470              		@ frame_needed = 0, uses_anonymous_args = 0
+ 471              		@ link register save eliminated.
+ 472 0274 82B0     		sub	sp, sp, #8
+ 473              	.LCFI9:
+ 474              		.cfi_def_cfa_offset 8
+ 475 0276 0190     		str	r0, [sp, #4]
+ 476 0278 0B46     		mov	r3, r1
+ 477 027a 8DF80330 		strb	r3, [sp, #3]
+ 395:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   /* Check the parameters */
+ 396:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   assert_param(IS_OPAMP_ALL_PERIPH(OPAMP_Selection));
+ 397:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   assert_param(IS_FUNCTIONAL_STATE(NewState));
+ 398:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 399:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   if (NewState != DISABLE)
+ 478              		.loc 1 399 0
+ 479 027e 9DF80330 		ldrb	r3, [sp, #3]	@ zero_extendqisi2
+ 480 0282 002B     		cmp	r3, #0
+ 481 0284 11D0     		beq	.L17
+ 400:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   {
+ 401:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****     /* Enable the selected OPAMPx peripheral */
+ 402:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****     *(__IO uint32_t *) (OPAMP_BASE + OPAMP_Selection) |= (uint32_t) (OPAMP_CSR_OPAMPxEN);
+ 482              		.loc 1 402 0
+ 483 0286 019A     		ldr	r2, [sp, #4]
+ 484 0288 4FF03803 		mov	r3, #56
+ 485 028c C4F20103 		movt	r3, 16385
+ 486 0290 D318     		adds	r3, r2, r3
+ 487 0292 1A46     		mov	r2, r3
+ 488 0294 0199     		ldr	r1, [sp, #4]
+ 489 0296 4FF03803 		mov	r3, #56
+ 490 029a C4F20103 		movt	r3, 16385
+ 491 029e CB18     		adds	r3, r1, r3
+ 492 02a0 1B68     		ldr	r3, [r3, #0]
+ 493 02a2 43F00103 		orr	r3, r3, #1
+ 494 02a6 1360     		str	r3, [r2, #0]
+ 495 02a8 10E0     		b	.L16
+ 496              	.L17:
+ 403:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   }
+ 404:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   else
+ 405:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   {
+ 406:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****     /* Disable the selected OPAMPx peripheral */
+ 407:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****     *(__IO uint32_t *) (OPAMP_BASE + OPAMP_Selection) &= (uint32_t)(~OPAMP_CSR_OPAMPxEN);
+ 497              		.loc 1 407 0
+ 498 02aa 019A     		ldr	r2, [sp, #4]
+ 499 02ac 4FF03803 		mov	r3, #56
+ 500 02b0 C4F20103 		movt	r3, 16385
+ 501 02b4 D318     		adds	r3, r2, r3
+ 502 02b6 1A46     		mov	r2, r3
+ 503 02b8 0199     		ldr	r1, [sp, #4]
+ 504 02ba 4FF03803 		mov	r3, #56
+ 505 02be C4F20103 		movt	r3, 16385
+ 506 02c2 CB18     		adds	r3, r1, r3
+ 507 02c4 1B68     		ldr	r3, [r3, #0]
+ 508 02c6 23F00103 		bic	r3, r3, #1
+ 509 02ca 1360     		str	r3, [r2, #0]
+ 510              	.L16:
+ 408:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   }
+ 409:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** }
+ 511              		.loc 1 409 0
+ 512 02cc 02B0     		add	sp, sp, #8
+ 513 02ce 7047     		bx	lr
+ 514              		.cfi_endproc
+ 515              	.LFE120:
+ 517              		.align	2
+ 518              		.global	OPAMP_GetOutputLevel
+ 519              		.thumb
+ 520              		.thumb_func
+ 522              	OPAMP_GetOutputLevel:
+ 523              	.LFB121:
+ 410:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 411:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** /**
+ 412:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @brief  Return the output level (high or low) during calibration of the selected OPAMP. 
+ 413:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @param  OPAMP_Selection: the selected OPAMP. 
+ 414:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *          This parameter can be OPAMP_Selection_OPAMPx where x can be 1 to 4
+ 415:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *          to select the OPAMP peripheral.
+ 416:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *           - OPAMP output is low when the non-inverting input is at a lower
+ 417:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *             voltage than the inverting input
+ 418:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *           - OPAMP output is high when the non-inverting input is at a higher
+ 419:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *             voltage than the inverting input
+ 420:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @note OPAMP ouput level is provided only during calibration phase.
+ 421:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @retval Returns the selected OPAMP output level: low or high.
+ 422:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *       
+ 423:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   */
+ 424:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** uint32_t OPAMP_GetOutputLevel(uint32_t OPAMP_Selection)
+ 425:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** {
+ 524              		.loc 1 425 0
+ 525              		.cfi_startproc
+ 526              		@ args = 0, pretend = 0, frame = 16
+ 527              		@ frame_needed = 0, uses_anonymous_args = 0
+ 528              		@ link register save eliminated.
+ 529 02d0 84B0     		sub	sp, sp, #16
+ 530              	.LCFI10:
+ 531              		.cfi_def_cfa_offset 16
+ 532 02d2 0190     		str	r0, [sp, #4]
+ 426:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   uint32_t opampout = 0x0;
+ 533              		.loc 1 426 0
+ 534 02d4 4FF00003 		mov	r3, #0
+ 535 02d8 0393     		str	r3, [sp, #12]
+ 427:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 428:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   /* Check the parameters */
+ 429:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   assert_param(IS_OPAMP_ALL_PERIPH(OPAMP_Selection));
+ 430:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 431:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   /* Check if selected OPAMP output is high */
+ 432:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   if ((*(__IO uint32_t *) (OPAMP_BASE + OPAMP_Selection) & (OPAMP_CSR_OUTCAL)) != 0)
+ 536              		.loc 1 432 0
+ 537 02da 019A     		ldr	r2, [sp, #4]
+ 538 02dc 4FF03803 		mov	r3, #56
+ 539 02e0 C4F20103 		movt	r3, 16385
+ 540 02e4 D318     		adds	r3, r2, r3
+ 541 02e6 1B68     		ldr	r3, [r3, #0]
+ 542 02e8 03F08043 		and	r3, r3, #1073741824
+ 543 02ec 002B     		cmp	r3, #0
+ 544 02ee 03D0     		beq	.L20
+ 433:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   {
+ 434:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****     opampout = OPAMP_OutputLevel_High;
+ 545              		.loc 1 434 0
+ 546 02f0 4FF08043 		mov	r3, #1073741824
+ 547 02f4 0393     		str	r3, [sp, #12]
+ 548 02f6 02E0     		b	.L21
+ 549              	.L20:
+ 435:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   }
+ 436:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   else
+ 437:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   {
+ 438:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****     opampout = OPAMP_OutputLevel_Low;
+ 550              		.loc 1 438 0
+ 551 02f8 4FF00003 		mov	r3, #0
+ 552 02fc 0393     		str	r3, [sp, #12]
+ 553              	.L21:
+ 439:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   }
+ 440:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 441:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   /* Return the OPAMP output level */
+ 442:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   return (uint32_t)(opampout);
+ 554              		.loc 1 442 0
+ 555 02fe 039B     		ldr	r3, [sp, #12]
+ 443:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** }
+ 556              		.loc 1 443 0
+ 557 0300 1846     		mov	r0, r3
+ 558 0302 04B0     		add	sp, sp, #16
+ 559 0304 7047     		bx	lr
+ 560              		.cfi_endproc
+ 561              	.LFE121:
+ 563 0306 00BF     		.align	2
+ 564              		.global	OPAMP_OffsetTrimModeSelect
+ 565              		.thumb
+ 566              		.thumb_func
+ 568              	OPAMP_OffsetTrimModeSelect:
+ 569              	.LFB122:
+ 444:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 445:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** /**
+ 446:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @brief  Select the trimming mode.
+ 447:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @param  OffsetTrimming: the selected offset trimming mode. 
+ 448:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *   This parameter  can be one of the following values:
+ 449:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *     @arg OPAMP_Trimming_Factory: factory trimming values are used for offset
+ 450:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *                                  calibration
+ 451:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *     @arg OPAMP_Trimming_User: user trimming values are used for offset
+ 452:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *                               calibration
+ 453:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @note When OffsetTrimming_User is selected, use OPAMP_OffsetTrimConfig()
+ 454:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *       function or OPAMP_OffsetTrimLowPowerConfig() function to adjust 
+ 455:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *       trimming value.
+ 456:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @retval None
+ 457:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   */
+ 458:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** void OPAMP_OffsetTrimModeSelect(uint32_t OPAMP_Selection, uint32_t OPAMP_Trimming)
+ 459:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** {
+ 570              		.loc 1 459 0
+ 571              		.cfi_startproc
+ 572              		@ args = 0, pretend = 0, frame = 8
+ 573              		@ frame_needed = 0, uses_anonymous_args = 0
+ 574              		@ link register save eliminated.
+ 575 0308 82B0     		sub	sp, sp, #8
+ 576              	.LCFI11:
+ 577              		.cfi_def_cfa_offset 8
+ 578 030a 0190     		str	r0, [sp, #4]
+ 579 030c 0091     		str	r1, [sp, #0]
+ 460:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   /* Check the parameters */
+ 461:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   assert_param(IS_OPAMP_ALL_PERIPH(OPAMP_Selection));
+ 462:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   assert_param(IS_OPAMP_TRIMMING(OPAMP_Trimming));
+ 463:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 464:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   /* Reset USERTRIM bit */
+ 465:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *(__IO uint32_t *) (OPAMP_BASE + OPAMP_Selection) &= (~(uint32_t) (OPAMP_CSR_USERTRIM));
+ 580              		.loc 1 465 0
+ 581 030e 019A     		ldr	r2, [sp, #4]
+ 582 0310 4FF03803 		mov	r3, #56
+ 583 0314 C4F20103 		movt	r3, 16385
+ 584 0318 D318     		adds	r3, r2, r3
+ 585 031a 1A46     		mov	r2, r3
+ 586 031c 0199     		ldr	r1, [sp, #4]
+ 587 031e 4FF03803 		mov	r3, #56
+ 588 0322 C4F20103 		movt	r3, 16385
+ 589 0326 CB18     		adds	r3, r1, r3
+ 590 0328 1B68     		ldr	r3, [r3, #0]
+ 591 032a 23F48023 		bic	r3, r3, #262144
+ 592 032e 1360     		str	r3, [r2, #0]
+ 466:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 467:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   /* Select trimming mode */
+ 468:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *(__IO uint32_t *) (OPAMP_BASE + OPAMP_Selection) |= OPAMP_Trimming;
+ 593              		.loc 1 468 0
+ 594 0330 019A     		ldr	r2, [sp, #4]
+ 595 0332 4FF03803 		mov	r3, #56
+ 596 0336 C4F20103 		movt	r3, 16385
+ 597 033a D318     		adds	r3, r2, r3
+ 598 033c 1A46     		mov	r2, r3
+ 599 033e 0199     		ldr	r1, [sp, #4]
+ 600 0340 4FF03803 		mov	r3, #56
+ 601 0344 C4F20103 		movt	r3, 16385
+ 602 0348 CB18     		adds	r3, r1, r3
+ 603 034a 1968     		ldr	r1, [r3, #0]
+ 604 034c 009B     		ldr	r3, [sp, #0]
+ 605 034e 0B43     		orrs	r3, r3, r1
+ 606 0350 1360     		str	r3, [r2, #0]
+ 469:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** }
+ 607              		.loc 1 469 0
+ 608 0352 02B0     		add	sp, sp, #8
+ 609 0354 7047     		bx	lr
+ 610              		.cfi_endproc
+ 611              	.LFE122:
+ 613 0356 00BF     		.align	2
+ 614              		.global	OPAMP_OffsetTrimConfig
+ 615              		.thumb
+ 616              		.thumb_func
+ 618              	OPAMP_OffsetTrimConfig:
+ 619              	.LFB123:
+ 470:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 471:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** /**
+ 472:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @brief  Configure the trimming value of the OPAMP.
+ 473:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @param  OPAMP_Selection: the selected OPAMP. 
+ 474:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *          This parameter can be OPAMP_Selection_OPAMPx where x can be 1 to 4
+ 475:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *          to select the OPAMP peripheral.
+ 476:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @param  OPAMP_Input: the selected OPAMP input. 
+ 477:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *   This parameter can be one of the following values:
+ 478:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *         @arg OPAMP_Input_Inverting: Inverting input is selected to configure the trimming value
+ 479:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *         @arg OPAMP_Input_NonInverting: Non inverting input is selected to configure the trimmin
+ 480:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @param  OPAMP_TrimValue: the trimming value. This parameter can be any value lower
+ 481:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *         or equal to 0x0000001F. 
+ 482:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @retval None
+ 483:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   */
+ 484:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** void OPAMP_OffsetTrimConfig(uint32_t OPAMP_Selection, uint32_t OPAMP_Input, uint32_t OPAMP_TrimValu
+ 485:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** {
+ 620              		.loc 1 485 0
+ 621              		.cfi_startproc
+ 622              		@ args = 0, pretend = 0, frame = 24
+ 623              		@ frame_needed = 0, uses_anonymous_args = 0
+ 624              		@ link register save eliminated.
+ 625 0358 86B0     		sub	sp, sp, #24
+ 626              	.LCFI12:
+ 627              		.cfi_def_cfa_offset 24
+ 628 035a 0390     		str	r0, [sp, #12]
+ 629 035c 0291     		str	r1, [sp, #8]
+ 630 035e 0192     		str	r2, [sp, #4]
+ 486:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   uint32_t tmpreg = 0;
+ 631              		.loc 1 486 0
+ 632 0360 4FF00003 		mov	r3, #0
+ 633 0364 0593     		str	r3, [sp, #20]
+ 487:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 488:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   /* Check the parameters */
+ 489:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   assert_param(IS_OPAMP_ALL_PERIPH(OPAMP_Selection));
+ 490:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   assert_param(IS_OPAMP_INPUT(OPAMP_Input));
+ 491:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   assert_param(IS_OPAMP_TRIMMINGVALUE(OPAMP_TrimValue));
+ 492:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 493:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   /*!< Get the OPAMPx_CSR register value */
+ 494:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   tmpreg = *(__IO uint32_t *) (OPAMP_BASE + OPAMP_Selection);
+ 634              		.loc 1 494 0
+ 635 0366 039A     		ldr	r2, [sp, #12]
+ 636 0368 4FF03803 		mov	r3, #56
+ 637 036c C4F20103 		movt	r3, 16385
+ 638 0370 D318     		adds	r3, r2, r3
+ 639 0372 1B68     		ldr	r3, [r3, #0]
+ 640 0374 0593     		str	r3, [sp, #20]
+ 495:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 496:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   /*!< Clear the trimming bits */
+ 497:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   tmpreg &= ((uint32_t)~(OPAMP_CSR_TRIMMING_MASK<<OPAMP_Input));
+ 641              		.loc 1 497 0
+ 642 0376 029B     		ldr	r3, [sp, #8]
+ 643 0378 4FF01F02 		mov	r2, #31
+ 644 037c 02FA03F3 		lsl	r3, r2, r3
+ 645 0380 6FEA0303 		mvn	r3, r3
+ 646 0384 059A     		ldr	r2, [sp, #20]
+ 647 0386 1340     		ands	r3, r3, r2
+ 648 0388 0593     		str	r3, [sp, #20]
+ 498:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 499:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   /*!< Configure the new trimming value */
+ 500:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   tmpreg |= (uint32_t)(OPAMP_TrimValue<<OPAMP_Input);
+ 649              		.loc 1 500 0
+ 650 038a 029B     		ldr	r3, [sp, #8]
+ 651 038c 019A     		ldr	r2, [sp, #4]
+ 652 038e 02FA03F3 		lsl	r3, r2, r3
+ 653 0392 059A     		ldr	r2, [sp, #20]
+ 654 0394 1343     		orrs	r3, r3, r2
+ 655 0396 0593     		str	r3, [sp, #20]
+ 501:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 502:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   /*!< Write to OPAMPx_CSR register */
+ 503:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *(__IO uint32_t *) (OPAMP_BASE + OPAMP_Selection) = tmpreg;
+ 656              		.loc 1 503 0
+ 657 0398 039A     		ldr	r2, [sp, #12]
+ 658 039a 4FF03803 		mov	r3, #56
+ 659 039e C4F20103 		movt	r3, 16385
+ 660 03a2 D318     		adds	r3, r2, r3
+ 661 03a4 059A     		ldr	r2, [sp, #20]
+ 662 03a6 1A60     		str	r2, [r3, #0]
+ 504:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** }
+ 663              		.loc 1 504 0
+ 664 03a8 06B0     		add	sp, sp, #24
+ 665 03aa 7047     		bx	lr
+ 666              		.cfi_endproc
+ 667              	.LFE123:
+ 669              		.align	2
+ 670              		.global	OPAMP_StartCalibration
+ 671              		.thumb
+ 672              		.thumb_func
+ 674              	OPAMP_StartCalibration:
+ 675              	.LFB124:
+ 505:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 506:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** /**
+ 507:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @brief  Start or stop the calibration of selected OPAMP peripheral.
+ 508:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @note   If the selected OPAMP is locked, start/stop can't be performed.
+ 509:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *         To unlock the configuration, perform a system reset.
+ 510:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @param  OPAMP_Selection: the selected OPAMP. 
+ 511:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *          This parameter can be OPAMP_Selection_OPAMPx where x can be 1 to 4
+ 512:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *          to select the OPAMP peripheral.
+ 513:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @param  NewState: new state of the OPAMP peripheral.
+ 514:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *         This parameter can be: ENABLE or DISABLE.  
+ 515:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @retval None
+ 516:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   */
+ 517:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** void OPAMP_StartCalibration(uint32_t OPAMP_Selection, FunctionalState NewState)
+ 518:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** {
+ 676              		.loc 1 518 0
+ 677              		.cfi_startproc
+ 678              		@ args = 0, pretend = 0, frame = 8
+ 679              		@ frame_needed = 0, uses_anonymous_args = 0
+ 680              		@ link register save eliminated.
+ 681 03ac 82B0     		sub	sp, sp, #8
+ 682              	.LCFI13:
+ 683              		.cfi_def_cfa_offset 8
+ 684 03ae 0190     		str	r0, [sp, #4]
+ 685 03b0 0B46     		mov	r3, r1
+ 686 03b2 8DF80330 		strb	r3, [sp, #3]
+ 519:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   /* Check the parameters */
+ 520:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   assert_param(IS_OPAMP_ALL_PERIPH(OPAMP_Selection));
+ 521:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   assert_param(IS_FUNCTIONAL_STATE(NewState));
+ 522:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 523:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   if (NewState != DISABLE)
+ 687              		.loc 1 523 0
+ 688 03b6 9DF80330 		ldrb	r3, [sp, #3]	@ zero_extendqisi2
+ 689 03ba 002B     		cmp	r3, #0
+ 690 03bc 11D0     		beq	.L25
+ 524:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   {
+ 525:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****     /* Start the OPAMPx calibration */
+ 526:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****     *(__IO uint32_t *) (OPAMP_BASE + OPAMP_Selection) |= (uint32_t) (OPAMP_CSR_CALON);
+ 691              		.loc 1 526 0
+ 692 03be 019A     		ldr	r2, [sp, #4]
+ 693 03c0 4FF03803 		mov	r3, #56
+ 694 03c4 C4F20103 		movt	r3, 16385
+ 695 03c8 D318     		adds	r3, r2, r3
+ 696 03ca 1A46     		mov	r2, r3
+ 697 03cc 0199     		ldr	r1, [sp, #4]
+ 698 03ce 4FF03803 		mov	r3, #56
+ 699 03d2 C4F20103 		movt	r3, 16385
+ 700 03d6 CB18     		adds	r3, r1, r3
+ 701 03d8 1B68     		ldr	r3, [r3, #0]
+ 702 03da 43F40063 		orr	r3, r3, #2048
+ 703 03de 1360     		str	r3, [r2, #0]
+ 704 03e0 10E0     		b	.L24
+ 705              	.L25:
+ 527:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   }
+ 528:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   else
+ 529:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   {
+ 530:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****     /* Stop the OPAMPx calibration */
+ 531:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****     *(__IO uint32_t *) (OPAMP_BASE + OPAMP_Selection) &= (uint32_t)(~OPAMP_CSR_CALON);
+ 706              		.loc 1 531 0
+ 707 03e2 019A     		ldr	r2, [sp, #4]
+ 708 03e4 4FF03803 		mov	r3, #56
+ 709 03e8 C4F20103 		movt	r3, 16385
+ 710 03ec D318     		adds	r3, r2, r3
+ 711 03ee 1A46     		mov	r2, r3
+ 712 03f0 0199     		ldr	r1, [sp, #4]
+ 713 03f2 4FF03803 		mov	r3, #56
+ 714 03f6 C4F20103 		movt	r3, 16385
+ 715 03fa CB18     		adds	r3, r1, r3
+ 716 03fc 1B68     		ldr	r3, [r3, #0]
+ 717 03fe 23F40063 		bic	r3, r3, #2048
+ 718 0402 1360     		str	r3, [r2, #0]
+ 719              	.L24:
+ 532:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   }
+ 533:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** }
+ 720              		.loc 1 533 0
+ 721 0404 02B0     		add	sp, sp, #8
+ 722 0406 7047     		bx	lr
+ 723              		.cfi_endproc
+ 724              	.LFE124:
+ 726              		.align	2
+ 727              		.global	OPAMP_LockConfig
+ 728              		.thumb
+ 729              		.thumb_func
+ 731              	OPAMP_LockConfig:
+ 732              	.LFB125:
+ 534:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 535:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** /**
+ 536:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @}
+ 537:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   */
+ 538:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 539:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** /** @defgroup OPAMP_Group2 OPAMP configuration locking function
+ 540:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****  *  @brief   OPAMP1,...OPAMP4 configuration locking function
+ 541:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****  *           OPAMP1,...OPAMP4 configuration can be locked each separately.
+ 542:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****  *           Unlocking is performed by system reset.
+ 543:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****  *
+ 544:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** @verbatim   
+ 545:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****  ===============================================================================
+ 546:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****                      ##### Configuration Lock function #####
+ 547:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****  ===============================================================================  
+ 548:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 549:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** @endverbatim
+ 550:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @{
+ 551:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   */
+ 552:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 553:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** /**
+ 554:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @brief  Lock the selected OPAMP configuration.
+ 555:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @note   Locking the configuration means that all control bits are read-only.
+ 556:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *         To unlock the OPAMP configuration, perform a system reset.
+ 557:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @param  OPAMP_Selection: the selected OPAMP. 
+ 558:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *          This parameter can be OPAMP_Selection_OPAMPx where x can be 1 to 4
+ 559:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *          to select the OPAMP peripheral.
+ 560:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   * @retval None
+ 561:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   */
+ 562:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** void OPAMP_LockConfig(uint32_t OPAMP_Selection)
+ 563:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** {
+ 733              		.loc 1 563 0
+ 734              		.cfi_startproc
+ 735              		@ args = 0, pretend = 0, frame = 8
+ 736              		@ frame_needed = 0, uses_anonymous_args = 0
+ 737              		@ link register save eliminated.
+ 738 0408 82B0     		sub	sp, sp, #8
+ 739              	.LCFI14:
+ 740              		.cfi_def_cfa_offset 8
+ 741 040a 0190     		str	r0, [sp, #4]
+ 564:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   /* Check the parameter */
+ 565:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   assert_param(IS_OPAMP_ALL_PERIPH(OPAMP_Selection));
+ 566:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** 
+ 567:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   /* Set the lock bit corresponding to selected OPAMP */
+ 568:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c ****   *(__IO uint32_t *) (OPAMP_BASE + OPAMP_Selection) |= (uint32_t) (OPAMP_CSR_LOCK);
+ 742              		.loc 1 568 0
+ 743 040c 019A     		ldr	r2, [sp, #4]
+ 744 040e 4FF03803 		mov	r3, #56
+ 745 0412 C4F20103 		movt	r3, 16385
+ 746 0416 D318     		adds	r3, r2, r3
+ 747 0418 1A46     		mov	r2, r3
+ 748 041a 0199     		ldr	r1, [sp, #4]
+ 749 041c 4FF03803 		mov	r3, #56
+ 750 0420 C4F20103 		movt	r3, 16385
+ 751 0424 CB18     		adds	r3, r1, r3
+ 752 0426 1B68     		ldr	r3, [r3, #0]
+ 753 0428 43F00043 		orr	r3, r3, #-2147483648
+ 754 042c 1360     		str	r3, [r2, #0]
+ 569:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_opamp.c **** }
+ 755              		.loc 1 569 0
+ 756 042e 02B0     		add	sp, sp, #8
+ 757 0430 7047     		bx	lr
+ 758              		.cfi_endproc
+ 759              	.LFE125:
+ 761              	.Letext0:
+ 762              		.file 2 "c:\\program files\\codesourcery\\sourcery_codebench_lite_for_arm_eabi\\bin\\../lib/gcc/ar
+ 763              		.file 3 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\Libraries\\Device\\
+ 764              		.file 4 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\Libraries\\STM32F30
+ 765              		.file 5 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\Libraries\\CMSIS\\I
+DEFINED SYMBOLS
+                            *ABS*:00000000 stm32f30x_opamp.c
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cctvkZII.s:19     .text:00000000 $t
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cctvkZII.s:24     .text:00000000 OPAMP_DeInit
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cctvkZII.s:54     .text:0000001c OPAMP_Init
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cctvkZII.s:107    .text:00000064 OPAMP_StructInit
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cctvkZII.s:137    .text:0000007c OPAMP_PGAConfig
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cctvkZII.s:190    .text:000000d0 OPAMP_VrefConfig
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cctvkZII.s:239    .text:00000110 OPAMP_VrefConnectNonInvertingInput
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cctvkZII.s:296    .text:0000016c OPAMP_VrefConnectADCCmd
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cctvkZII.s:353    .text:000001c8 OPAMP_TimerControlledMuxConfig
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cctvkZII.s:408    .text:00000218 OPAMP_TimerControlledMuxCmd
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cctvkZII.s:465    .text:00000274 OPAMP_Cmd
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cctvkZII.s:522    .text:000002d0 OPAMP_GetOutputLevel
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cctvkZII.s:568    .text:00000308 OPAMP_OffsetTrimModeSelect
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cctvkZII.s:618    .text:00000358 OPAMP_OffsetTrimConfig
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cctvkZII.s:674    .text:000003ac OPAMP_StartCalibration
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cctvkZII.s:731    .text:00000408 OPAMP_LockConfig
+                     .debug_frame:00000010 $d
+
+NO UNDEFINED SYMBOLS

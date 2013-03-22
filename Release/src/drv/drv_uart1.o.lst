@@ -1,0 +1,899 @@
+   1              		.syntax unified
+   2              		.cpu cortex-m4
+   3              		.eabi_attribute 27, 3
+   4              		.fpu fpv4-sp-d16
+   5              		.eabi_attribute 20, 1
+   6              		.eabi_attribute 21, 1
+   7              		.eabi_attribute 23, 3
+   8              		.eabi_attribute 24, 1
+   9              		.eabi_attribute 25, 1
+  10              		.eabi_attribute 26, 1
+  11              		.eabi_attribute 30, 6
+  12              		.eabi_attribute 34, 1
+  13              		.eabi_attribute 18, 4
+  14              		.thumb
+  15              		.file	"drv_uart1.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.comm	mtk19ProcessDataState,1,1
+  20              		.comm	nmeaProcessDataState,1,1
+  21              		.comm	ubloxProcessDataState,1,1
+  22              		.comm	rx1Buffer,2048,4
+  23              		.global	rx1DMAPos
+  24              		.bss
+  25              		.align	2
+  28              	rx1DMAPos:
+  29 0000 00000000 		.space	4
+  30              		.comm	tx1Buffer,2048,4
+  31              		.global	tx1BufferTail
+  32              		.align	2
+  35              	tx1BufferTail:
+  36 0004 00000000 		.space	4
+  37              		.global	tx1BufferHead
+  38              		.align	2
+  41              	tx1BufferHead:
+  42 0008 00000000 		.space	4
+  43              		.text
+  44              		.align	2
+  45              		.thumb
+  46              		.thumb_func
+  48              	uart1TxDMA:
+  49              	.LFB111:
+  50              		.file 1 "../src/drv/drv_uart1.c"
+   1:../src/drv/drv_uart1.c **** /*
+   2:../src/drv/drv_uart1.c ****   December 2012
+   3:../src/drv/drv_uart1.c **** 
+   4:../src/drv/drv_uart1.c ****   aq32Plus_F3 Rev -
+   5:../src/drv/drv_uart1.c **** 
+   6:../src/drv/drv_uart1.c ****   Copyright (c) 2012 John Ihlein.  All rights reserved.
+   7:../src/drv/drv_uart1.c **** 
+   8:../src/drv/drv_uart1.c ****   Open Source STM32 Based Multicopter Controller Software
+   9:../src/drv/drv_uart1.c **** 
+  10:../src/drv/drv_uart1.c ****   Includes code and/or ideas from:
+  11:../src/drv/drv_uart1.c **** 
+  12:../src/drv/drv_uart1.c ****   1)AeroQuad
+  13:../src/drv/drv_uart1.c ****   2)BaseFlight
+  14:../src/drv/drv_uart1.c ****   3)CH Robotics
+  15:../src/drv/drv_uart1.c ****   4)MultiWii
+  16:../src/drv/drv_uart1.c ****   5)S.O.H. Madgwick
+  17:../src/drv/drv_uart1.c ****   6)UAVX
+  18:../src/drv/drv_uart1.c ****   7)STM DiscoveryF3 demonstration software
+  19:../src/drv/drv_uart1.c **** 
+  20:../src/drv/drv_uart1.c ****   Designed to run on the DiscoveryF3 board
+  21:../src/drv/drv_uart1.c **** 
+  22:../src/drv/drv_uart1.c ****   This program is free software: you can redistribute it and/or modify
+  23:../src/drv/drv_uart1.c ****   it under the terms of the GNU General Public License as published by
+  24:../src/drv/drv_uart1.c ****   the Free Software Foundation, either version 3 of the License, or
+  25:../src/drv/drv_uart1.c ****   (at your option) any later version.
+  26:../src/drv/drv_uart1.c **** 
+  27:../src/drv/drv_uart1.c ****   This program is distributed in the hope that it will be useful,
+  28:../src/drv/drv_uart1.c ****   but WITHOUT ANY WARRANTY; without even the implied warranty of
+  29:../src/drv/drv_uart1.c ****   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  30:../src/drv/drv_uart1.c ****   GNU General Public License for more details.
+  31:../src/drv/drv_uart1.c **** 
+  32:../src/drv/drv_uart1.c ****   You should have received a copy of the GNU General Public License
+  33:../src/drv/drv_uart1.c ****   along with this program. If not, see <http://www.gnu.org/licenses/>.
+  34:../src/drv/drv_uart1.c **** */
+  35:../src/drv/drv_uart1.c **** 
+  36:../src/drv/drv_uart1.c **** ///////////////////////////////////////////////////////////////////////////////
+  37:../src/drv/drv_uart1.c **** 
+  38:../src/drv/drv_uart1.c **** #include "board.h"
+  39:../src/drv/drv_uart1.c **** 
+  40:../src/drv/drv_uart1.c **** ///////////////////////////////////////////////////////////////////////////////
+  41:../src/drv/drv_uart1.c **** 
+  42:../src/drv/drv_uart1.c **** /*
+  43:../src/drv/drv_uart1.c ****     DMA UART routines idea lifted from AutoQuad
+  44:../src/drv/drv_uart1.c ****     Copyright © 2011  Bill Nesbitt
+  45:../src/drv/drv_uart1.c **** */
+  46:../src/drv/drv_uart1.c **** 
+  47:../src/drv/drv_uart1.c **** ///////////////////////////////////////////////////////////////////////////////
+  48:../src/drv/drv_uart1.c **** // UART1 Defines and Variables
+  49:../src/drv/drv_uart1.c **** ///////////////////////////////////////////////////////////////////////////////
+  50:../src/drv/drv_uart1.c **** 
+  51:../src/drv/drv_uart1.c **** #define UART1_TX_PIN        GPIO_Pin_4
+  52:../src/drv/drv_uart1.c **** #define UART1_RX_PIN        GPIO_Pin_5
+  53:../src/drv/drv_uart1.c **** #define UART1_GPIO          GPIOC
+  54:../src/drv/drv_uart1.c **** #define UART1_TX_PINSOURCE  GPIO_PinSource4
+  55:../src/drv/drv_uart1.c **** #define UART1_RX_PINSOURCE  GPIO_PinSource5
+  56:../src/drv/drv_uart1.c **** 
+  57:../src/drv/drv_uart1.c **** #define UART1_BUFFER_SIZE 2048
+  58:../src/drv/drv_uart1.c **** 
+  59:../src/drv/drv_uart1.c **** // Receive buffer, circular DMA
+  60:../src/drv/drv_uart1.c **** volatile uint8_t rx1Buffer[UART1_BUFFER_SIZE];
+  61:../src/drv/drv_uart1.c **** uint32_t rx1DMAPos = 0;
+  62:../src/drv/drv_uart1.c **** 
+  63:../src/drv/drv_uart1.c **** volatile uint8_t tx1Buffer[UART1_BUFFER_SIZE];
+  64:../src/drv/drv_uart1.c **** uint32_t tx1BufferTail = 0;
+  65:../src/drv/drv_uart1.c **** uint32_t tx1BufferHead = 0;
+  66:../src/drv/drv_uart1.c **** 
+  67:../src/drv/drv_uart1.c **** ///////////////////////////////////////////////////////////////////////////////
+  68:../src/drv/drv_uart1.c **** // UART1 Transmit via DMA
+  69:../src/drv/drv_uart1.c **** ///////////////////////////////////////////////////////////////////////////////
+  70:../src/drv/drv_uart1.c **** 
+  71:../src/drv/drv_uart1.c **** static void uart1TxDMA(void)
+  72:../src/drv/drv_uart1.c **** {
+  51              		.loc 1 72 0
+  52              		.cfi_startproc
+  53              		@ args = 0, pretend = 0, frame = 0
+  54              		@ frame_needed = 0, uses_anonymous_args = 0
+  55 0000 08B5     		push	{r3, lr}
+  56              	.LCFI0:
+  57              		.cfi_def_cfa_offset 8
+  58              		.cfi_offset 14, -4
+  59              		.cfi_offset 3, -8
+  73:../src/drv/drv_uart1.c ****     DMA1_Channel4->CMAR = (uint32_t) & tx1Buffer[tx1BufferTail];
+  60              		.loc 1 73 0
+  61 0002 4FF04403 		mov	r3, #68
+  62 0006 C4F20203 		movt	r3, 16386
+  63 000a 40F20002 		movw	r2, #:lower16:tx1BufferTail
+  64 000e C0F20002 		movt	r2, #:upper16:tx1BufferTail
+  65 0012 1168     		ldr	r1, [r2, #0]
+  66 0014 40F20002 		movw	r2, #:lower16:tx1Buffer
+  67 0018 C0F20002 		movt	r2, #:upper16:tx1Buffer
+  68 001c 8A18     		adds	r2, r1, r2
+  69 001e DA60     		str	r2, [r3, #12]
+  74:../src/drv/drv_uart1.c ****     if (tx1BufferHead > tx1BufferTail)
+  70              		.loc 1 74 0
+  71 0020 40F20003 		movw	r3, #:lower16:tx1BufferHead
+  72 0024 C0F20003 		movt	r3, #:upper16:tx1BufferHead
+  73 0028 1A68     		ldr	r2, [r3, #0]
+  74 002a 40F20003 		movw	r3, #:lower16:tx1BufferTail
+  75 002e C0F20003 		movt	r3, #:upper16:tx1BufferTail
+  76 0032 1B68     		ldr	r3, [r3, #0]
+  77 0034 9A42     		cmp	r2, r3
+  78 0036 1AD9     		bls	.L2
+  75:../src/drv/drv_uart1.c ****     {
+  76:../src/drv/drv_uart1.c ****         DMA1_Channel4->CNDTR = tx1BufferHead - tx1BufferTail;
+  79              		.loc 1 76 0
+  80 0038 4FF04403 		mov	r3, #68
+  81 003c C4F20203 		movt	r3, 16386
+  82 0040 40F20002 		movw	r2, #:lower16:tx1BufferHead
+  83 0044 C0F20002 		movt	r2, #:upper16:tx1BufferHead
+  84 0048 1168     		ldr	r1, [r2, #0]
+  85 004a 40F20002 		movw	r2, #:lower16:tx1BufferTail
+  86 004e C0F20002 		movt	r2, #:upper16:tx1BufferTail
+  87 0052 1268     		ldr	r2, [r2, #0]
+  88 0054 8A1A     		subs	r2, r1, r2
+  89 0056 5A60     		str	r2, [r3, #4]
+  77:../src/drv/drv_uart1.c ****         tx1BufferTail = tx1BufferHead;
+  90              		.loc 1 77 0
+  91 0058 40F20003 		movw	r3, #:lower16:tx1BufferHead
+  92 005c C0F20003 		movt	r3, #:upper16:tx1BufferHead
+  93 0060 1A68     		ldr	r2, [r3, #0]
+  94 0062 40F20003 		movw	r3, #:lower16:tx1BufferTail
+  95 0066 C0F20003 		movt	r3, #:upper16:tx1BufferTail
+  96 006a 1A60     		str	r2, [r3, #0]
+  97 006c 12E0     		b	.L3
+  98              	.L2:
+  78:../src/drv/drv_uart1.c ****     }
+  79:../src/drv/drv_uart1.c ****     else
+  80:../src/drv/drv_uart1.c ****     {
+  81:../src/drv/drv_uart1.c ****         DMA1_Channel4->CNDTR = UART1_BUFFER_SIZE - tx1BufferTail;
+  99              		.loc 1 81 0
+ 100 006e 4FF04403 		mov	r3, #68
+ 101 0072 C4F20203 		movt	r3, 16386
+ 102 0076 40F20002 		movw	r2, #:lower16:tx1BufferTail
+ 103 007a C0F20002 		movt	r2, #:upper16:tx1BufferTail
+ 104 007e 1268     		ldr	r2, [r2, #0]
+ 105 0080 C2F50062 		rsb	r2, r2, #2048
+ 106 0084 5A60     		str	r2, [r3, #4]
+  82:../src/drv/drv_uart1.c ****         tx1BufferTail = 0;
+ 107              		.loc 1 82 0
+ 108 0086 40F20003 		movw	r3, #:lower16:tx1BufferTail
+ 109 008a C0F20003 		movt	r3, #:upper16:tx1BufferTail
+ 110 008e 4FF00002 		mov	r2, #0
+ 111 0092 1A60     		str	r2, [r3, #0]
+ 112              	.L3:
+  83:../src/drv/drv_uart1.c ****     }
+  84:../src/drv/drv_uart1.c **** 
+  85:../src/drv/drv_uart1.c ****     DMA_Cmd(DMA1_Channel4, ENABLE);
+ 113              		.loc 1 85 0
+ 114 0094 4FF04400 		mov	r0, #68
+ 115 0098 C4F20200 		movt	r0, 16386
+ 116 009c 4FF00101 		mov	r1, #1
+ 117 00a0 FFF7FEFF 		bl	DMA_Cmd
+  86:../src/drv/drv_uart1.c **** }
+ 118              		.loc 1 86 0
+ 119 00a4 08BD     		pop	{r3, pc}
+ 120              		.cfi_endproc
+ 121              	.LFE111:
+ 123 00a6 00BF     		.align	2
+ 124              		.global	DMA1_Channel4_IRQHandler
+ 125              		.thumb
+ 126              		.thumb_func
+ 128              	DMA1_Channel4_IRQHandler:
+ 129              	.LFB112:
+  87:../src/drv/drv_uart1.c **** 
+  88:../src/drv/drv_uart1.c **** ///////////////////////////////////////////////////////////////////////////////
+  89:../src/drv/drv_uart1.c **** // UART1 TX Complete Interrupt Handler
+  90:../src/drv/drv_uart1.c **** ///////////////////////////////////////////////////////////////////////////////
+  91:../src/drv/drv_uart1.c **** 
+  92:../src/drv/drv_uart1.c **** void DMA1_Channel4_IRQHandler(void)
+  93:../src/drv/drv_uart1.c **** {
+ 130              		.loc 1 93 0
+ 131              		.cfi_startproc
+ 132              		@ args = 0, pretend = 0, frame = 0
+ 133              		@ frame_needed = 0, uses_anonymous_args = 0
+ 134 00a8 08B5     		push	{r3, lr}
+ 135              	.LCFI1:
+ 136              		.cfi_def_cfa_offset 8
+ 137              		.cfi_offset 14, -4
+ 138              		.cfi_offset 3, -8
+  94:../src/drv/drv_uart1.c ****     DMA_ClearITPendingBit(DMA1_IT_TC4);
+ 139              		.loc 1 94 0
+ 140 00aa 4FF40050 		mov	r0, #8192
+ 141 00ae FFF7FEFF 		bl	DMA_ClearITPendingBit
+  95:../src/drv/drv_uart1.c ****     DMA_Cmd(DMA1_Channel4, DISABLE);
+ 142              		.loc 1 95 0
+ 143 00b2 4FF04400 		mov	r0, #68
+ 144 00b6 C4F20200 		movt	r0, 16386
+ 145 00ba 4FF00001 		mov	r1, #0
+ 146 00be FFF7FEFF 		bl	DMA_Cmd
+  96:../src/drv/drv_uart1.c **** 
+  97:../src/drv/drv_uart1.c ****     if (tx1BufferHead != tx1BufferTail)
+ 147              		.loc 1 97 0
+ 148 00c2 40F20003 		movw	r3, #:lower16:tx1BufferHead
+ 149 00c6 C0F20003 		movt	r3, #:upper16:tx1BufferHead
+ 150 00ca 1A68     		ldr	r2, [r3, #0]
+ 151 00cc 40F20003 		movw	r3, #:lower16:tx1BufferTail
+ 152 00d0 C0F20003 		movt	r3, #:upper16:tx1BufferTail
+ 153 00d4 1B68     		ldr	r3, [r3, #0]
+ 154 00d6 9A42     		cmp	r2, r3
+ 155 00d8 01D0     		beq	.L4
+  98:../src/drv/drv_uart1.c ****         uart1TxDMA();
+ 156              		.loc 1 98 0
+ 157 00da FFF791FF 		bl	uart1TxDMA
+ 158              	.L4:
+  99:../src/drv/drv_uart1.c **** }
+ 159              		.loc 1 99 0
+ 160 00de 08BD     		pop	{r3, pc}
+ 161              		.cfi_endproc
+ 162              	.LFE112:
+ 164              		.align	2
+ 165              		.global	uart1Init
+ 166              		.thumb
+ 167              		.thumb_func
+ 169              	uart1Init:
+ 170              	.LFB113:
+ 100:../src/drv/drv_uart1.c **** 
+ 101:../src/drv/drv_uart1.c **** ///////////////////////////////////////////////////////////////////////////////
+ 102:../src/drv/drv_uart1.c **** // UART1 Initialization
+ 103:../src/drv/drv_uart1.c **** ///////////////////////////////////////////////////////////////////////////////
+ 104:../src/drv/drv_uart1.c **** 
+ 105:../src/drv/drv_uart1.c **** void uart1Init(void)
+ 106:../src/drv/drv_uart1.c **** {
+ 171              		.loc 1 106 0
+ 172              		.cfi_startproc
+ 173              		@ args = 0, pretend = 0, frame = 80
+ 174              		@ frame_needed = 0, uses_anonymous_args = 0
+ 175 00e0 00B5     		push	{lr}
+ 176              	.LCFI2:
+ 177              		.cfi_def_cfa_offset 4
+ 178              		.cfi_offset 14, -4
+ 179 00e2 95B0     		sub	sp, sp, #84
+ 180              	.LCFI3:
+ 181              		.cfi_def_cfa_offset 88
+ 107:../src/drv/drv_uart1.c ****     GPIO_InitTypeDef  GPIO_InitStructure;
+ 108:../src/drv/drv_uart1.c ****     USART_InitTypeDef USART_InitStructure;
+ 109:../src/drv/drv_uart1.c ****     DMA_InitTypeDef   DMA_InitStructure;
+ 110:../src/drv/drv_uart1.c ****     NVIC_InitTypeDef  NVIC_InitStructure;
+ 111:../src/drv/drv_uart1.c **** 
+ 112:../src/drv/drv_uart1.c ****     RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOC,    ENABLE);
+ 182              		.loc 1 112 0
+ 183 00e4 4FF40020 		mov	r0, #524288
+ 184 00e8 4FF00101 		mov	r1, #1
+ 185 00ec FFF7FEFF 		bl	RCC_AHBPeriphClockCmd
+ 113:../src/drv/drv_uart1.c ****     RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1,     ENABLE);
+ 186              		.loc 1 113 0
+ 187 00f0 4FF00100 		mov	r0, #1
+ 188 00f4 4FF00101 		mov	r1, #1
+ 189 00f8 FFF7FEFF 		bl	RCC_AHBPeriphClockCmd
+ 114:../src/drv/drv_uart1.c ****     RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);
+ 190              		.loc 1 114 0
+ 191 00fc 4FF48040 		mov	r0, #16384
+ 192 0100 4FF00101 		mov	r1, #1
+ 193 0104 FFF7FEFF 		bl	RCC_APB2PeriphClockCmd
+ 115:../src/drv/drv_uart1.c **** 
+ 116:../src/drv/drv_uart1.c ****     GPIO_InitStructure.GPIO_Pin   = UART1_TX_PIN | UART1_RX_PIN;
+ 194              		.loc 1 116 0
+ 195 0108 4FF03003 		mov	r3, #48
+ 196 010c 1293     		str	r3, [sp, #72]
+ 117:../src/drv/drv_uart1.c ****     GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_AF;
+ 197              		.loc 1 117 0
+ 198 010e 4FF00203 		mov	r3, #2
+ 199 0112 8DF84C30 		strb	r3, [sp, #76]
+ 118:../src/drv/drv_uart1.c ****     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+ 200              		.loc 1 118 0
+ 201 0116 4FF00303 		mov	r3, #3
+ 202 011a 8DF84D30 		strb	r3, [sp, #77]
+ 119:../src/drv/drv_uart1.c ****     GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+ 203              		.loc 1 119 0
+ 204 011e 4FF00003 		mov	r3, #0
+ 205 0122 8DF84E30 		strb	r3, [sp, #78]
+ 120:../src/drv/drv_uart1.c ****     GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_UP;
+ 206              		.loc 1 120 0
+ 207 0126 4FF00103 		mov	r3, #1
+ 208 012a 8DF84F30 		strb	r3, [sp, #79]
+ 121:../src/drv/drv_uart1.c **** 
+ 122:../src/drv/drv_uart1.c ****     GPIO_PinAFConfig(UART1_GPIO, UART1_TX_PINSOURCE, GPIO_AF_7);
+ 209              		.loc 1 122 0
+ 210 012e 4FF40060 		mov	r0, #2048
+ 211 0132 C4F60000 		movt	r0, 18432
+ 212 0136 4FF00401 		mov	r1, #4
+ 213 013a 4FF00702 		mov	r2, #7
+ 214 013e FFF7FEFF 		bl	GPIO_PinAFConfig
+ 123:../src/drv/drv_uart1.c ****     GPIO_PinAFConfig(UART1_GPIO, UART1_RX_PINSOURCE, GPIO_AF_7);
+ 215              		.loc 1 123 0
+ 216 0142 4FF40060 		mov	r0, #2048
+ 217 0146 C4F60000 		movt	r0, 18432
+ 218 014a 4FF00501 		mov	r1, #5
+ 219 014e 4FF00702 		mov	r2, #7
+ 220 0152 FFF7FEFF 		bl	GPIO_PinAFConfig
+ 124:../src/drv/drv_uart1.c **** 
+ 125:../src/drv/drv_uart1.c ****     GPIO_Init(UART1_GPIO, &GPIO_InitStructure);
+ 221              		.loc 1 125 0
+ 222 0156 4FF40060 		mov	r0, #2048
+ 223 015a C4F60000 		movt	r0, 18432
+ 224 015e 12AB     		add	r3, sp, #72
+ 225 0160 1946     		mov	r1, r3
+ 226 0162 FFF7FEFF 		bl	GPIO_Init
+ 126:../src/drv/drv_uart1.c **** 
+ 127:../src/drv/drv_uart1.c ****     // DMA TX Interrupt
+ 128:../src/drv/drv_uart1.c ****     NVIC_InitStructure.NVIC_IRQChannel                   = DMA1_Channel4_IRQn;
+ 227              		.loc 1 128 0
+ 228 0166 4FF00E03 		mov	r3, #14
+ 229 016a 8DF80030 		strb	r3, [sp, #0]
+ 129:../src/drv/drv_uart1.c ****     NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
+ 230              		.loc 1 129 0
+ 231 016e 4FF00103 		mov	r3, #1
+ 232 0172 8DF80130 		strb	r3, [sp, #1]
+ 130:../src/drv/drv_uart1.c ****     NVIC_InitStructure.NVIC_IRQChannelSubPriority        = 1;
+ 233              		.loc 1 130 0
+ 234 0176 4FF00103 		mov	r3, #1
+ 235 017a 8DF80230 		strb	r3, [sp, #2]
+ 131:../src/drv/drv_uart1.c ****     NVIC_InitStructure.NVIC_IRQChannelCmd                = ENABLE;
+ 236              		.loc 1 131 0
+ 237 017e 4FF00103 		mov	r3, #1
+ 238 0182 8DF80330 		strb	r3, [sp, #3]
+ 132:../src/drv/drv_uart1.c **** 
+ 133:../src/drv/drv_uart1.c ****     NVIC_Init(&NVIC_InitStructure);
+ 239              		.loc 1 133 0
+ 240 0186 6B46     		mov	r3, sp
+ 241 0188 1846     		mov	r0, r3
+ 242 018a FFF7FEFF 		bl	NVIC_Init
+ 134:../src/drv/drv_uart1.c **** 
+ 135:../src/drv/drv_uart1.c ****     USART_InitStructure.USART_BaudRate            = 115200;
+ 243              		.loc 1 135 0
+ 244 018e 4FF4E133 		mov	r3, #115200
+ 245 0192 0C93     		str	r3, [sp, #48]
+ 136:../src/drv/drv_uart1.c ****     USART_InitStructure.USART_WordLength          = USART_WordLength_8b;
+ 246              		.loc 1 136 0
+ 247 0194 4FF00003 		mov	r3, #0
+ 248 0198 0D93     		str	r3, [sp, #52]
+ 137:../src/drv/drv_uart1.c ****     USART_InitStructure.USART_StopBits            = USART_StopBits_1;
+ 249              		.loc 1 137 0
+ 250 019a 4FF00003 		mov	r3, #0
+ 251 019e 0E93     		str	r3, [sp, #56]
+ 138:../src/drv/drv_uart1.c ****     USART_InitStructure.USART_Parity              = USART_Parity_No;
+ 252              		.loc 1 138 0
+ 253 01a0 4FF00003 		mov	r3, #0
+ 254 01a4 0F93     		str	r3, [sp, #60]
+ 139:../src/drv/drv_uart1.c ****     USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
+ 255              		.loc 1 139 0
+ 256 01a6 4FF00003 		mov	r3, #0
+ 257 01aa 1193     		str	r3, [sp, #68]
+ 140:../src/drv/drv_uart1.c ****     USART_InitStructure.USART_Mode                = USART_Mode_Rx | USART_Mode_Tx;
+ 258              		.loc 1 140 0
+ 259 01ac 4FF00C03 		mov	r3, #12
+ 260 01b0 1093     		str	r3, [sp, #64]
+ 141:../src/drv/drv_uart1.c **** 
+ 142:../src/drv/drv_uart1.c ****     USART_Init(USART1, &USART_InitStructure);
+ 261              		.loc 1 142 0
+ 262 01b2 4FF46050 		mov	r0, #14336
+ 263 01b6 C4F20100 		movt	r0, 16385
+ 264 01ba 0CAB     		add	r3, sp, #48
+ 265 01bc 1946     		mov	r1, r3
+ 266 01be FFF7FEFF 		bl	USART_Init
+ 143:../src/drv/drv_uart1.c **** 
+ 144:../src/drv/drv_uart1.c ****     // Receive DMA into a circular buffer
+ 145:../src/drv/drv_uart1.c **** 
+ 146:../src/drv/drv_uart1.c ****     DMA_DeInit(DMA1_Channel5);
+ 267              		.loc 1 146 0
+ 268 01c2 4FF05800 		mov	r0, #88
+ 269 01c6 C4F20200 		movt	r0, 16386
+ 270 01ca FFF7FEFF 		bl	DMA_DeInit
+ 147:../src/drv/drv_uart1.c **** 
+ 148:../src/drv/drv_uart1.c ****     DMA_InitStructure.DMA_BufferSize         = UART1_BUFFER_SIZE;
+ 271              		.loc 1 148 0
+ 272 01ce 4FF40063 		mov	r3, #2048
+ 273 01d2 ADF81030 		strh	r3, [sp, #16]	@ movhi
+ 149:../src/drv/drv_uart1.c **** 	DMA_InitStructure.DMA_DIR                = DMA_DIR_PeripheralSRC;
+ 274              		.loc 1 149 0
+ 275 01d6 4FF00003 		mov	r3, #0
+ 276 01da 0393     		str	r3, [sp, #12]
+ 150:../src/drv/drv_uart1.c **** 	DMA_InitStructure.DMA_M2M                = DMA_M2M_Disable;
+ 277              		.loc 1 150 0
+ 278 01dc 4FF00003 		mov	r3, #0
+ 279 01e0 0B93     		str	r3, [sp, #44]
+ 151:../src/drv/drv_uart1.c **** 	DMA_InitStructure.DMA_MemoryBaseAddr     = (uint32_t)rx1Buffer;
+ 280              		.loc 1 151 0
+ 281 01e2 40F20003 		movw	r3, #:lower16:rx1Buffer
+ 282 01e6 C0F20003 		movt	r3, #:upper16:rx1Buffer
+ 283 01ea 0293     		str	r3, [sp, #8]
+ 152:../src/drv/drv_uart1.c **** 	DMA_InitStructure.DMA_MemoryDataSize     = DMA_MemoryDataSize_Byte;
+ 284              		.loc 1 152 0
+ 285 01ec 4FF00003 		mov	r3, #0
+ 286 01f0 0893     		str	r3, [sp, #32]
+ 153:../src/drv/drv_uart1.c **** 	DMA_InitStructure.DMA_MemoryInc          = DMA_MemoryInc_Enable;
+ 287              		.loc 1 153 0
+ 288 01f2 4FF08003 		mov	r3, #128
+ 289 01f6 0693     		str	r3, [sp, #24]
+ 154:../src/drv/drv_uart1.c **** 	DMA_InitStructure.DMA_Mode               = DMA_Mode_Circular;
+ 290              		.loc 1 154 0
+ 291 01f8 4FF02003 		mov	r3, #32
+ 292 01fc 0993     		str	r3, [sp, #36]
+ 155:../src/drv/drv_uart1.c **** 	DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)&USART1->RDR;
+ 293              		.loc 1 155 0
+ 294 01fe 43F62403 		movw	r3, #14372
+ 295 0202 C4F20103 		movt	r3, 16385
+ 296 0206 0193     		str	r3, [sp, #4]
+ 156:../src/drv/drv_uart1.c **** 	DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
+ 297              		.loc 1 156 0
+ 298 0208 4FF00003 		mov	r3, #0
+ 299 020c 0793     		str	r3, [sp, #28]
+ 157:../src/drv/drv_uart1.c **** 	DMA_InitStructure.DMA_PeripheralInc      = DMA_PeripheralInc_Disable;
+ 300              		.loc 1 157 0
+ 301 020e 4FF00003 		mov	r3, #0
+ 302 0212 0593     		str	r3, [sp, #20]
+ 158:../src/drv/drv_uart1.c ****     DMA_InitStructure.DMA_Priority           = DMA_Priority_Medium;
+ 303              		.loc 1 158 0
+ 304 0214 4FF48053 		mov	r3, #4096
+ 305 0218 0A93     		str	r3, [sp, #40]
+ 159:../src/drv/drv_uart1.c **** 
+ 160:../src/drv/drv_uart1.c ****     DMA_Init(DMA1_Channel5, &DMA_InitStructure);
+ 306              		.loc 1 160 0
+ 307 021a 4FF05800 		mov	r0, #88
+ 308 021e C4F20200 		movt	r0, 16386
+ 309 0222 01AB     		add	r3, sp, #4
+ 310 0224 1946     		mov	r1, r3
+ 311 0226 FFF7FEFF 		bl	DMA_Init
+ 161:../src/drv/drv_uart1.c **** 
+ 162:../src/drv/drv_uart1.c ****     DMA_Cmd(DMA1_Channel5, ENABLE);
+ 312              		.loc 1 162 0
+ 313 022a 4FF05800 		mov	r0, #88
+ 314 022e C4F20200 		movt	r0, 16386
+ 315 0232 4FF00101 		mov	r1, #1
+ 316 0236 FFF7FEFF 		bl	DMA_Cmd
+ 163:../src/drv/drv_uart1.c **** 
+ 164:../src/drv/drv_uart1.c ****     USART_DMACmd(USART1, USART_DMAReq_Rx, ENABLE);
+ 317              		.loc 1 164 0
+ 318 023a 4FF46050 		mov	r0, #14336
+ 319 023e C4F20100 		movt	r0, 16385
+ 320 0242 4FF04001 		mov	r1, #64
+ 321 0246 4FF00102 		mov	r2, #1
+ 322 024a FFF7FEFF 		bl	USART_DMACmd
+ 165:../src/drv/drv_uart1.c **** 
+ 166:../src/drv/drv_uart1.c ****     rx1DMAPos = DMA_GetCurrDataCounter(DMA1_Channel5);
+ 323              		.loc 1 166 0
+ 324 024e 4FF05800 		mov	r0, #88
+ 325 0252 C4F20200 		movt	r0, 16386
+ 326 0256 FFF7FEFF 		bl	DMA_GetCurrDataCounter
+ 327 025a 0346     		mov	r3, r0
+ 328 025c 1A46     		mov	r2, r3
+ 329 025e 40F20003 		movw	r3, #:lower16:rx1DMAPos
+ 330 0262 C0F20003 		movt	r3, #:upper16:rx1DMAPos
+ 331 0266 1A60     		str	r2, [r3, #0]
+ 167:../src/drv/drv_uart1.c **** 
+ 168:../src/drv/drv_uart1.c ****     // Transmit DMA
+ 169:../src/drv/drv_uart1.c ****     DMA_DeInit(DMA1_Channel4);
+ 332              		.loc 1 169 0
+ 333 0268 4FF04400 		mov	r0, #68
+ 334 026c C4F20200 		movt	r0, 16386
+ 335 0270 FFF7FEFF 		bl	DMA_DeInit
+ 170:../src/drv/drv_uart1.c **** 
+ 171:../src/drv/drv_uart1.c ****     DMA_InitStructure.DMA_BufferSize         = UART1_BUFFER_SIZE;
+ 336              		.loc 1 171 0
+ 337 0274 4FF40063 		mov	r3, #2048
+ 338 0278 ADF81030 		strh	r3, [sp, #16]	@ movhi
+ 172:../src/drv/drv_uart1.c **** 	DMA_InitStructure.DMA_DIR                = DMA_DIR_PeripheralDST;
+ 339              		.loc 1 172 0
+ 340 027c 4FF01003 		mov	r3, #16
+ 341 0280 0393     		str	r3, [sp, #12]
+ 173:../src/drv/drv_uart1.c **** 	DMA_InitStructure.DMA_M2M                = DMA_M2M_Disable;
+ 342              		.loc 1 173 0
+ 343 0282 4FF00003 		mov	r3, #0
+ 344 0286 0B93     		str	r3, [sp, #44]
+ 174:../src/drv/drv_uart1.c **** 	DMA_InitStructure.DMA_MemoryBaseAddr     = (uint32_t)tx1Buffer;
+ 345              		.loc 1 174 0
+ 346 0288 40F20003 		movw	r3, #:lower16:tx1Buffer
+ 347 028c C0F20003 		movt	r3, #:upper16:tx1Buffer
+ 348 0290 0293     		str	r3, [sp, #8]
+ 175:../src/drv/drv_uart1.c **** 	DMA_InitStructure.DMA_MemoryDataSize     = DMA_MemoryDataSize_Byte;
+ 349              		.loc 1 175 0
+ 350 0292 4FF00003 		mov	r3, #0
+ 351 0296 0893     		str	r3, [sp, #32]
+ 176:../src/drv/drv_uart1.c **** 	DMA_InitStructure.DMA_MemoryInc          = DMA_MemoryInc_Enable;
+ 352              		.loc 1 176 0
+ 353 0298 4FF08003 		mov	r3, #128
+ 354 029c 0693     		str	r3, [sp, #24]
+ 177:../src/drv/drv_uart1.c **** 	DMA_InitStructure.DMA_Mode               = DMA_Mode_Normal;
+ 355              		.loc 1 177 0
+ 356 029e 4FF00003 		mov	r3, #0
+ 357 02a2 0993     		str	r3, [sp, #36]
+ 178:../src/drv/drv_uart1.c **** 	DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t) &USART1->TDR;
+ 358              		.loc 1 178 0
+ 359 02a4 43F62803 		movw	r3, #14376
+ 360 02a8 C4F20103 		movt	r3, 16385
+ 361 02ac 0193     		str	r3, [sp, #4]
+ 179:../src/drv/drv_uart1.c **** 	DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
+ 362              		.loc 1 179 0
+ 363 02ae 4FF00003 		mov	r3, #0
+ 364 02b2 0793     		str	r3, [sp, #28]
+ 180:../src/drv/drv_uart1.c **** 	DMA_InitStructure.DMA_PeripheralInc      = DMA_PeripheralInc_Disable;
+ 365              		.loc 1 180 0
+ 366 02b4 4FF00003 		mov	r3, #0
+ 367 02b8 0593     		str	r3, [sp, #20]
+ 181:../src/drv/drv_uart1.c ****     DMA_InitStructure.DMA_Priority           = DMA_Priority_Medium;
+ 368              		.loc 1 181 0
+ 369 02ba 4FF48053 		mov	r3, #4096
+ 370 02be 0A93     		str	r3, [sp, #40]
+ 182:../src/drv/drv_uart1.c **** 
+ 183:../src/drv/drv_uart1.c ****     DMA_Init(DMA1_Channel4, &DMA_InitStructure);
+ 371              		.loc 1 183 0
+ 372 02c0 4FF04400 		mov	r0, #68
+ 373 02c4 C4F20200 		movt	r0, 16386
+ 374 02c8 01AB     		add	r3, sp, #4
+ 375 02ca 1946     		mov	r1, r3
+ 376 02cc FFF7FEFF 		bl	DMA_Init
+ 184:../src/drv/drv_uart1.c **** 
+ 185:../src/drv/drv_uart1.c ****     DMA_ITConfig(DMA1_Channel4, DMA_IT_TC, ENABLE);
+ 377              		.loc 1 185 0
+ 378 02d0 4FF04400 		mov	r0, #68
+ 379 02d4 C4F20200 		movt	r0, 16386
+ 380 02d8 4FF00201 		mov	r1, #2
+ 381 02dc 4FF00102 		mov	r2, #1
+ 382 02e0 FFF7FEFF 		bl	DMA_ITConfig
+ 186:../src/drv/drv_uart1.c **** 
+ 187:../src/drv/drv_uart1.c ****     DMA1_Channel4->CNDTR = 0;
+ 383              		.loc 1 187 0
+ 384 02e4 4FF04403 		mov	r3, #68
+ 385 02e8 C4F20203 		movt	r3, 16386
+ 386 02ec 4FF00002 		mov	r2, #0
+ 387 02f0 5A60     		str	r2, [r3, #4]
+ 188:../src/drv/drv_uart1.c **** 
+ 189:../src/drv/drv_uart1.c ****     USART_DMACmd(USART1, USART_DMAReq_Tx, ENABLE);
+ 388              		.loc 1 189 0
+ 389 02f2 4FF46050 		mov	r0, #14336
+ 390 02f6 C4F20100 		movt	r0, 16385
+ 391 02fa 4FF08001 		mov	r1, #128
+ 392 02fe 4FF00102 		mov	r2, #1
+ 393 0302 FFF7FEFF 		bl	USART_DMACmd
+ 190:../src/drv/drv_uart1.c **** 
+ 191:../src/drv/drv_uart1.c ****     USART_Cmd(USART1, ENABLE);
+ 394              		.loc 1 191 0
+ 395 0306 4FF46050 		mov	r0, #14336
+ 396 030a C4F20100 		movt	r0, 16385
+ 397 030e 4FF00101 		mov	r1, #1
+ 398 0312 FFF7FEFF 		bl	USART_Cmd
+ 192:../src/drv/drv_uart1.c **** }
+ 399              		.loc 1 192 0
+ 400 0316 15B0     		add	sp, sp, #84
+ 401 0318 00BD     		pop	{pc}
+ 402              		.cfi_endproc
+ 403              	.LFE113:
+ 405 031a 00BF     		.align	2
+ 406              		.global	uart1Available
+ 407              		.thumb
+ 408              		.thumb_func
+ 410              	uart1Available:
+ 411              	.LFB114:
+ 193:../src/drv/drv_uart1.c **** 
+ 194:../src/drv/drv_uart1.c **** ///////////////////////////////////////////////////////////////////////////////
+ 195:../src/drv/drv_uart1.c **** // UART1 Avaialble
+ 196:../src/drv/drv_uart1.c **** ///////////////////////////////////////////////////////////////////////////////
+ 197:../src/drv/drv_uart1.c **** 
+ 198:../src/drv/drv_uart1.c **** uint16_t uart1Available(void)
+ 199:../src/drv/drv_uart1.c **** {
+ 412              		.loc 1 199 0
+ 413              		.cfi_startproc
+ 414              		@ args = 0, pretend = 0, frame = 0
+ 415              		@ frame_needed = 0, uses_anonymous_args = 0
+ 416 031c 08B5     		push	{r3, lr}
+ 417              	.LCFI4:
+ 418              		.cfi_def_cfa_offset 8
+ 419              		.cfi_offset 14, -4
+ 420              		.cfi_offset 3, -8
+ 200:../src/drv/drv_uart1.c ****     return (DMA_GetCurrDataCounter(DMA1_Channel5) != rx1DMAPos) ? true : false;
+ 421              		.loc 1 200 0
+ 422 031e 4FF05800 		mov	r0, #88
+ 423 0322 C4F20200 		movt	r0, 16386
+ 424 0326 FFF7FEFF 		bl	DMA_GetCurrDataCounter
+ 425 032a 0346     		mov	r3, r0
+ 426 032c 1A46     		mov	r2, r3
+ 427 032e 40F20003 		movw	r3, #:lower16:rx1DMAPos
+ 428 0332 C0F20003 		movt	r3, #:upper16:rx1DMAPos
+ 429 0336 1B68     		ldr	r3, [r3, #0]
+ 430 0338 9A42     		cmp	r2, r3
+ 431 033a 0CBF     		ite	eq
+ 432 033c 0023     		moveq	r3, #0
+ 433 033e 0123     		movne	r3, #1
+ 434 0340 9BB2     		uxth	r3, r3
+ 201:../src/drv/drv_uart1.c **** }
+ 435              		.loc 1 201 0
+ 436 0342 1846     		mov	r0, r3
+ 437 0344 08BD     		pop	{r3, pc}
+ 438              		.cfi_endproc
+ 439              	.LFE114:
+ 441 0346 00BF     		.align	2
+ 442              		.global	uart1Read
+ 443              		.thumb
+ 444              		.thumb_func
+ 446              	uart1Read:
+ 447              	.LFB115:
+ 202:../src/drv/drv_uart1.c **** 
+ 203:../src/drv/drv_uart1.c **** ///////////////////////////////////////////////////////////////////////////////
+ 204:../src/drv/drv_uart1.c **** // UART1 Read
+ 205:../src/drv/drv_uart1.c **** ///////////////////////////////////////////////////////////////////////////////
+ 206:../src/drv/drv_uart1.c **** 
+ 207:../src/drv/drv_uart1.c **** uint8_t uart1Read(void)
+ 208:../src/drv/drv_uart1.c **** {
+ 448              		.loc 1 208 0
+ 449              		.cfi_startproc
+ 450              		@ args = 0, pretend = 0, frame = 8
+ 451              		@ frame_needed = 0, uses_anonymous_args = 0
+ 452              		@ link register save eliminated.
+ 453 0348 82B0     		sub	sp, sp, #8
+ 454              	.LCFI5:
+ 455              		.cfi_def_cfa_offset 8
+ 209:../src/drv/drv_uart1.c ****     uint8_t ch;
+ 210:../src/drv/drv_uart1.c **** 
+ 211:../src/drv/drv_uart1.c ****     ch = rx1Buffer[UART1_BUFFER_SIZE - rx1DMAPos];
+ 456              		.loc 1 211 0
+ 457 034a 40F20003 		movw	r3, #:lower16:rx1DMAPos
+ 458 034e C0F20003 		movt	r3, #:upper16:rx1DMAPos
+ 459 0352 1B68     		ldr	r3, [r3, #0]
+ 460 0354 C3F50062 		rsb	r2, r3, #2048
+ 461 0358 40F20003 		movw	r3, #:lower16:rx1Buffer
+ 462 035c C0F20003 		movt	r3, #:upper16:rx1Buffer
+ 463 0360 9B5C     		ldrb	r3, [r3, r2]
+ 464 0362 8DF80730 		strb	r3, [sp, #7]
+ 212:../src/drv/drv_uart1.c ****     // go back around the buffer
+ 213:../src/drv/drv_uart1.c ****     if (--rx1DMAPos == 0)
+ 465              		.loc 1 213 0
+ 466 0366 40F20003 		movw	r3, #:lower16:rx1DMAPos
+ 467 036a C0F20003 		movt	r3, #:upper16:rx1DMAPos
+ 468 036e 1B68     		ldr	r3, [r3, #0]
+ 469 0370 03F1FF32 		add	r2, r3, #-1
+ 470 0374 40F20003 		movw	r3, #:lower16:rx1DMAPos
+ 471 0378 C0F20003 		movt	r3, #:upper16:rx1DMAPos
+ 472 037c 1A60     		str	r2, [r3, #0]
+ 473 037e 40F20003 		movw	r3, #:lower16:rx1DMAPos
+ 474 0382 C0F20003 		movt	r3, #:upper16:rx1DMAPos
+ 475 0386 1B68     		ldr	r3, [r3, #0]
+ 476 0388 002B     		cmp	r3, #0
+ 477 038a 06D1     		bne	.L9
+ 214:../src/drv/drv_uart1.c ****         rx1DMAPos = UART1_BUFFER_SIZE;
+ 478              		.loc 1 214 0
+ 479 038c 40F20003 		movw	r3, #:lower16:rx1DMAPos
+ 480 0390 C0F20003 		movt	r3, #:upper16:rx1DMAPos
+ 481 0394 4FF40062 		mov	r2, #2048
+ 482 0398 1A60     		str	r2, [r3, #0]
+ 483              	.L9:
+ 215:../src/drv/drv_uart1.c **** 
+ 216:../src/drv/drv_uart1.c ****     return ch;
+ 484              		.loc 1 216 0
+ 485 039a 9DF80730 		ldrb	r3, [sp, #7]	@ zero_extendqisi2
+ 217:../src/drv/drv_uart1.c **** }
+ 486              		.loc 1 217 0
+ 487 039e 1846     		mov	r0, r3
+ 488 03a0 02B0     		add	sp, sp, #8
+ 489 03a2 7047     		bx	lr
+ 490              		.cfi_endproc
+ 491              	.LFE115:
+ 493              		.align	2
+ 494              		.global	uart1ReadPoll
+ 495              		.thumb
+ 496              		.thumb_func
+ 498              	uart1ReadPoll:
+ 499              	.LFB116:
+ 218:../src/drv/drv_uart1.c **** 
+ 219:../src/drv/drv_uart1.c **** ///////////////////////////////////////////////////////////////////////////////
+ 220:../src/drv/drv_uart1.c **** // UART1 Read Poll
+ 221:../src/drv/drv_uart1.c **** ///////////////////////////////////////////////////////////////////////////////
+ 222:../src/drv/drv_uart1.c **** 
+ 223:../src/drv/drv_uart1.c **** uint8_t uart1ReadPoll(void)
+ 224:../src/drv/drv_uart1.c **** {
+ 500              		.loc 1 224 0
+ 501              		.cfi_startproc
+ 502              		@ args = 0, pretend = 0, frame = 0
+ 503              		@ frame_needed = 0, uses_anonymous_args = 0
+ 504 03a4 08B5     		push	{r3, lr}
+ 505              	.LCFI6:
+ 506              		.cfi_def_cfa_offset 8
+ 507              		.cfi_offset 14, -4
+ 508              		.cfi_offset 3, -8
+ 225:../src/drv/drv_uart1.c ****     while (!uart1Available()); // wait for some bytes
+ 509              		.loc 1 225 0
+ 510 03a6 00BF     		nop
+ 511              	.L11:
+ 512              		.loc 1 225 0 is_stmt 0 discriminator 1
+ 513 03a8 FFF7FEFF 		bl	uart1Available
+ 514 03ac 0346     		mov	r3, r0
+ 515 03ae 002B     		cmp	r3, #0
+ 516 03b0 FAD0     		beq	.L11
+ 226:../src/drv/drv_uart1.c ****     return uart1Read();
+ 517              		.loc 1 226 0 is_stmt 1
+ 518 03b2 FFF7FEFF 		bl	uart1Read
+ 519 03b6 0346     		mov	r3, r0
+ 227:../src/drv/drv_uart1.c **** }
+ 520              		.loc 1 227 0
+ 521 03b8 1846     		mov	r0, r3
+ 522 03ba 08BD     		pop	{r3, pc}
+ 523              		.cfi_endproc
+ 524              	.LFE116:
+ 526              		.align	2
+ 527              		.global	uart1Write
+ 528              		.thumb
+ 529              		.thumb_func
+ 531              	uart1Write:
+ 532              	.LFB117:
+ 228:../src/drv/drv_uart1.c **** 
+ 229:../src/drv/drv_uart1.c **** ///////////////////////////////////////////////////////////////////////////////
+ 230:../src/drv/drv_uart1.c **** // UART1 Write
+ 231:../src/drv/drv_uart1.c **** ///////////////////////////////////////////////////////////////////////////////
+ 232:../src/drv/drv_uart1.c **** 
+ 233:../src/drv/drv_uart1.c **** void uart1Write(uint8_t ch)
+ 234:../src/drv/drv_uart1.c **** {
+ 533              		.loc 1 234 0
+ 534              		.cfi_startproc
+ 535              		@ args = 0, pretend = 0, frame = 8
+ 536              		@ frame_needed = 0, uses_anonymous_args = 0
+ 537 03bc 00B5     		push	{lr}
+ 538              	.LCFI7:
+ 539              		.cfi_def_cfa_offset 4
+ 540              		.cfi_offset 14, -4
+ 541 03be 83B0     		sub	sp, sp, #12
+ 542              	.LCFI8:
+ 543              		.cfi_def_cfa_offset 16
+ 544 03c0 0346     		mov	r3, r0
+ 545 03c2 8DF80730 		strb	r3, [sp, #7]
+ 235:../src/drv/drv_uart1.c ****     tx1Buffer[tx1BufferHead] = ch;
+ 546              		.loc 1 235 0
+ 547 03c6 40F20003 		movw	r3, #:lower16:tx1BufferHead
+ 548 03ca C0F20003 		movt	r3, #:upper16:tx1BufferHead
+ 549 03ce 1A68     		ldr	r2, [r3, #0]
+ 550 03d0 40F20003 		movw	r3, #:lower16:tx1Buffer
+ 551 03d4 C0F20003 		movt	r3, #:upper16:tx1Buffer
+ 552 03d8 9DF80710 		ldrb	r1, [sp, #7]
+ 553 03dc 9954     		strb	r1, [r3, r2]
+ 236:../src/drv/drv_uart1.c ****     tx1BufferHead = (tx1BufferHead + 1) % UART1_BUFFER_SIZE;
+ 554              		.loc 1 236 0
+ 555 03de 40F20003 		movw	r3, #:lower16:tx1BufferHead
+ 556 03e2 C0F20003 		movt	r3, #:upper16:tx1BufferHead
+ 557 03e6 1B68     		ldr	r3, [r3, #0]
+ 558 03e8 03F10103 		add	r3, r3, #1
+ 559 03ec 4FEA4352 		lsl	r2, r3, #21
+ 560 03f0 4FEA5252 		lsr	r2, r2, #21
+ 561 03f4 40F20003 		movw	r3, #:lower16:tx1BufferHead
+ 562 03f8 C0F20003 		movt	r3, #:upper16:tx1BufferHead
+ 563 03fc 1A60     		str	r2, [r3, #0]
+ 237:../src/drv/drv_uart1.c **** 
+ 238:../src/drv/drv_uart1.c ****     // if DMA wasn't enabled, fire it up
+ 239:../src/drv/drv_uart1.c ****     if (!(DMA1_Channel4->CCR & 1))
+ 564              		.loc 1 239 0
+ 565 03fe 4FF04403 		mov	r3, #68
+ 566 0402 C4F20203 		movt	r3, 16386
+ 567 0406 1B68     		ldr	r3, [r3, #0]
+ 568 0408 03F00103 		and	r3, r3, #1
+ 569 040c 002B     		cmp	r3, #0
+ 570 040e 01D1     		bne	.L12
+ 240:../src/drv/drv_uart1.c ****         uart1TxDMA();
+ 571              		.loc 1 240 0
+ 572 0410 FFF7F6FD 		bl	uart1TxDMA
+ 573              	.L12:
+ 241:../src/drv/drv_uart1.c **** }
+ 574              		.loc 1 241 0
+ 575 0414 03B0     		add	sp, sp, #12
+ 576 0416 00BD     		pop	{pc}
+ 577              		.cfi_endproc
+ 578              	.LFE117:
+ 580              		.align	2
+ 581              		.global	uart1Print
+ 582              		.thumb
+ 583              		.thumb_func
+ 585              	uart1Print:
+ 586              	.LFB118:
+ 242:../src/drv/drv_uart1.c **** 
+ 243:../src/drv/drv_uart1.c **** ///////////////////////////////////////////////////////////////////////////////
+ 244:../src/drv/drv_uart1.c **** // UART1 Print
+ 245:../src/drv/drv_uart1.c **** ///////////////////////////////////////////////////////////////////////////////
+ 246:../src/drv/drv_uart1.c **** 
+ 247:../src/drv/drv_uart1.c **** void uart1Print(char *str)
+ 248:../src/drv/drv_uart1.c **** {
+ 587              		.loc 1 248 0
+ 588              		.cfi_startproc
+ 589              		@ args = 0, pretend = 0, frame = 8
+ 590              		@ frame_needed = 0, uses_anonymous_args = 0
+ 591 0418 00B5     		push	{lr}
+ 592              	.LCFI9:
+ 593              		.cfi_def_cfa_offset 4
+ 594              		.cfi_offset 14, -4
+ 595 041a 83B0     		sub	sp, sp, #12
+ 596              	.LCFI10:
+ 597              		.cfi_def_cfa_offset 16
+ 598 041c 0190     		str	r0, [sp, #4]
+ 249:../src/drv/drv_uart1.c ****     while (*str)
+ 599              		.loc 1 249 0
+ 600 041e 08E0     		b	.L15
+ 601              	.L16:
+ 250:../src/drv/drv_uart1.c ****         uart1Write(*(str++));
+ 602              		.loc 1 250 0
+ 603 0420 019B     		ldr	r3, [sp, #4]
+ 604 0422 1B78     		ldrb	r3, [r3, #0]	@ zero_extendqisi2
+ 605 0424 019A     		ldr	r2, [sp, #4]
+ 606 0426 02F10102 		add	r2, r2, #1
+ 607 042a 0192     		str	r2, [sp, #4]
+ 608 042c 1846     		mov	r0, r3
+ 609 042e FFF7FEFF 		bl	uart1Write
+ 610              	.L15:
+ 249:../src/drv/drv_uart1.c ****     while (*str)
+ 611              		.loc 1 249 0 discriminator 1
+ 612 0432 019B     		ldr	r3, [sp, #4]
+ 613 0434 1B78     		ldrb	r3, [r3, #0]	@ zero_extendqisi2
+ 614 0436 002B     		cmp	r3, #0
+ 615 0438 F2D1     		bne	.L16
+ 251:../src/drv/drv_uart1.c **** }
+ 616              		.loc 1 251 0
+ 617 043a 03B0     		add	sp, sp, #12
+ 618 043c 00BD     		pop	{pc}
+ 619              		.cfi_endproc
+ 620              	.LFE118:
+ 622              	.Letext0:
+ 623              		.file 2 "c:\\program files\\codesourcery\\sourcery_codebench_lite_for_arm_eabi\\bin\\../lib/gcc/ar
+ 624              		.file 3 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\Libraries\\Device\\
+ 625              		.file 4 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\Libraries\\STM32F30
+ 626              		.file 5 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\Libraries\\STM32F30
+ 627              		.file 6 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\Libraries\\STM32F30
+ 628              		.file 7 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\Libraries\\STM32F30
+ 629              		.file 8 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\src\\gps/gpsMediaTe
+ 630              		.file 9 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\src\\gps/gpsNMEA.h"
+ 631              		.file 10 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\src\\gps/gpsUblox.
+ 632              		.file 11 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\Libraries\\CMSIS\\
+DEFINED SYMBOLS
+                            *ABS*:00000000 drv_uart1.c
+                            *COM*:00000001 mtk19ProcessDataState
+                            *COM*:00000001 nmeaProcessDataState
+                            *COM*:00000001 ubloxProcessDataState
+                            *COM*:00000800 rx1Buffer
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccK9Tru5.s:28     .bss:00000000 rx1DMAPos
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccK9Tru5.s:25     .bss:00000000 $d
+                            *COM*:00000800 tx1Buffer
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccK9Tru5.s:35     .bss:00000004 tx1BufferTail
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccK9Tru5.s:41     .bss:00000008 tx1BufferHead
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccK9Tru5.s:44     .text:00000000 $t
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccK9Tru5.s:48     .text:00000000 uart1TxDMA
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccK9Tru5.s:128    .text:000000a8 DMA1_Channel4_IRQHandler
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccK9Tru5.s:169    .text:000000e0 uart1Init
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccK9Tru5.s:410    .text:0000031c uart1Available
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccK9Tru5.s:446    .text:00000348 uart1Read
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccK9Tru5.s:498    .text:000003a4 uart1ReadPoll
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccK9Tru5.s:531    .text:000003bc uart1Write
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccK9Tru5.s:585    .text:00000418 uart1Print
+                     .debug_frame:00000010 $d
+
+UNDEFINED SYMBOLS
+DMA_Cmd
+DMA_ClearITPendingBit
+RCC_AHBPeriphClockCmd
+RCC_APB2PeriphClockCmd
+GPIO_PinAFConfig
+GPIO_Init
+NVIC_Init
+USART_Init
+DMA_DeInit
+DMA_Init
+USART_DMACmd
+DMA_GetCurrDataCounter
+DMA_ITConfig
+USART_Cmd

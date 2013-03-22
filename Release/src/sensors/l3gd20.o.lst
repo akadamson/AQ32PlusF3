@@ -1,0 +1,567 @@
+   1              		.syntax unified
+   2              		.cpu cortex-m4
+   3              		.eabi_attribute 27, 3
+   4              		.fpu fpv4-sp-d16
+   5              		.eabi_attribute 20, 1
+   6              		.eabi_attribute 21, 1
+   7              		.eabi_attribute 23, 3
+   8              		.eabi_attribute 24, 1
+   9              		.eabi_attribute 25, 1
+  10              		.eabi_attribute 26, 1
+  11              		.eabi_attribute 30, 6
+  12              		.eabi_attribute 34, 1
+  13              		.eabi_attribute 18, 4
+  14              		.thumb
+  15              		.file	"l3gd20.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.comm	mtk19ProcessDataState,1,1
+  20              		.comm	nmeaProcessDataState,1,1
+  21              		.comm	ubloxProcessDataState,1,1
+  22              		.comm	gyroRTBias,12,4
+  23              		.global	gyroSum500Hz
+  24              		.bss
+  25              		.align	2
+  28              	gyroSum500Hz:
+  29 0000 00000000 		.space	12
+  29      00000000 
+  29      00000000 
+  30              		.comm	gyroSummedSamples500Hz,12,4
+  31              		.comm	rawGyro,6,4
+  32              		.global	gyroCalibrating
+  35              	gyroCalibrating:
+  36 000c 00       		.space	1
+  37 000d 000000   		.text
+  38              		.align	2
+  39              		.global	initGyro
+  40              		.thumb
+  41              		.thumb_func
+  43              	initGyro:
+  44              	.LFB111:
+  45              		.file 1 "../src/sensors/l3gd20.c"
+   1:../src/sensors/l3gd20.c **** /*
+   2:../src/sensors/l3gd20.c ****   December 2012
+   3:../src/sensors/l3gd20.c **** 
+   4:../src/sensors/l3gd20.c ****   aq32Plus_F3 Rev -
+   5:../src/sensors/l3gd20.c **** 
+   6:../src/sensors/l3gd20.c ****   Copyright (c) 2012 John Ihlein.  All rights reserved.
+   7:../src/sensors/l3gd20.c **** 
+   8:../src/sensors/l3gd20.c ****   Open Source STM32 Based Multicopter Controller Software
+   9:../src/sensors/l3gd20.c **** 
+  10:../src/sensors/l3gd20.c ****   Includes code and/or ideas from:
+  11:../src/sensors/l3gd20.c **** 
+  12:../src/sensors/l3gd20.c ****   1)AeroQuad
+  13:../src/sensors/l3gd20.c ****   2)BaseFlight
+  14:../src/sensors/l3gd20.c ****   3)CH Robotics
+  15:../src/sensors/l3gd20.c ****   4)MultiWii
+  16:../src/sensors/l3gd20.c ****   5)S.O.H. Madgwick
+  17:../src/sensors/l3gd20.c ****   6)UAVX
+  18:../src/sensors/l3gd20.c ****   7)STM DiscoveryF3 demonstration software
+  19:../src/sensors/l3gd20.c **** 
+  20:../src/sensors/l3gd20.c ****   Designed to run on the DiscoveryF3 board
+  21:../src/sensors/l3gd20.c **** 
+  22:../src/sensors/l3gd20.c ****   This program is free software: you can redistribute it and/or modify
+  23:../src/sensors/l3gd20.c ****   it under the terms of the GNU General Public License as published by
+  24:../src/sensors/l3gd20.c ****   the Free Software Foundation, either version 3 of the License, or
+  25:../src/sensors/l3gd20.c ****   (at your option) any later version.
+  26:../src/sensors/l3gd20.c **** 
+  27:../src/sensors/l3gd20.c ****   This program is distributed in the hope that it will be useful,
+  28:../src/sensors/l3gd20.c ****   but WITHOUT ANY WARRANTY; without even the implied warranty of
+  29:../src/sensors/l3gd20.c ****   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  30:../src/sensors/l3gd20.c ****   GNU General Public License for more details.
+  31:../src/sensors/l3gd20.c **** 
+  32:../src/sensors/l3gd20.c ****   You should have received a copy of the GNU General Public License
+  33:../src/sensors/l3gd20.c ****   along with this program. If not, see <http://www.gnu.org/licenses/>.
+  34:../src/sensors/l3gd20.c **** */
+  35:../src/sensors/l3gd20.c **** 
+  36:../src/sensors/l3gd20.c **** ///////////////////////////////////////////////////////////////////////////////
+  37:../src/sensors/l3gd20.c **** 
+  38:../src/sensors/l3gd20.c **** #include "board.h"
+  39:../src/sensors/l3gd20.c **** 
+  40:../src/sensors/l3gd20.c **** ///////////////////////////////////////////////////////////////////////////////
+  41:../src/sensors/l3gd20.c **** // L3GD20 Defines and Variables
+  42:../src/sensors/l3gd20.c **** ///////////////////////////////////////////////////////////////////////////////
+  43:../src/sensors/l3gd20.c **** 
+  44:../src/sensors/l3gd20.c **** /* Read/Write command */
+  45:../src/sensors/l3gd20.c **** #define READ_CMD               ((uint8_t)0x80)
+  46:../src/sensors/l3gd20.c **** #define MULTIPLEBYTE_CMD       ((uint8_t)0x40)
+  47:../src/sensors/l3gd20.c **** #define DUMMY_BYTE             ((uint8_t)0x00)
+  48:../src/sensors/l3gd20.c **** 
+  49:../src/sensors/l3gd20.c **** #define CTRL_REG1_ADDR         0x20
+  50:../src/sensors/l3gd20.c **** #define CTRL_REG4_ADDR         0x23
+  51:../src/sensors/l3gd20.c **** #define CTRL_REG5_ADDR         0x24
+  52:../src/sensors/l3gd20.c **** #define OUT_TEMP_ADDR          0x26
+  53:../src/sensors/l3gd20.c **** #define OUT_X_L_ADDR           0x28
+  54:../src/sensors/l3gd20.c **** 
+  55:../src/sensors/l3gd20.c **** ///////////////////////////////////////
+  56:../src/sensors/l3gd20.c **** 
+  57:../src/sensors/l3gd20.c **** #define MODE_ACTIVE                   ((uint8_t)0x08)
+  58:../src/sensors/l3gd20.c **** 
+  59:../src/sensors/l3gd20.c **** #define OUTPUT_DATARATE_1             ((uint8_t)0x00)
+  60:../src/sensors/l3gd20.c **** #define OUTPUT_DATARATE_2             ((uint8_t)0x40)
+  61:../src/sensors/l3gd20.c **** #define OUTPUT_DATARATE_3             ((uint8_t)0x80)
+  62:../src/sensors/l3gd20.c **** #define OUTPUT_DATARATE_4             ((uint8_t)0xC0)
+  63:../src/sensors/l3gd20.c **** 
+  64:../src/sensors/l3gd20.c **** #define AXES_ENABLE                   ((uint8_t)0x07)
+  65:../src/sensors/l3gd20.c **** 
+  66:../src/sensors/l3gd20.c **** #define BANDWIDTH_1                   ((uint8_t)0x00)
+  67:../src/sensors/l3gd20.c **** #define BANDWIDTH_2                   ((uint8_t)0x10)
+  68:../src/sensors/l3gd20.c **** #define BANDWIDTH_3                   ((uint8_t)0x20)
+  69:../src/sensors/l3gd20.c **** #define BANDWIDTH_4                   ((uint8_t)0x30)
+  70:../src/sensors/l3gd20.c **** 
+  71:../src/sensors/l3gd20.c **** #define FULLSCALE_250                 ((uint8_t)0x00)
+  72:../src/sensors/l3gd20.c **** #define FULLSCALE_500                 ((uint8_t)0x10)
+  73:../src/sensors/l3gd20.c **** #define FULLSCALE_2000                ((uint8_t)0x20)
+  74:../src/sensors/l3gd20.c **** 
+  75:../src/sensors/l3gd20.c **** #define BLOCK_DATA_UPDATE_CONTINUOUS  ((uint8_t)0x00)
+  76:../src/sensors/l3gd20.c **** 
+  77:../src/sensors/l3gd20.c **** #define BLE_MSB	                      ((uint8_t)0x40)
+  78:../src/sensors/l3gd20.c **** 
+  79:../src/sensors/l3gd20.c **** #define BOOT                          ((uint8_t)0x80)
+  80:../src/sensors/l3gd20.c **** 
+  81:../src/sensors/l3gd20.c **** ///////////////////////////////////////
+  82:../src/sensors/l3gd20.c **** 
+  83:../src/sensors/l3gd20.c **** float   gyroRTBias[3];
+  84:../src/sensors/l3gd20.c **** 
+  85:../src/sensors/l3gd20.c **** int32_t gyroSum500Hz[3] = { 0, 0, 0 };
+  86:../src/sensors/l3gd20.c **** 
+  87:../src/sensors/l3gd20.c **** int32_t gyroSummedSamples500Hz[3];
+  88:../src/sensors/l3gd20.c **** 
+  89:../src/sensors/l3gd20.c **** int16andUint8_t rawGyro[3];
+  90:../src/sensors/l3gd20.c **** 
+  91:../src/sensors/l3gd20.c **** ///////////////////////////////////////
+  92:../src/sensors/l3gd20.c **** 
+  93:../src/sensors/l3gd20.c **** uint8_t gyroCalibrating = false;
+  94:../src/sensors/l3gd20.c **** 
+  95:../src/sensors/l3gd20.c **** ///////////////////////////////////////////////////////////////////////////////
+  96:../src/sensors/l3gd20.c **** // Gyro Initialization
+  97:../src/sensors/l3gd20.c **** ///////////////////////////////////////////////////////////////////////////////
+  98:../src/sensors/l3gd20.c **** 
+  99:../src/sensors/l3gd20.c **** void initGyro(void)
+ 100:../src/sensors/l3gd20.c **** {
+  46              		.loc 1 100 0
+  47              		.cfi_startproc
+  48              		@ args = 0, pretend = 0, frame = 0
+  49              		@ frame_needed = 0, uses_anonymous_args = 0
+  50 0000 08B5     		push	{r3, lr}
+  51              	.LCFI0:
+  52              		.cfi_def_cfa_offset 8
+  53              		.cfi_offset 14, -4
+  54              		.cfi_offset 3, -8
+ 101:../src/sensors/l3gd20.c ****     ///////////////////////////////////
+ 102:../src/sensors/l3gd20.c **** 
+ 103:../src/sensors/l3gd20.c **** 	GPIO_ResetBits(L3GD20_CS_GPIO, L3GD20_CS_PIN);
+  55              		.loc 1 103 0
+  56 0002 4FF48050 		mov	r0, #4096
+  57 0006 C4F60000 		movt	r0, 18432
+  58 000a 4FF00801 		mov	r1, #8
+  59 000e FFF7FEFF 		bl	GPIO_ResetBits
+ 104:../src/sensors/l3gd20.c **** 
+ 105:../src/sensors/l3gd20.c **** 	spiTransfer(L3GD20_SPI, CTRL_REG5_ADDR);
+  60              		.loc 1 105 0
+  61 0012 4FF44050 		mov	r0, #12288
+  62 0016 C4F20100 		movt	r0, 16385
+  63 001a 4FF02401 		mov	r1, #36
+  64 001e FFF7FEFF 		bl	spiTransfer
+ 106:../src/sensors/l3gd20.c **** 	spiTransfer(L3GD20_SPI, BOOT);
+  65              		.loc 1 106 0
+  66 0022 4FF44050 		mov	r0, #12288
+  67 0026 C4F20100 		movt	r0, 16385
+  68 002a 4FF08001 		mov	r1, #128
+  69 002e FFF7FEFF 		bl	spiTransfer
+ 107:../src/sensors/l3gd20.c **** 
+ 108:../src/sensors/l3gd20.c **** 	GPIO_SetBits(L3GD20_CS_GPIO, L3GD20_CS_PIN);
+  70              		.loc 1 108 0
+  71 0032 4FF48050 		mov	r0, #4096
+  72 0036 C4F60000 		movt	r0, 18432
+  73 003a 4FF00801 		mov	r1, #8
+  74 003e FFF7FEFF 		bl	GPIO_SetBits
+ 109:../src/sensors/l3gd20.c **** 
+ 110:../src/sensors/l3gd20.c **** 	delayMicroseconds(100);
+  75              		.loc 1 110 0
+  76 0042 4FF06400 		mov	r0, #100
+  77 0046 FFF7FEFF 		bl	delayMicroseconds
+ 111:../src/sensors/l3gd20.c **** 
+ 112:../src/sensors/l3gd20.c **** 	GPIO_ResetBits(L3GD20_CS_GPIO, L3GD20_CS_PIN);
+  78              		.loc 1 112 0
+  79 004a 4FF48050 		mov	r0, #4096
+  80 004e C4F60000 		movt	r0, 18432
+  81 0052 4FF00801 		mov	r1, #8
+  82 0056 FFF7FEFF 		bl	GPIO_ResetBits
+ 113:../src/sensors/l3gd20.c **** 
+ 114:../src/sensors/l3gd20.c ****     spiTransfer(L3GD20_SPI, CTRL_REG1_ADDR);
+  83              		.loc 1 114 0
+  84 005a 4FF44050 		mov	r0, #12288
+  85 005e C4F20100 		movt	r0, 16385
+  86 0062 4FF02001 		mov	r1, #32
+  87 0066 FFF7FEFF 		bl	spiTransfer
+ 115:../src/sensors/l3gd20.c ****     spiTransfer(L3GD20_SPI, MODE_ACTIVE | OUTPUT_DATARATE_4 | AXES_ENABLE | BANDWIDTH_4);
+  88              		.loc 1 115 0
+  89 006a 4FF44050 		mov	r0, #12288
+  90 006e C4F20100 		movt	r0, 16385
+  91 0072 4FF0FF01 		mov	r1, #255
+  92 0076 FFF7FEFF 		bl	spiTransfer
+ 116:../src/sensors/l3gd20.c **** 
+ 117:../src/sensors/l3gd20.c ****     GPIO_SetBits(L3GD20_CS_GPIO, L3GD20_CS_PIN);
+  93              		.loc 1 117 0
+  94 007a 4FF48050 		mov	r0, #4096
+  95 007e C4F60000 		movt	r0, 18432
+  96 0082 4FF00801 		mov	r1, #8
+  97 0086 FFF7FEFF 		bl	GPIO_SetBits
+ 118:../src/sensors/l3gd20.c **** 
+ 119:../src/sensors/l3gd20.c ****     delayMicroseconds(1);
+  98              		.loc 1 119 0
+  99 008a 4FF00100 		mov	r0, #1
+ 100 008e FFF7FEFF 		bl	delayMicroseconds
+ 120:../src/sensors/l3gd20.c **** 
+ 121:../src/sensors/l3gd20.c ****     GPIO_ResetBits(L3GD20_CS_GPIO, L3GD20_CS_PIN);
+ 101              		.loc 1 121 0
+ 102 0092 4FF48050 		mov	r0, #4096
+ 103 0096 C4F60000 		movt	r0, 18432
+ 104 009a 4FF00801 		mov	r1, #8
+ 105 009e FFF7FEFF 		bl	GPIO_ResetBits
+ 122:../src/sensors/l3gd20.c **** 
+ 123:../src/sensors/l3gd20.c ****     spiTransfer(L3GD20_SPI, CTRL_REG4_ADDR);
+ 106              		.loc 1 123 0
+ 107 00a2 4FF44050 		mov	r0, #12288
+ 108 00a6 C4F20100 		movt	r0, 16385
+ 109 00aa 4FF02301 		mov	r1, #35
+ 110 00ae FFF7FEFF 		bl	spiTransfer
+ 124:../src/sensors/l3gd20.c ****     spiTransfer(L3GD20_SPI, BLOCK_DATA_UPDATE_CONTINUOUS | BLE_MSB | FULLSCALE_500);
+ 111              		.loc 1 124 0
+ 112 00b2 4FF44050 		mov	r0, #12288
+ 113 00b6 C4F20100 		movt	r0, 16385
+ 114 00ba 4FF05001 		mov	r1, #80
+ 115 00be FFF7FEFF 		bl	spiTransfer
+ 125:../src/sensors/l3gd20.c **** 
+ 126:../src/sensors/l3gd20.c ****     GPIO_SetBits(L3GD20_CS_GPIO, L3GD20_CS_PIN);
+ 116              		.loc 1 126 0
+ 117 00c2 4FF48050 		mov	r0, #4096
+ 118 00c6 C4F60000 		movt	r0, 18432
+ 119 00ca 4FF00801 		mov	r1, #8
+ 120 00ce FFF7FEFF 		bl	GPIO_SetBits
+ 127:../src/sensors/l3gd20.c **** 
+ 128:../src/sensors/l3gd20.c ****     ///////////////////////////////////
+ 129:../src/sensors/l3gd20.c **** 
+ 130:../src/sensors/l3gd20.c ****     delay(100);
+ 121              		.loc 1 130 0
+ 122 00d2 4FF06400 		mov	r0, #100
+ 123 00d6 FFF7FEFF 		bl	delay
+ 131:../src/sensors/l3gd20.c **** 
+ 132:../src/sensors/l3gd20.c ****     computeGyroRTData();
+ 124              		.loc 1 132 0
+ 125 00da FFF7FEFF 		bl	computeGyroRTData
+ 133:../src/sensors/l3gd20.c **** }
+ 126              		.loc 1 133 0
+ 127 00de 08BD     		pop	{r3, pc}
+ 128              		.cfi_endproc
+ 129              	.LFE111:
+ 131              		.align	2
+ 132              		.global	readGyro
+ 133              		.thumb
+ 134              		.thumb_func
+ 136              	readGyro:
+ 137              	.LFB112:
+ 134:../src/sensors/l3gd20.c **** 
+ 135:../src/sensors/l3gd20.c **** ///////////////////////////////////////////////////////////////////////////////
+ 136:../src/sensors/l3gd20.c **** // Read Gyro
+ 137:../src/sensors/l3gd20.c **** ///////////////////////////////////////////////////////////////////////////////
+ 138:../src/sensors/l3gd20.c **** 
+ 139:../src/sensors/l3gd20.c **** void readGyro(void)
+ 140:../src/sensors/l3gd20.c **** {
+ 138              		.loc 1 140 0
+ 139              		.cfi_startproc
+ 140              		@ args = 0, pretend = 0, frame = 0
+ 141              		@ frame_needed = 0, uses_anonymous_args = 0
+ 142 00e0 08B5     		push	{r3, lr}
+ 143              	.LCFI1:
+ 144              		.cfi_def_cfa_offset 8
+ 145              		.cfi_offset 14, -4
+ 146              		.cfi_offset 3, -8
+ 141:../src/sensors/l3gd20.c **** 	GPIO_ResetBits(L3GD20_CS_GPIO, L3GD20_CS_PIN);
+ 147              		.loc 1 141 0
+ 148 00e2 4FF48050 		mov	r0, #4096
+ 149 00e6 C4F60000 		movt	r0, 18432
+ 150 00ea 4FF00801 		mov	r1, #8
+ 151 00ee FFF7FEFF 		bl	GPIO_ResetBits
+ 142:../src/sensors/l3gd20.c **** 
+ 143:../src/sensors/l3gd20.c **** 	                          //spiTransfer(L3GD20_SPI, OUT_TEMP_ADDR | READ_CMD);
+ 144:../src/sensors/l3gd20.c **** 
+ 145:../src/sensors/l3gd20.c **** 	//rawGyroTemperature      = spiTransfer(L3GD20_SPI, DUMMY_BYTE);
+ 146:../src/sensors/l3gd20.c **** 
+ 147:../src/sensors/l3gd20.c **** 	                          spiTransfer(L3GD20_SPI, OUT_X_L_ADDR | READ_CMD |MULTIPLEBYTE_CMD);
+ 152              		.loc 1 147 0
+ 153 00f2 4FF44050 		mov	r0, #12288
+ 154 00f6 C4F20100 		movt	r0, 16385
+ 155 00fa 4FF0E801 		mov	r1, #232
+ 156 00fe FFF7FEFF 		bl	spiTransfer
+ 148:../src/sensors/l3gd20.c **** 
+ 149:../src/sensors/l3gd20.c ****     rawGyro[PITCH].bytes[1] = spiTransfer(L3GD20_SPI, DUMMY_BYTE);
+ 157              		.loc 1 149 0
+ 158 0102 4FF44050 		mov	r0, #12288
+ 159 0106 C4F20100 		movt	r0, 16385
+ 160 010a 4FF00001 		mov	r1, #0
+ 161 010e FFF7FEFF 		bl	spiTransfer
+ 162 0112 0346     		mov	r3, r0
+ 163 0114 1A46     		mov	r2, r3
+ 164 0116 40F20003 		movw	r3, #:lower16:rawGyro
+ 165 011a C0F20003 		movt	r3, #:upper16:rawGyro
+ 166 011e DA70     		strb	r2, [r3, #3]
+ 150:../src/sensors/l3gd20.c ****     rawGyro[PITCH].bytes[0] = spiTransfer(L3GD20_SPI, DUMMY_BYTE);
+ 167              		.loc 1 150 0
+ 168 0120 4FF44050 		mov	r0, #12288
+ 169 0124 C4F20100 		movt	r0, 16385
+ 170 0128 4FF00001 		mov	r1, #0
+ 171 012c FFF7FEFF 		bl	spiTransfer
+ 172 0130 0346     		mov	r3, r0
+ 173 0132 1A46     		mov	r2, r3
+ 174 0134 40F20003 		movw	r3, #:lower16:rawGyro
+ 175 0138 C0F20003 		movt	r3, #:upper16:rawGyro
+ 176 013c 9A70     		strb	r2, [r3, #2]
+ 151:../src/sensors/l3gd20.c ****     rawGyro[ROLL ].bytes[1] = spiTransfer(L3GD20_SPI, DUMMY_BYTE);
+ 177              		.loc 1 151 0
+ 178 013e 4FF44050 		mov	r0, #12288
+ 179 0142 C4F20100 		movt	r0, 16385
+ 180 0146 4FF00001 		mov	r1, #0
+ 181 014a FFF7FEFF 		bl	spiTransfer
+ 182 014e 0346     		mov	r3, r0
+ 183 0150 1A46     		mov	r2, r3
+ 184 0152 40F20003 		movw	r3, #:lower16:rawGyro
+ 185 0156 C0F20003 		movt	r3, #:upper16:rawGyro
+ 186 015a 5A70     		strb	r2, [r3, #1]
+ 152:../src/sensors/l3gd20.c ****     rawGyro[ROLL ].bytes[0] = spiTransfer(L3GD20_SPI, DUMMY_BYTE);
+ 187              		.loc 1 152 0
+ 188 015c 4FF44050 		mov	r0, #12288
+ 189 0160 C4F20100 		movt	r0, 16385
+ 190 0164 4FF00001 		mov	r1, #0
+ 191 0168 FFF7FEFF 		bl	spiTransfer
+ 192 016c 0346     		mov	r3, r0
+ 193 016e 1A46     		mov	r2, r3
+ 194 0170 40F20003 		movw	r3, #:lower16:rawGyro
+ 195 0174 C0F20003 		movt	r3, #:upper16:rawGyro
+ 196 0178 1A70     		strb	r2, [r3, #0]
+ 153:../src/sensors/l3gd20.c ****     rawGyro[YAW  ].bytes[1] = spiTransfer(L3GD20_SPI, DUMMY_BYTE);
+ 197              		.loc 1 153 0
+ 198 017a 4FF44050 		mov	r0, #12288
+ 199 017e C4F20100 		movt	r0, 16385
+ 200 0182 4FF00001 		mov	r1, #0
+ 201 0186 FFF7FEFF 		bl	spiTransfer
+ 202 018a 0346     		mov	r3, r0
+ 203 018c 1A46     		mov	r2, r3
+ 204 018e 40F20003 		movw	r3, #:lower16:rawGyro
+ 205 0192 C0F20003 		movt	r3, #:upper16:rawGyro
+ 206 0196 5A71     		strb	r2, [r3, #5]
+ 154:../src/sensors/l3gd20.c ****     rawGyro[YAW  ].bytes[0] = spiTransfer(L3GD20_SPI, DUMMY_BYTE);
+ 207              		.loc 1 154 0
+ 208 0198 4FF44050 		mov	r0, #12288
+ 209 019c C4F20100 		movt	r0, 16385
+ 210 01a0 4FF00001 		mov	r1, #0
+ 211 01a4 FFF7FEFF 		bl	spiTransfer
+ 212 01a8 0346     		mov	r3, r0
+ 213 01aa 1A46     		mov	r2, r3
+ 214 01ac 40F20003 		movw	r3, #:lower16:rawGyro
+ 215 01b0 C0F20003 		movt	r3, #:upper16:rawGyro
+ 216 01b4 1A71     		strb	r2, [r3, #4]
+ 155:../src/sensors/l3gd20.c **** 
+ 156:../src/sensors/l3gd20.c ****     GPIO_SetBits(L3GD20_CS_GPIO, L3GD20_CS_PIN);
+ 217              		.loc 1 156 0
+ 218 01b6 4FF48050 		mov	r0, #4096
+ 219 01ba C4F60000 		movt	r0, 18432
+ 220 01be 4FF00801 		mov	r1, #8
+ 221 01c2 FFF7FEFF 		bl	GPIO_SetBits
+ 157:../src/sensors/l3gd20.c **** }
+ 222              		.loc 1 157 0
+ 223 01c6 08BD     		pop	{r3, pc}
+ 224              		.cfi_endproc
+ 225              	.LFE112:
+ 227              		.align	2
+ 228              		.global	computeGyroRTData
+ 229              		.thumb
+ 230              		.thumb_func
+ 232              	computeGyroRTData:
+ 233              	.LFB113:
+ 158:../src/sensors/l3gd20.c **** 
+ 159:../src/sensors/l3gd20.c **** ///////////////////////////////////////////////////////////////////////////////
+ 160:../src/sensors/l3gd20.c **** // Compute Gyro Runtime Data
+ 161:../src/sensors/l3gd20.c **** ///////////////////////////////////////////////////////////////////////////////
+ 162:../src/sensors/l3gd20.c **** 
+ 163:../src/sensors/l3gd20.c **** void computeGyroRTData(void)
+ 164:../src/sensors/l3gd20.c **** {
+ 234              		.loc 1 164 0
+ 235              		.cfi_startproc
+ 236              		@ args = 0, pretend = 0, frame = 16
+ 237              		@ frame_needed = 0, uses_anonymous_args = 0
+ 238 01c8 00B5     		push	{lr}
+ 239              	.LCFI2:
+ 240              		.cfi_def_cfa_offset 4
+ 241              		.cfi_offset 14, -4
+ 242 01ca 85B0     		sub	sp, sp, #20
+ 243              	.LCFI3:
+ 244              		.cfi_def_cfa_offset 24
+ 165:../src/sensors/l3gd20.c ****     uint8_t  axis;
+ 166:../src/sensors/l3gd20.c ****     uint16_t samples;
+ 167:../src/sensors/l3gd20.c **** 
+ 168:../src/sensors/l3gd20.c ****     float gyroSum[3]  = { 0.0f, 0.0f, 0.0f };
+ 245              		.loc 1 168 0
+ 246 01cc 424B     		ldr	r3, .L8+4	@ float
+ 247 01ce 0093     		str	r3, [sp, #0]	@ float
+ 248 01d0 414B     		ldr	r3, .L8+4	@ float
+ 249 01d2 0193     		str	r3, [sp, #4]	@ float
+ 250 01d4 404B     		ldr	r3, .L8+4	@ float
+ 251 01d6 0293     		str	r3, [sp, #8]	@ float
+ 169:../src/sensors/l3gd20.c **** 
+ 170:../src/sensors/l3gd20.c ****     gyroCalibrating = true;
+ 252              		.loc 1 170 0
+ 253 01d8 40F20003 		movw	r3, #:lower16:gyroCalibrating
+ 254 01dc C0F20003 		movt	r3, #:upper16:gyroCalibrating
+ 255 01e0 4FF00102 		mov	r2, #1
+ 256 01e4 1A70     		strb	r2, [r3, #0]
+ 171:../src/sensors/l3gd20.c **** 
+ 172:../src/sensors/l3gd20.c ****     for (samples = 0; samples < 2000; samples++)
+ 257              		.loc 1 172 0
+ 258 01e6 4FF00003 		mov	r3, #0
+ 259 01ea ADF80C30 		strh	r3, [sp, #12]	@ movhi
+ 260 01ee 3BE0     		b	.L4
+ 261              	.L5:
+ 173:../src/sensors/l3gd20.c ****     {
+ 174:../src/sensors/l3gd20.c ****         readGyro();
+ 262              		.loc 1 174 0 discriminator 2
+ 263 01f0 FFF7FEFF 		bl	readGyro
+ 175:../src/sensors/l3gd20.c **** 
+ 176:../src/sensors/l3gd20.c ****         gyroSum[ROLL ]  += (float)rawGyro[ROLL ].value;
+ 264              		.loc 1 176 0 discriminator 2
+ 265 01f4 9DED007A 		flds	s14, [sp, #0]
+ 266 01f8 40F20003 		movw	r3, #:lower16:rawGyro
+ 267 01fc C0F20003 		movt	r3, #:upper16:rawGyro
+ 268 0200 1B88     		ldrh	r3, [r3, #0]
+ 269 0202 1BB2     		sxth	r3, r3
+ 270 0204 06EE903A 		fmsr	s13, r3	@ int
+ 271 0208 F8EEE67A 		fsitos	s15, s13
+ 272 020c 77EE277A 		fadds	s15, s14, s15
+ 273 0210 CDED007A 		fsts	s15, [sp, #0]
+ 177:../src/sensors/l3gd20.c ****         gyroSum[PITCH]  += (float)rawGyro[PITCH].value;
+ 274              		.loc 1 177 0 discriminator 2
+ 275 0214 9DED017A 		flds	s14, [sp, #4]
+ 276 0218 40F20003 		movw	r3, #:lower16:rawGyro
+ 277 021c C0F20003 		movt	r3, #:upper16:rawGyro
+ 278 0220 5B88     		ldrh	r3, [r3, #2]
+ 279 0222 1BB2     		sxth	r3, r3
+ 280 0224 06EE903A 		fmsr	s13, r3	@ int
+ 281 0228 F8EEE67A 		fsitos	s15, s13
+ 282 022c 77EE277A 		fadds	s15, s14, s15
+ 283 0230 CDED017A 		fsts	s15, [sp, #4]
+ 178:../src/sensors/l3gd20.c ****         gyroSum[YAW  ]  += (float)rawGyro[YAW  ].value;
+ 284              		.loc 1 178 0 discriminator 2
+ 285 0234 9DED027A 		flds	s14, [sp, #8]
+ 286 0238 40F20003 		movw	r3, #:lower16:rawGyro
+ 287 023c C0F20003 		movt	r3, #:upper16:rawGyro
+ 288 0240 9B88     		ldrh	r3, [r3, #4]
+ 289 0242 1BB2     		sxth	r3, r3
+ 290 0244 06EE903A 		fmsr	s13, r3	@ int
+ 291 0248 F8EEE67A 		fsitos	s15, s13
+ 292 024c 77EE277A 		fadds	s15, s14, s15
+ 293 0250 CDED027A 		fsts	s15, [sp, #8]
+ 179:../src/sensors/l3gd20.c **** 
+ 180:../src/sensors/l3gd20.c ****         delayMicroseconds(1000);
+ 294              		.loc 1 180 0 discriminator 2
+ 295 0254 4FF47A70 		mov	r0, #1000
+ 296 0258 FFF7FEFF 		bl	delayMicroseconds
+ 172:../src/sensors/l3gd20.c ****     for (samples = 0; samples < 2000; samples++)
+ 297              		.loc 1 172 0 discriminator 2
+ 298 025c BDF80C30 		ldrh	r3, [sp, #12]	@ movhi
+ 299 0260 03F10103 		add	r3, r3, #1
+ 300 0264 ADF80C30 		strh	r3, [sp, #12]	@ movhi
+ 301              	.L4:
+ 172:../src/sensors/l3gd20.c ****     for (samples = 0; samples < 2000; samples++)
+ 302              		.loc 1 172 0 is_stmt 0 discriminator 1
+ 303 0268 BDF80C20 		ldrh	r2, [sp, #12]
+ 304 026c 40F2CF73 		movw	r3, #1999
+ 305 0270 9A42     		cmp	r2, r3
+ 306 0272 BDD9     		bls	.L5
+ 181:../src/sensors/l3gd20.c ****     }
+ 182:../src/sensors/l3gd20.c **** 
+ 183:../src/sensors/l3gd20.c ****     for (axis = 0; axis < 3; axis++)
+ 307              		.loc 1 183 0 is_stmt 1
+ 308 0274 4FF00003 		mov	r3, #0
+ 309 0278 8DF80F30 		strb	r3, [sp, #15]
+ 310 027c 1CE0     		b	.L6
+ 311              	.L7:
+ 184:../src/sensors/l3gd20.c ****     {
+ 185:../src/sensors/l3gd20.c ****         gyroRTBias[axis] = gyroSum[axis]  / 2000.0f;
+ 312              		.loc 1 185 0 discriminator 2
+ 313 027e 9DF80F20 		ldrb	r2, [sp, #15]	@ zero_extendqisi2
+ 314 0282 9DF80F30 		ldrb	r3, [sp, #15]	@ zero_extendqisi2
+ 315 0286 4FEA8303 		lsl	r3, r3, #2
+ 316 028a 04A9     		add	r1, sp, #16
+ 317 028c CB18     		adds	r3, r1, r3
+ 318 028e 13ED047A 		flds	s14, [r3, #-16]
+ 319 0292 DFED107A 		flds	s15, .L8
+ 320 0296 C7EE277A 		fdivs	s15, s14, s15
+ 321 029a 40F20003 		movw	r3, #:lower16:gyroRTBias
+ 322 029e C0F20003 		movt	r3, #:upper16:gyroRTBias
+ 323 02a2 4FEA8202 		lsl	r2, r2, #2
+ 324 02a6 9B18     		adds	r3, r3, r2
+ 325 02a8 C3ED007A 		fsts	s15, [r3, #0]
+ 183:../src/sensors/l3gd20.c ****     for (axis = 0; axis < 3; axis++)
+ 326              		.loc 1 183 0 discriminator 2
+ 327 02ac 9DF80F30 		ldrb	r3, [sp, #15]
+ 328 02b0 03F10103 		add	r3, r3, #1
+ 329 02b4 8DF80F30 		strb	r3, [sp, #15]
+ 330              	.L6:
+ 183:../src/sensors/l3gd20.c ****     for (axis = 0; axis < 3; axis++)
+ 331              		.loc 1 183 0 is_stmt 0 discriminator 1
+ 332 02b8 9DF80F30 		ldrb	r3, [sp, #15]	@ zero_extendqisi2
+ 333 02bc 022B     		cmp	r3, #2
+ 334 02be DED9     		bls	.L7
+ 186:../src/sensors/l3gd20.c ****     }
+ 187:../src/sensors/l3gd20.c **** 
+ 188:../src/sensors/l3gd20.c ****     gyroCalibrating = false;
+ 335              		.loc 1 188 0 is_stmt 1
+ 336 02c0 40F20003 		movw	r3, #:lower16:gyroCalibrating
+ 337 02c4 C0F20003 		movt	r3, #:upper16:gyroCalibrating
+ 338 02c8 4FF00002 		mov	r2, #0
+ 339 02cc 1A70     		strb	r2, [r3, #0]
+ 189:../src/sensors/l3gd20.c **** }
+ 340              		.loc 1 189 0
+ 341 02ce 05B0     		add	sp, sp, #20
+ 342 02d0 00BD     		pop	{pc}
+ 343              	.L9:
+ 344 02d2 00BF     		.align	2
+ 345              	.L8:
+ 346 02d4 0000FA44 		.word	1157234688
+ 347 02d8 00000000 		.word	0
+ 348              		.cfi_endproc
+ 349              	.LFE113:
+ 351              	.Letext0:
+ 352              		.file 2 "c:\\program files\\codesourcery\\sourcery_codebench_lite_for_arm_eabi\\bin\\../lib/gcc/ar
+ 353              		.file 3 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\Libraries\\Device\\
+ 354              		.file 4 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\src/aq32Plus_F3.h"
+ 355              		.file 5 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\src\\gps/gpsMediaTe
+ 356              		.file 6 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\src\\gps/gpsNMEA.h"
+ 357              		.file 7 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\src\\gps/gpsUblox.h
+ 358              		.file 8 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\Libraries\\CMSIS\\I
+DEFINED SYMBOLS
+                            *ABS*:00000000 l3gd20.c
+                            *COM*:00000001 mtk19ProcessDataState
+                            *COM*:00000001 nmeaProcessDataState
+                            *COM*:00000001 ubloxProcessDataState
+                            *COM*:0000000c gyroRTBias
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cc9icmtV.s:28     .bss:00000000 gyroSum500Hz
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cc9icmtV.s:25     .bss:00000000 $d
+                            *COM*:0000000c gyroSummedSamples500Hz
+                            *COM*:00000006 rawGyro
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cc9icmtV.s:35     .bss:0000000c gyroCalibrating
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cc9icmtV.s:38     .text:00000000 $t
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cc9icmtV.s:43     .text:00000000 initGyro
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cc9icmtV.s:232    .text:000001c8 computeGyroRTData
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cc9icmtV.s:136    .text:000000e0 readGyro
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cc9icmtV.s:346    .text:000002d4 $d
+                     .debug_frame:00000010 $d
+
+UNDEFINED SYMBOLS
+GPIO_ResetBits
+spiTransfer
+GPIO_SetBits
+delayMicroseconds
+delay

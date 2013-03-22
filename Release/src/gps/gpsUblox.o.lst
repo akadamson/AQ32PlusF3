@@ -1,0 +1,1092 @@
+   1              		.syntax unified
+   2              		.cpu cortex-m4
+   3              		.eabi_attribute 27, 3
+   4              		.fpu fpv4-sp-d16
+   5              		.eabi_attribute 20, 1
+   6              		.eabi_attribute 21, 1
+   7              		.eabi_attribute 23, 3
+   8              		.eabi_attribute 24, 1
+   9              		.eabi_attribute 25, 1
+  10              		.eabi_attribute 26, 1
+  11              		.eabi_attribute 30, 6
+  12              		.eabi_attribute 34, 1
+  13              		.eabi_attribute 18, 4
+  14              		.thumb
+  15              		.file	"gpsUblox.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.comm	mtk19ProcessDataState,1,1
+  20              		.comm	nmeaProcessDataState,1,1
+  21              		.comm	ubloxProcessDataState,1,1
+  22              		.comm	ubloxMessage,52,4
+  23              		.comm	ubloxExpectedDataLength,1,1
+  24              		.comm	ubloxDataLength,1,1
+  25              		.comm	ubloxClass,1,1
+  26              		.comm	ubloxId,1,1
+  27              		.comm	ubloxCKA,1,1
+  28              		.comm	ubloxCKB,1,1
+  29              		.align	2
+  30              		.global	ubloxParseData
+  31              		.thumb
+  32              		.thumb_func
+  34              	ubloxParseData:
+  35              	.LFB111:
+  36              		.file 1 "../src/gps/gpsUblox.c"
+   1:../src/gps/gpsUblox.c **** /*
+   2:../src/gps/gpsUblox.c ****   February 2013
+   3:../src/gps/gpsUblox.c **** 
+   4:../src/gps/gpsUblox.c ****   aq32Plus Rev -
+   5:../src/gps/gpsUblox.c **** 
+   6:../src/gps/gpsUblox.c ****   Copyright (c) 2012 John Ihlein.  All rights reserved.
+   7:../src/gps/gpsUblox.c **** 
+   8:../src/gps/gpsUblox.c ****   Open Source STM32 Based Multicopter Controller Software
+   9:../src/gps/gpsUblox.c **** 
+  10:../src/gps/gpsUblox.c ****   Includes code and/or ideas from:
+  11:../src/gps/gpsUblox.c **** 
+  12:../src/gps/gpsUblox.c ****   1)AeroQuad
+  13:../src/gps/gpsUblox.c ****   2)BaseFlight
+  14:../src/gps/gpsUblox.c ****   3)CH Robotics
+  15:../src/gps/gpsUblox.c ****   4)MultiWii
+  16:../src/gps/gpsUblox.c ****   5)S.O.H. Madgwick
+  17:../src/gps/gpsUblox.c ****   6)UAVX
+  18:../src/gps/gpsUblox.c **** 
+  19:../src/gps/gpsUblox.c ****   Designed to run on the AQ32 Flight Control Board
+  20:../src/gps/gpsUblox.c **** 
+  21:../src/gps/gpsUblox.c ****   This program is free software: you can redistribute it and/or modify
+  22:../src/gps/gpsUblox.c ****   it under the terms of the GNU General Public License as published by
+  23:../src/gps/gpsUblox.c ****   the Free Software Foundation, either version 3 of the License, or
+  24:../src/gps/gpsUblox.c ****   (at your option) any later version.
+  25:../src/gps/gpsUblox.c **** 
+  26:../src/gps/gpsUblox.c ****   This program is distributed in the hope that it will be useful,
+  27:../src/gps/gpsUblox.c ****   but WITHOUT ANY WARRANTY; without even the implied warranty of
+  28:../src/gps/gpsUblox.c ****   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  29:../src/gps/gpsUblox.c ****   GNU General Public License for more details.
+  30:../src/gps/gpsUblox.c **** 
+  31:../src/gps/gpsUblox.c ****   You should have received a copy of the GNU General Public License
+  32:../src/gps/gpsUblox.c ****   along with this program. If not, see <http://www.gnu.org/licenses/>.
+  33:../src/gps/gpsUblox.c **** */
+  34:../src/gps/gpsUblox.c **** 
+  35:../src/gps/gpsUblox.c **** ///////////////////////////////////////////////////////////////////////////////
+  36:../src/gps/gpsUblox.c **** 
+  37:../src/gps/gpsUblox.c **** #include "board.h"
+  38:../src/gps/gpsUblox.c **** 
+  39:../src/gps/gpsUblox.c **** ///////////////////////////////////////////////////////////////////////////////
+  40:../src/gps/gpsUblox.c **** // GPS Variables
+  41:../src/gps/gpsUblox.c **** ///////////////////////////////////////////////////////////////////////////////
+  42:../src/gps/gpsUblox.c **** 
+  43:../src/gps/gpsUblox.c **** // UBLOX binary message definitions
+  44:../src/gps/gpsUblox.c **** struct ublox_NAV_POSLLH  // 01 02 (28)
+  45:../src/gps/gpsUblox.c **** {
+  46:../src/gps/gpsUblox.c **** 	uint32_t iTow;
+  47:../src/gps/gpsUblox.c ****     int32_t  lon;    // 1e-7 degrees
+  48:../src/gps/gpsUblox.c ****     int32_t  lat;    // 1e-7 degrees
+  49:../src/gps/gpsUblox.c ****     int32_t  height; // mm
+  50:../src/gps/gpsUblox.c ****     int32_t  hMSL;   // mm
+  51:../src/gps/gpsUblox.c ****     uint32_t hAcc;   // mm
+  52:../src/gps/gpsUblox.c ****     uint32_t vAcc;   // mm
+  53:../src/gps/gpsUblox.c **** };
+  54:../src/gps/gpsUblox.c **** 
+  55:../src/gps/gpsUblox.c **** struct ublox_NAV_STATUS  // 01 03 (16)
+  56:../src/gps/gpsUblox.c **** {
+  57:../src/gps/gpsUblox.c ****     uint32_t iTow;
+  58:../src/gps/gpsUblox.c ****     uint8_t  gpsFix;
+  59:../src/gps/gpsUblox.c ****     uint8_t  flags;
+  60:../src/gps/gpsUblox.c ****     uint8_t  fixStat;
+  61:../src/gps/gpsUblox.c ****     uint8_t  flags2;
+  62:../src/gps/gpsUblox.c ****     uint32_t ttfx;
+  63:../src/gps/gpsUblox.c ****     uint32_t msss;
+  64:../src/gps/gpsUblox.c **** };
+  65:../src/gps/gpsUblox.c **** 
+  66:../src/gps/gpsUblox.c **** struct ublox_NAV_DOP  // 01 04 (18)
+  67:../src/gps/gpsUblox.c **** {
+  68:../src/gps/gpsUblox.c **** 	uint32_t iTow;
+  69:../src/gps/gpsUblox.c **** 	uint16_t gDOP;
+  70:../src/gps/gpsUblox.c **** 	uint16_t pDOP;
+  71:../src/gps/gpsUblox.c **** 	uint16_t tDOP;
+  72:../src/gps/gpsUblox.c **** 	uint16_t vDOP;
+  73:../src/gps/gpsUblox.c **** 	uint16_t hDOP;
+  74:../src/gps/gpsUblox.c **** 	uint16_t nDOP;
+  75:../src/gps/gpsUblox.c **** 	uint16_t eDOP;
+  76:../src/gps/gpsUblox.c **** };
+  77:../src/gps/gpsUblox.c **** 
+  78:../src/gps/gpsUblox.c **** struct ublox_NAV_SOL  // 01 06 (52)
+  79:../src/gps/gpsUblox.c **** {
+  80:../src/gps/gpsUblox.c **** 	uint32_t iTow;
+  81:../src/gps/gpsUblox.c ****     int32_t  fTow;
+  82:../src/gps/gpsUblox.c ****     int16_t  week;
+  83:../src/gps/gpsUblox.c ****     uint8_t  gspFix;
+  84:../src/gps/gpsUblox.c ****     uint8_t  flags;
+  85:../src/gps/gpsUblox.c ****     int32_t  ecefX;
+  86:../src/gps/gpsUblox.c ****     int32_t  ecefY;
+  87:../src/gps/gpsUblox.c ****     int32_t  ecefZ;
+  88:../src/gps/gpsUblox.c ****     int32_t  pAcc;
+  89:../src/gps/gpsUblox.c ****     int32_t  ecefVX;
+  90:../src/gps/gpsUblox.c ****     int32_t  ecefVY;
+  91:../src/gps/gpsUblox.c ****     int32_t  ecefVZ;
+  92:../src/gps/gpsUblox.c ****     int32_t  sAcc;
+  93:../src/gps/gpsUblox.c ****     uint16_t pDOP;
+  94:../src/gps/gpsUblox.c ****     uint8_t  res1;
+  95:../src/gps/gpsUblox.c ****     uint8_t  numSV;
+  96:../src/gps/gpsUblox.c ****     uint32_t res2;
+  97:../src/gps/gpsUblox.c **** };
+  98:../src/gps/gpsUblox.c **** 
+  99:../src/gps/gpsUblox.c **** struct ublox_NAV_VELNED  // 01 18 (36)
+ 100:../src/gps/gpsUblox.c **** {
+ 101:../src/gps/gpsUblox.c **** 	uint32_t iTow;
+ 102:../src/gps/gpsUblox.c ****     int32_t  velN;    // cm/s
+ 103:../src/gps/gpsUblox.c ****     int32_t  velE;    // cm/s
+ 104:../src/gps/gpsUblox.c ****     int32_t  velD;    // cm/s
+ 105:../src/gps/gpsUblox.c ****     uint32_t speed;   // cm/s
+ 106:../src/gps/gpsUblox.c ****     uint32_t gSpeed;  // cm/s
+ 107:../src/gps/gpsUblox.c ****     int32_t  heading; // dev 1e-5
+ 108:../src/gps/gpsUblox.c ****     uint32_t sAcc;    // cm/s
+ 109:../src/gps/gpsUblox.c ****     uint32_t cAcc;    // deg 1e-5
+ 110:../src/gps/gpsUblox.c **** };
+ 111:../src/gps/gpsUblox.c **** 
+ 112:../src/gps/gpsUblox.c **** struct ublox_NAV_TIMEUTC  // 01 33 (20)
+ 113:../src/gps/gpsUblox.c **** {
+ 114:../src/gps/gpsUblox.c ****     uint32_t iTOW;  // mSec
+ 115:../src/gps/gpsUblox.c ****     uint32_t tACC;  // nSec
+ 116:../src/gps/gpsUblox.c ****     int32_t  nano;  // nSec
+ 117:../src/gps/gpsUblox.c ****     uint16_t year;  // years
+ 118:../src/gps/gpsUblox.c ****     uint8_t  month; // months
+ 119:../src/gps/gpsUblox.c ****     uint8_t  day;   // days
+ 120:../src/gps/gpsUblox.c ****     uint8_t  hour;  // hours
+ 121:../src/gps/gpsUblox.c ****     uint8_t  min;   // minutes
+ 122:../src/gps/gpsUblox.c ****     uint8_t  sec;   // seconds
+ 123:../src/gps/gpsUblox.c ****     uint8_t  valid;
+ 124:../src/gps/gpsUblox.c **** };
+ 125:../src/gps/gpsUblox.c **** 
+ 126:../src/gps/gpsUblox.c **** union ublox_message
+ 127:../src/gps/gpsUblox.c **** {
+ 128:../src/gps/gpsUblox.c ****     struct ublox_NAV_POSLLH  nav_posllh;
+ 129:../src/gps/gpsUblox.c ****     struct ublox_NAV_STATUS  nav_status;
+ 130:../src/gps/gpsUblox.c ****     struct ublox_NAV_DOP     nav_dop;
+ 131:../src/gps/gpsUblox.c ****     struct ublox_NAV_VELNED  nav_velned;
+ 132:../src/gps/gpsUblox.c ****     struct ublox_NAV_SOL     nav_sol;
+ 133:../src/gps/gpsUblox.c ****     struct ublox_NAV_TIMEUTC nav_timeutc;
+ 134:../src/gps/gpsUblox.c ****     unsigned char raw[52];
+ 135:../src/gps/gpsUblox.c **** }   ubloxMessage;
+ 136:../src/gps/gpsUblox.c **** 
+ 137:../src/gps/gpsUblox.c **** uint8_t ubloxExpectedDataLength;
+ 138:../src/gps/gpsUblox.c **** uint8_t ubloxDataLength;
+ 139:../src/gps/gpsUblox.c **** uint8_t ubloxClass,ubloxId;
+ 140:../src/gps/gpsUblox.c **** uint8_t ubloxCKA,ubloxCKB;
+ 141:../src/gps/gpsUblox.c **** 
+ 142:../src/gps/gpsUblox.c **** ///////////////////////////////////////////////////////////////////////////////
+ 143:../src/gps/gpsUblox.c **** // Decode Data Parse
+ 144:../src/gps/gpsUblox.c **** ///////////////////////////////////////////////////////////////////////////////
+ 145:../src/gps/gpsUblox.c **** 
+ 146:../src/gps/gpsUblox.c **** void ubloxParseData()
+ 147:../src/gps/gpsUblox.c **** {
+  37              		.loc 1 147 0
+  38              		.cfi_startproc
+  39              		@ args = 0, pretend = 0, frame = 0
+  40              		@ frame_needed = 0, uses_anonymous_args = 0
+  41              		@ link register save eliminated.
+ 148:../src/gps/gpsUblox.c ****     if (ubloxClass == 1)         // NAV
+  42              		.loc 1 148 0
+  43 0000 40F20003 		movw	r3, #:lower16:ubloxClass
+  44 0004 C0F20003 		movt	r3, #:upper16:ubloxClass
+  45 0008 1B78     		ldrb	r3, [r3, #0]	@ zero_extendqisi2
+  46 000a 012B     		cmp	r3, #1
+  47 000c 40F03D81 		bne	.L1
+ 149:../src/gps/gpsUblox.c ****     {
+ 150:../src/gps/gpsUblox.c ****         if (ubloxId == 2)        // NAV:POSLLH
+  48              		.loc 1 150 0
+  49 0010 40F20003 		movw	r3, #:lower16:ubloxId
+  50 0014 C0F20003 		movt	r3, #:upper16:ubloxId
+  51 0018 1B78     		ldrb	r3, [r3, #0]	@ zero_extendqisi2
+  52 001a 022B     		cmp	r3, #2
+  53 001c 49D1     		bne	.L3
+ 151:../src/gps/gpsUblox.c ****         {
+ 152:../src/gps/gpsUblox.c ****             sensors.gpsLatitude  = (float)ubloxMessage.nav_posllh.lat    * 0.0000001f * D2R; // Rad
+  54              		.loc 1 152 0
+  55 001e 40F20003 		movw	r3, #:lower16:ubloxMessage
+  56 0022 C0F20003 		movt	r3, #:upper16:ubloxMessage
+  57 0026 9B68     		ldr	r3, [r3, #8]
+  58 0028 07EE903A 		fmsr	s15, r3	@ int
+  59 002c B8EEE77A 		fsitos	s14, s15
+  60 0030 DFED967A 		flds	s15, .L13
+  61 0034 67EE277A 		fmuls	s15, s14, s15
+  62 0038 9FED957A 		flds	s14, .L13+4
+  63 003c 67EE877A 		fmuls	s15, s15, s14
+  64 0040 9FED947A 		flds	s14, .L13+8
+  65 0044 C7EE877A 		fdivs	s15, s15, s14
+  66 0048 40F20003 		movw	r3, #:lower16:sensors
+  67 004c C0F20003 		movt	r3, #:upper16:sensors
+  68 0050 C3ED107A 		fsts	s15, [r3, #64]
+ 153:../src/gps/gpsUblox.c ****             sensors.gpsLongitude = (float)ubloxMessage.nav_posllh.lon    * 0.0000001f * D2R; // Rad
+  69              		.loc 1 153 0
+  70 0054 40F20003 		movw	r3, #:lower16:ubloxMessage
+  71 0058 C0F20003 		movt	r3, #:upper16:ubloxMessage
+  72 005c 5B68     		ldr	r3, [r3, #4]
+  73 005e 07EE903A 		fmsr	s15, r3	@ int
+  74 0062 B8EEE77A 		fsitos	s14, s15
+  75 0066 DFED897A 		flds	s15, .L13
+  76 006a 67EE277A 		fmuls	s15, s14, s15
+  77 006e 9FED887A 		flds	s14, .L13+4
+  78 0072 67EE877A 		fmuls	s15, s15, s14
+  79 0076 9FED877A 		flds	s14, .L13+8
+  80 007a C7EE877A 		fdivs	s15, s15, s14
+  81 007e 40F20003 		movw	r3, #:lower16:sensors
+  82 0082 C0F20003 		movt	r3, #:upper16:sensors
+  83 0086 C3ED117A 		fsts	s15, [r3, #68]
+ 154:../src/gps/gpsUblox.c ****             sensors.gpsAltitude  = (float)ubloxMessage.nav_posllh.height * 0.01f;            // Met
+  84              		.loc 1 154 0
+  85 008a 40F20003 		movw	r3, #:lower16:ubloxMessage
+  86 008e C0F20003 		movt	r3, #:upper16:ubloxMessage
+  87 0092 DB68     		ldr	r3, [r3, #12]
+  88 0094 07EE903A 		fmsr	s15, r3	@ int
+  89 0098 B8EEE77A 		fsitos	s14, s15
+  90 009c DFED7E7A 		flds	s15, .L13+12
+  91 00a0 67EE277A 		fmuls	s15, s14, s15
+  92 00a4 40F20003 		movw	r3, #:lower16:sensors
+  93 00a8 C0F20003 		movt	r3, #:upper16:sensors
+  94 00ac C3ED127A 		fsts	s15, [r3, #72]
+  95 00b0 EBE0     		b	.L1
+  96              	.L3:
+ 155:../src/gps/gpsUblox.c ****         }
+ 156:../src/gps/gpsUblox.c ****         else if (ubloxId == 3)   // NAV:STATUS
+  97              		.loc 1 156 0
+  98 00b2 40F20003 		movw	r3, #:lower16:ubloxId
+  99 00b6 C0F20003 		movt	r3, #:upper16:ubloxId
+ 100 00ba 1B78     		ldrb	r3, [r3, #0]	@ zero_extendqisi2
+ 101 00bc 032B     		cmp	r3, #3
+ 102 00be 25D1     		bne	.L4
+ 157:../src/gps/gpsUblox.c ****         {
+ 158:../src/gps/gpsUblox.c ****             switch (ubloxMessage.nav_status.gpsFix)
+ 103              		.loc 1 158 0
+ 104 00c0 40F20003 		movw	r3, #:lower16:ubloxMessage
+ 105 00c4 C0F20003 		movt	r3, #:upper16:ubloxMessage
+ 106 00c8 1B79     		ldrb	r3, [r3, #4]	@ zero_extendqisi2
+ 107 00ca 022B     		cmp	r3, #2
+ 108 00cc 02D0     		beq	.L6
+ 109 00ce 032B     		cmp	r3, #3
+ 110 00d0 09D0     		beq	.L7
+ 111 00d2 12E0     		b	.L12
+ 112              	.L6:
+ 159:../src/gps/gpsUblox.c ****             {
+ 160:../src/gps/gpsUblox.c ****                 case 2:
+ 161:../src/gps/gpsUblox.c ****                     sensors.gpsFix = FIX_2D;
+ 113              		.loc 1 161 0
+ 114 00d4 40F20003 		movw	r3, #:lower16:sensors
+ 115 00d8 C0F20003 		movt	r3, #:upper16:sensors
+ 116 00dc 4FF00202 		mov	r2, #2
+ 117 00e0 83F85520 		strb	r2, [r3, #85]
+ 162:../src/gps/gpsUblox.c ****                     break;
+ 118              		.loc 1 162 0
+ 119 00e4 D1E0     		b	.L1
+ 120              	.L7:
+ 163:../src/gps/gpsUblox.c **** 
+ 164:../src/gps/gpsUblox.c ****                 case 3:
+ 165:../src/gps/gpsUblox.c ****                     sensors.gpsFix = FIX_3D;
+ 121              		.loc 1 165 0
+ 122 00e6 40F20003 		movw	r3, #:lower16:sensors
+ 123 00ea C0F20003 		movt	r3, #:upper16:sensors
+ 124 00ee 4FF00302 		mov	r2, #3
+ 125 00f2 83F85520 		strb	r2, [r3, #85]
+ 166:../src/gps/gpsUblox.c ****                     break;
+ 126              		.loc 1 166 0
+ 127 00f6 00BF     		nop
+ 128 00f8 C7E0     		b	.L1
+ 129              	.L12:
+ 167:../src/gps/gpsUblox.c **** 
+ 168:../src/gps/gpsUblox.c ****                 default:
+ 169:../src/gps/gpsUblox.c ****                     sensors.gpsFix = FIX_NONE;
+ 130              		.loc 1 169 0
+ 131 00fa 40F20003 		movw	r3, #:lower16:sensors
+ 132 00fe C0F20003 		movt	r3, #:upper16:sensors
+ 133 0102 4FF00102 		mov	r2, #1
+ 134 0106 83F85520 		strb	r2, [r3, #85]
+ 170:../src/gps/gpsUblox.c ****                     break;
+ 135              		.loc 1 170 0
+ 136 010a BEE0     		b	.L1
+ 137              	.L4:
+ 171:../src/gps/gpsUblox.c ****             }
+ 172:../src/gps/gpsUblox.c ****         }
+ 173:../src/gps/gpsUblox.c ****         else if (ubloxId == 4)   // NAV:DOP
+ 138              		.loc 1 173 0
+ 139 010c 40F20003 		movw	r3, #:lower16:ubloxId
+ 140 0110 C0F20003 		movt	r3, #:upper16:ubloxId
+ 141 0114 1B78     		ldrb	r3, [r3, #0]	@ zero_extendqisi2
+ 142 0116 042B     		cmp	r3, #4
+ 143 0118 13D1     		bne	.L9
+ 174:../src/gps/gpsUblox.c ****         {
+ 175:../src/gps/gpsUblox.c **** 		    sensors.gpsHdop    = (float)ubloxMessage.nav_dop.hDOP * 0.01f;
+ 144              		.loc 1 175 0
+ 145 011a 40F20003 		movw	r3, #:lower16:ubloxMessage
+ 146 011e C0F20003 		movt	r3, #:upper16:ubloxMessage
+ 147 0122 9B89     		ldrh	r3, [r3, #12]
+ 148 0124 07EE903A 		fmsr	s15, r3	@ int
+ 149 0128 B8EE677A 		fuitos	s14, s15
+ 150 012c DFED5A7A 		flds	s15, .L13+12
+ 151 0130 67EE277A 		fmuls	s15, s14, s15
+ 152 0134 40F20003 		movw	r3, #:lower16:sensors
+ 153 0138 C0F20003 		movt	r3, #:upper16:sensors
+ 154 013c C3ED187A 		fsts	s15, [r3, #96]
+ 155 0140 A3E0     		b	.L1
+ 156              	.L9:
+ 176:../src/gps/gpsUblox.c **** 		}
+ 177:../src/gps/gpsUblox.c **** 		else if (ubloxId == 6)   // NAV:SOL
+ 157              		.loc 1 177 0
+ 158 0142 40F20003 		movw	r3, #:lower16:ubloxId
+ 159 0146 C0F20003 		movt	r3, #:upper16:ubloxId
+ 160 014a 1B78     		ldrb	r3, [r3, #0]	@ zero_extendqisi2
+ 161 014c 062B     		cmp	r3, #6
+ 162 014e 0CD1     		bne	.L10
+ 178:../src/gps/gpsUblox.c ****         {
+ 179:../src/gps/gpsUblox.c ****             sensors.gpsNumSats = ubloxMessage.nav_sol.numSV;
+ 163              		.loc 1 179 0
+ 164 0150 40F20003 		movw	r3, #:lower16:ubloxMessage
+ 165 0154 C0F20003 		movt	r3, #:upper16:ubloxMessage
+ 166 0158 93F82F20 		ldrb	r2, [r3, #47]	@ zero_extendqisi2
+ 167 015c 40F20003 		movw	r3, #:lower16:sensors
+ 168 0160 C0F20003 		movt	r3, #:upper16:sensors
+ 169 0164 83F85420 		strb	r2, [r3, #84]
+ 170 0168 8FE0     		b	.L1
+ 171              	.L10:
+ 180:../src/gps/gpsUblox.c ****         }
+ 181:../src/gps/gpsUblox.c ****         else if (ubloxId == 18)  // NAV:VELNED
+ 172              		.loc 1 181 0
+ 173 016a 40F20003 		movw	r3, #:lower16:ubloxId
+ 174 016e C0F20003 		movt	r3, #:upper16:ubloxId
+ 175 0172 1B78     		ldrb	r3, [r3, #0]	@ zero_extendqisi2
+ 176 0174 122B     		cmp	r3, #18
+ 177 0176 2ED1     		bne	.L11
+ 182:../src/gps/gpsUblox.c ****         {
+ 183:../src/gps/gpsUblox.c ****             sensors.gpsGroundTrack = (float)ubloxMessage.nav_velned.heading * 0.01f * D2R;    // Ra
+ 178              		.loc 1 183 0
+ 179 0178 40F20003 		movw	r3, #:lower16:ubloxMessage
+ 180 017c C0F20003 		movt	r3, #:upper16:ubloxMessage
+ 181 0180 9B69     		ldr	r3, [r3, #24]
+ 182 0182 07EE903A 		fmsr	s15, r3	@ int
+ 183 0186 B8EEE77A 		fsitos	s14, s15
+ 184 018a DFED437A 		flds	s15, .L13+12
+ 185 018e 67EE277A 		fmuls	s15, s14, s15
+ 186 0192 9FED3F7A 		flds	s14, .L13+4
+ 187 0196 67EE877A 		fmuls	s15, s15, s14
+ 188 019a 9FED3E7A 		flds	s14, .L13+8
+ 189 019e C7EE877A 		fdivs	s15, s15, s14
+ 190 01a2 40F20003 		movw	r3, #:lower16:sensors
+ 191 01a6 C0F20003 		movt	r3, #:upper16:sensors
+ 192 01aa C3ED147A 		fsts	s15, [r3, #80]
+ 184:../src/gps/gpsUblox.c ****             sensors.gpsGroundSpeed = (float)ubloxMessage.nav_velned.gSpeed  * 0.01f;          // Me
+ 193              		.loc 1 184 0
+ 194 01ae 40F20003 		movw	r3, #:lower16:ubloxMessage
+ 195 01b2 C0F20003 		movt	r3, #:upper16:ubloxMessage
+ 196 01b6 5B69     		ldr	r3, [r3, #20]
+ 197 01b8 07EE903A 		fmsr	s15, r3	@ int
+ 198 01bc B8EE677A 		fuitos	s14, s15
+ 199 01c0 DFED357A 		flds	s15, .L13+12
+ 200 01c4 67EE277A 		fmuls	s15, s14, s15
+ 201 01c8 40F20003 		movw	r3, #:lower16:sensors
+ 202 01cc C0F20003 		movt	r3, #:upper16:sensors
+ 203 01d0 C3ED137A 		fsts	s15, [r3, #76]
+ 204 01d4 59E0     		b	.L1
+ 205              	.L11:
+ 185:../src/gps/gpsUblox.c ****         }
+ 186:../src/gps/gpsUblox.c ****         else if (ubloxId == 33)  // NAV:TIMEUTC
+ 206              		.loc 1 186 0
+ 207 01d6 40F20003 		movw	r3, #:lower16:ubloxId
+ 208 01da C0F20003 		movt	r3, #:upper16:ubloxId
+ 209 01de 1B78     		ldrb	r3, [r3, #0]	@ zero_extendqisi2
+ 210 01e0 212B     		cmp	r3, #33
+ 211 01e2 52D1     		bne	.L1
+ 187:../src/gps/gpsUblox.c ****         {
+ 188:../src/gps/gpsUblox.c **** 			sensors.gpsTime = (float)(ubloxMessage.nav_timeutc.hour * 10000 +
+ 212              		.loc 1 188 0
+ 213 01e4 40F20003 		movw	r3, #:lower16:ubloxMessage
+ 214 01e8 C0F20003 		movt	r3, #:upper16:ubloxMessage
+ 215 01ec 1B7C     		ldrb	r3, [r3, #16]	@ zero_extendqisi2
+ 216 01ee 42F21072 		movw	r2, #10000
+ 217 01f2 02FB03F2 		mul	r2, r2, r3
+ 189:../src/gps/gpsUblox.c **** 			                          ubloxMessage.nav_timeutc.min  * 100   +
+ 218              		.loc 1 189 0
+ 219 01f6 40F20003 		movw	r3, #:lower16:ubloxMessage
+ 220 01fa C0F20003 		movt	r3, #:upper16:ubloxMessage
+ 221 01fe 5B7C     		ldrb	r3, [r3, #17]	@ zero_extendqisi2
+ 222 0200 4FF06401 		mov	r1, #100
+ 223 0204 01FB03F3 		mul	r3, r1, r3
+ 188:../src/gps/gpsUblox.c **** 			sensors.gpsTime = (float)(ubloxMessage.nav_timeutc.hour * 10000 +
+ 224              		.loc 1 188 0
+ 225 0208 D218     		adds	r2, r2, r3
+ 190:../src/gps/gpsUblox.c **** 			                          ubloxMessage.nav_timeutc.sec        ) +
+ 226              		.loc 1 190 0
+ 227 020a 40F20003 		movw	r3, #:lower16:ubloxMessage
+ 228 020e C0F20003 		movt	r3, #:upper16:ubloxMessage
+ 229 0212 9B7C     		ldrb	r3, [r3, #18]	@ zero_extendqisi2
+ 189:../src/gps/gpsUblox.c **** 			                          ubloxMessage.nav_timeutc.min  * 100   +
+ 230              		.loc 1 189 0
+ 231 0214 D318     		adds	r3, r2, r3
+ 188:../src/gps/gpsUblox.c **** 			sensors.gpsTime = (float)(ubloxMessage.nav_timeutc.hour * 10000 +
+ 232              		.loc 1 188 0
+ 233 0216 07EE903A 		fmsr	s15, r3	@ int
+ 234 021a B8EEE77A 		fsitos	s14, s15
+ 191:../src/gps/gpsUblox.c **** 			                  (float)(ubloxMessage.nav_timeutc.nano) * 0.000000001f;
+ 235              		.loc 1 191 0
+ 236 021e 40F20003 		movw	r3, #:lower16:ubloxMessage
+ 237 0222 C0F20003 		movt	r3, #:upper16:ubloxMessage
+ 238 0226 9B68     		ldr	r3, [r3, #8]
+ 239 0228 07EE903A 		fmsr	s15, r3	@ int
+ 240 022c F8EEE76A 		fsitos	s13, s15
+ 241 0230 DFED1A7A 		flds	s15, .L13+16
+ 242 0234 66EEA77A 		fmuls	s15, s13, s15
+ 190:../src/gps/gpsUblox.c **** 			                          ubloxMessage.nav_timeutc.sec        ) +
+ 243              		.loc 1 190 0
+ 244 0238 77EE277A 		fadds	s15, s14, s15
+ 188:../src/gps/gpsUblox.c **** 			sensors.gpsTime = (float)(ubloxMessage.nav_timeutc.hour * 10000 +
+ 245              		.loc 1 188 0
+ 246 023c 40F20003 		movw	r3, #:lower16:sensors
+ 247 0240 C0F20003 		movt	r3, #:upper16:sensors
+ 248 0244 C3ED177A 		fsts	s15, [r3, #92]
+ 192:../src/gps/gpsUblox.c **** 
+ 193:../src/gps/gpsUblox.c **** 			sensors.gpsDate = ubloxMessage.nav_timeutc.day   * 10000 +
+ 249              		.loc 1 193 0
+ 250 0248 40F20003 		movw	r3, #:lower16:ubloxMessage
+ 251 024c C0F20003 		movt	r3, #:upper16:ubloxMessage
+ 252 0250 DB7B     		ldrb	r3, [r3, #15]	@ zero_extendqisi2
+ 253 0252 42F21072 		movw	r2, #10000
+ 254 0256 02FB03F2 		mul	r2, r2, r3
+ 194:../src/gps/gpsUblox.c **** 			                  ubloxMessage.nav_timeutc.month * 100   +
+ 255              		.loc 1 194 0
+ 256 025a 40F20003 		movw	r3, #:lower16:ubloxMessage
+ 257 025e C0F20003 		movt	r3, #:upper16:ubloxMessage
+ 258 0262 9B7B     		ldrb	r3, [r3, #14]	@ zero_extendqisi2
+ 259 0264 4FF06401 		mov	r1, #100
+ 260 0268 01FB03F3 		mul	r3, r1, r3
+ 193:../src/gps/gpsUblox.c **** 			sensors.gpsDate = ubloxMessage.nav_timeutc.day   * 10000 +
+ 261              		.loc 1 193 0
+ 262 026c D218     		adds	r2, r2, r3
+ 195:../src/gps/gpsUblox.c **** 			                  ubloxMessage.nav_timeutc.year  - 2000;
+ 263              		.loc 1 195 0
+ 264 026e 40F20003 		movw	r3, #:lower16:ubloxMessage
+ 265 0272 C0F20003 		movt	r3, #:upper16:ubloxMessage
+ 266 0276 9B89     		ldrh	r3, [r3, #12]
+ 194:../src/gps/gpsUblox.c **** 			                  ubloxMessage.nav_timeutc.month * 100   +
+ 267              		.loc 1 194 0
+ 268 0278 D318     		adds	r3, r2, r3
+ 269              		.loc 1 195 0
+ 270 027a A3F5FA63 		sub	r3, r3, #2000
+ 193:../src/gps/gpsUblox.c **** 			sensors.gpsDate = ubloxMessage.nav_timeutc.day   * 10000 +
+ 271              		.loc 1 193 0
+ 272 027e 1A46     		mov	r2, r3
+ 273 0280 40F20003 		movw	r3, #:lower16:sensors
+ 274 0284 C0F20003 		movt	r3, #:upper16:sensors
+ 275 0288 9A65     		str	r2, [r3, #88]
+ 276              	.L1:
+ 196:../src/gps/gpsUblox.c **** 		}
+ 197:../src/gps/gpsUblox.c ****     }
+ 198:../src/gps/gpsUblox.c **** }
+ 277              		.loc 1 198 0
+ 278 028a 7047     		bx	lr
+ 279              	.L14:
+ 280              		.align	2
+ 281              	.L13:
+ 282 028c 95BFD633 		.word	869711765
+ 283 0290 DB0F4940 		.word	1078530011
+ 284 0294 00003443 		.word	1127481344
+ 285 0298 0AD7233C 		.word	1008981770
+ 286 029c 5F708930 		.word	814313567
+ 287              		.cfi_endproc
+ 288              	.LFE111:
+ 290              		.align	2
+ 291              		.global	decodeUbloxMsg
+ 292              		.thumb
+ 293              		.thumb_func
+ 295              	decodeUbloxMsg:
+ 296              	.LFB112:
+ 199:../src/gps/gpsUblox.c **** 
+ 200:../src/gps/gpsUblox.c **** ///////////////////////////////////////////////////////////////////////////////
+ 201:../src/gps/gpsUblox.c **** // Decode UBLOX Message
+ 202:../src/gps/gpsUblox.c **** ///////////////////////////////////////////////////////////////////////////////
+ 203:../src/gps/gpsUblox.c **** 
+ 204:../src/gps/gpsUblox.c **** uint8_t decodeUbloxMsg(void)
+ 205:../src/gps/gpsUblox.c **** {
+ 297              		.loc 1 205 0
+ 298              		.cfi_startproc
+ 299              		@ args = 0, pretend = 0, frame = 8
+ 300              		@ frame_needed = 0, uses_anonymous_args = 0
+ 301 02a0 00B5     		push	{lr}
+ 302              	.LCFI0:
+ 303              		.cfi_def_cfa_offset 4
+ 304              		.cfi_offset 14, -4
+ 305 02a2 83B0     		sub	sp, sp, #12
+ 306              	.LCFI1:
+ 307              		.cfi_def_cfa_offset 16
+ 206:../src/gps/gpsUblox.c ****     char     data;
+ 207:../src/gps/gpsUblox.c ****     uint8_t  parsed = false;
+ 308              		.loc 1 207 0
+ 309 02a4 4FF00003 		mov	r3, #0
+ 310 02a8 8DF80730 		strb	r3, [sp, #7]
+ 208:../src/gps/gpsUblox.c ****     uint16_t i;
+ 209:../src/gps/gpsUblox.c ****     uint16_t numberOfChars;
+ 210:../src/gps/gpsUblox.c **** 
+ 211:../src/gps/gpsUblox.c ****     numberOfChars = gpsNumCharsAvailable();
+ 311              		.loc 1 211 0
+ 312 02ac FFF7FEFF 		bl	gpsNumCharsAvailable
+ 313 02b0 0346     		mov	r3, r0
+ 314 02b2 ADF80230 		strh	r3, [sp, #2]	@ movhi
+ 212:../src/gps/gpsUblox.c **** 
+ 213:../src/gps/gpsUblox.c ****     for (i = 0; i < numberOfChars; i++)
+ 315              		.loc 1 213 0
+ 316 02b6 4FF00003 		mov	r3, #0
+ 317 02ba ADF80430 		strh	r3, [sp, #4]	@ movhi
+ 318 02be CCE1     		b	.L16
+ 319              	.L39:
+ 214:../src/gps/gpsUblox.c ****     {
+ 215:../src/gps/gpsUblox.c **** 		data = gpsRead();
+ 320              		.loc 1 215 0
+ 321 02c0 FFF7FEFF 		bl	gpsRead
+ 322 02c4 0346     		mov	r3, r0
+ 323 02c6 8DF80130 		strb	r3, [sp, #1]
+ 216:../src/gps/gpsUblox.c **** 
+ 217:../src/gps/gpsUblox.c ****         switch (ubloxProcessDataState)
+ 324              		.loc 1 217 0
+ 325 02ca 40F20003 		movw	r3, #:lower16:ubloxProcessDataState
+ 326 02ce C0F20003 		movt	r3, #:upper16:ubloxProcessDataState
+ 327 02d2 1B78     		ldrb	r3, [r3, #0]	@ zero_extendqisi2
+ 328 02d4 082B     		cmp	r3, #8
+ 329 02d6 00F2BA81 		bhi	.L17
+ 330 02da 01A2     		adr	r2, .L27
+ 331 02dc 52F823F0 		ldr	pc, [r2, r3, lsl #2]
+ 332              		.align	2
+ 333              	.L27:
+ 334 02e0 05030000 		.word	.L18+1
+ 335 02e4 1F030000 		.word	.L19+1
+ 336 02e8 47030000 		.word	.L20+1
+ 337 02ec 81030000 		.word	.L21+1
+ 338 02f0 DD030000 		.word	.L22+1
+ 339 02f4 39040000 		.word	.L23+1
+ 340 02f8 C7040000 		.word	.L24+1
+ 341 02fc 65050000 		.word	.L25+1
+ 342 0300 97050000 		.word	.L26+1
+ 343              	.L18:
+ 218:../src/gps/gpsUblox.c ****         {
+ 219:../src/gps/gpsUblox.c ****             ///////////////////////////
+ 220:../src/gps/gpsUblox.c **** 
+ 221:../src/gps/gpsUblox.c ****             case WAIT_SYNC1:
+ 222:../src/gps/gpsUblox.c ****                 if (data == 0xb5)
+ 344              		.loc 1 222 0
+ 345 0304 9DF80130 		ldrb	r3, [sp, #1]	@ zero_extendqisi2
+ 346 0308 B52B     		cmp	r3, #181
+ 347 030a 40F09D81 		bne	.L40
+ 223:../src/gps/gpsUblox.c ****                     ubloxProcessDataState = WAIT_SYNC2;
+ 348              		.loc 1 223 0
+ 349 030e 40F20003 		movw	r3, #:lower16:ubloxProcessDataState
+ 350 0312 C0F20003 		movt	r3, #:upper16:ubloxProcessDataState
+ 351 0316 4FF00102 		mov	r2, #1
+ 352 031a 1A70     		strb	r2, [r3, #0]
+ 224:../src/gps/gpsUblox.c **** 
+ 225:../src/gps/gpsUblox.c ****                 break;
+ 353              		.loc 1 225 0
+ 354 031c 94E1     		b	.L40
+ 355              	.L19:
+ 226:../src/gps/gpsUblox.c **** 
+ 227:../src/gps/gpsUblox.c ****             ///////////////////////////
+ 228:../src/gps/gpsUblox.c **** 
+ 229:../src/gps/gpsUblox.c ****             case WAIT_SYNC2:
+ 230:../src/gps/gpsUblox.c ****                 if (data == 0x62)
+ 356              		.loc 1 230 0
+ 357 031e 9DF80130 		ldrb	r3, [sp, #1]	@ zero_extendqisi2
+ 358 0322 622B     		cmp	r3, #98
+ 359 0324 07D1     		bne	.L29
+ 231:../src/gps/gpsUblox.c ****                     ubloxProcessDataState = GET_CLASS;
+ 360              		.loc 1 231 0
+ 361 0326 40F20003 		movw	r3, #:lower16:ubloxProcessDataState
+ 362 032a C0F20003 		movt	r3, #:upper16:ubloxProcessDataState
+ 363 032e 4FF00202 		mov	r2, #2
+ 364 0332 1A70     		strb	r2, [r3, #0]
+ 232:../src/gps/gpsUblox.c ****                 else
+ 233:../src/gps/gpsUblox.c ****                     ubloxProcessDataState = WAIT_SYNC1;
+ 234:../src/gps/gpsUblox.c **** 
+ 235:../src/gps/gpsUblox.c ****                 break;
+ 365              		.loc 1 235 0
+ 366 0334 8BE1     		b	.L17
+ 367              	.L29:
+ 233:../src/gps/gpsUblox.c ****                     ubloxProcessDataState = WAIT_SYNC1;
+ 368              		.loc 1 233 0
+ 369 0336 40F20003 		movw	r3, #:lower16:ubloxProcessDataState
+ 370 033a C0F20003 		movt	r3, #:upper16:ubloxProcessDataState
+ 371 033e 4FF00002 		mov	r2, #0
+ 372 0342 1A70     		strb	r2, [r3, #0]
+ 373              		.loc 1 235 0
+ 374 0344 83E1     		b	.L17
+ 375              	.L20:
+ 236:../src/gps/gpsUblox.c **** 
+ 237:../src/gps/gpsUblox.c ****             ///////////////////////////
+ 238:../src/gps/gpsUblox.c **** 
+ 239:../src/gps/gpsUblox.c ****             case GET_CLASS:
+ 240:../src/gps/gpsUblox.c ****                 ubloxClass            = data;
+ 376              		.loc 1 240 0
+ 377 0346 40F20003 		movw	r3, #:lower16:ubloxClass
+ 378 034a C0F20003 		movt	r3, #:upper16:ubloxClass
+ 379 034e 9DF80120 		ldrb	r2, [sp, #1]
+ 380 0352 1A70     		strb	r2, [r3, #0]
+ 241:../src/gps/gpsUblox.c ****                 ubloxCKA              = data;
+ 381              		.loc 1 241 0
+ 382 0354 40F20003 		movw	r3, #:lower16:ubloxCKA
+ 383 0358 C0F20003 		movt	r3, #:upper16:ubloxCKA
+ 384 035c 9DF80120 		ldrb	r2, [sp, #1]
+ 385 0360 1A70     		strb	r2, [r3, #0]
+ 242:../src/gps/gpsUblox.c ****                 ubloxCKB              = data;
+ 386              		.loc 1 242 0
+ 387 0362 40F20003 		movw	r3, #:lower16:ubloxCKB
+ 388 0366 C0F20003 		movt	r3, #:upper16:ubloxCKB
+ 389 036a 9DF80120 		ldrb	r2, [sp, #1]
+ 390 036e 1A70     		strb	r2, [r3, #0]
+ 243:../src/gps/gpsUblox.c ****                 ubloxProcessDataState = GET_ID;
+ 391              		.loc 1 243 0
+ 392 0370 40F20003 		movw	r3, #:lower16:ubloxProcessDataState
+ 393 0374 C0F20003 		movt	r3, #:upper16:ubloxProcessDataState
+ 394 0378 4FF00302 		mov	r2, #3
+ 395 037c 1A70     		strb	r2, [r3, #0]
+ 244:../src/gps/gpsUblox.c **** 
+ 245:../src/gps/gpsUblox.c ****                 break;
+ 396              		.loc 1 245 0
+ 397 037e 66E1     		b	.L17
+ 398              	.L21:
+ 246:../src/gps/gpsUblox.c **** 
+ 247:../src/gps/gpsUblox.c ****             ///////////////////////////
+ 248:../src/gps/gpsUblox.c **** 
+ 249:../src/gps/gpsUblox.c ****             case GET_ID:
+ 250:../src/gps/gpsUblox.c ****                 ubloxId               = data;
+ 399              		.loc 1 250 0
+ 400 0380 40F20003 		movw	r3, #:lower16:ubloxId
+ 401 0384 C0F20003 		movt	r3, #:upper16:ubloxId
+ 402 0388 9DF80120 		ldrb	r2, [sp, #1]
+ 403 038c 1A70     		strb	r2, [r3, #0]
+ 251:../src/gps/gpsUblox.c ****                 ubloxCKA             += data;
+ 404              		.loc 1 251 0
+ 405 038e 40F20003 		movw	r3, #:lower16:ubloxCKA
+ 406 0392 C0F20003 		movt	r3, #:upper16:ubloxCKA
+ 407 0396 1A78     		ldrb	r2, [r3, #0]	@ zero_extendqisi2
+ 408 0398 9DF80130 		ldrb	r3, [sp, #1]
+ 409 039c D318     		adds	r3, r2, r3
+ 410 039e DAB2     		uxtb	r2, r3
+ 411 03a0 40F20003 		movw	r3, #:lower16:ubloxCKA
+ 412 03a4 C0F20003 		movt	r3, #:upper16:ubloxCKA
+ 413 03a8 1A70     		strb	r2, [r3, #0]
+ 252:../src/gps/gpsUblox.c ****                 ubloxCKB             += ubloxCKA;
+ 414              		.loc 1 252 0
+ 415 03aa 40F20003 		movw	r3, #:lower16:ubloxCKB
+ 416 03ae C0F20003 		movt	r3, #:upper16:ubloxCKB
+ 417 03b2 1A78     		ldrb	r2, [r3, #0]	@ zero_extendqisi2
+ 418 03b4 40F20003 		movw	r3, #:lower16:ubloxCKA
+ 419 03b8 C0F20003 		movt	r3, #:upper16:ubloxCKA
+ 420 03bc 1B78     		ldrb	r3, [r3, #0]	@ zero_extendqisi2
+ 421 03be D318     		adds	r3, r2, r3
+ 422 03c0 DAB2     		uxtb	r2, r3
+ 423 03c2 40F20003 		movw	r3, #:lower16:ubloxCKB
+ 424 03c6 C0F20003 		movt	r3, #:upper16:ubloxCKB
+ 425 03ca 1A70     		strb	r2, [r3, #0]
+ 253:../src/gps/gpsUblox.c ****                 ubloxProcessDataState = GET_LL;
+ 426              		.loc 1 253 0
+ 427 03cc 40F20003 		movw	r3, #:lower16:ubloxProcessDataState
+ 428 03d0 C0F20003 		movt	r3, #:upper16:ubloxProcessDataState
+ 429 03d4 4FF00402 		mov	r2, #4
+ 430 03d8 1A70     		strb	r2, [r3, #0]
+ 254:../src/gps/gpsUblox.c **** 
+ 255:../src/gps/gpsUblox.c ****                 break;
+ 431              		.loc 1 255 0
+ 432 03da 38E1     		b	.L17
+ 433              	.L22:
+ 256:../src/gps/gpsUblox.c **** 
+ 257:../src/gps/gpsUblox.c ****             ///////////////////////////
+ 258:../src/gps/gpsUblox.c **** 
+ 259:../src/gps/gpsUblox.c ****             case GET_LL:
+ 260:../src/gps/gpsUblox.c ****                 ubloxExpectedDataLength = data;
+ 434              		.loc 1 260 0
+ 435 03dc 40F20003 		movw	r3, #:lower16:ubloxExpectedDataLength
+ 436 03e0 C0F20003 		movt	r3, #:upper16:ubloxExpectedDataLength
+ 437 03e4 9DF80120 		ldrb	r2, [sp, #1]
+ 438 03e8 1A70     		strb	r2, [r3, #0]
+ 261:../src/gps/gpsUblox.c ****                 ubloxCKA               += data;
+ 439              		.loc 1 261 0
+ 440 03ea 40F20003 		movw	r3, #:lower16:ubloxCKA
+ 441 03ee C0F20003 		movt	r3, #:upper16:ubloxCKA
+ 442 03f2 1A78     		ldrb	r2, [r3, #0]	@ zero_extendqisi2
+ 443 03f4 9DF80130 		ldrb	r3, [sp, #1]
+ 444 03f8 D318     		adds	r3, r2, r3
+ 445 03fa DAB2     		uxtb	r2, r3
+ 446 03fc 40F20003 		movw	r3, #:lower16:ubloxCKA
+ 447 0400 C0F20003 		movt	r3, #:upper16:ubloxCKA
+ 448 0404 1A70     		strb	r2, [r3, #0]
+ 262:../src/gps/gpsUblox.c ****                 ubloxCKB               += ubloxCKA;
+ 449              		.loc 1 262 0
+ 450 0406 40F20003 		movw	r3, #:lower16:ubloxCKB
+ 451 040a C0F20003 		movt	r3, #:upper16:ubloxCKB
+ 452 040e 1A78     		ldrb	r2, [r3, #0]	@ zero_extendqisi2
+ 453 0410 40F20003 		movw	r3, #:lower16:ubloxCKA
+ 454 0414 C0F20003 		movt	r3, #:upper16:ubloxCKA
+ 455 0418 1B78     		ldrb	r3, [r3, #0]	@ zero_extendqisi2
+ 456 041a D318     		adds	r3, r2, r3
+ 457 041c DAB2     		uxtb	r2, r3
+ 458 041e 40F20003 		movw	r3, #:lower16:ubloxCKB
+ 459 0422 C0F20003 		movt	r3, #:upper16:ubloxCKB
+ 460 0426 1A70     		strb	r2, [r3, #0]
+ 263:../src/gps/gpsUblox.c ****                 ubloxProcessDataState   = GET_LH;
+ 461              		.loc 1 263 0
+ 462 0428 40F20003 		movw	r3, #:lower16:ubloxProcessDataState
+ 463 042c C0F20003 		movt	r3, #:upper16:ubloxProcessDataState
+ 464 0430 4FF00502 		mov	r2, #5
+ 465 0434 1A70     		strb	r2, [r3, #0]
+ 264:../src/gps/gpsUblox.c **** 
+ 265:../src/gps/gpsUblox.c ****                 break;
+ 466              		.loc 1 265 0
+ 467 0436 0AE1     		b	.L17
+ 468              	.L23:
+ 266:../src/gps/gpsUblox.c **** 
+ 267:../src/gps/gpsUblox.c ****             ///////////////////////////
+ 268:../src/gps/gpsUblox.c **** 
+ 269:../src/gps/gpsUblox.c ****             case GET_LH:
+ 270:../src/gps/gpsUblox.c ****                 ubloxExpectedDataLength += data << 8;
+ 469              		.loc 1 270 0
+ 470 0438 40F20003 		movw	r3, #:lower16:ubloxExpectedDataLength
+ 471 043c C0F20003 		movt	r3, #:upper16:ubloxExpectedDataLength
+ 472 0440 1A78     		ldrb	r2, [r3, #0]	@ zero_extendqisi2
+ 473 0442 40F20003 		movw	r3, #:lower16:ubloxExpectedDataLength
+ 474 0446 C0F20003 		movt	r3, #:upper16:ubloxExpectedDataLength
+ 475 044a 1A70     		strb	r2, [r3, #0]
+ 271:../src/gps/gpsUblox.c ****                 ubloxDataLength          = 0;
+ 476              		.loc 1 271 0
+ 477 044c 40F20003 		movw	r3, #:lower16:ubloxDataLength
+ 478 0450 C0F20003 		movt	r3, #:upper16:ubloxDataLength
+ 479 0454 4FF00002 		mov	r2, #0
+ 480 0458 1A70     		strb	r2, [r3, #0]
+ 272:../src/gps/gpsUblox.c ****                 ubloxCKA                += data;
+ 481              		.loc 1 272 0
+ 482 045a 40F20003 		movw	r3, #:lower16:ubloxCKA
+ 483 045e C0F20003 		movt	r3, #:upper16:ubloxCKA
+ 484 0462 1A78     		ldrb	r2, [r3, #0]	@ zero_extendqisi2
+ 485 0464 9DF80130 		ldrb	r3, [sp, #1]
+ 486 0468 D318     		adds	r3, r2, r3
+ 487 046a DAB2     		uxtb	r2, r3
+ 488 046c 40F20003 		movw	r3, #:lower16:ubloxCKA
+ 489 0470 C0F20003 		movt	r3, #:upper16:ubloxCKA
+ 490 0474 1A70     		strb	r2, [r3, #0]
+ 273:../src/gps/gpsUblox.c ****                 ubloxCKB                += ubloxCKA;
+ 491              		.loc 1 273 0
+ 492 0476 40F20003 		movw	r3, #:lower16:ubloxCKB
+ 493 047a C0F20003 		movt	r3, #:upper16:ubloxCKB
+ 494 047e 1A78     		ldrb	r2, [r3, #0]	@ zero_extendqisi2
+ 495 0480 40F20003 		movw	r3, #:lower16:ubloxCKA
+ 496 0484 C0F20003 		movt	r3, #:upper16:ubloxCKA
+ 497 0488 1B78     		ldrb	r3, [r3, #0]	@ zero_extendqisi2
+ 498 048a D318     		adds	r3, r2, r3
+ 499 048c DAB2     		uxtb	r2, r3
+ 500 048e 40F20003 		movw	r3, #:lower16:ubloxCKB
+ 501 0492 C0F20003 		movt	r3, #:upper16:ubloxCKB
+ 502 0496 1A70     		strb	r2, [r3, #0]
+ 274:../src/gps/gpsUblox.c **** 
+ 275:../src/gps/gpsUblox.c ****                 if (ubloxExpectedDataLength <= sizeof(ubloxMessage))
+ 503              		.loc 1 275 0
+ 504 0498 40F20003 		movw	r3, #:lower16:ubloxExpectedDataLength
+ 505 049c C0F20003 		movt	r3, #:upper16:ubloxExpectedDataLength
+ 506 04a0 1B78     		ldrb	r3, [r3, #0]	@ zero_extendqisi2
+ 507 04a2 342B     		cmp	r3, #52
+ 508 04a4 07D8     		bhi	.L31
+ 276:../src/gps/gpsUblox.c ****                     ubloxProcessDataState = GET_DATA;
+ 509              		.loc 1 276 0
+ 510 04a6 40F20003 		movw	r3, #:lower16:ubloxProcessDataState
+ 511 04aa C0F20003 		movt	r3, #:upper16:ubloxProcessDataState
+ 512 04ae 4FF00602 		mov	r2, #6
+ 513 04b2 1A70     		strb	r2, [r3, #0]
+ 277:../src/gps/gpsUblox.c ****                 else
+ 278:../src/gps/gpsUblox.c ****                     // discard overlong message
+ 279:../src/gps/gpsUblox.c ****                     ubloxProcessDataState = WAIT_SYNC1;
+ 280:../src/gps/gpsUblox.c **** 
+ 281:../src/gps/gpsUblox.c ****                 break;
+ 514              		.loc 1 281 0
+ 515 04b4 CBE0     		b	.L17
+ 516              	.L31:
+ 279:../src/gps/gpsUblox.c ****                     ubloxProcessDataState = WAIT_SYNC1;
+ 517              		.loc 1 279 0
+ 518 04b6 40F20003 		movw	r3, #:lower16:ubloxProcessDataState
+ 519 04ba C0F20003 		movt	r3, #:upper16:ubloxProcessDataState
+ 520 04be 4FF00002 		mov	r2, #0
+ 521 04c2 1A70     		strb	r2, [r3, #0]
+ 522              		.loc 1 281 0
+ 523 04c4 C3E0     		b	.L17
+ 524              	.L24:
+ 282:../src/gps/gpsUblox.c **** 
+ 283:../src/gps/gpsUblox.c ****             ///////////////////////////
+ 284:../src/gps/gpsUblox.c **** 
+ 285:../src/gps/gpsUblox.c ****             case GET_DATA:
+ 286:../src/gps/gpsUblox.c ****                 ubloxCKA += data;
+ 525              		.loc 1 286 0
+ 526 04c6 40F20003 		movw	r3, #:lower16:ubloxCKA
+ 527 04ca C0F20003 		movt	r3, #:upper16:ubloxCKA
+ 528 04ce 1A78     		ldrb	r2, [r3, #0]	@ zero_extendqisi2
+ 529 04d0 9DF80130 		ldrb	r3, [sp, #1]
+ 530 04d4 D318     		adds	r3, r2, r3
+ 531 04d6 DAB2     		uxtb	r2, r3
+ 532 04d8 40F20003 		movw	r3, #:lower16:ubloxCKA
+ 533 04dc C0F20003 		movt	r3, #:upper16:ubloxCKA
+ 534 04e0 1A70     		strb	r2, [r3, #0]
+ 287:../src/gps/gpsUblox.c ****                 ubloxCKB += ubloxCKA;
+ 535              		.loc 1 287 0
+ 536 04e2 40F20003 		movw	r3, #:lower16:ubloxCKB
+ 537 04e6 C0F20003 		movt	r3, #:upper16:ubloxCKB
+ 538 04ea 1A78     		ldrb	r2, [r3, #0]	@ zero_extendqisi2
+ 539 04ec 40F20003 		movw	r3, #:lower16:ubloxCKA
+ 540 04f0 C0F20003 		movt	r3, #:upper16:ubloxCKA
+ 541 04f4 1B78     		ldrb	r3, [r3, #0]	@ zero_extendqisi2
+ 542 04f6 D318     		adds	r3, r2, r3
+ 543 04f8 DAB2     		uxtb	r2, r3
+ 544 04fa 40F20003 		movw	r3, #:lower16:ubloxCKB
+ 545 04fe C0F20003 		movt	r3, #:upper16:ubloxCKB
+ 546 0502 1A70     		strb	r2, [r3, #0]
+ 288:../src/gps/gpsUblox.c **** 
+ 289:../src/gps/gpsUblox.c ****                 // next will discard data if it exceeds our biggest known msg
+ 290:../src/gps/gpsUblox.c ****                 if (ubloxDataLength < sizeof(ubloxMessage))
+ 547              		.loc 1 290 0
+ 548 0504 40F20003 		movw	r3, #:lower16:ubloxDataLength
+ 549 0508 C0F20003 		movt	r3, #:upper16:ubloxDataLength
+ 550 050c 1B78     		ldrb	r3, [r3, #0]	@ zero_extendqisi2
+ 551 050e 332B     		cmp	r3, #51
+ 552 0510 14D8     		bhi	.L33
+ 291:../src/gps/gpsUblox.c ****                     ubloxMessage.raw[ubloxDataLength++] = data;
+ 553              		.loc 1 291 0
+ 554 0512 40F20003 		movw	r3, #:lower16:ubloxDataLength
+ 555 0516 C0F20003 		movt	r3, #:upper16:ubloxDataLength
+ 556 051a 1A78     		ldrb	r2, [r3, #0]	@ zero_extendqisi2
+ 557 051c 1146     		mov	r1, r2
+ 558 051e 40F20003 		movw	r3, #:lower16:ubloxMessage
+ 559 0522 C0F20003 		movt	r3, #:upper16:ubloxMessage
+ 560 0526 9DF80100 		ldrb	r0, [sp, #1]
+ 561 052a 5854     		strb	r0, [r3, r1]
+ 562 052c 02F10103 		add	r3, r2, #1
+ 563 0530 DAB2     		uxtb	r2, r3
+ 564 0532 40F20003 		movw	r3, #:lower16:ubloxDataLength
+ 565 0536 C0F20003 		movt	r3, #:upper16:ubloxDataLength
+ 566 053a 1A70     		strb	r2, [r3, #0]
+ 567              	.L33:
+ 292:../src/gps/gpsUblox.c **** 
+ 293:../src/gps/gpsUblox.c ****                 if (ubloxDataLength >= ubloxExpectedDataLength)
+ 568              		.loc 1 293 0
+ 569 053c 40F20003 		movw	r3, #:lower16:ubloxDataLength
+ 570 0540 C0F20003 		movt	r3, #:upper16:ubloxDataLength
+ 571 0544 1A78     		ldrb	r2, [r3, #0]	@ zero_extendqisi2
+ 572 0546 40F20003 		movw	r3, #:lower16:ubloxExpectedDataLength
+ 573 054a C0F20003 		movt	r3, #:upper16:ubloxExpectedDataLength
+ 574 054e 1B78     		ldrb	r3, [r3, #0]	@ zero_extendqisi2
+ 575 0550 9A42     		cmp	r2, r3
+ 576 0552 7BD3     		bcc	.L41
+ 294:../src/gps/gpsUblox.c ****                     ubloxProcessDataState = GET_CKA;
+ 577              		.loc 1 294 0
+ 578 0554 40F20003 		movw	r3, #:lower16:ubloxProcessDataState
+ 579 0558 C0F20003 		movt	r3, #:upper16:ubloxProcessDataState
+ 580 055c 4FF00702 		mov	r2, #7
+ 581 0560 1A70     		strb	r2, [r3, #0]
+ 295:../src/gps/gpsUblox.c **** 
+ 296:../src/gps/gpsUblox.c ****                 break;
+ 582              		.loc 1 296 0
+ 583 0562 73E0     		b	.L41
+ 584              	.L25:
+ 297:../src/gps/gpsUblox.c **** 
+ 298:../src/gps/gpsUblox.c ****             ///////////////////////////
+ 299:../src/gps/gpsUblox.c **** 
+ 300:../src/gps/gpsUblox.c ****             case GET_CKA:
+ 301:../src/gps/gpsUblox.c ****                 if (ubloxCKA != data)
+ 585              		.loc 1 301 0
+ 586 0564 40F20003 		movw	r3, #:lower16:ubloxCKA
+ 587 0568 C0F20003 		movt	r3, #:upper16:ubloxCKA
+ 588 056c 1B78     		ldrb	r3, [r3, #0]	@ zero_extendqisi2
+ 589 056e 9DF80120 		ldrb	r2, [sp, #1]	@ zero_extendqisi2
+ 590 0572 9A42     		cmp	r2, r3
+ 591 0574 07D0     		beq	.L35
+ 302:../src/gps/gpsUblox.c ****                     ubloxProcessDataState = WAIT_SYNC1;
+ 592              		.loc 1 302 0
+ 593 0576 40F20003 		movw	r3, #:lower16:ubloxProcessDataState
+ 594 057a C0F20003 		movt	r3, #:upper16:ubloxProcessDataState
+ 595 057e 4FF00002 		mov	r2, #0
+ 596 0582 1A70     		strb	r2, [r3, #0]
+ 303:../src/gps/gpsUblox.c **** 	            else
+ 304:../src/gps/gpsUblox.c ****                     ubloxProcessDataState = GET_CKB;
+ 305:../src/gps/gpsUblox.c **** 
+ 306:../src/gps/gpsUblox.c ****                 break;
+ 597              		.loc 1 306 0
+ 598 0584 63E0     		b	.L17
+ 599              	.L35:
+ 304:../src/gps/gpsUblox.c ****                     ubloxProcessDataState = GET_CKB;
+ 600              		.loc 1 304 0
+ 601 0586 40F20003 		movw	r3, #:lower16:ubloxProcessDataState
+ 602 058a C0F20003 		movt	r3, #:upper16:ubloxProcessDataState
+ 603 058e 4FF00802 		mov	r2, #8
+ 604 0592 1A70     		strb	r2, [r3, #0]
+ 605              		.loc 1 306 0
+ 606 0594 5BE0     		b	.L17
+ 607              	.L26:
+ 307:../src/gps/gpsUblox.c **** 
+ 308:../src/gps/gpsUblox.c ****             ///////////////////////////
+ 309:../src/gps/gpsUblox.c **** 
+ 310:../src/gps/gpsUblox.c ****             case GET_CKB:
+ 311:../src/gps/gpsUblox.c ****                 if (ubloxCKB == data)
+ 608              		.loc 1 311 0
+ 609 0596 40F20003 		movw	r3, #:lower16:ubloxCKB
+ 610 059a C0F20003 		movt	r3, #:upper16:ubloxCKB
+ 611 059e 1B78     		ldrb	r3, [r3, #0]	@ zero_extendqisi2
+ 612 05a0 9DF80120 		ldrb	r2, [sp, #1]	@ zero_extendqisi2
+ 613 05a4 9A42     		cmp	r2, r3
+ 614 05a6 06D1     		bne	.L37
+ 312:../src/gps/gpsUblox.c ****                 {
+ 313:../src/gps/gpsUblox.c ****                     parsed = 1;
+ 615              		.loc 1 313 0
+ 616 05a8 4FF00103 		mov	r3, #1
+ 617 05ac 8DF80730 		strb	r3, [sp, #7]
+ 314:../src/gps/gpsUblox.c ****                     ubloxParseData();
+ 618              		.loc 1 314 0
+ 619 05b0 FFF7FEFF 		bl	ubloxParseData
+ 620 05b4 40E0     		b	.L38
+ 621              	.L37:
+ 315:../src/gps/gpsUblox.c ****                 }
+ 316:../src/gps/gpsUblox.c **** 			    else
+ 317:../src/gps/gpsUblox.c **** 			    {
+ 318:../src/gps/gpsUblox.c **** 					sensors.gpsLatitude    = GPS_INVALID_ANGLE;
+ 622              		.loc 1 318 0
+ 623 05b6 40F20003 		movw	r3, #:lower16:sensors
+ 624 05ba C0F20003 		movt	r3, #:upper16:sensors
+ 625 05be 2D4A     		ldr	r2, .L42	@ float
+ 626 05c0 1A64     		str	r2, [r3, #64]	@ float
+ 319:../src/gps/gpsUblox.c **** 					sensors.gpsLongitude   = GPS_INVALID_ANGLE;
+ 627              		.loc 1 319 0
+ 628 05c2 40F20003 		movw	r3, #:lower16:sensors
+ 629 05c6 C0F20003 		movt	r3, #:upper16:sensors
+ 630 05ca 2A4A     		ldr	r2, .L42	@ float
+ 631 05cc 5A64     		str	r2, [r3, #68]	@ float
+ 320:../src/gps/gpsUblox.c **** 					sensors.gpsAltitude	   = GPS_INVALID_ALTITUDE;
+ 632              		.loc 1 320 0
+ 633 05ce 40F20003 		movw	r3, #:lower16:sensors
+ 634 05d2 C0F20003 		movt	r3, #:upper16:sensors
+ 635 05d6 284A     		ldr	r2, .L42+4	@ float
+ 636 05d8 9A64     		str	r2, [r3, #72]	@ float
+ 321:../src/gps/gpsUblox.c **** 					sensors.gpsGroundSpeed = GPS_INVALID_SPEED;
+ 637              		.loc 1 321 0
+ 638 05da 40F20003 		movw	r3, #:lower16:sensors
+ 639 05de C0F20003 		movt	r3, #:upper16:sensors
+ 640 05e2 254A     		ldr	r2, .L42+4	@ float
+ 641 05e4 DA64     		str	r2, [r3, #76]	@ float
+ 322:../src/gps/gpsUblox.c **** 					sensors.gpsGroundTrack = GPS_INVALID_ANGLE;
+ 642              		.loc 1 322 0
+ 643 05e6 40F20003 		movw	r3, #:lower16:sensors
+ 644 05ea C0F20003 		movt	r3, #:upper16:sensors
+ 645 05ee 214A     		ldr	r2, .L42	@ float
+ 646 05f0 1A65     		str	r2, [r3, #80]	@ float
+ 323:../src/gps/gpsUblox.c **** 					sensors.gpsNumSats     = GPS_INVALID_SATS;
+ 647              		.loc 1 323 0
+ 648 05f2 40F20003 		movw	r3, #:lower16:sensors
+ 649 05f6 C0F20003 		movt	r3, #:upper16:sensors
+ 650 05fa 4FF00002 		mov	r2, #0
+ 651 05fe 83F85420 		strb	r2, [r3, #84]
+ 324:../src/gps/gpsUblox.c **** 					sensors.gpsFix         = GPS_INVALID_FIX;
+ 652              		.loc 1 324 0
+ 653 0602 40F20003 		movw	r3, #:lower16:sensors
+ 654 0606 C0F20003 		movt	r3, #:upper16:sensors
+ 655 060a 4FF00002 		mov	r2, #0
+ 656 060e 83F85520 		strb	r2, [r3, #85]
+ 325:../src/gps/gpsUblox.c **** 					sensors.gpsDate        = GPS_INVALID_DATE;
+ 657              		.loc 1 325 0
+ 658 0612 40F20003 		movw	r3, #:lower16:sensors
+ 659 0616 C0F20003 		movt	r3, #:upper16:sensors
+ 660 061a 42F20F72 		movw	r2, #9999
+ 661 061e 9A65     		str	r2, [r3, #88]
+ 326:../src/gps/gpsUblox.c **** 					sensors.gpsTime        = GPS_INVALID_TIME;
+ 662              		.loc 1 326 0
+ 663 0620 40F20003 		movw	r3, #:lower16:sensors
+ 664 0624 C0F20003 		movt	r3, #:upper16:sensors
+ 665 0628 144A     		ldr	r2, .L42+8	@ float
+ 666 062a DA65     		str	r2, [r3, #92]	@ float
+ 327:../src/gps/gpsUblox.c **** 					sensors.gpsHdop        = GPS_INVALID_HDOP;
+ 667              		.loc 1 327 0
+ 668 062c 40F20003 		movw	r3, #:lower16:sensors
+ 669 0630 C0F20003 		movt	r3, #:upper16:sensors
+ 670 0634 104A     		ldr	r2, .L42+4	@ float
+ 671 0636 1A66     		str	r2, [r3, #96]	@ float
+ 672              	.L38:
+ 328:../src/gps/gpsUblox.c **** 				}
+ 329:../src/gps/gpsUblox.c **** 
+ 330:../src/gps/gpsUblox.c ****                 ubloxProcessDataState = WAIT_SYNC1;
+ 673              		.loc 1 330 0
+ 674 0638 40F20003 		movw	r3, #:lower16:ubloxProcessDataState
+ 675 063c C0F20003 		movt	r3, #:upper16:ubloxProcessDataState
+ 676 0640 4FF00002 		mov	r2, #0
+ 677 0644 1A70     		strb	r2, [r3, #0]
+ 331:../src/gps/gpsUblox.c **** 
+ 332:../src/gps/gpsUblox.c ****                 break;
+ 678              		.loc 1 332 0
+ 679 0646 02E0     		b	.L17
+ 680              	.L40:
+ 225:../src/gps/gpsUblox.c ****                 break;
+ 681              		.loc 1 225 0
+ 682 0648 00BF     		nop
+ 683 064a 00E0     		b	.L17
+ 684              	.L41:
+ 296:../src/gps/gpsUblox.c ****                 break;
+ 685              		.loc 1 296 0
+ 686 064c 00BF     		nop
+ 687              	.L17:
+ 213:../src/gps/gpsUblox.c ****     for (i = 0; i < numberOfChars; i++)
+ 688              		.loc 1 213 0
+ 689 064e BDF80430 		ldrh	r3, [sp, #4]	@ movhi
+ 690 0652 03F10103 		add	r3, r3, #1
+ 691 0656 ADF80430 		strh	r3, [sp, #4]	@ movhi
+ 692              	.L16:
+ 213:../src/gps/gpsUblox.c ****     for (i = 0; i < numberOfChars; i++)
+ 693              		.loc 1 213 0 is_stmt 0 discriminator 1
+ 694 065a BDF80420 		ldrh	r2, [sp, #4]
+ 695 065e BDF80230 		ldrh	r3, [sp, #2]
+ 696 0662 9A42     		cmp	r2, r3
+ 697 0664 FFF42CAE 		bcc	.L39
+ 333:../src/gps/gpsUblox.c ****         }
+ 334:../src/gps/gpsUblox.c ****     }
+ 335:../src/gps/gpsUblox.c ****     return parsed;
+ 698              		.loc 1 335 0 is_stmt 1
+ 699 0668 9DF80730 		ldrb	r3, [sp, #7]	@ zero_extendqisi2
+ 336:../src/gps/gpsUblox.c **** }
+ 700              		.loc 1 336 0
+ 701 066c 1846     		mov	r0, r3
+ 702 066e 03B0     		add	sp, sp, #12
+ 703 0670 00BD     		pop	{pc}
+ 704              	.L43:
+ 705 0672 00BF     		.align	2
+ 706              	.L42:
+ 707 0674 F6832E43 		.word	1127121910
+ 708 0678 003C1C46 		.word	1176255488
+ 709 067c 00000000 		.word	0
+ 710              		.cfi_endproc
+ 711              	.LFE112:
+ 713              	.Letext0:
+ 714              		.file 2 "c:\\program files\\codesourcery\\sourcery_codebench_lite_for_arm_eabi\\bin\\../lib/gcc/ar
+ 715              		.file 3 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\src/aq32Plus_F3.h"
+ 716              		.file 4 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\src\\gps/gpsMediaTe
+ 717              		.file 5 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\src\\gps/gpsNMEA.h"
+ 718              		.file 6 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\src\\gps/gpsUblox.h
+ 719              		.file 7 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\Libraries\\CMSIS\\I
+DEFINED SYMBOLS
+                            *ABS*:00000000 gpsUblox.c
+                            *COM*:00000001 mtk19ProcessDataState
+                            *COM*:00000001 nmeaProcessDataState
+                            *COM*:00000001 ubloxProcessDataState
+                            *COM*:00000034 ubloxMessage
+                            *COM*:00000001 ubloxExpectedDataLength
+                            *COM*:00000001 ubloxDataLength
+                            *COM*:00000001 ubloxClass
+                            *COM*:00000001 ubloxId
+                            *COM*:00000001 ubloxCKA
+                            *COM*:00000001 ubloxCKB
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccz43LI7.s:29     .text:00000000 $t
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccz43LI7.s:34     .text:00000000 ubloxParseData
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccz43LI7.s:282    .text:0000028c $d
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccz43LI7.s:290    .text:000002a0 $t
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccz43LI7.s:295    .text:000002a0 decodeUbloxMsg
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccz43LI7.s:334    .text:000002e0 $d
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccz43LI7.s:345    .text:00000304 $t
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccz43LI7.s:707    .text:00000674 $d
+                     .debug_frame:00000010 $d
+
+UNDEFINED SYMBOLS
+sensors
+gpsNumCharsAvailable
+gpsRead

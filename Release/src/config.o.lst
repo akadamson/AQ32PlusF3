@@ -1,0 +1,1923 @@
+   1              		.syntax unified
+   2              		.cpu cortex-m4
+   3              		.eabi_attribute 27, 3
+   4              		.fpu fpv4-sp-d16
+   5              		.eabi_attribute 20, 1
+   6              		.eabi_attribute 21, 1
+   7              		.eabi_attribute 23, 3
+   8              		.eabi_attribute 24, 1
+   9              		.eabi_attribute 25, 1
+  10              		.eabi_attribute 26, 1
+  11              		.eabi_attribute 30, 6
+  12              		.eabi_attribute 34, 1
+  13              		.eabi_attribute 18, 4
+  14              		.thumb
+  15              		.file	"config.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.comm	mtk19ProcessDataState,1,1
+  20              		.comm	nmeaProcessDataState,1,1
+  21              		.comm	ubloxProcessDataState,1,1
+  22              		.global	rcChannelLetters
+  23              		.section	.rodata
+  24              		.align	2
+  27              	rcChannelLetters:
+  28 0000 41455254 		.ascii	"AERT1234"
+  28      31323334 
+  29              		.comm	vTailThrust,4,4
+  30              		.data
+  33              	checkNewEEPROMConf:
+  34 0000 01       		.byte	1
+  35              		.text
+  36              		.align	2
+  37              		.global	parseRcChannels
+  38              		.thumb
+  39              		.thumb_func
+  41              	parseRcChannels:
+  42              	.LFB111:
+  43              		.file 1 "../src/config.c"
+   1:../src/config.c **** /*
+   2:../src/config.c ****   December 2012
+   3:../src/config.c **** 
+   4:../src/config.c ****   aq32Plus_F3 Rev -
+   5:../src/config.c **** 
+   6:../src/config.c ****   Copyright (c) 2012 John Ihlein.  All rights reserved.
+   7:../src/config.c **** 
+   8:../src/config.c ****   Open Source STM32 Based Multicopter Controller Software
+   9:../src/config.c **** 
+  10:../src/config.c ****   Includes code and/or ideas from:
+  11:../src/config.c **** 
+  12:../src/config.c ****   1)AeroQuad
+  13:../src/config.c ****   2)BaseFlight
+  14:../src/config.c ****   3)CH Robotics
+  15:../src/config.c ****   4)MultiWii
+  16:../src/config.c ****   5)S.O.H. Madgwick
+  17:../src/config.c ****   6)UAVX
+  18:../src/config.c ****   7)STM DiscoveryF3 demonstration software
+  19:../src/config.c **** 
+  20:../src/config.c ****   Designed to run on the DiscoveryF3 board
+  21:../src/config.c **** 
+  22:../src/config.c ****   This program is free software: you can redistribute it and/or modify
+  23:../src/config.c ****   it under the terms of the GNU General Public License as published by
+  24:../src/config.c ****   the Free Software Foundation, either version 3 of the License, or
+  25:../src/config.c ****   (at your option) any later version.
+  26:../src/config.c **** 
+  27:../src/config.c ****   This program is distributed in the hope that it will be useful,
+  28:../src/config.c ****   but WITHOUT ANY WARRANTY; without even the implied warranty of
+  29:../src/config.c ****   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  30:../src/config.c ****   GNU General Public License for more details.
+  31:../src/config.c **** 
+  32:../src/config.c ****   You should have received a copy of the GNU General Public License
+  33:../src/config.c ****   along with this program. If not, see <http://www.gnu.org/licenses/>.
+  34:../src/config.c **** */
+  35:../src/config.c **** 
+  36:../src/config.c **** ///////////////////////////////////////////////////////////////////////////////
+  37:../src/config.c **** 
+  38:../src/config.c **** #include "board.h"
+  39:../src/config.c **** 
+  40:../src/config.c **** ///////////////////////////////////////////////////////////////////////////////
+  41:../src/config.c **** 
+  42:../src/config.c **** #define FLASH_WRITE_EEPROM_ADDR  0x0803F800  // FLASH Page 127
+  43:../src/config.c **** 
+  44:../src/config.c **** const char rcChannelLetters[] = "AERT1234";
+  45:../src/config.c **** 
+  46:../src/config.c **** float vTailThrust;
+  47:../src/config.c **** 
+  48:../src/config.c **** static uint8_t checkNewEEPROMConf = 1;
+  49:../src/config.c **** 
+  50:../src/config.c **** ///////////////////////////////////////////////////////////////////////////////
+  51:../src/config.c **** 
+  52:../src/config.c **** void parseRcChannels(const char *input)
+  53:../src/config.c **** {
+  44              		.loc 1 53 0
+  45              		.cfi_startproc
+  46              		@ args = 0, pretend = 0, frame = 16
+  47              		@ frame_needed = 0, uses_anonymous_args = 0
+  48 0000 00B5     		push	{lr}
+  49              	.LCFI0:
+  50              		.cfi_def_cfa_offset 4
+  51              		.cfi_offset 14, -4
+  52 0002 85B0     		sub	sp, sp, #20
+  53              	.LCFI1:
+  54              		.cfi_def_cfa_offset 24
+  55 0004 0190     		str	r0, [sp, #4]
+  54:../src/config.c ****     const char *c, *s;
+  55:../src/config.c **** 
+  56:../src/config.c ****     for (c = input; *c; c++)
+  56              		.loc 1 56 0
+  57 0006 019B     		ldr	r3, [sp, #4]
+  58 0008 0393     		str	r3, [sp, #12]
+  59 000a 21E0     		b	.L2
+  60              	.L4:
+  57:../src/config.c ****     {
+  58:../src/config.c ****         s = strchr(rcChannelLetters, *c);
+  61              		.loc 1 58 0
+  62 000c 039B     		ldr	r3, [sp, #12]
+  63 000e 1B78     		ldrb	r3, [r3, #0]	@ zero_extendqisi2
+  64 0010 40F20000 		movw	r0, #:lower16:rcChannelLetters
+  65 0014 C0F20000 		movt	r0, #:upper16:rcChannelLetters
+  66 0018 1946     		mov	r1, r3
+  67 001a FFF7FEFF 		bl	strchr
+  68 001e 0290     		str	r0, [sp, #8]
+  59:../src/config.c ****         if (s)
+  69              		.loc 1 59 0
+  70 0020 029B     		ldr	r3, [sp, #8]
+  71 0022 002B     		cmp	r3, #0
+  72 0024 10D0     		beq	.L3
+  60:../src/config.c ****             eepromConfig.rcMap[s - rcChannelLetters] = c - input;
+  73              		.loc 1 60 0
+  74 0026 029A     		ldr	r2, [sp, #8]
+  75 0028 40F20003 		movw	r3, #:lower16:rcChannelLetters
+  76 002c C0F20003 		movt	r3, #:upper16:rcChannelLetters
+  77 0030 D11A     		subs	r1, r2, r3
+  78 0032 039A     		ldr	r2, [sp, #12]
+  79 0034 019B     		ldr	r3, [sp, #4]
+  80 0036 D31A     		subs	r3, r2, r3
+  81 0038 DAB2     		uxtb	r2, r3
+  82 003a 40F20003 		movw	r3, #:lower16:eepromConfig
+  83 003e C0F20003 		movt	r3, #:upper16:eepromConfig
+  84 0042 5B18     		adds	r3, r3, r1
+  85 0044 83F86F20 		strb	r2, [r3, #111]
+  86              	.L3:
+  56:../src/config.c ****     for (c = input; *c; c++)
+  87              		.loc 1 56 0
+  88 0048 039B     		ldr	r3, [sp, #12]
+  89 004a 03F10103 		add	r3, r3, #1
+  90 004e 0393     		str	r3, [sp, #12]
+  91              	.L2:
+  56:../src/config.c ****     for (c = input; *c; c++)
+  92              		.loc 1 56 0 is_stmt 0 discriminator 1
+  93 0050 039B     		ldr	r3, [sp, #12]
+  94 0052 1B78     		ldrb	r3, [r3, #0]	@ zero_extendqisi2
+  95 0054 002B     		cmp	r3, #0
+  96 0056 D9D1     		bne	.L4
+  61:../src/config.c ****     }
+  62:../src/config.c **** }
+  97              		.loc 1 62 0 is_stmt 1
+  98 0058 05B0     		add	sp, sp, #20
+  99 005a 00BD     		pop	{pc}
+ 100              		.cfi_endproc
+ 101              	.LFE111:
+ 103              		.global	__aeabi_f2d
+ 104              		.global	__aeabi_ddiv
+ 105              		.global	__aeabi_d2f
+ 106              		.align	2
+ 107              		.global	readEEPROM
+ 108              		.thumb
+ 109              		.thumb_func
+ 111              	readEEPROM:
+ 112              	.LFB112:
+  63:../src/config.c **** 
+  64:../src/config.c **** ///////////////////////////////////////////////////////////////////////////////
+  65:../src/config.c **** 
+  66:../src/config.c **** void readEEPROM(void)
+  67:../src/config.c **** {
+ 113              		.loc 1 67 0
+ 114              		.cfi_startproc
+ 115              		@ args = 0, pretend = 0, frame = 0
+ 116              		@ frame_needed = 0, uses_anonymous_args = 0
+ 117 005c 10B5     		push	{r4, lr}
+ 118              	.LCFI2:
+ 119              		.cfi_def_cfa_offset 8
+ 120              		.cfi_offset 14, -4
+ 121              		.cfi_offset 4, -8
+  68:../src/config.c ****     memcpy(&eepromConfig, (char *)FLASH_WRITE_EEPROM_ADDR, sizeof(eepromConfig_t));
+ 122              		.loc 1 68 0
+ 123 005e 40F20002 		movw	r2, #:lower16:eepromConfig
+ 124 0062 C0F20002 		movt	r2, #:upper16:eepromConfig
+ 125 0066 4FF47843 		mov	r3, #63488
+ 126 006a C0F60303 		movt	r3, 2051
+ 127 006e 4FF45374 		mov	r4, #844
+ 128 0072 1046     		mov	r0, r2
+ 129 0074 1946     		mov	r1, r3
+ 130 0076 2346     		mov	r3, r4
+ 131 0078 1A46     		mov	r2, r3
+ 132 007a FFF7FEFF 		bl	memcpy
+  69:../src/config.c **** 
+  70:../src/config.c ****     accConfidenceDecay = 1.0f / sqrt(eepromConfig.accelCutoff);
+ 133              		.loc 1 70 0
+ 134 007e 40F20003 		movw	r3, #:lower16:eepromConfig
+ 135 0082 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 136 0086 1B6C     		ldr	r3, [r3, #64]	@ float
+ 137 0088 1846     		mov	r0, r3	@ float
+ 138 008a FFF7FEFF 		bl	__aeabi_f2d
+ 139 008e 0246     		mov	r2, r0
+ 140 0090 0B46     		mov	r3, r1
+ 141 0092 1046     		mov	r0, r2
+ 142 0094 1946     		mov	r1, r3
+ 143 0096 FFF7FEFF 		bl	sqrt
+ 144 009a 0246     		mov	r2, r0
+ 145 009c 0B46     		mov	r3, r1
+ 146 009e 1AA1     		adr	r1, .L6
+ 147 00a0 D1E90001 		ldrd	r0, [r1]
+ 148 00a4 FFF7FEFF 		bl	__aeabi_ddiv
+ 149 00a8 0246     		mov	r2, r0
+ 150 00aa 0B46     		mov	r3, r1
+ 151 00ac 1046     		mov	r0, r2
+ 152 00ae 1946     		mov	r1, r3
+ 153 00b0 FFF7FEFF 		bl	__aeabi_d2f
+ 154 00b4 0246     		mov	r2, r0	@ float
+ 155 00b6 40F20003 		movw	r3, #:lower16:accConfidenceDecay
+ 156 00ba C0F20003 		movt	r3, #:upper16:accConfidenceDecay
+ 157 00be 1A60     		str	r2, [r3, #0]	@ float
+  71:../src/config.c **** 
+  72:../src/config.c ****     eepromConfig.yawDirection = constrain(eepromConfig.yawDirection, -1.0f, 1.0f);
+ 158              		.loc 1 72 0
+ 159 00c0 40F20003 		movw	r3, #:lower16:eepromConfig
+ 160 00c4 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 161 00c8 D3F88030 		ldr	r3, [r3, #128]	@ float
+ 162 00cc 1846     		mov	r0, r3	@ float
+ 163 00ce 1049     		ldr	r1, .L6+8	@ float
+ 164 00d0 104A     		ldr	r2, .L6+12	@ float
+ 165 00d2 FFF7FEFF 		bl	constrain
+ 166 00d6 0246     		mov	r2, r0	@ float
+ 167 00d8 40F20003 		movw	r3, #:lower16:eepromConfig
+ 168 00dc C0F20003 		movt	r3, #:upper16:eepromConfig
+ 169 00e0 C3F88020 		str	r2, [r3, #128]	@ float
+  73:../src/config.c **** 
+  74:../src/config.c ****     vTailThrust = sinf(eepromConfig.vTailAngle);
+ 170              		.loc 1 74 0
+ 171 00e4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 172 00e8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 173 00ec D3F8DC32 		ldr	r3, [r3, #732]	@ float
+ 174 00f0 1846     		mov	r0, r3	@ float
+ 175 00f2 FFF7FEFF 		bl	sinf
+ 176 00f6 0246     		mov	r2, r0	@ float
+ 177 00f8 40F20003 		movw	r3, #:lower16:vTailThrust
+ 178 00fc C0F20003 		movt	r3, #:upper16:vTailThrust
+ 179 0100 1A60     		str	r2, [r3, #0]	@ float
+  75:../src/config.c **** }
+ 180              		.loc 1 75 0
+ 181 0102 10BD     		pop	{r4, pc}
+ 182              	.L7:
+ 183 0104 AFF30080 		.align	3
+ 184              	.L6:
+ 185 0108 00000000 		.word	0
+ 186 010c 0000F03F 		.word	1072693248
+ 187 0110 000080BF 		.word	-1082130432
+ 188 0114 0000803F 		.word	1065353216
+ 189              		.cfi_endproc
+ 190              	.LFE112:
+ 192              		.align	2
+ 193              		.global	writeEEPROM
+ 194              		.thumb
+ 195              		.thumb_func
+ 197              	writeEEPROM:
+ 198              	.LFB113:
+  76:../src/config.c **** 
+  77:../src/config.c **** ///////////////////////////////////////////////////////////////////////////////
+  78:../src/config.c **** 
+  79:../src/config.c **** void writeEEPROM(void)
+  80:../src/config.c **** {
+ 199              		.loc 1 80 0
+ 200              		.cfi_startproc
+ 201              		@ args = 0, pretend = 0, frame = 8
+ 202              		@ frame_needed = 0, uses_anonymous_args = 0
+ 203 0118 00B5     		push	{lr}
+ 204              	.LCFI3:
+ 205              		.cfi_def_cfa_offset 4
+ 206              		.cfi_offset 14, -4
+ 207 011a 83B0     		sub	sp, sp, #12
+ 208              	.LCFI4:
+ 209              		.cfi_def_cfa_offset 16
+  81:../src/config.c ****     FLASH_Status status;
+  82:../src/config.c ****     uint32_t i;
+  83:../src/config.c **** 
+  84:../src/config.c ****     FLASH_Unlock();
+ 210              		.loc 1 84 0
+ 211 011c FFF7FEFF 		bl	FLASH_Unlock
+  85:../src/config.c **** 
+  86:../src/config.c ****     FLASH_ClearFlag(FLASH_FLAG_EOP | FLASH_FLAG_PGERR | FLASH_FLAG_WRPERR);
+ 212              		.loc 1 86 0
+ 213 0120 4FF03400 		mov	r0, #52
+ 214 0124 FFF7FEFF 		bl	FLASH_ClearFlag
+  87:../src/config.c **** 
+  88:../src/config.c ****     if (FLASH_ErasePage(FLASH_WRITE_EEPROM_ADDR) == FLASH_COMPLETE)
+ 215              		.loc 1 88 0
+ 216 0128 4FF47840 		mov	r0, #63488
+ 217 012c C0F60300 		movt	r0, 2051
+ 218 0130 FFF7FEFF 		bl	FLASH_ErasePage
+ 219 0134 0346     		mov	r3, r0
+ 220 0136 042B     		cmp	r3, #4
+ 221 0138 25D1     		bne	.L9
+  89:../src/config.c ****     {
+  90:../src/config.c ****         for (i = 0; i < sizeof(eepromConfig_t); i += 4)
+ 222              		.loc 1 90 0
+ 223 013a 4FF00003 		mov	r3, #0
+ 224 013e 0193     		str	r3, [sp, #4]
+ 225 0140 1AE0     		b	.L10
+ 226              	.L12:
+  91:../src/config.c ****         {
+  92:../src/config.c ****             status = FLASH_ProgramWord(FLASH_WRITE_EEPROM_ADDR + i, *(uint32_t *)((char *)&eepromCo
+ 227              		.loc 1 92 0
+ 228 0142 019B     		ldr	r3, [sp, #4]
+ 229 0144 03F10063 		add	r3, r3, #134217728
+ 230 0148 03F57E33 		add	r3, r3, #260096
+ 231 014c 0199     		ldr	r1, [sp, #4]
+ 232 014e 40F20002 		movw	r2, #:lower16:eepromConfig
+ 233 0152 C0F20002 		movt	r2, #:upper16:eepromConfig
+ 234 0156 8A18     		adds	r2, r1, r2
+ 235 0158 1268     		ldr	r2, [r2, #0]
+ 236 015a 1846     		mov	r0, r3
+ 237 015c 1146     		mov	r1, r2
+ 238 015e FFF7FEFF 		bl	FLASH_ProgramWord
+ 239 0162 0346     		mov	r3, r0
+ 240 0164 8DF80330 		strb	r3, [sp, #3]
+  93:../src/config.c ****             if (status != FLASH_COMPLETE)
+ 241              		.loc 1 93 0
+ 242 0168 9DF80330 		ldrb	r3, [sp, #3]	@ zero_extendqisi2
+ 243 016c 042B     		cmp	r3, #4
+ 244 016e 09D1     		bne	.L13
+ 245              	.L11:
+  90:../src/config.c ****         for (i = 0; i < sizeof(eepromConfig_t); i += 4)
+ 246              		.loc 1 90 0
+ 247 0170 019B     		ldr	r3, [sp, #4]
+ 248 0172 03F10403 		add	r3, r3, #4
+ 249 0176 0193     		str	r3, [sp, #4]
+ 250              	.L10:
+  90:../src/config.c ****         for (i = 0; i < sizeof(eepromConfig_t); i += 4)
+ 251              		.loc 1 90 0 is_stmt 0 discriminator 1
+ 252 0178 019A     		ldr	r2, [sp, #4]
+ 253 017a 40F24B33 		movw	r3, #843
+ 254 017e 9A42     		cmp	r2, r3
+ 255 0180 DFD9     		bls	.L12
+ 256 0182 00E0     		b	.L9
+ 257              	.L13:
+  94:../src/config.c ****                 break; // TODO: fail
+ 258              		.loc 1 94 0 is_stmt 1
+ 259 0184 00BF     		nop
+ 260              	.L9:
+  95:../src/config.c ****         }
+  96:../src/config.c ****     }
+  97:../src/config.c **** 
+  98:../src/config.c ****     FLASH_Lock();
+ 261              		.loc 1 98 0
+ 262 0186 FFF7FEFF 		bl	FLASH_Lock
+  99:../src/config.c **** 
+ 100:../src/config.c ****     readEEPROM();
+ 263              		.loc 1 100 0
+ 264 018a FFF7FEFF 		bl	readEEPROM
+ 101:../src/config.c **** }
+ 265              		.loc 1 101 0
+ 266 018e 03B0     		add	sp, sp, #12
+ 267 0190 00BD     		pop	{pc}
+ 268              		.cfi_endproc
+ 269              	.LFE113:
+ 271              		.section	.rodata
+ 272              		.align	2
+ 273              	.LC0:
+ 274 0008 54414552 		.ascii	"TAER1234\000"
+ 274      31323334 
+ 274      00
+ 275 0011 000000   		.text
+ 276 0192 00BF     		.align	2
+ 277              		.global	checkFirstTime
+ 278              		.thumb
+ 279              		.thumb_func
+ 281              	checkFirstTime:
+ 282              	.LFB114:
+ 102:../src/config.c **** 
+ 103:../src/config.c **** ///////////////////////////////////////////////////////////////////////////////
+ 104:../src/config.c **** 
+ 105:../src/config.c **** void checkFirstTime(bool eepromReset)
+ 106:../src/config.c **** {
+ 283              		.loc 1 106 0
+ 284              		.cfi_startproc
+ 285              		@ args = 0, pretend = 0, frame = 16
+ 286              		@ frame_needed = 0, uses_anonymous_args = 0
+ 287 0194 00B5     		push	{lr}
+ 288              	.LCFI5:
+ 289              		.cfi_def_cfa_offset 4
+ 290              		.cfi_offset 14, -4
+ 291 0196 85B0     		sub	sp, sp, #20
+ 292              	.LCFI6:
+ 293              		.cfi_def_cfa_offset 24
+ 294 0198 0346     		mov	r3, r0
+ 295 019a 8DF80730 		strb	r3, [sp, #7]
+ 107:../src/config.c ****     uint8_t test_val;
+ 108:../src/config.c **** 
+ 109:../src/config.c ****     test_val = *(uint8_t *)FLASH_WRITE_EEPROM_ADDR;
+ 296              		.loc 1 109 0
+ 297 019e 4FF47843 		mov	r3, #63488
+ 298 01a2 C0F60303 		movt	r3, 2051
+ 299 01a6 1B78     		ldrb	r3, [r3, #0]
+ 300 01a8 8DF80F30 		strb	r3, [sp, #15]
+ 110:../src/config.c **** 
+ 111:../src/config.c ****     if (eepromReset || test_val != checkNewEEPROMConf)
+ 301              		.loc 1 111 0
+ 302 01ac 9DF80730 		ldrb	r3, [sp, #7]	@ zero_extendqisi2
+ 303 01b0 002B     		cmp	r3, #0
+ 304 01b2 09D1     		bne	.L15
+ 305              		.loc 1 111 0 is_stmt 0 discriminator 1
+ 306 01b4 40F20003 		movw	r3, #:lower16:checkNewEEPROMConf
+ 307 01b8 C0F20003 		movt	r3, #:upper16:checkNewEEPROMConf
+ 308 01bc 1B78     		ldrb	r3, [r3, #0]	@ zero_extendqisi2
+ 309 01be 9DF80F20 		ldrb	r2, [sp, #15]	@ zero_extendqisi2
+ 310 01c2 9A42     		cmp	r2, r3
+ 311 01c4 00F0B786 		beq	.L14
+ 312              	.L15:
+ 112:../src/config.c ****     {
+ 113:../src/config.c **** 		// Default settings
+ 114:../src/config.c ****         eepromConfig.version = checkNewEEPROMConf;
+ 313              		.loc 1 114 0 is_stmt 1
+ 314 01c8 40F20003 		movw	r3, #:lower16:checkNewEEPROMConf
+ 315 01cc C0F20003 		movt	r3, #:upper16:checkNewEEPROMConf
+ 316 01d0 1A78     		ldrb	r2, [r3, #0]	@ zero_extendqisi2
+ 317 01d2 40F20003 		movw	r3, #:lower16:eepromConfig
+ 318 01d6 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 319 01da 1A70     		strb	r2, [r3, #0]
+ 115:../src/config.c **** 
+ 116:../src/config.c **** 	    ///////////////////////////////
+ 117:../src/config.c **** 
+ 118:../src/config.c ****         eepromConfig.accelBias[XAXIS] = 0.0f;
+ 320              		.loc 1 118 0
+ 321 01dc 40F20003 		movw	r3, #:lower16:eepromConfig
+ 322 01e0 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 323 01e4 DFF8542D 		ldr	r2, .L17	@ float
+ 324 01e8 5A60     		str	r2, [r3, #4]	@ float
+ 119:../src/config.c ****         eepromConfig.accelBias[YAXIS] = 0.0f;
+ 325              		.loc 1 119 0
+ 326 01ea 40F20003 		movw	r3, #:lower16:eepromConfig
+ 327 01ee C0F20003 		movt	r3, #:upper16:eepromConfig
+ 328 01f2 DFF8482D 		ldr	r2, .L17	@ float
+ 329 01f6 9A60     		str	r2, [r3, #8]	@ float
+ 120:../src/config.c ****         eepromConfig.accelBias[ZAXIS] = 0.0f;
+ 330              		.loc 1 120 0
+ 331 01f8 40F20003 		movw	r3, #:lower16:eepromConfig
+ 332 01fc C0F20003 		movt	r3, #:upper16:eepromConfig
+ 333 0200 DFF8382D 		ldr	r2, .L17	@ float
+ 334 0204 DA60     		str	r2, [r3, #12]	@ float
+ 121:../src/config.c **** 
+ 122:../src/config.c ****         ///////////////////////////////
+ 123:../src/config.c **** 
+ 124:../src/config.c ****         eepromConfig.accelScaleFactor[XAXIS] = 9.8065f * 0.002f / 16.0f;
+ 335              		.loc 1 124 0
+ 336 0206 40F20003 		movw	r3, #:lower16:eepromConfig
+ 337 020a C0F20003 		movt	r3, #:upper16:eepromConfig
+ 338 020e DFF8302D 		ldr	r2, .L17+4	@ float
+ 339 0212 1A61     		str	r2, [r3, #16]	@ float
+ 125:../src/config.c ****         eepromConfig.accelScaleFactor[YAXIS] = 9.8065f * 0.002f / 16.0f;
+ 340              		.loc 1 125 0
+ 341 0214 40F20003 		movw	r3, #:lower16:eepromConfig
+ 342 0218 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 343 021c DFF8202D 		ldr	r2, .L17+4	@ float
+ 344 0220 5A61     		str	r2, [r3, #20]	@ float
+ 126:../src/config.c ****         eepromConfig.accelScaleFactor[ZAXIS] = 9.8065f * 0.002f / 16.0f;
+ 345              		.loc 1 126 0
+ 346 0222 40F20003 		movw	r3, #:lower16:eepromConfig
+ 347 0226 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 348 022a DFF8142D 		ldr	r2, .L17+4	@ float
+ 349 022e 9A61     		str	r2, [r3, #24]	@ float
+ 127:../src/config.c **** 
+ 128:../src/config.c ****         ///////////////////////////////
+ 129:../src/config.c **** 
+ 130:../src/config.c ****         eepromConfig.gyroTCBiasSlope[ROLL ] = 0.0f;
+ 350              		.loc 1 130 0
+ 351 0230 40F20003 		movw	r3, #:lower16:eepromConfig
+ 352 0234 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 353 0238 DFF8002D 		ldr	r2, .L17	@ float
+ 354 023c DA61     		str	r2, [r3, #28]	@ float
+ 131:../src/config.c ****         eepromConfig.gyroTCBiasSlope[PITCH] = 0.0f;
+ 355              		.loc 1 131 0
+ 356 023e 40F20003 		movw	r3, #:lower16:eepromConfig
+ 357 0242 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 358 0246 DFF8F42C 		ldr	r2, .L17	@ float
+ 359 024a 1A62     		str	r2, [r3, #32]	@ float
+ 132:../src/config.c ****         eepromConfig.gyroTCBiasSlope[YAW  ] = 0.0f;
+ 360              		.loc 1 132 0
+ 361 024c 40F20003 		movw	r3, #:lower16:eepromConfig
+ 362 0250 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 363 0254 DFF8E42C 		ldr	r2, .L17	@ float
+ 364 0258 5A62     		str	r2, [r3, #36]	@ float
+ 133:../src/config.c **** 
+ 134:../src/config.c **** 	    ///////////////////////////////
+ 135:../src/config.c **** 
+ 136:../src/config.c **** 	    eepromConfig.gyroTCBiasIntercept[ROLL ] = 0.0f;
+ 365              		.loc 1 136 0
+ 366 025a 40F20003 		movw	r3, #:lower16:eepromConfig
+ 367 025e C0F20003 		movt	r3, #:upper16:eepromConfig
+ 368 0262 DFF8D82C 		ldr	r2, .L17	@ float
+ 369 0266 9A62     		str	r2, [r3, #40]	@ float
+ 137:../src/config.c **** 	    eepromConfig.gyroTCBiasIntercept[PITCH] = 0.0f;
+ 370              		.loc 1 137 0
+ 371 0268 40F20003 		movw	r3, #:lower16:eepromConfig
+ 372 026c C0F20003 		movt	r3, #:upper16:eepromConfig
+ 373 0270 DFF8C82C 		ldr	r2, .L17	@ float
+ 374 0274 DA62     		str	r2, [r3, #44]	@ float
+ 138:../src/config.c **** 	    eepromConfig.gyroTCBiasIntercept[YAW  ] = 0.0f;
+ 375              		.loc 1 138 0
+ 376 0276 40F20003 		movw	r3, #:lower16:eepromConfig
+ 377 027a C0F20003 		movt	r3, #:upper16:eepromConfig
+ 378 027e DFF8BC2C 		ldr	r2, .L17	@ float
+ 379 0282 1A63     		str	r2, [r3, #48]	@ float
+ 139:../src/config.c **** 
+ 140:../src/config.c **** 	    ///////////////////////////////
+ 141:../src/config.c **** 
+ 142:../src/config.c **** 	    eepromConfig.magBias[XAXIS] = 0.0f;
+ 380              		.loc 1 142 0
+ 381 0284 40F20003 		movw	r3, #:lower16:eepromConfig
+ 382 0288 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 383 028c DFF8AC2C 		ldr	r2, .L17	@ float
+ 384 0290 5A63     		str	r2, [r3, #52]	@ float
+ 143:../src/config.c **** 	    eepromConfig.magBias[YAXIS] = 0.0f;
+ 385              		.loc 1 143 0
+ 386 0292 40F20003 		movw	r3, #:lower16:eepromConfig
+ 387 0296 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 388 029a DFF8A02C 		ldr	r2, .L17	@ float
+ 389 029e 9A63     		str	r2, [r3, #56]	@ float
+ 144:../src/config.c **** 	    eepromConfig.magBias[ZAXIS] = 0.0f;
+ 390              		.loc 1 144 0
+ 391 02a0 40F20003 		movw	r3, #:lower16:eepromConfig
+ 392 02a4 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 393 02a8 DFF8902C 		ldr	r2, .L17	@ float
+ 394 02ac DA63     		str	r2, [r3, #60]	@ float
+ 145:../src/config.c **** 
+ 146:../src/config.c **** 		///////////////////////////////
+ 147:../src/config.c **** 
+ 148:../src/config.c **** 		eepromConfig.accelCutoff = 1.0f;
+ 395              		.loc 1 148 0
+ 396 02ae 40F20003 		movw	r3, #:lower16:eepromConfig
+ 397 02b2 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 398 02b6 DFF88C2C 		ldr	r2, .L17+8	@ float
+ 399 02ba 1A64     		str	r2, [r3, #64]	@ float
+ 149:../src/config.c **** 
+ 150:../src/config.c **** 		///////////////////////////////
+ 151:../src/config.c **** 
+ 152:../src/config.c **** 	    eepromConfig.KpAcc = 5.0f;    // proportional gain governs rate of convergence to acceleromete
+ 400              		.loc 1 152 0
+ 401 02bc 40F20003 		movw	r3, #:lower16:eepromConfig
+ 402 02c0 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 403 02c4 DFF8802C 		ldr	r2, .L17+12	@ float
+ 404 02c8 5A64     		str	r2, [r3, #68]	@ float
+ 153:../src/config.c **** 	    eepromConfig.KiAcc = 0.0f;    // integral gain governs rate of convergence of gyroscope biases
+ 405              		.loc 1 153 0
+ 406 02ca 40F20003 		movw	r3, #:lower16:eepromConfig
+ 407 02ce C0F20003 		movt	r3, #:upper16:eepromConfig
+ 408 02d2 DFF8682C 		ldr	r2, .L17	@ float
+ 409 02d6 9A64     		str	r2, [r3, #72]	@ float
+ 154:../src/config.c **** 	    eepromConfig.KpMag = 5.0f;    // proportional gain governs rate of convergence to magnetometer
+ 410              		.loc 1 154 0
+ 411 02d8 40F20003 		movw	r3, #:lower16:eepromConfig
+ 412 02dc C0F20003 		movt	r3, #:upper16:eepromConfig
+ 413 02e0 DFF8642C 		ldr	r2, .L17+12	@ float
+ 414 02e4 DA64     		str	r2, [r3, #76]	@ float
+ 155:../src/config.c **** 	    eepromConfig.KiMag = 0.0f;    // integral gain governs rate of convergence of gyroscope biases
+ 415              		.loc 1 155 0
+ 416 02e6 40F20003 		movw	r3, #:lower16:eepromConfig
+ 417 02ea C0F20003 		movt	r3, #:upper16:eepromConfig
+ 418 02ee DFF84C2C 		ldr	r2, .L17	@ float
+ 419 02f2 1A65     		str	r2, [r3, #80]	@ float
+ 156:../src/config.c **** 
+ 157:../src/config.c **** 	    ///////////////////////////////
+ 158:../src/config.c **** 
+ 159:../src/config.c **** 	    eepromConfig.compFilterA =  0.005f;
+ 420              		.loc 1 159 0
+ 421 02f4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 422 02f8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 423 02fc DFF84C2C 		ldr	r2, .L17+16	@ float
+ 424 0300 5A65     		str	r2, [r3, #84]	@ float
+ 160:../src/config.c **** 	    eepromConfig.compFilterB =  0.005f;
+ 425              		.loc 1 160 0
+ 426 0302 40F20003 		movw	r3, #:lower16:eepromConfig
+ 427 0306 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 428 030a DFF8402C 		ldr	r2, .L17+16	@ float
+ 429 030e 9A65     		str	r2, [r3, #88]	@ float
+ 161:../src/config.c **** 
+ 162:../src/config.c **** 	    ///////////////////////////////////
+ 163:../src/config.c **** 
+ 164:../src/config.c ****         eepromConfig.rateScaling     = 300.0 / 180000.0 * PI;  // Stick to rate scaling for 300 DPS
+ 430              		.loc 1 164 0
+ 431 0310 40F20003 		movw	r3, #:lower16:eepromConfig
+ 432 0314 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 433 0318 DFF8342C 		ldr	r2, .L17+20	@ float
+ 434 031c DA65     		str	r2, [r3, #92]	@ float
+ 165:../src/config.c **** 
+ 166:../src/config.c ****         eepromConfig.attitudeScaling = 60.0  / 180000.0 * PI;  // Stick to att scaling for 60 degre
+ 435              		.loc 1 166 0
+ 436 031e 40F20003 		movw	r3, #:lower16:eepromConfig
+ 437 0322 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 438 0326 DFF82C2C 		ldr	r2, .L17+24	@ float
+ 439 032a 1A66     		str	r2, [r3, #96]	@ float
+ 167:../src/config.c **** 
+ 168:../src/config.c ****         eepromConfig.nDotEdotScaling = 0.009f;      // Stick to nDot/eDot scaling (9 mps)/(1000 RX 
+ 440              		.loc 1 168 0
+ 441 032c 40F20003 		movw	r3, #:lower16:eepromConfig
+ 442 0330 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 443 0334 DFF8202C 		ldr	r2, .L17+28	@ float
+ 444 0338 5A66     		str	r2, [r3, #100]	@ float
+ 169:../src/config.c **** 
+ 170:../src/config.c ****         eepromConfig.hDotScaling     = 0.003f;      // Stick to hDot scaling (3 mps)/(1000 RX PWM S
+ 445              		.loc 1 170 0
+ 446 033a 40F20003 		movw	r3, #:lower16:eepromConfig
+ 447 033e C0F20003 		movt	r3, #:upper16:eepromConfig
+ 448 0342 DFF8182C 		ldr	r2, .L17+32	@ float
+ 449 0346 9A66     		str	r2, [r3, #104]	@ float
+ 171:../src/config.c **** 
+ 172:../src/config.c ****         ///////////////////////////////
+ 173:../src/config.c **** 
+ 174:../src/config.c **** 	    eepromConfig.receiverType  = PARALLEL_PWM;
+ 450              		.loc 1 174 0
+ 451 0348 40F20003 		movw	r3, #:lower16:eepromConfig
+ 452 034c C0F20003 		movt	r3, #:upper16:eepromConfig
+ 453 0350 4FF00102 		mov	r2, #1
+ 454 0354 83F86C20 		strb	r2, [r3, #108]
+ 175:../src/config.c **** 	    eepromConfig.spektrumChannels = 7;
+ 455              		.loc 1 175 0
+ 456 0358 40F20003 		movw	r3, #:lower16:eepromConfig
+ 457 035c C0F20003 		movt	r3, #:upper16:eepromConfig
+ 458 0360 4FF00702 		mov	r2, #7
+ 459 0364 83F86D20 		strb	r2, [r3, #109]
+ 176:../src/config.c **** 	    eepromConfig.spektrumHires = 0;
+ 460              		.loc 1 176 0
+ 461 0368 40F20003 		movw	r3, #:lower16:eepromConfig
+ 462 036c C0F20003 		movt	r3, #:upper16:eepromConfig
+ 463 0370 4FF00002 		mov	r2, #0
+ 464 0374 83F86E20 		strb	r2, [r3, #110]
+ 177:../src/config.c **** 
+ 178:../src/config.c **** 	    parseRcChannels("TAER1234");
+ 465              		.loc 1 178 0
+ 466 0378 40F20000 		movw	r0, #:lower16:.LC0
+ 467 037c C0F20000 		movt	r0, #:upper16:.LC0
+ 468 0380 FFF7FEFF 		bl	parseRcChannels
+ 179:../src/config.c **** 
+ 180:../src/config.c **** 	    eepromConfig.escPwmRate   = 450;
+ 469              		.loc 1 180 0
+ 470 0384 40F20003 		movw	r3, #:lower16:eepromConfig
+ 471 0388 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 472 038c 4FF4E172 		mov	r2, #450
+ 473 0390 A3F87820 		strh	r2, [r3, #120]	@ movhi
+ 181:../src/config.c ****         eepromConfig.servoPwmRate = 50;
+ 474              		.loc 1 181 0
+ 475 0394 40F20003 		movw	r3, #:lower16:eepromConfig
+ 476 0398 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 477 039c 4FF03202 		mov	r2, #50
+ 478 03a0 A3F87A20 		strh	r2, [r3, #122]	@ movhi
+ 182:../src/config.c **** 
+ 183:../src/config.c ****         eepromConfig.mixerConfiguration = MIXERTYPE_QUADX;
+ 479              		.loc 1 183 0
+ 480 03a4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 481 03a8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 482 03ac 4FF00602 		mov	r2, #6
+ 483 03b0 83F87C20 		strb	r2, [r3, #124]
+ 184:../src/config.c ****         eepromConfig.yawDirection = 1.0f;
+ 484              		.loc 1 184 0
+ 485 03b4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 486 03b8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 487 03bc DFF8842B 		ldr	r2, .L17+8	@ float
+ 488 03c0 C3F88020 		str	r2, [r3, #128]	@ float
+ 185:../src/config.c **** 
+ 186:../src/config.c ****         eepromConfig.midCommand   = 3000.0f;
+ 489              		.loc 1 186 0
+ 490 03c4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 491 03c8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 492 03cc DFF8902B 		ldr	r2, .L17+36	@ float
+ 493 03d0 C3F88420 		str	r2, [r3, #132]	@ float
+ 187:../src/config.c ****         eepromConfig.minCheck     = (float)(MINCOMMAND + 200);
+ 494              		.loc 1 187 0
+ 495 03d4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 496 03d8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 497 03dc DFF8842B 		ldr	r2, .L17+40	@ float
+ 498 03e0 C3F88820 		str	r2, [r3, #136]	@ float
+ 188:../src/config.c ****         eepromConfig.maxCheck     = (float)(MAXCOMMAND - 200);
+ 499              		.loc 1 188 0
+ 500 03e4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 501 03e8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 502 03ec DFF8782B 		ldr	r2, .L17+44	@ float
+ 503 03f0 C3F88C20 		str	r2, [r3, #140]	@ float
+ 189:../src/config.c ****         eepromConfig.minThrottle  = (float)(MINCOMMAND + 200);
+ 504              		.loc 1 189 0
+ 505 03f4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 506 03f8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 507 03fc DFF8642B 		ldr	r2, .L17+40	@ float
+ 508 0400 C3F89020 		str	r2, [r3, #144]	@ float
+ 190:../src/config.c ****         eepromConfig.maxThrottle  = (float)(MAXCOMMAND);
+ 509              		.loc 1 190 0
+ 510 0404 40F20003 		movw	r3, #:lower16:eepromConfig
+ 511 0408 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 512 040c DFF85C2B 		ldr	r2, .L17+48	@ float
+ 513 0410 C3F89420 		str	r2, [r3, #148]	@ float
+ 191:../src/config.c **** 
+ 192:../src/config.c ****         eepromConfig.PID[ROLL_RATE_PID].B               =   1.0f;
+ 514              		.loc 1 192 0
+ 515 0414 40F20003 		movw	r3, #:lower16:eepromConfig
+ 516 0418 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 517 041c DFF8242B 		ldr	r2, .L17+8	@ float
+ 518 0420 C3F89820 		str	r2, [r3, #152]	@ float
+ 193:../src/config.c ****         eepromConfig.PID[ROLL_RATE_PID].P               = 250.0f;
+ 519              		.loc 1 193 0
+ 520 0424 40F20003 		movw	r3, #:lower16:eepromConfig
+ 521 0428 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 522 042c DFF8402B 		ldr	r2, .L17+52	@ float
+ 523 0430 C3F89C20 		str	r2, [r3, #156]	@ float
+ 194:../src/config.c ****         eepromConfig.PID[ROLL_RATE_PID].I               = 100.0f;
+ 524              		.loc 1 194 0
+ 525 0434 40F20003 		movw	r3, #:lower16:eepromConfig
+ 526 0438 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 527 043c DFF8342B 		ldr	r2, .L17+56	@ float
+ 528 0440 C3F8A020 		str	r2, [r3, #160]	@ float
+ 195:../src/config.c ****         eepromConfig.PID[ROLL_RATE_PID].D               =   0.0f;
+ 529              		.loc 1 195 0
+ 530 0444 40F20003 		movw	r3, #:lower16:eepromConfig
+ 531 0448 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 532 044c DFF8EC2A 		ldr	r2, .L17	@ float
+ 533 0450 C3F8A420 		str	r2, [r3, #164]	@ float
+ 196:../src/config.c ****         eepromConfig.PID[ROLL_RATE_PID].iTerm           =   0.0f;
+ 534              		.loc 1 196 0
+ 535 0454 40F20003 		movw	r3, #:lower16:eepromConfig
+ 536 0458 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 537 045c DFF8DC2A 		ldr	r2, .L17	@ float
+ 538 0460 C3F8A820 		str	r2, [r3, #168]	@ float
+ 197:../src/config.c ****         eepromConfig.PID[ROLL_RATE_PID].windupGuard     = 100.0f;  // PWMs
+ 539              		.loc 1 197 0
+ 540 0464 40F20003 		movw	r3, #:lower16:eepromConfig
+ 541 0468 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 542 046c DFF8042B 		ldr	r2, .L17+56	@ float
+ 543 0470 C3F8AC20 		str	r2, [r3, #172]	@ float
+ 198:../src/config.c ****         eepromConfig.PID[ROLL_RATE_PID].lastDcalcValue  =   0.0f;
+ 544              		.loc 1 198 0
+ 545 0474 40F20003 		movw	r3, #:lower16:eepromConfig
+ 546 0478 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 547 047c DFF8BC2A 		ldr	r2, .L17	@ float
+ 548 0480 C3F8B020 		str	r2, [r3, #176]	@ float
+ 199:../src/config.c ****         eepromConfig.PID[ROLL_RATE_PID].lastDterm       =   0.0f;
+ 549              		.loc 1 199 0
+ 550 0484 40F20003 		movw	r3, #:lower16:eepromConfig
+ 551 0488 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 552 048c DFF8AC2A 		ldr	r2, .L17	@ float
+ 553 0490 C3F8B420 		str	r2, [r3, #180]	@ float
+ 200:../src/config.c ****         eepromConfig.PID[ROLL_RATE_PID].lastLastDterm   =   0.0f;
+ 554              		.loc 1 200 0
+ 555 0494 40F20003 		movw	r3, #:lower16:eepromConfig
+ 556 0498 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 557 049c DFF89C2A 		ldr	r2, .L17	@ float
+ 558 04a0 C3F8B820 		str	r2, [r3, #184]	@ float
+ 201:../src/config.c ****         eepromConfig.PID[ROLL_RATE_PID].dErrorCalc      =   D_ERROR;
+ 559              		.loc 1 201 0
+ 560 04a4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 561 04a8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 562 04ac 4FF00102 		mov	r2, #1
+ 563 04b0 83F8BC20 		strb	r2, [r3, #188]
+ 202:../src/config.c ****         eepromConfig.PID[ROLL_RATE_PID].type            =   OTHER;
+ 564              		.loc 1 202 0
+ 565 04b4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 566 04b8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 567 04bc 4FF00002 		mov	r2, #0
+ 568 04c0 83F8BD20 		strb	r2, [r3, #189]
+ 203:../src/config.c **** 
+ 204:../src/config.c ****         eepromConfig.PID[PITCH_RATE_PID].B              =   1.0f;
+ 569              		.loc 1 204 0
+ 570 04c4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 571 04c8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 572 04cc DFF8742A 		ldr	r2, .L17+8	@ float
+ 573 04d0 C3F8C020 		str	r2, [r3, #192]	@ float
+ 205:../src/config.c ****         eepromConfig.PID[PITCH_RATE_PID].P              = 250.0f;
+ 574              		.loc 1 205 0
+ 575 04d4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 576 04d8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 577 04dc DFF8902A 		ldr	r2, .L17+52	@ float
+ 578 04e0 C3F8C420 		str	r2, [r3, #196]	@ float
+ 206:../src/config.c ****         eepromConfig.PID[PITCH_RATE_PID].I              = 100.0f;
+ 579              		.loc 1 206 0
+ 580 04e4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 581 04e8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 582 04ec DFF8842A 		ldr	r2, .L17+56	@ float
+ 583 04f0 C3F8C820 		str	r2, [r3, #200]	@ float
+ 207:../src/config.c ****         eepromConfig.PID[PITCH_RATE_PID].D              =   0.0f;
+ 584              		.loc 1 207 0
+ 585 04f4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 586 04f8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 587 04fc DFF83C2A 		ldr	r2, .L17	@ float
+ 588 0500 C3F8CC20 		str	r2, [r3, #204]	@ float
+ 208:../src/config.c ****         eepromConfig.PID[PITCH_RATE_PID].iTerm          =   0.0f;
+ 589              		.loc 1 208 0
+ 590 0504 40F20003 		movw	r3, #:lower16:eepromConfig
+ 591 0508 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 592 050c DFF82C2A 		ldr	r2, .L17	@ float
+ 593 0510 C3F8D020 		str	r2, [r3, #208]	@ float
+ 209:../src/config.c ****         eepromConfig.PID[PITCH_RATE_PID].windupGuard    = 100.0f;  // PWMs
+ 594              		.loc 1 209 0
+ 595 0514 40F20003 		movw	r3, #:lower16:eepromConfig
+ 596 0518 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 597 051c DFF8542A 		ldr	r2, .L17+56	@ float
+ 598 0520 C3F8D420 		str	r2, [r3, #212]	@ float
+ 210:../src/config.c ****         eepromConfig.PID[PITCH_RATE_PID].lastDcalcValue =   0.0f;
+ 599              		.loc 1 210 0
+ 600 0524 40F20003 		movw	r3, #:lower16:eepromConfig
+ 601 0528 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 602 052c DFF80C2A 		ldr	r2, .L17	@ float
+ 603 0530 C3F8D820 		str	r2, [r3, #216]	@ float
+ 211:../src/config.c ****         eepromConfig.PID[PITCH_RATE_PID].lastDterm      =   0.0f;
+ 604              		.loc 1 211 0
+ 605 0534 40F20003 		movw	r3, #:lower16:eepromConfig
+ 606 0538 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 607 053c DFF8FC29 		ldr	r2, .L17	@ float
+ 608 0540 C3F8DC20 		str	r2, [r3, #220]	@ float
+ 212:../src/config.c ****         eepromConfig.PID[PITCH_RATE_PID].lastLastDterm  =   0.0f;
+ 609              		.loc 1 212 0
+ 610 0544 40F20003 		movw	r3, #:lower16:eepromConfig
+ 611 0548 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 612 054c DFF8EC29 		ldr	r2, .L17	@ float
+ 613 0550 C3F8E020 		str	r2, [r3, #224]	@ float
+ 213:../src/config.c ****         eepromConfig.PID[PITCH_RATE_PID].dErrorCalc     =   D_ERROR;
+ 614              		.loc 1 213 0
+ 615 0554 40F20003 		movw	r3, #:lower16:eepromConfig
+ 616 0558 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 617 055c 4FF00102 		mov	r2, #1
+ 618 0560 83F8E420 		strb	r2, [r3, #228]
+ 214:../src/config.c ****         eepromConfig.PID[PITCH_RATE_PID].type           =   OTHER;
+ 619              		.loc 1 214 0
+ 620 0564 40F20003 		movw	r3, #:lower16:eepromConfig
+ 621 0568 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 622 056c 4FF00002 		mov	r2, #0
+ 623 0570 83F8E520 		strb	r2, [r3, #229]
+ 215:../src/config.c **** 
+ 216:../src/config.c ****         eepromConfig.PID[YAW_RATE_PID].B                =   1.0f;
+ 624              		.loc 1 216 0
+ 625 0574 40F20003 		movw	r3, #:lower16:eepromConfig
+ 626 0578 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 627 057c DFF8C429 		ldr	r2, .L17+8	@ float
+ 628 0580 C3F8E820 		str	r2, [r3, #232]	@ float
+ 217:../src/config.c ****         eepromConfig.PID[YAW_RATE_PID].P                = 350.0f;
+ 629              		.loc 1 217 0
+ 630 0584 40F20003 		movw	r3, #:lower16:eepromConfig
+ 631 0588 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 632 058c DFF8E829 		ldr	r2, .L17+60	@ float
+ 633 0590 C3F8EC20 		str	r2, [r3, #236]	@ float
+ 218:../src/config.c ****         eepromConfig.PID[YAW_RATE_PID].I                = 100.0f;
+ 634              		.loc 1 218 0
+ 635 0594 40F20003 		movw	r3, #:lower16:eepromConfig
+ 636 0598 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 637 059c DFF8D429 		ldr	r2, .L17+56	@ float
+ 638 05a0 C3F8F020 		str	r2, [r3, #240]	@ float
+ 219:../src/config.c ****         eepromConfig.PID[YAW_RATE_PID].D                =   0.0f;
+ 639              		.loc 1 219 0
+ 640 05a4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 641 05a8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 642 05ac DFF88C29 		ldr	r2, .L17	@ float
+ 643 05b0 C3F8F420 		str	r2, [r3, #244]	@ float
+ 220:../src/config.c ****         eepromConfig.PID[YAW_RATE_PID].iTerm            =   0.0f;
+ 644              		.loc 1 220 0
+ 645 05b4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 646 05b8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 647 05bc DFF87C29 		ldr	r2, .L17	@ float
+ 648 05c0 C3F8F820 		str	r2, [r3, #248]	@ float
+ 221:../src/config.c ****         eepromConfig.PID[YAW_RATE_PID].windupGuard      = 100.0f;  // PWMs
+ 649              		.loc 1 221 0
+ 650 05c4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 651 05c8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 652 05cc DFF8A429 		ldr	r2, .L17+56	@ float
+ 653 05d0 C3F8FC20 		str	r2, [r3, #252]	@ float
+ 222:../src/config.c ****         eepromConfig.PID[YAW_RATE_PID].lastDcalcValue   =   0.0f;
+ 654              		.loc 1 222 0
+ 655 05d4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 656 05d8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 657 05dc DFF85C29 		ldr	r2, .L17	@ float
+ 658 05e0 C3F80021 		str	r2, [r3, #256]	@ float
+ 223:../src/config.c ****         eepromConfig.PID[YAW_RATE_PID].lastDterm        =   0.0f;
+ 659              		.loc 1 223 0
+ 660 05e4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 661 05e8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 662 05ec DFF84C29 		ldr	r2, .L17	@ float
+ 663 05f0 C3F80421 		str	r2, [r3, #260]	@ float
+ 224:../src/config.c ****         eepromConfig.PID[YAW_RATE_PID].lastLastDterm    =   0.0f;
+ 664              		.loc 1 224 0
+ 665 05f4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 666 05f8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 667 05fc DFF83C29 		ldr	r2, .L17	@ float
+ 668 0600 C3F80821 		str	r2, [r3, #264]	@ float
+ 225:../src/config.c ****         eepromConfig.PID[YAW_RATE_PID].dErrorCalc       =   D_ERROR;
+ 669              		.loc 1 225 0
+ 670 0604 40F20003 		movw	r3, #:lower16:eepromConfig
+ 671 0608 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 672 060c 4FF00102 		mov	r2, #1
+ 673 0610 83F80C21 		strb	r2, [r3, #268]
+ 226:../src/config.c ****         eepromConfig.PID[YAW_RATE_PID].type             =   OTHER;
+ 674              		.loc 1 226 0
+ 675 0614 40F20003 		movw	r3, #:lower16:eepromConfig
+ 676 0618 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 677 061c 4FF00002 		mov	r2, #0
+ 678 0620 83F80D21 		strb	r2, [r3, #269]
+ 227:../src/config.c **** 
+ 228:../src/config.c ****         eepromConfig.PID[ROLL_ATT_PID].B                =   1.0f;
+ 679              		.loc 1 228 0
+ 680 0624 40F20003 		movw	r3, #:lower16:eepromConfig
+ 681 0628 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 682 062c DFF81429 		ldr	r2, .L17+8	@ float
+ 683 0630 C3F81021 		str	r2, [r3, #272]	@ float
+ 229:../src/config.c ****         eepromConfig.PID[ROLL_ATT_PID].P                =   2.0f;
+ 684              		.loc 1 229 0
+ 685 0634 40F20003 		movw	r3, #:lower16:eepromConfig
+ 686 0638 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 687 063c DFF83C29 		ldr	r2, .L17+64	@ float
+ 688 0640 C3F81421 		str	r2, [r3, #276]	@ float
+ 230:../src/config.c ****         eepromConfig.PID[ROLL_ATT_PID].I                =   0.0f;
+ 689              		.loc 1 230 0
+ 690 0644 40F20003 		movw	r3, #:lower16:eepromConfig
+ 691 0648 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 692 064c DFF8EC28 		ldr	r2, .L17	@ float
+ 693 0650 C3F81821 		str	r2, [r3, #280]	@ float
+ 231:../src/config.c ****         eepromConfig.PID[ROLL_ATT_PID].D                =   0.0f;
+ 694              		.loc 1 231 0
+ 695 0654 40F20003 		movw	r3, #:lower16:eepromConfig
+ 696 0658 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 697 065c DFF8DC28 		ldr	r2, .L17	@ float
+ 698 0660 C3F81C21 		str	r2, [r3, #284]	@ float
+ 232:../src/config.c ****         eepromConfig.PID[ROLL_ATT_PID].iTerm            =   0.0f;
+ 699              		.loc 1 232 0
+ 700 0664 40F20003 		movw	r3, #:lower16:eepromConfig
+ 701 0668 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 702 066c DFF8CC28 		ldr	r2, .L17	@ float
+ 703 0670 C3F82021 		str	r2, [r3, #288]	@ float
+ 233:../src/config.c ****         eepromConfig.PID[ROLL_ATT_PID].windupGuard      =   0.5f;  // radians/sec
+ 704              		.loc 1 233 0
+ 705 0674 40F20003 		movw	r3, #:lower16:eepromConfig
+ 706 0678 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 707 067c DFF80029 		ldr	r2, .L17+68	@ float
+ 708 0680 C3F82421 		str	r2, [r3, #292]	@ float
+ 234:../src/config.c ****         eepromConfig.PID[ROLL_ATT_PID].lastDcalcValue   =   0.0f;
+ 709              		.loc 1 234 0
+ 710 0684 40F20003 		movw	r3, #:lower16:eepromConfig
+ 711 0688 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 712 068c DFF8AC28 		ldr	r2, .L17	@ float
+ 713 0690 C3F82821 		str	r2, [r3, #296]	@ float
+ 235:../src/config.c ****         eepromConfig.PID[ROLL_ATT_PID].lastDterm        =   0.0f;
+ 714              		.loc 1 235 0
+ 715 0694 40F20003 		movw	r3, #:lower16:eepromConfig
+ 716 0698 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 717 069c DFF89C28 		ldr	r2, .L17	@ float
+ 718 06a0 C3F82C21 		str	r2, [r3, #300]	@ float
+ 236:../src/config.c ****         eepromConfig.PID[ROLL_ATT_PID].lastLastDterm    =   0.0f;
+ 719              		.loc 1 236 0
+ 720 06a4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 721 06a8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 722 06ac DFF88C28 		ldr	r2, .L17	@ float
+ 723 06b0 C3F83021 		str	r2, [r3, #304]	@ float
+ 237:../src/config.c ****         eepromConfig.PID[ROLL_ATT_PID].dErrorCalc       =   D_ERROR;
+ 724              		.loc 1 237 0
+ 725 06b4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 726 06b8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 727 06bc 4FF00102 		mov	r2, #1
+ 728 06c0 83F83421 		strb	r2, [r3, #308]
+ 238:../src/config.c ****         eepromConfig.PID[ROLL_ATT_PID].type             =   ANGULAR;
+ 729              		.loc 1 238 0
+ 730 06c4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 731 06c8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 732 06cc 4FF00102 		mov	r2, #1
+ 733 06d0 83F83521 		strb	r2, [r3, #309]
+ 239:../src/config.c **** 
+ 240:../src/config.c ****         eepromConfig.PID[PITCH_ATT_PID].B               =   1.0f;
+ 734              		.loc 1 240 0
+ 735 06d4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 736 06d8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 737 06dc DFF86428 		ldr	r2, .L17+8	@ float
+ 738 06e0 C3F83821 		str	r2, [r3, #312]	@ float
+ 241:../src/config.c ****         eepromConfig.PID[PITCH_ATT_PID].P               =   2.0f;
+ 739              		.loc 1 241 0
+ 740 06e4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 741 06e8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 742 06ec DFF88C28 		ldr	r2, .L17+64	@ float
+ 743 06f0 C3F83C21 		str	r2, [r3, #316]	@ float
+ 242:../src/config.c ****         eepromConfig.PID[PITCH_ATT_PID].I               =   0.0f;
+ 744              		.loc 1 242 0
+ 745 06f4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 746 06f8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 747 06fc DFF83C28 		ldr	r2, .L17	@ float
+ 748 0700 C3F84021 		str	r2, [r3, #320]	@ float
+ 243:../src/config.c ****         eepromConfig.PID[PITCH_ATT_PID].D               =   0.0f;
+ 749              		.loc 1 243 0
+ 750 0704 40F20003 		movw	r3, #:lower16:eepromConfig
+ 751 0708 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 752 070c DFF82C28 		ldr	r2, .L17	@ float
+ 753 0710 C3F84421 		str	r2, [r3, #324]	@ float
+ 244:../src/config.c ****         eepromConfig.PID[PITCH_ATT_PID].iTerm           =   0.0f;
+ 754              		.loc 1 244 0
+ 755 0714 40F20003 		movw	r3, #:lower16:eepromConfig
+ 756 0718 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 757 071c DFF81C28 		ldr	r2, .L17	@ float
+ 758 0720 C3F84821 		str	r2, [r3, #328]	@ float
+ 245:../src/config.c ****         eepromConfig.PID[PITCH_ATT_PID].windupGuard     =   0.5f;  // radians/sec
+ 759              		.loc 1 245 0
+ 760 0724 40F20003 		movw	r3, #:lower16:eepromConfig
+ 761 0728 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 762 072c DFF85028 		ldr	r2, .L17+68	@ float
+ 763 0730 C3F84C21 		str	r2, [r3, #332]	@ float
+ 246:../src/config.c ****         eepromConfig.PID[PITCH_ATT_PID].lastDcalcValue  =   0.0f;
+ 764              		.loc 1 246 0
+ 765 0734 40F20003 		movw	r3, #:lower16:eepromConfig
+ 766 0738 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 767 073c DFF8FC27 		ldr	r2, .L17	@ float
+ 768 0740 C3F85021 		str	r2, [r3, #336]	@ float
+ 247:../src/config.c ****         eepromConfig.PID[PITCH_ATT_PID].lastDterm       =   0.0f;
+ 769              		.loc 1 247 0
+ 770 0744 40F20003 		movw	r3, #:lower16:eepromConfig
+ 771 0748 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 772 074c DFF8EC27 		ldr	r2, .L17	@ float
+ 773 0750 C3F85421 		str	r2, [r3, #340]	@ float
+ 248:../src/config.c ****         eepromConfig.PID[PITCH_ATT_PID].lastLastDterm   =   0.0f;
+ 774              		.loc 1 248 0
+ 775 0754 40F20003 		movw	r3, #:lower16:eepromConfig
+ 776 0758 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 777 075c DFF8DC27 		ldr	r2, .L17	@ float
+ 778 0760 C3F85821 		str	r2, [r3, #344]	@ float
+ 249:../src/config.c ****         eepromConfig.PID[PITCH_ATT_PID].dErrorCalc      =   D_ERROR;
+ 779              		.loc 1 249 0
+ 780 0764 40F20003 		movw	r3, #:lower16:eepromConfig
+ 781 0768 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 782 076c 4FF00102 		mov	r2, #1
+ 783 0770 83F85C21 		strb	r2, [r3, #348]
+ 250:../src/config.c ****         eepromConfig.PID[PITCH_ATT_PID].type            =   ANGULAR;
+ 784              		.loc 1 250 0
+ 785 0774 40F20003 		movw	r3, #:lower16:eepromConfig
+ 786 0778 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 787 077c 4FF00102 		mov	r2, #1
+ 788 0780 83F85D21 		strb	r2, [r3, #349]
+ 251:../src/config.c **** 
+ 252:../src/config.c ****         eepromConfig.PID[HEADING_PID].B                 =   1.0f;
+ 789              		.loc 1 252 0
+ 790 0784 40F20003 		movw	r3, #:lower16:eepromConfig
+ 791 0788 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 792 078c DFF8B427 		ldr	r2, .L17+8	@ float
+ 793 0790 C3F86021 		str	r2, [r3, #352]	@ float
+ 253:../src/config.c ****         eepromConfig.PID[HEADING_PID].P                 =   3.0f;
+ 794              		.loc 1 253 0
+ 795 0794 40F20003 		movw	r3, #:lower16:eepromConfig
+ 796 0798 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 797 079c DFF8E427 		ldr	r2, .L17+72	@ float
+ 798 07a0 C3F86421 		str	r2, [r3, #356]	@ float
+ 254:../src/config.c ****         eepromConfig.PID[HEADING_PID].I                 =   0.0f;
+ 799              		.loc 1 254 0
+ 800 07a4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 801 07a8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 802 07ac DFF88C27 		ldr	r2, .L17	@ float
+ 803 07b0 C3F86821 		str	r2, [r3, #360]	@ float
+ 255:../src/config.c ****         eepromConfig.PID[HEADING_PID].D                 =   0.0f;
+ 804              		.loc 1 255 0
+ 805 07b4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 806 07b8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 807 07bc DFF87C27 		ldr	r2, .L17	@ float
+ 808 07c0 C3F86C21 		str	r2, [r3, #364]	@ float
+ 256:../src/config.c ****         eepromConfig.PID[HEADING_PID].iTerm             =   0.0f;
+ 809              		.loc 1 256 0
+ 810 07c4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 811 07c8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 812 07cc DFF86C27 		ldr	r2, .L17	@ float
+ 813 07d0 C3F87021 		str	r2, [r3, #368]	@ float
+ 257:../src/config.c ****         eepromConfig.PID[HEADING_PID].windupGuard       =   0.5f;  // radians/sec
+ 814              		.loc 1 257 0
+ 815 07d4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 816 07d8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 817 07dc DFF8A027 		ldr	r2, .L17+68	@ float
+ 818 07e0 C3F87421 		str	r2, [r3, #372]	@ float
+ 258:../src/config.c ****         eepromConfig.PID[HEADING_PID].lastDcalcValue    =   0.0f;
+ 819              		.loc 1 258 0
+ 820 07e4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 821 07e8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 822 07ec DFF84C27 		ldr	r2, .L17	@ float
+ 823 07f0 C3F87821 		str	r2, [r3, #376]	@ float
+ 259:../src/config.c ****         eepromConfig.PID[HEADING_PID].lastDterm         =   0.0f;
+ 824              		.loc 1 259 0
+ 825 07f4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 826 07f8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 827 07fc DFF83C27 		ldr	r2, .L17	@ float
+ 828 0800 C3F87C21 		str	r2, [r3, #380]	@ float
+ 260:../src/config.c ****         eepromConfig.PID[HEADING_PID].lastLastDterm     =   0.0f;
+ 829              		.loc 1 260 0
+ 830 0804 40F20003 		movw	r3, #:lower16:eepromConfig
+ 831 0808 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 832 080c DFF82C27 		ldr	r2, .L17	@ float
+ 833 0810 C3F88021 		str	r2, [r3, #384]	@ float
+ 261:../src/config.c ****         eepromConfig.PID[HEADING_PID].dErrorCalc        =   D_ERROR;
+ 834              		.loc 1 261 0
+ 835 0814 40F20003 		movw	r3, #:lower16:eepromConfig
+ 836 0818 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 837 081c 4FF00102 		mov	r2, #1
+ 838 0820 83F88421 		strb	r2, [r3, #388]
+ 262:../src/config.c ****         eepromConfig.PID[HEADING_PID].type              =   ANGULAR;
+ 839              		.loc 1 262 0
+ 840 0824 40F20003 		movw	r3, #:lower16:eepromConfig
+ 841 0828 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 842 082c 4FF00102 		mov	r2, #1
+ 843 0830 83F88521 		strb	r2, [r3, #389]
+ 263:../src/config.c **** 
+ 264:../src/config.c ****         eepromConfig.PID[NDOT_PID].B                    =   1.0f;
+ 844              		.loc 1 264 0
+ 845 0834 40F20003 		movw	r3, #:lower16:eepromConfig
+ 846 0838 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 847 083c DFF80427 		ldr	r2, .L17+8	@ float
+ 848 0840 C3F88821 		str	r2, [r3, #392]	@ float
+ 265:../src/config.c ****         eepromConfig.PID[NDOT_PID].P                    =   3.0f;
+ 849              		.loc 1 265 0
+ 850 0844 40F20003 		movw	r3, #:lower16:eepromConfig
+ 851 0848 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 852 084c DFF83427 		ldr	r2, .L17+72	@ float
+ 853 0850 C3F88C21 		str	r2, [r3, #396]	@ float
+ 266:../src/config.c ****         eepromConfig.PID[NDOT_PID].I                    =   0.0f;
+ 854              		.loc 1 266 0
+ 855 0854 40F20003 		movw	r3, #:lower16:eepromConfig
+ 856 0858 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 857 085c DFF8DC26 		ldr	r2, .L17	@ float
+ 858 0860 C3F89021 		str	r2, [r3, #400]	@ float
+ 267:../src/config.c ****         eepromConfig.PID[NDOT_PID].D                    =   0.0f;
+ 859              		.loc 1 267 0
+ 860 0864 40F20003 		movw	r3, #:lower16:eepromConfig
+ 861 0868 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 862 086c DFF8CC26 		ldr	r2, .L17	@ float
+ 863 0870 C3F89421 		str	r2, [r3, #404]	@ float
+ 268:../src/config.c ****         eepromConfig.PID[NDOT_PID].iTerm                =   0.0f;
+ 864              		.loc 1 268 0
+ 865 0874 40F20003 		movw	r3, #:lower16:eepromConfig
+ 866 0878 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 867 087c DFF8BC26 		ldr	r2, .L17	@ float
+ 868 0880 C3F89821 		str	r2, [r3, #408]	@ float
+ 269:../src/config.c ****         eepromConfig.PID[NDOT_PID].windupGuard          =   0.5f;
+ 869              		.loc 1 269 0
+ 870 0884 40F20003 		movw	r3, #:lower16:eepromConfig
+ 871 0888 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 872 088c DFF8F026 		ldr	r2, .L17+68	@ float
+ 873 0890 C3F89C21 		str	r2, [r3, #412]	@ float
+ 270:../src/config.c ****         eepromConfig.PID[NDOT_PID].lastDcalcValue       =   0.0f;
+ 874              		.loc 1 270 0
+ 875 0894 40F20003 		movw	r3, #:lower16:eepromConfig
+ 876 0898 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 877 089c DFF89C26 		ldr	r2, .L17	@ float
+ 878 08a0 C3F8A021 		str	r2, [r3, #416]	@ float
+ 271:../src/config.c ****         eepromConfig.PID[NDOT_PID].lastDterm            =   0.0f;
+ 879              		.loc 1 271 0
+ 880 08a4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 881 08a8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 882 08ac DFF88C26 		ldr	r2, .L17	@ float
+ 883 08b0 C3F8A421 		str	r2, [r3, #420]	@ float
+ 272:../src/config.c ****         eepromConfig.PID[NDOT_PID].lastLastDterm        =   0.0f;
+ 884              		.loc 1 272 0
+ 885 08b4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 886 08b8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 887 08bc DFF87C26 		ldr	r2, .L17	@ float
+ 888 08c0 C3F8A821 		str	r2, [r3, #424]	@ float
+ 273:../src/config.c ****         eepromConfig.PID[NDOT_PID].dErrorCalc           =   D_ERROR;
+ 889              		.loc 1 273 0
+ 890 08c4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 891 08c8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 892 08cc 4FF00102 		mov	r2, #1
+ 893 08d0 83F8AC21 		strb	r2, [r3, #428]
+ 274:../src/config.c ****         eepromConfig.PID[NDOT_PID].type                 =   OTHER;
+ 894              		.loc 1 274 0
+ 895 08d4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 896 08d8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 897 08dc 4FF00002 		mov	r2, #0
+ 898 08e0 83F8AD21 		strb	r2, [r3, #429]
+ 275:../src/config.c **** 
+ 276:../src/config.c ****         eepromConfig.PID[EDOT_PID].B                    =   1.0f;
+ 899              		.loc 1 276 0
+ 900 08e4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 901 08e8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 902 08ec DFF85426 		ldr	r2, .L17+8	@ float
+ 903 08f0 C3F8B021 		str	r2, [r3, #432]	@ float
+ 277:../src/config.c ****         eepromConfig.PID[EDOT_PID].P                    =   3.0f;
+ 904              		.loc 1 277 0
+ 905 08f4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 906 08f8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 907 08fc DFF88426 		ldr	r2, .L17+72	@ float
+ 908 0900 C3F8B421 		str	r2, [r3, #436]	@ float
+ 278:../src/config.c ****         eepromConfig.PID[EDOT_PID].I                    =   0.0f;
+ 909              		.loc 1 278 0
+ 910 0904 40F20003 		movw	r3, #:lower16:eepromConfig
+ 911 0908 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 912 090c DFF82C26 		ldr	r2, .L17	@ float
+ 913 0910 C3F8B821 		str	r2, [r3, #440]	@ float
+ 279:../src/config.c ****         eepromConfig.PID[EDOT_PID].D                    =   0.0f;
+ 914              		.loc 1 279 0
+ 915 0914 40F20003 		movw	r3, #:lower16:eepromConfig
+ 916 0918 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 917 091c DFF81C26 		ldr	r2, .L17	@ float
+ 918 0920 C3F8BC21 		str	r2, [r3, #444]	@ float
+ 280:../src/config.c ****         eepromConfig.PID[EDOT_PID].iTerm                =   0.0f;
+ 919              		.loc 1 280 0
+ 920 0924 40F20003 		movw	r3, #:lower16:eepromConfig
+ 921 0928 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 922 092c DFF80C26 		ldr	r2, .L17	@ float
+ 923 0930 C3F8C021 		str	r2, [r3, #448]	@ float
+ 281:../src/config.c ****         eepromConfig.PID[EDOT_PID].windupGuard          =   0.5f;
+ 924              		.loc 1 281 0
+ 925 0934 40F20003 		movw	r3, #:lower16:eepromConfig
+ 926 0938 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 927 093c DFF84026 		ldr	r2, .L17+68	@ float
+ 928 0940 C3F8C421 		str	r2, [r3, #452]	@ float
+ 282:../src/config.c ****         eepromConfig.PID[EDOT_PID].lastDcalcValue       =   0.0f;
+ 929              		.loc 1 282 0
+ 930 0944 40F20003 		movw	r3, #:lower16:eepromConfig
+ 931 0948 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 932 094c DFF8EC25 		ldr	r2, .L17	@ float
+ 933 0950 C3F8C821 		str	r2, [r3, #456]	@ float
+ 283:../src/config.c ****         eepromConfig.PID[EDOT_PID].lastDterm            =   0.0f;
+ 934              		.loc 1 283 0
+ 935 0954 40F20003 		movw	r3, #:lower16:eepromConfig
+ 936 0958 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 937 095c DFF8DC25 		ldr	r2, .L17	@ float
+ 938 0960 C3F8CC21 		str	r2, [r3, #460]	@ float
+ 284:../src/config.c ****         eepromConfig.PID[EDOT_PID].lastLastDterm        =   0.0f;
+ 939              		.loc 1 284 0
+ 940 0964 40F20003 		movw	r3, #:lower16:eepromConfig
+ 941 0968 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 942 096c DFF8CC25 		ldr	r2, .L17	@ float
+ 943 0970 C3F8D021 		str	r2, [r3, #464]	@ float
+ 285:../src/config.c ****         eepromConfig.PID[EDOT_PID].dErrorCalc           =   D_ERROR;
+ 944              		.loc 1 285 0
+ 945 0974 40F20003 		movw	r3, #:lower16:eepromConfig
+ 946 0978 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 947 097c 4FF00102 		mov	r2, #1
+ 948 0980 83F8D421 		strb	r2, [r3, #468]
+ 286:../src/config.c ****         eepromConfig.PID[EDOT_PID].type                 =   OTHER;
+ 949              		.loc 1 286 0
+ 950 0984 40F20003 		movw	r3, #:lower16:eepromConfig
+ 951 0988 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 952 098c 4FF00002 		mov	r2, #0
+ 953 0990 83F8D521 		strb	r2, [r3, #469]
+ 287:../src/config.c **** 
+ 288:../src/config.c ****         eepromConfig.PID[HDOT_PID].B                    =   1.0f;
+ 954              		.loc 1 288 0
+ 955 0994 40F20003 		movw	r3, #:lower16:eepromConfig
+ 956 0998 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 957 099c DFF8A425 		ldr	r2, .L17+8	@ float
+ 958 09a0 C3F8D821 		str	r2, [r3, #472]	@ float
+ 289:../src/config.c ****         eepromConfig.PID[HDOT_PID].P                    =   2.0f;
+ 959              		.loc 1 289 0
+ 960 09a4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 961 09a8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 962 09ac DFF8CC25 		ldr	r2, .L17+64	@ float
+ 963 09b0 C3F8DC21 		str	r2, [r3, #476]	@ float
+ 290:../src/config.c ****         eepromConfig.PID[HDOT_PID].I                    =   0.0f;
+ 964              		.loc 1 290 0
+ 965 09b4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 966 09b8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 967 09bc DFF87C25 		ldr	r2, .L17	@ float
+ 968 09c0 C3F8E021 		str	r2, [r3, #480]	@ float
+ 291:../src/config.c ****         eepromConfig.PID[HDOT_PID].D                    =   0.0f;
+ 969              		.loc 1 291 0
+ 970 09c4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 971 09c8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 972 09cc DFF86C25 		ldr	r2, .L17	@ float
+ 973 09d0 C3F8E421 		str	r2, [r3, #484]	@ float
+ 292:../src/config.c ****         eepromConfig.PID[HDOT_PID].iTerm                =   0.0f;
+ 974              		.loc 1 292 0
+ 975 09d4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 976 09d8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 977 09dc DFF85C25 		ldr	r2, .L17	@ float
+ 978 09e0 C3F8E821 		str	r2, [r3, #488]	@ float
+ 293:../src/config.c ****         eepromConfig.PID[HDOT_PID].windupGuard          =   5.0f;
+ 979              		.loc 1 293 0
+ 980 09e4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 981 09e8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 982 09ec DFF85825 		ldr	r2, .L17+12	@ float
+ 983 09f0 C3F8EC21 		str	r2, [r3, #492]	@ float
+ 294:../src/config.c ****         eepromConfig.PID[HDOT_PID].lastDcalcValue       =   0.0f;
+ 984              		.loc 1 294 0
+ 985 09f4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 986 09f8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 987 09fc DFF83C25 		ldr	r2, .L17	@ float
+ 988 0a00 C3F8F021 		str	r2, [r3, #496]	@ float
+ 295:../src/config.c ****         eepromConfig.PID[HDOT_PID].lastDterm            =   0.0f;
+ 989              		.loc 1 295 0
+ 990 0a04 40F20003 		movw	r3, #:lower16:eepromConfig
+ 991 0a08 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 992 0a0c DFF82C25 		ldr	r2, .L17	@ float
+ 993 0a10 C3F8F421 		str	r2, [r3, #500]	@ float
+ 296:../src/config.c ****         eepromConfig.PID[HDOT_PID].lastLastDterm        =   0.0f;
+ 994              		.loc 1 296 0
+ 995 0a14 40F20003 		movw	r3, #:lower16:eepromConfig
+ 996 0a18 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 997 0a1c DFF81C25 		ldr	r2, .L17	@ float
+ 998 0a20 C3F8F821 		str	r2, [r3, #504]	@ float
+ 297:../src/config.c ****         eepromConfig.PID[HDOT_PID].dErrorCalc           =   D_ERROR;
+ 999              		.loc 1 297 0
+ 1000 0a24 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1001 0a28 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1002 0a2c 4FF00102 		mov	r2, #1
+ 1003 0a30 83F8FC21 		strb	r2, [r3, #508]
+ 298:../src/config.c ****         eepromConfig.PID[HDOT_PID].type                 =   OTHER;
+ 1004              		.loc 1 298 0
+ 1005 0a34 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1006 0a38 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1007 0a3c 4FF00002 		mov	r2, #0
+ 1008 0a40 83F8FD21 		strb	r2, [r3, #509]
+ 299:../src/config.c **** 
+ 300:../src/config.c ****         eepromConfig.PID[N_PID].B                       =   1.0f;
+ 1009              		.loc 1 300 0
+ 1010 0a44 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1011 0a48 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1012 0a4c DFF8F424 		ldr	r2, .L17+8	@ float
+ 1013 0a50 C3F80022 		str	r2, [r3, #512]	@ float
+ 301:../src/config.c ****         eepromConfig.PID[N_PID].P                       =   3.0f;
+ 1014              		.loc 1 301 0
+ 1015 0a54 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1016 0a58 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1017 0a5c DFF82425 		ldr	r2, .L17+72	@ float
+ 1018 0a60 C3F80422 		str	r2, [r3, #516]	@ float
+ 302:../src/config.c ****         eepromConfig.PID[N_PID].I                       =   0.0f;
+ 1019              		.loc 1 302 0
+ 1020 0a64 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1021 0a68 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1022 0a6c DFF8CC24 		ldr	r2, .L17	@ float
+ 1023 0a70 C3F80822 		str	r2, [r3, #520]	@ float
+ 303:../src/config.c ****         eepromConfig.PID[N_PID].D                       =   0.0f;
+ 1024              		.loc 1 303 0
+ 1025 0a74 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1026 0a78 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1027 0a7c DFF8BC24 		ldr	r2, .L17	@ float
+ 1028 0a80 C3F80C22 		str	r2, [r3, #524]	@ float
+ 304:../src/config.c ****         eepromConfig.PID[N_PID].iTerm                   =   0.0f;
+ 1029              		.loc 1 304 0
+ 1030 0a84 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1031 0a88 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1032 0a8c DFF8AC24 		ldr	r2, .L17	@ float
+ 1033 0a90 C3F81022 		str	r2, [r3, #528]	@ float
+ 305:../src/config.c ****         eepromConfig.PID[N_PID].windupGuard             =   0.5f;
+ 1034              		.loc 1 305 0
+ 1035 0a94 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1036 0a98 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1037 0a9c DFF8E024 		ldr	r2, .L17+68	@ float
+ 1038 0aa0 C3F81422 		str	r2, [r3, #532]	@ float
+ 306:../src/config.c ****         eepromConfig.PID[N_PID].lastDcalcValue          =   0.0f;
+ 1039              		.loc 1 306 0
+ 1040 0aa4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1041 0aa8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1042 0aac DFF88C24 		ldr	r2, .L17	@ float
+ 1043 0ab0 C3F81822 		str	r2, [r3, #536]	@ float
+ 307:../src/config.c ****         eepromConfig.PID[N_PID].lastDterm               =   0.0f;
+ 1044              		.loc 1 307 0
+ 1045 0ab4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1046 0ab8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1047 0abc DFF87C24 		ldr	r2, .L17	@ float
+ 1048 0ac0 C3F81C22 		str	r2, [r3, #540]	@ float
+ 308:../src/config.c ****         eepromConfig.PID[N_PID].lastLastDterm           =   0.0f;
+ 1049              		.loc 1 308 0
+ 1050 0ac4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1051 0ac8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1052 0acc DFF86C24 		ldr	r2, .L17	@ float
+ 1053 0ad0 C3F82022 		str	r2, [r3, #544]	@ float
+ 309:../src/config.c ****         eepromConfig.PID[N_PID].dErrorCalc              =   D_ERROR;
+ 1054              		.loc 1 309 0
+ 1055 0ad4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1056 0ad8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1057 0adc 4FF00102 		mov	r2, #1
+ 1058 0ae0 83F82422 		strb	r2, [r3, #548]
+ 310:../src/config.c ****         eepromConfig.PID[N_PID].type                    =   OTHER;
+ 1059              		.loc 1 310 0
+ 1060 0ae4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1061 0ae8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1062 0aec 4FF00002 		mov	r2, #0
+ 1063 0af0 83F82522 		strb	r2, [r3, #549]
+ 311:../src/config.c **** 
+ 312:../src/config.c ****         eepromConfig.PID[E_PID].B                       =   1.0f;
+ 1064              		.loc 1 312 0
+ 1065 0af4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1066 0af8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1067 0afc DFF84424 		ldr	r2, .L17+8	@ float
+ 1068 0b00 C3F82822 		str	r2, [r3, #552]	@ float
+ 313:../src/config.c ****         eepromConfig.PID[E_PID].P                       =   3.0f;
+ 1069              		.loc 1 313 0
+ 1070 0b04 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1071 0b08 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1072 0b0c DFF87424 		ldr	r2, .L17+72	@ float
+ 1073 0b10 C3F82C22 		str	r2, [r3, #556]	@ float
+ 314:../src/config.c ****         eepromConfig.PID[E_PID].I                       =   0.0f;
+ 1074              		.loc 1 314 0
+ 1075 0b14 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1076 0b18 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1077 0b1c DFF81C24 		ldr	r2, .L17	@ float
+ 1078 0b20 C3F83022 		str	r2, [r3, #560]	@ float
+ 315:../src/config.c ****         eepromConfig.PID[E_PID].D                       =   0.0f;
+ 1079              		.loc 1 315 0
+ 1080 0b24 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1081 0b28 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1082 0b2c DFF80C24 		ldr	r2, .L17	@ float
+ 1083 0b30 C3F83422 		str	r2, [r3, #564]	@ float
+ 316:../src/config.c ****         eepromConfig.PID[E_PID].iTerm                   =   0.0f;
+ 1084              		.loc 1 316 0
+ 1085 0b34 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1086 0b38 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1087 0b3c FF4A     		ldr	r2, .L17	@ float
+ 1088 0b3e C3F83822 		str	r2, [r3, #568]	@ float
+ 317:../src/config.c ****         eepromConfig.PID[E_PID].windupGuard             =   0.5f;
+ 1089              		.loc 1 317 0
+ 1090 0b42 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1091 0b46 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1092 0b4a DFF83424 		ldr	r2, .L17+68	@ float
+ 1093 0b4e C3F83C22 		str	r2, [r3, #572]	@ float
+ 318:../src/config.c ****         eepromConfig.PID[E_PID].lastDcalcValue          =   0.0f;
+ 1094              		.loc 1 318 0
+ 1095 0b52 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1096 0b56 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1097 0b5a F84A     		ldr	r2, .L17	@ float
+ 1098 0b5c C3F84022 		str	r2, [r3, #576]	@ float
+ 319:../src/config.c ****         eepromConfig.PID[E_PID].lastDterm               =   0.0f;
+ 1099              		.loc 1 319 0
+ 1100 0b60 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1101 0b64 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1102 0b68 F44A     		ldr	r2, .L17	@ float
+ 1103 0b6a C3F84422 		str	r2, [r3, #580]	@ float
+ 320:../src/config.c ****         eepromConfig.PID[E_PID].lastLastDterm           =   0.0f;
+ 1104              		.loc 1 320 0
+ 1105 0b6e 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1106 0b72 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1107 0b76 F14A     		ldr	r2, .L17	@ float
+ 1108 0b78 C3F84822 		str	r2, [r3, #584]	@ float
+ 321:../src/config.c ****         eepromConfig.PID[E_PID].dErrorCalc              =   D_ERROR;
+ 1109              		.loc 1 321 0
+ 1110 0b7c 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1111 0b80 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1112 0b84 4FF00102 		mov	r2, #1
+ 1113 0b88 83F84C22 		strb	r2, [r3, #588]
+ 322:../src/config.c ****         eepromConfig.PID[E_PID].type                    =   OTHER;
+ 1114              		.loc 1 322 0
+ 1115 0b8c 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1116 0b90 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1117 0b94 4FF00002 		mov	r2, #0
+ 1118 0b98 83F84D22 		strb	r2, [r3, #589]
+ 323:../src/config.c **** 
+ 324:../src/config.c ****         eepromConfig.PID[H_PID].B                       =   1.0f;
+ 1119              		.loc 1 324 0
+ 1120 0b9c 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1121 0ba0 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1122 0ba4 E74A     		ldr	r2, .L17+8	@ float
+ 1123 0ba6 C3F85022 		str	r2, [r3, #592]	@ float
+ 325:../src/config.c ****         eepromConfig.PID[H_PID].P                       =   2.0f;
+ 1124              		.loc 1 325 0
+ 1125 0baa 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1126 0bae C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1127 0bb2 F24A     		ldr	r2, .L17+64	@ float
+ 1128 0bb4 C3F85422 		str	r2, [r3, #596]	@ float
+ 326:../src/config.c ****         eepromConfig.PID[H_PID].I                       =   0.0f;
+ 1129              		.loc 1 326 0
+ 1130 0bb8 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1131 0bbc C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1132 0bc0 DE4A     		ldr	r2, .L17	@ float
+ 1133 0bc2 C3F85822 		str	r2, [r3, #600]	@ float
+ 327:../src/config.c ****         eepromConfig.PID[H_PID].D                       =   0.0f;
+ 1134              		.loc 1 327 0
+ 1135 0bc6 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1136 0bca C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1137 0bce DB4A     		ldr	r2, .L17	@ float
+ 1138 0bd0 C3F85C22 		str	r2, [r3, #604]	@ float
+ 328:../src/config.c ****         eepromConfig.PID[H_PID].iTerm                   =   0.0f;
+ 1139              		.loc 1 328 0
+ 1140 0bd4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1141 0bd8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1142 0bdc D74A     		ldr	r2, .L17	@ float
+ 1143 0bde C3F86022 		str	r2, [r3, #608]	@ float
+ 329:../src/config.c ****         eepromConfig.PID[H_PID].windupGuard             =   5.0f;
+ 1144              		.loc 1 329 0
+ 1145 0be2 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1146 0be6 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1147 0bea D74A     		ldr	r2, .L17+12	@ float
+ 1148 0bec C3F86422 		str	r2, [r3, #612]	@ float
+ 330:../src/config.c ****         eepromConfig.PID[H_PID].lastDcalcValue          =   0.0f;
+ 1149              		.loc 1 330 0
+ 1150 0bf0 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1151 0bf4 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1152 0bf8 D04A     		ldr	r2, .L17	@ float
+ 1153 0bfa C3F86822 		str	r2, [r3, #616]	@ float
+ 331:../src/config.c ****         eepromConfig.PID[H_PID].lastDterm               =   0.0f;
+ 1154              		.loc 1 331 0
+ 1155 0bfe 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1156 0c02 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1157 0c06 CD4A     		ldr	r2, .L17	@ float
+ 1158 0c08 C3F86C22 		str	r2, [r3, #620]	@ float
+ 332:../src/config.c ****         eepromConfig.PID[H_PID].lastLastDterm           =   0.0f;
+ 1159              		.loc 1 332 0
+ 1160 0c0c 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1161 0c10 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1162 0c14 C94A     		ldr	r2, .L17	@ float
+ 1163 0c16 C3F87022 		str	r2, [r3, #624]	@ float
+ 333:../src/config.c ****         eepromConfig.PID[H_PID].dErrorCalc              =   D_ERROR;
+ 1164              		.loc 1 333 0
+ 1165 0c1a 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1166 0c1e C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1167 0c22 4FF00102 		mov	r2, #1
+ 1168 0c26 83F87422 		strb	r2, [r3, #628]
+ 334:../src/config.c ****         eepromConfig.PID[H_PID].type                    =   OTHER;
+ 1169              		.loc 1 334 0
+ 1170 0c2a 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1171 0c2e C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1172 0c32 4FF00002 		mov	r2, #0
+ 1173 0c36 83F87522 		strb	r2, [r3, #629]
+ 335:../src/config.c **** 
+ 336:../src/config.c ****         eepromConfig.gimbalRollServoMin   = 2000.0f;
+ 1174              		.loc 1 336 0
+ 1175 0c3a 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1176 0c3e C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1177 0c42 D14A     		ldr	r2, .L17+76	@ float
+ 1178 0c44 C3F87822 		str	r2, [r3, #632]	@ float
+ 337:../src/config.c **** 		eepromConfig.gimbalRollServoMid   = 3000.0f;
+ 1179              		.loc 1 337 0
+ 1180 0c48 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1181 0c4c C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1182 0c50 C34A     		ldr	r2, .L17+36	@ float
+ 1183 0c52 C3F87C22 		str	r2, [r3, #636]	@ float
+ 338:../src/config.c **** 		eepromConfig.gimbalRollServoMax   = 4000.0f;
+ 1184              		.loc 1 338 0
+ 1185 0c56 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1186 0c5a C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1187 0c5e C34A     		ldr	r2, .L17+48	@ float
+ 1188 0c60 C3F88022 		str	r2, [r3, #640]	@ float
+ 339:../src/config.c **** 		eepromConfig.gimbalRollServoGain  = 1.0f;
+ 1189              		.loc 1 339 0
+ 1190 0c64 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1191 0c68 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1192 0c6c B54A     		ldr	r2, .L17+8	@ float
+ 1193 0c6e C3F88422 		str	r2, [r3, #644]	@ float
+ 340:../src/config.c **** 
+ 341:../src/config.c **** 		eepromConfig.gimbalPitchServoMin  = 2000.0f;
+ 1194              		.loc 1 341 0
+ 1195 0c72 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1196 0c76 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1197 0c7a C34A     		ldr	r2, .L17+76	@ float
+ 1198 0c7c C3F88822 		str	r2, [r3, #648]	@ float
+ 342:../src/config.c **** 		eepromConfig.gimbalPitchServoMid  = 3000.0f;
+ 1199              		.loc 1 342 0
+ 1200 0c80 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1201 0c84 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1202 0c88 B54A     		ldr	r2, .L17+36	@ float
+ 1203 0c8a C3F88C22 		str	r2, [r3, #652]	@ float
+ 343:../src/config.c **** 		eepromConfig.gimbalPitchServoMax  = 4000.0f;
+ 1204              		.loc 1 343 0
+ 1205 0c8e 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1206 0c92 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1207 0c96 B54A     		ldr	r2, .L17+48	@ float
+ 1208 0c98 C3F89022 		str	r2, [r3, #656]	@ float
+ 344:../src/config.c **** 		eepromConfig.gimbalPitchServoGain = 1.0f;
+ 1209              		.loc 1 344 0
+ 1210 0c9c 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1211 0ca0 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1212 0ca4 A74A     		ldr	r2, .L17+8	@ float
+ 1213 0ca6 C3F89422 		str	r2, [r3, #660]	@ float
+ 345:../src/config.c **** 
+ 346:../src/config.c ****         eepromConfig.rollDirectionLeft    = -1.0f;
+ 1214              		.loc 1 346 0
+ 1215 0caa 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1216 0cae C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1217 0cb2 B64A     		ldr	r2, .L17+80	@ float
+ 1218 0cb4 C3F89822 		str	r2, [r3, #664]	@ float
+ 347:../src/config.c ****         eepromConfig.rollDirectionRight   =  1.0f;
+ 1219              		.loc 1 347 0
+ 1220 0cb8 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1221 0cbc C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1222 0cc0 A04A     		ldr	r2, .L17+8	@ float
+ 1223 0cc2 C3F89C22 		str	r2, [r3, #668]	@ float
+ 348:../src/config.c ****         eepromConfig.pitchDirectionLeft   = -1.0f;
+ 1224              		.loc 1 348 0
+ 1225 0cc6 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1226 0cca C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1227 0cce AF4A     		ldr	r2, .L17+80	@ float
+ 1228 0cd0 C3F8A022 		str	r2, [r3, #672]	@ float
+ 349:../src/config.c ****         eepromConfig.pitchDirectionRight  =  1.0f;
+ 1229              		.loc 1 349 0
+ 1230 0cd4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1231 0cd8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1232 0cdc 994A     		ldr	r2, .L17+8	@ float
+ 1233 0cde C3F8A422 		str	r2, [r3, #676]	@ float
+ 350:../src/config.c **** 
+ 351:../src/config.c ****         eepromConfig.wingLeftMinimum      = 2000.0f;
+ 1234              		.loc 1 351 0
+ 1235 0ce2 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1236 0ce6 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1237 0cea A74A     		ldr	r2, .L17+76	@ float
+ 1238 0cec C3F8A822 		str	r2, [r3, #680]	@ float
+ 352:../src/config.c ****         eepromConfig.wingLeftMaximum      = 4000.0f;
+ 1239              		.loc 1 352 0
+ 1240 0cf0 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1241 0cf4 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1242 0cf8 9C4A     		ldr	r2, .L17+48	@ float
+ 1243 0cfa C3F8AC22 		str	r2, [r3, #684]	@ float
+ 353:../src/config.c ****         eepromConfig.wingRightMinimum     = 2000.0f;
+ 1244              		.loc 1 353 0
+ 1245 0cfe 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1246 0d02 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1247 0d06 A04A     		ldr	r2, .L17+76	@ float
+ 1248 0d08 C3F8B022 		str	r2, [r3, #688]	@ float
+ 354:../src/config.c ****         eepromConfig.wingRightMaximum     = 4000.0f;
+ 1249              		.loc 1 354 0
+ 1250 0d0c 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1251 0d10 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1252 0d14 954A     		ldr	r2, .L17+48	@ float
+ 1253 0d16 C3F8B422 		str	r2, [r3, #692]	@ float
+ 355:../src/config.c **** 
+ 356:../src/config.c ****         eepromConfig.biLeftServoMin       = 2000.0f;
+ 1254              		.loc 1 356 0
+ 1255 0d1a 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1256 0d1e C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1257 0d22 994A     		ldr	r2, .L17+76	@ float
+ 1258 0d24 C3F8B822 		str	r2, [r3, #696]	@ float
+ 357:../src/config.c ****         eepromConfig.biLeftServoMid       = 3000.0f;
+ 1259              		.loc 1 357 0
+ 1260 0d28 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1261 0d2c C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1262 0d30 8B4A     		ldr	r2, .L17+36	@ float
+ 1263 0d32 C3F8BC22 		str	r2, [r3, #700]	@ float
+ 358:../src/config.c ****         eepromConfig.biLeftServoMax       = 4000.0f;
+ 1264              		.loc 1 358 0
+ 1265 0d36 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1266 0d3a C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1267 0d3e 8B4A     		ldr	r2, .L17+48	@ float
+ 1268 0d40 C3F8C022 		str	r2, [r3, #704]	@ float
+ 359:../src/config.c **** 
+ 360:../src/config.c ****         eepromConfig.biRightServoMin      = 2000.0f;
+ 1269              		.loc 1 360 0
+ 1270 0d44 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1271 0d48 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1272 0d4c 8E4A     		ldr	r2, .L17+76	@ float
+ 1273 0d4e C3F8C422 		str	r2, [r3, #708]	@ float
+ 361:../src/config.c ****         eepromConfig.biRightServoMid      = 3000.0f;
+ 1274              		.loc 1 361 0
+ 1275 0d52 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1276 0d56 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1277 0d5a 814A     		ldr	r2, .L17+36	@ float
+ 1278 0d5c C3F8C822 		str	r2, [r3, #712]	@ float
+ 362:../src/config.c ****         eepromConfig.biRightServoMax      = 4000.0f;
+ 1279              		.loc 1 362 0
+ 1280 0d60 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1281 0d64 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1282 0d68 804A     		ldr	r2, .L17+48	@ float
+ 1283 0d6a C3F8CC22 		str	r2, [r3, #716]	@ float
+ 363:../src/config.c **** 
+ 364:../src/config.c ****         eepromConfig.triYawServoMin       = 2000.0f;
+ 1284              		.loc 1 364 0
+ 1285 0d6e 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1286 0d72 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1287 0d76 844A     		ldr	r2, .L17+76	@ float
+ 1288 0d78 C3F8D022 		str	r2, [r3, #720]	@ float
+ 365:../src/config.c ****         eepromConfig.triYawServoMid       = 3000.0f;
+ 1289              		.loc 1 365 0
+ 1290 0d7c 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1291 0d80 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1292 0d84 764A     		ldr	r2, .L17+36	@ float
+ 1293 0d86 C3F8D422 		str	r2, [r3, #724]	@ float
+ 366:../src/config.c ****         eepromConfig.triYawServoMax       = 4000.0f;
+ 1294              		.loc 1 366 0
+ 1295 0d8a 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1296 0d8e C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1297 0d92 764A     		ldr	r2, .L17+48	@ float
+ 1298 0d94 C3F8D822 		str	r2, [r3, #728]	@ float
+ 367:../src/config.c **** 
+ 368:../src/config.c ****         eepromConfig.vTailAngle           = 40.0f;
+ 1299              		.loc 1 368 0
+ 1300 0d98 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1301 0d9c C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1302 0da0 7B4A     		ldr	r2, .L17+84	@ float
+ 1303 0da2 C3F8DC22 		str	r2, [r3, #732]	@ float
+ 369:../src/config.c **** 
+ 370:../src/config.c ****         // Free Mix Defaults to Quad X
+ 371:../src/config.c **** 		eepromConfig.freeMixMotors        = 4;
+ 1304              		.loc 1 371 0
+ 1305 0da6 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1306 0daa C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1307 0dae 4FF00402 		mov	r2, #4
+ 1308 0db2 83F8E022 		strb	r2, [r3, #736]
+ 372:../src/config.c **** 
+ 373:../src/config.c **** 		eepromConfig.freeMix[0][ROLL ]    =  1.0f;
+ 1309              		.loc 1 373 0
+ 1310 0db6 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1311 0dba C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1312 0dbe 614A     		ldr	r2, .L17+8	@ float
+ 1313 0dc0 C3F8E422 		str	r2, [r3, #740]	@ float
+ 374:../src/config.c ****         eepromConfig.freeMix[0][PITCH]    = -1.0f;
+ 1314              		.loc 1 374 0
+ 1315 0dc4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1316 0dc8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1317 0dcc 6F4A     		ldr	r2, .L17+80	@ float
+ 1318 0dce C3F8E822 		str	r2, [r3, #744]	@ float
+ 375:../src/config.c ****         eepromConfig.freeMix[0][YAW  ]    = -1.0f;
+ 1319              		.loc 1 375 0
+ 1320 0dd2 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1321 0dd6 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1322 0dda 6C4A     		ldr	r2, .L17+80	@ float
+ 1323 0ddc C3F8EC22 		str	r2, [r3, #748]	@ float
+ 376:../src/config.c **** 
+ 377:../src/config.c ****         eepromConfig.freeMix[1][ROLL ]    = -1.0f;
+ 1324              		.loc 1 377 0
+ 1325 0de0 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1326 0de4 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1327 0de8 684A     		ldr	r2, .L17+80	@ float
+ 1328 0dea C3F8F022 		str	r2, [r3, #752]	@ float
+ 378:../src/config.c ****         eepromConfig.freeMix[1][PITCH]    = -1.0f;
+ 1329              		.loc 1 378 0
+ 1330 0dee 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1331 0df2 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1332 0df6 654A     		ldr	r2, .L17+80	@ float
+ 1333 0df8 C3F8F422 		str	r2, [r3, #756]	@ float
+ 379:../src/config.c ****         eepromConfig.freeMix[1][YAW  ]    =  1.0f;
+ 1334              		.loc 1 379 0
+ 1335 0dfc 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1336 0e00 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1337 0e04 4F4A     		ldr	r2, .L17+8	@ float
+ 1338 0e06 C3F8F822 		str	r2, [r3, #760]	@ float
+ 380:../src/config.c **** 
+ 381:../src/config.c ****         eepromConfig.freeMix[2][ROLL ]    = -1.0f;
+ 1339              		.loc 1 381 0
+ 1340 0e0a 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1341 0e0e C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1342 0e12 5E4A     		ldr	r2, .L17+80	@ float
+ 1343 0e14 C3F8FC22 		str	r2, [r3, #764]	@ float
+ 382:../src/config.c ****         eepromConfig.freeMix[2][PITCH]    =  1.0f;
+ 1344              		.loc 1 382 0
+ 1345 0e18 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1346 0e1c C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1347 0e20 484A     		ldr	r2, .L17+8	@ float
+ 1348 0e22 C3F80023 		str	r2, [r3, #768]	@ float
+ 383:../src/config.c ****         eepromConfig.freeMix[2][YAW  ]    = -1.0f;
+ 1349              		.loc 1 383 0
+ 1350 0e26 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1351 0e2a C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1352 0e2e 574A     		ldr	r2, .L17+80	@ float
+ 1353 0e30 C3F80423 		str	r2, [r3, #772]	@ float
+ 384:../src/config.c **** 
+ 385:../src/config.c ****         eepromConfig.freeMix[3][ROLL ]    =  1.0f;
+ 1354              		.loc 1 385 0
+ 1355 0e34 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1356 0e38 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1357 0e3c 414A     		ldr	r2, .L17+8	@ float
+ 1358 0e3e C3F80823 		str	r2, [r3, #776]	@ float
+ 386:../src/config.c ****         eepromConfig.freeMix[3][PITCH]    =  1.0f;
+ 1359              		.loc 1 386 0
+ 1360 0e42 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1361 0e46 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1362 0e4a 3E4A     		ldr	r2, .L17+8	@ float
+ 1363 0e4c C3F80C23 		str	r2, [r3, #780]	@ float
+ 387:../src/config.c ****         eepromConfig.freeMix[3][YAW  ]    =  1.0f;
+ 1364              		.loc 1 387 0
+ 1365 0e50 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1366 0e54 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1367 0e58 3A4A     		ldr	r2, .L17+8	@ float
+ 1368 0e5a C3F81023 		str	r2, [r3, #784]	@ float
+ 388:../src/config.c **** 
+ 389:../src/config.c ****         eepromConfig.freeMix[4][ROLL ]    =  0.0f;
+ 1369              		.loc 1 389 0
+ 1370 0e5e 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1371 0e62 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1372 0e66 354A     		ldr	r2, .L17	@ float
+ 1373 0e68 C3F81423 		str	r2, [r3, #788]	@ float
+ 390:../src/config.c ****         eepromConfig.freeMix[4][PITCH]    =  0.0f;
+ 1374              		.loc 1 390 0
+ 1375 0e6c 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1376 0e70 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1377 0e74 314A     		ldr	r2, .L17	@ float
+ 1378 0e76 C3F81823 		str	r2, [r3, #792]	@ float
+ 391:../src/config.c ****         eepromConfig.freeMix[4][YAW  ]    =  0.0f;
+ 1379              		.loc 1 391 0
+ 1380 0e7a 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1381 0e7e C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1382 0e82 2E4A     		ldr	r2, .L17	@ float
+ 1383 0e84 C3F81C23 		str	r2, [r3, #796]	@ float
+ 392:../src/config.c **** 
+ 393:../src/config.c ****         eepromConfig.freeMix[5][ROLL ]    =  0.0f;
+ 1384              		.loc 1 393 0
+ 1385 0e88 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1386 0e8c C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1387 0e90 2A4A     		ldr	r2, .L17	@ float
+ 1388 0e92 C3F82023 		str	r2, [r3, #800]	@ float
+ 394:../src/config.c ****         eepromConfig.freeMix[5][PITCH]    =  0.0f;
+ 1389              		.loc 1 394 0
+ 1390 0e96 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1391 0e9a C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1392 0e9e 274A     		ldr	r2, .L17	@ float
+ 1393 0ea0 C3F82423 		str	r2, [r3, #804]	@ float
+ 395:../src/config.c ****         eepromConfig.freeMix[5][YAW  ]    =  0.0f;
+ 1394              		.loc 1 395 0
+ 1395 0ea4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1396 0ea8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1397 0eac 234A     		ldr	r2, .L17	@ float
+ 1398 0eae C3F82823 		str	r2, [r3, #808]	@ float
+ 396:../src/config.c **** 
+ 397:../src/config.c ****         eepromConfig.osdEnabled           =  false;
+ 1399              		.loc 1 397 0
+ 1400 0eb2 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1401 0eb6 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1402 0eba 4FF00002 		mov	r2, #0
+ 1403 0ebe 83F84423 		strb	r2, [r3, #836]
+ 398:../src/config.c ****         eepromConfig.defaultVideoStandard =  NTSC;
+ 1404              		.loc 1 398 0
+ 1405 0ec2 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1406 0ec6 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1407 0eca 4FF00002 		mov	r2, #0
+ 1408 0ece 83F84523 		strb	r2, [r3, #837]
+ 399:../src/config.c ****         eepromConfig.metricUnits          =  false;
+ 1409              		.loc 1 399 0
+ 1410 0ed2 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1411 0ed6 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1412 0eda 4FF00002 		mov	r2, #0
+ 1413 0ede 83F84623 		strb	r2, [r3, #838]
+ 400:../src/config.c ****         eepromConfig.osdDisplayAlt        =  true;
+ 1414              		.loc 1 400 0
+ 1415 0ee2 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1416 0ee6 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1417 0eea 4FF00102 		mov	r2, #1
+ 1418 0eee 83F84723 		strb	r2, [r3, #839]
+ 401:../src/config.c ****         eepromConfig.osdDisplayAH         =  true;
+ 1419              		.loc 1 401 0
+ 1420 0ef2 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1421 0ef6 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1422 0efa 4FF00102 		mov	r2, #1
+ 1423 0efe 83F84823 		strb	r2, [r3, #840]
+ 402:../src/config.c ****         eepromConfig.osdDisplayAtt        =  false;
+ 1424              		.loc 1 402 0
+ 1425 0f02 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1426 0f06 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1427 0f0a 4FF00002 		mov	r2, #0
+ 1428 0f0e 83F84923 		strb	r2, [r3, #841]
+ 403:../src/config.c ****         eepromConfig.osdDisplayHdg        =  true;
+ 1429              		.loc 1 403 0
+ 1430 0f12 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1431 0f16 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1432 0f1a 4FF00102 		mov	r2, #1
+ 1433 0f1e 83F84A23 		strb	r2, [r3, #842]
+ 404:../src/config.c **** 
+ 405:../src/config.c ****         eepromConfig.gpsType              =  NO_GPS;
+ 1434              		.loc 1 405 0
+ 1435 0f22 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1436 0f26 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1437 0f2a 4FF00002 		mov	r2, #0
+ 1438 0f2e 83F84B23 		strb	r2, [r3, #843]
+ 406:../src/config.c **** 
+ 407:../src/config.c ****         writeEEPROM();
+ 1439              		.loc 1 407 0
+ 1440 0f32 FFF7FEFF 		bl	writeEEPROM
+ 1441              	.L14:
+ 408:../src/config.c **** 	}
+ 409:../src/config.c **** }
+ 1442              		.loc 1 409 0
+ 1443 0f36 05B0     		add	sp, sp, #20
+ 1444 0f38 00BD     		pop	{pc}
+ 1445              	.L18:
+ 1446 0f3a 00BF     		.align	2
+ 1447              	.L17:
+ 1448 0f3c 00000000 		.word	0
+ 1449 0f40 72ABA03A 		.word	983608178
+ 1450 0f44 0000803F 		.word	1065353216
+ 1451 0f48 0000A040 		.word	1084227584
+ 1452 0f4c 0AD7A33B 		.word	1000593162
+ 1453 0f50 A692AB3B 		.word	1001099942
+ 1454 0f54 1F42893A 		.word	982073887
+ 1455 0f58 BC74133C 		.word	1007908028
+ 1456 0f5c A69B443B 		.word	994352038
+ 1457 0f60 00803B45 		.word	1161527296
+ 1458 0f64 00800945 		.word	1158250496
+ 1459 0f68 00806D45 		.word	1164804096
+ 1460 0f6c 00007A45 		.word	1165623296
+ 1461 0f70 00007A43 		.word	1132068864
+ 1462 0f74 0000C842 		.word	1120403456
+ 1463 0f78 0000AF43 		.word	1135542272
+ 1464 0f7c 00000040 		.word	1073741824
+ 1465 0f80 0000003F 		.word	1056964608
+ 1466 0f84 00004040 		.word	1077936128
+ 1467 0f88 0000FA44 		.word	1157234688
+ 1468 0f8c 000080BF 		.word	-1082130432
+ 1469 0f90 00002042 		.word	1109393408
+ 1470              		.cfi_endproc
+ 1471              	.LFE114:
+ 1473              	.Letext0:
+ 1474              		.file 2 "c:\\program files\\codesourcery\\sourcery_codebench_lite_for_arm_eabi\\bin\\../lib/gcc/ar
+ 1475              		.file 3 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\Libraries\\STM32F30
+ 1476              		.file 4 "../src/pid.h"
+ 1477              		.file 5 "../src/aq32Plus_F3.h"
+ 1478              		.file 6 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\src\\gps/gpsMediaTe
+ 1479              		.file 7 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\src\\gps/gpsNMEA.h"
+ 1480              		.file 8 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\src\\gps/gpsUblox.h
+ 1481              		.file 9 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\Libraries\\CMSIS\\I
+ 1482              		.file 10 "../src/MargAHRS.h"
+DEFINED SYMBOLS
+                            *ABS*:00000000 config.c
+                            *COM*:00000001 mtk19ProcessDataState
+                            *COM*:00000001 nmeaProcessDataState
+                            *COM*:00000001 ubloxProcessDataState
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cc1DGvrB.s:27     .rodata:00000000 rcChannelLetters
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cc1DGvrB.s:24     .rodata:00000000 $d
+                            *COM*:00000004 vTailThrust
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cc1DGvrB.s:33     .data:00000000 checkNewEEPROMConf
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cc1DGvrB.s:36     .text:00000000 $t
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cc1DGvrB.s:41     .text:00000000 parseRcChannels
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cc1DGvrB.s:111    .text:0000005c readEEPROM
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cc1DGvrB.s:185    .text:00000108 $d
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cc1DGvrB.s:192    .text:00000118 $t
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cc1DGvrB.s:197    .text:00000118 writeEEPROM
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cc1DGvrB.s:273    .rodata:00000008 .LC0
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cc1DGvrB.s:281    .text:00000194 checkFirstTime
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cc1DGvrB.s:1448   .text:00000f3c $d
+                     .debug_frame:00000010 $d
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cc1DGvrB.s:1483   .text:00000f94 $t
+
+UNDEFINED SYMBOLS
+strchr
+eepromConfig
+__aeabi_f2d
+__aeabi_ddiv
+__aeabi_d2f
+memcpy
+sqrt
+accConfidenceDecay
+constrain
+sinf
+FLASH_Unlock
+FLASH_ClearFlag
+FLASH_ErasePage
+FLASH_ProgramWord
+FLASH_Lock

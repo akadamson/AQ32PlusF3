@@ -1,0 +1,334 @@
+   1              		.syntax unified
+   2              		.cpu cortex-m4
+   3              		.eabi_attribute 27, 3
+   4              		.fpu fpv4-sp-d16
+   5              		.eabi_attribute 20, 1
+   6              		.eabi_attribute 21, 1
+   7              		.eabi_attribute 23, 3
+   8              		.eabi_attribute 24, 1
+   9              		.eabi_attribute 25, 1
+  10              		.eabi_attribute 26, 1
+  11              		.eabi_attribute 30, 6
+  12              		.eabi_attribute 34, 1
+  13              		.eabi_attribute 18, 4
+  14              		.thumb
+  15              		.file	"drv_pwmServo.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.comm	mtk19ProcessDataState,1,1
+  20              		.comm	nmeaProcessDataState,1,1
+  21              		.comm	ubloxProcessDataState,1,1
+  22              		.data
+  23              		.align	2
+  26              	OutputChannels:
+  27 0000 34400140 		.word	1073823796
+  28 0004 38400140 		.word	1073823800
+  29              		.text
+  30              		.align	2
+  31              		.global	pwmServoInit
+  32              		.thumb
+  33              		.thumb_func
+  35              	pwmServoInit:
+  36              	.LFB111:
+  37              		.file 1 "../src/drv/drv_pwmServo.c"
+   1:../src/drv/drv_pwmServo.c **** /*
+   2:../src/drv/drv_pwmServo.c ****   December 2012
+   3:../src/drv/drv_pwmServo.c **** 
+   4:../src/drv/drv_pwmServo.c ****   aq32Plus_F3 Rev -
+   5:../src/drv/drv_pwmServo.c **** 
+   6:../src/drv/drv_pwmServo.c ****   Copyright (c) 2012 John Ihlein.  All rights reserved.
+   7:../src/drv/drv_pwmServo.c **** 
+   8:../src/drv/drv_pwmServo.c ****   Open Source STM32 Based Multicopter Controller Software
+   9:../src/drv/drv_pwmServo.c **** 
+  10:../src/drv/drv_pwmServo.c ****   Includes code and/or ideas from:
+  11:../src/drv/drv_pwmServo.c **** 
+  12:../src/drv/drv_pwmServo.c ****   1)AeroQuad
+  13:../src/drv/drv_pwmServo.c ****   2)BaseFlight
+  14:../src/drv/drv_pwmServo.c ****   3)CH Robotics
+  15:../src/drv/drv_pwmServo.c ****   4)MultiWii
+  16:../src/drv/drv_pwmServo.c ****   5)S.O.H. Madgwick
+  17:../src/drv/drv_pwmServo.c ****   6)UAVX
+  18:../src/drv/drv_pwmServo.c ****   7)STM DiscoveryF3 demonstration software
+  19:../src/drv/drv_pwmServo.c **** 
+  20:../src/drv/drv_pwmServo.c ****   Designed to run on the DiscoveryF3 board
+  21:../src/drv/drv_pwmServo.c **** 
+  22:../src/drv/drv_pwmServo.c ****   This program is free software: you can redistribute it and/or modify
+  23:../src/drv/drv_pwmServo.c ****   it under the terms of the GNU General Public License as published by
+  24:../src/drv/drv_pwmServo.c ****   the Free Software Foundation, either version 3 of the License, or
+  25:../src/drv/drv_pwmServo.c ****   (at your option) any later version.
+  26:../src/drv/drv_pwmServo.c **** 
+  27:../src/drv/drv_pwmServo.c ****   This program is distributed in the hope that it will be useful,
+  28:../src/drv/drv_pwmServo.c ****   but WITHOUT ANY WARRANTY; without even the implied warranty of
+  29:../src/drv/drv_pwmServo.c ****   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  30:../src/drv/drv_pwmServo.c ****   GNU General Public License for more details.
+  31:../src/drv/drv_pwmServo.c **** 
+  32:../src/drv/drv_pwmServo.c ****   You should have received a copy of the GNU General Public License
+  33:../src/drv/drv_pwmServo.c ****   along with this program. If not, see <http://www.gnu.org/licenses/>.
+  34:../src/drv/drv_pwmServo.c **** */
+  35:../src/drv/drv_pwmServo.c **** 
+  36:../src/drv/drv_pwmServo.c **** ///////////////////////////////////////////////////////////////////////////////
+  37:../src/drv/drv_pwmServo.c **** 
+  38:../src/drv/drv_pwmServo.c **** #include "board.h"
+  39:../src/drv/drv_pwmServo.c **** 
+  40:../src/drv/drv_pwmServo.c **** ///////////////////////////////////////////////////////////////////////////////
+  41:../src/drv/drv_pwmServo.c **** // PWM Servo Defines and Variables
+  42:../src/drv/drv_pwmServo.c **** ///////////////////////////////////////////////////////////////////////////////
+  43:../src/drv/drv_pwmServo.c **** 
+  44:../src/drv/drv_pwmServo.c **** #define SERVO_PULSE_1p5MS           3000  // 1.5 ms pulse width
+  45:../src/drv/drv_pwmServo.c **** 
+  46:../src/drv/drv_pwmServo.c **** static volatile uint32_t *OutputChannels[] = { &(TIM15->CCR1),
+  47:../src/drv/drv_pwmServo.c **** 	                                           &(TIM15->CCR2), };
+  48:../src/drv/drv_pwmServo.c **** 
+  49:../src/drv/drv_pwmServo.c **** ///////////////////////////////////////////////////////////////////////////////
+  50:../src/drv/drv_pwmServo.c **** // PWM Servo Initialization
+  51:../src/drv/drv_pwmServo.c **** ///////////////////////////////////////////////////////////////////////////////
+  52:../src/drv/drv_pwmServo.c **** 
+  53:../src/drv/drv_pwmServo.c **** void pwmServoInit(uint16_t servoPwmRate)
+  54:../src/drv/drv_pwmServo.c **** {
+  38              		.loc 1 54 0
+  39              		.cfi_startproc
+  40              		@ args = 0, pretend = 0, frame = 48
+  41              		@ frame_needed = 0, uses_anonymous_args = 0
+  42 0000 00B5     		push	{lr}
+  43              	.LCFI0:
+  44              		.cfi_def_cfa_offset 4
+  45              		.cfi_offset 14, -4
+  46 0002 8DB0     		sub	sp, sp, #52
+  47              	.LCFI1:
+  48              		.cfi_def_cfa_offset 56
+  49 0004 0346     		mov	r3, r0
+  50 0006 ADF80630 		strh	r3, [sp, #6]	@ movhi
+  55:../src/drv/drv_pwmServo.c ****     GPIO_InitTypeDef         GPIO_InitStructure;
+  56:../src/drv/drv_pwmServo.c ****     TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
+  57:../src/drv/drv_pwmServo.c ****     TIM_OCInitTypeDef        TIM_OCInitStructure;
+  58:../src/drv/drv_pwmServo.c **** 
+  59:../src/drv/drv_pwmServo.c ****     GPIO_StructInit(&GPIO_InitStructure);
+  51              		.loc 1 59 0
+  52 000a 0AAB     		add	r3, sp, #40
+  53 000c 1846     		mov	r0, r3
+  54 000e FFF7FEFF 		bl	GPIO_StructInit
+  60:../src/drv/drv_pwmServo.c ****     TIM_TimeBaseStructInit(&TIM_TimeBaseStructure);
+  55              		.loc 1 60 0
+  56 0012 07AB     		add	r3, sp, #28
+  57 0014 1846     		mov	r0, r3
+  58 0016 FFF7FEFF 		bl	TIM_TimeBaseStructInit
+  61:../src/drv/drv_pwmServo.c ****     TIM_OCStructInit(&TIM_OCInitStructure);
+  59              		.loc 1 61 0
+  60 001a 02AB     		add	r3, sp, #8
+  61 001c 1846     		mov	r0, r3
+  62 001e FFF7FEFF 		bl	TIM_OCStructInit
+  62:../src/drv/drv_pwmServo.c **** 
+  63:../src/drv/drv_pwmServo.c ****     // Outputs
+  64:../src/drv/drv_pwmServo.c ****     // SERVO PWM0 TIM15 CH1 PF9
+  65:../src/drv/drv_pwmServo.c ****     // SERVO PWM1 TIM15 CH2 PF10
+  66:../src/drv/drv_pwmServo.c **** 
+  67:../src/drv/drv_pwmServo.c **** 
+  68:../src/drv/drv_pwmServo.c ****     RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOF, ENABLE);
+  63              		.loc 1 68 0
+  64 0022 4FF48000 		mov	r0, #4194304
+  65 0026 4FF00101 		mov	r1, #1
+  66 002a FFF7FEFF 		bl	RCC_AHBPeriphClockCmd
+  69:../src/drv/drv_pwmServo.c **** 
+  70:../src/drv/drv_pwmServo.c ****     RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM15, ENABLE);
+  67              		.loc 1 70 0
+  68 002e 4FF48030 		mov	r0, #65536
+  69 0032 4FF00101 		mov	r1, #1
+  70 0036 FFF7FEFF 		bl	RCC_APB2PeriphClockCmd
+  71:../src/drv/drv_pwmServo.c **** 
+  72:../src/drv/drv_pwmServo.c ****       GPIO_InitStructure.GPIO_Pin   = GPIO_Pin_9 | GPIO_Pin_10;
+  71              		.loc 1 72 0
+  72 003a 4FF4C063 		mov	r3, #1536
+  73 003e 0A93     		str	r3, [sp, #40]
+  73:../src/drv/drv_pwmServo.c ****       GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_AF;
+  74              		.loc 1 73 0
+  75 0040 4FF00203 		mov	r3, #2
+  76 0044 8DF82C30 		strb	r3, [sp, #44]
+  74:../src/drv/drv_pwmServo.c ****       GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+  77              		.loc 1 74 0
+  78 0048 4FF00303 		mov	r3, #3
+  79 004c 8DF82D30 		strb	r3, [sp, #45]
+  75:../src/drv/drv_pwmServo.c ****     //GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+  76:../src/drv/drv_pwmServo.c **** 	//GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_NOPULL;
+  77:../src/drv/drv_pwmServo.c **** 
+  78:../src/drv/drv_pwmServo.c **** 	GPIO_Init(GPIOF, &GPIO_InitStructure);
+  80              		.loc 1 78 0
+  81 0050 4FF4A050 		mov	r0, #5120
+  82 0054 C4F60000 		movt	r0, 18432
+  83 0058 0AAB     		add	r3, sp, #40
+  84 005a 1946     		mov	r1, r3
+  85 005c FFF7FEFF 		bl	GPIO_Init
+  79:../src/drv/drv_pwmServo.c **** 
+  80:../src/drv/drv_pwmServo.c **** 	GPIO_PinAFConfig(GPIOF, GPIO_PinSource9,  GPIO_AF_2);
+  86              		.loc 1 80 0
+  87 0060 4FF4A050 		mov	r0, #5120
+  88 0064 C4F60000 		movt	r0, 18432
+  89 0068 4FF00901 		mov	r1, #9
+  90 006c 4FF00202 		mov	r2, #2
+  91 0070 FFF7FEFF 		bl	GPIO_PinAFConfig
+  81:../src/drv/drv_pwmServo.c **** 	GPIO_PinAFConfig(GPIOF, GPIO_PinSource10, GPIO_AF_2);
+  92              		.loc 1 81 0
+  93 0074 4FF4A050 		mov	r0, #5120
+  94 0078 C4F60000 		movt	r0, 18432
+  95 007c 4FF00A01 		mov	r1, #10
+  96 0080 4FF00202 		mov	r2, #2
+  97 0084 FFF7FEFF 		bl	GPIO_PinAFConfig
+  82:../src/drv/drv_pwmServo.c **** 
+  83:../src/drv/drv_pwmServo.c ****     // Output timers
+  84:../src/drv/drv_pwmServo.c **** 
+  85:../src/drv/drv_pwmServo.c ****       TIM_TimeBaseStructure.TIM_Period            = (uint16_t)(2000000 / servoPwmRate) - 1;
+  98              		.loc 1 85 0
+  99 0088 BDF80620 		ldrh	r2, [sp, #6]
+ 100 008c 48F28043 		movw	r3, #33920
+ 101 0090 C0F21E03 		movt	r3, 30
+ 102 0094 93FBF2F3 		sdiv	r3, r3, r2
+ 103 0098 9BB2     		uxth	r3, r3
+ 104 009a 03F1FF33 		add	r3, r3, #-1
+ 105 009e 0893     		str	r3, [sp, #32]
+  86:../src/drv/drv_pwmServo.c ****       TIM_TimeBaseStructure.TIM_Prescaler         = 36 - 1;
+ 106              		.loc 1 86 0
+ 107 00a0 4FF02303 		mov	r3, #35
+ 108 00a4 ADF81C30 		strh	r3, [sp, #28]	@ movhi
+  87:../src/drv/drv_pwmServo.c ****     //TIM_TimeBaseStructure.TIM_ClockDivision     = TIM_CKD_DIV1;
+  88:../src/drv/drv_pwmServo.c ****     //TIM_TimeBaseStructure.TIM_CounterMode       = TIM_CounterMode_Up;
+  89:../src/drv/drv_pwmServo.c ****     //TIM_TimeBaseStructure.TIM_RepititionCounter = 0x0000;
+  90:../src/drv/drv_pwmServo.c **** 
+  91:../src/drv/drv_pwmServo.c ****     TIM_TimeBaseInit(TIM15, &TIM_TimeBaseStructure);
+ 109              		.loc 1 91 0
+ 110 00a8 4FF48040 		mov	r0, #16384
+ 111 00ac C4F20100 		movt	r0, 16385
+ 112 00b0 07AB     		add	r3, sp, #28
+ 113 00b2 1946     		mov	r1, r3
+ 114 00b4 FFF7FEFF 		bl	TIM_TimeBaseInit
+  92:../src/drv/drv_pwmServo.c **** 
+  93:../src/drv/drv_pwmServo.c ****       TIM_OCInitStructure.TIM_OCMode       = TIM_OCMode_PWM2;
+ 115              		.loc 1 93 0
+ 116 00b8 4FF07003 		mov	r3, #112
+ 117 00bc 0293     		str	r3, [sp, #8]
+  94:../src/drv/drv_pwmServo.c ****       TIM_OCInitStructure.TIM_OutputState  = TIM_OutputState_Enable;
+ 118              		.loc 1 94 0
+ 119 00be 4FF00103 		mov	r3, #1
+ 120 00c2 ADF80C30 		strh	r3, [sp, #12]	@ movhi
+  95:../src/drv/drv_pwmServo.c ****     //TIM_OCInitStructure.TIMOutputNState  = TIM_OutputNState_Disable;
+  96:../src/drv/drv_pwmServo.c ****       TIM_OCInitStructure.TIM_Pulse        = SERVO_PULSE_1p5MS;
+ 121              		.loc 1 96 0
+ 122 00c6 40F6B833 		movw	r3, #3000
+ 123 00ca 0493     		str	r3, [sp, #16]
+  97:../src/drv/drv_pwmServo.c ****       TIM_OCInitStructure.TIM_OCPolarity   = TIM_OCPolarity_Low;
+ 124              		.loc 1 97 0
+ 125 00cc 4FF00203 		mov	r3, #2
+ 126 00d0 ADF81430 		strh	r3, [sp, #20]	@ movhi
+  98:../src/drv/drv_pwmServo.c ****     //TIM_OCInitStructure.TIM_OCNPolarity  = TIM_OCPolarity_High;
+  99:../src/drv/drv_pwmServo.c ****       TIM_OCInitStructure.TIM_OCIdleState  = TIM_OCIdleState_Set;
+ 127              		.loc 1 99 0
+ 128 00d4 4FF48073 		mov	r3, #256
+ 129 00d8 ADF81830 		strh	r3, [sp, #24]	@ movhi
+ 100:../src/drv/drv_pwmServo.c ****     //TIM_OCInitStructure.TIM_OCNIdleState = TIM_OCNIdleState_Reset;
+ 101:../src/drv/drv_pwmServo.c **** 
+ 102:../src/drv/drv_pwmServo.c ****     TIM_OC1Init(TIM15, &TIM_OCInitStructure);
+ 130              		.loc 1 102 0
+ 131 00dc 4FF48040 		mov	r0, #16384
+ 132 00e0 C4F20100 		movt	r0, 16385
+ 133 00e4 02AB     		add	r3, sp, #8
+ 134 00e6 1946     		mov	r1, r3
+ 135 00e8 FFF7FEFF 		bl	TIM_OC1Init
+ 103:../src/drv/drv_pwmServo.c ****     TIM_OC2Init(TIM15, &TIM_OCInitStructure);
+ 136              		.loc 1 103 0
+ 137 00ec 4FF48040 		mov	r0, #16384
+ 138 00f0 C4F20100 		movt	r0, 16385
+ 139 00f4 02AB     		add	r3, sp, #8
+ 140 00f6 1946     		mov	r1, r3
+ 141 00f8 FFF7FEFF 		bl	TIM_OC2Init
+ 104:../src/drv/drv_pwmServo.c **** 
+ 105:../src/drv/drv_pwmServo.c ****     TIM_Cmd(TIM15, ENABLE);
+ 142              		.loc 1 105 0
+ 143 00fc 4FF48040 		mov	r0, #16384
+ 144 0100 C4F20100 		movt	r0, 16385
+ 145 0104 4FF00101 		mov	r1, #1
+ 146 0108 FFF7FEFF 		bl	TIM_Cmd
+ 106:../src/drv/drv_pwmServo.c ****     TIM_CtrlPWMOutputs(TIM15, ENABLE);
+ 147              		.loc 1 106 0
+ 148 010c 4FF48040 		mov	r0, #16384
+ 149 0110 C4F20100 		movt	r0, 16385
+ 150 0114 4FF00101 		mov	r1, #1
+ 151 0118 FFF7FEFF 		bl	TIM_CtrlPWMOutputs
+ 107:../src/drv/drv_pwmServo.c **** 
+ 108:../src/drv/drv_pwmServo.c **** }
+ 152              		.loc 1 108 0
+ 153 011c 0DB0     		add	sp, sp, #52
+ 154 011e 00BD     		pop	{pc}
+ 155              		.cfi_endproc
+ 156              	.LFE111:
+ 158              		.align	2
+ 159              		.global	pwmServoWrite
+ 160              		.thumb
+ 161              		.thumb_func
+ 163              	pwmServoWrite:
+ 164              	.LFB112:
+ 109:../src/drv/drv_pwmServo.c **** 
+ 110:../src/drv/drv_pwmServo.c **** ///////////////////////////////////////////////////////////////////////////////
+ 111:../src/drv/drv_pwmServo.c **** // PWM Servo Write
+ 112:../src/drv/drv_pwmServo.c **** ///////////////////////////////////////////////////////////////////////////////
+ 113:../src/drv/drv_pwmServo.c **** 
+ 114:../src/drv/drv_pwmServo.c **** void pwmServoWrite(uint8_t channel, uint16_t value)
+ 115:../src/drv/drv_pwmServo.c **** {
+ 165              		.loc 1 115 0
+ 166              		.cfi_startproc
+ 167              		@ args = 0, pretend = 0, frame = 8
+ 168              		@ frame_needed = 0, uses_anonymous_args = 0
+ 169              		@ link register save eliminated.
+ 170 0120 82B0     		sub	sp, sp, #8
+ 171              	.LCFI2:
+ 172              		.cfi_def_cfa_offset 8
+ 173 0122 0246     		mov	r2, r0
+ 174 0124 0B46     		mov	r3, r1
+ 175 0126 8DF80720 		strb	r2, [sp, #7]
+ 176 012a ADF80430 		strh	r3, [sp, #4]	@ movhi
+ 116:../src/drv/drv_pwmServo.c ****     *OutputChannels[channel] = value;
+ 177              		.loc 1 116 0
+ 178 012e 9DF80720 		ldrb	r2, [sp, #7]	@ zero_extendqisi2
+ 179 0132 40F20003 		movw	r3, #:lower16:OutputChannels
+ 180 0136 C0F20003 		movt	r3, #:upper16:OutputChannels
+ 181 013a 53F82230 		ldr	r3, [r3, r2, lsl #2]
+ 182 013e BDF80420 		ldrh	r2, [sp, #4]
+ 183 0142 1A60     		str	r2, [r3, #0]
+ 117:../src/drv/drv_pwmServo.c **** }
+ 184              		.loc 1 117 0
+ 185 0144 02B0     		add	sp, sp, #8
+ 186 0146 7047     		bx	lr
+ 187              		.cfi_endproc
+ 188              	.LFE112:
+ 190              	.Letext0:
+ 191              		.file 2 "c:\\program files\\codesourcery\\sourcery_codebench_lite_for_arm_eabi\\bin\\../lib/gcc/ar
+ 192              		.file 3 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\Libraries\\Device\\
+ 193              		.file 4 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\Libraries\\STM32F30
+ 194              		.file 5 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\Libraries\\STM32F30
+ 195              		.file 6 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\src\\gps/gpsMediaTe
+ 196              		.file 7 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\src\\gps/gpsNMEA.h"
+ 197              		.file 8 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\src\\gps/gpsUblox.h
+ 198              		.file 9 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\Libraries\\CMSIS\\I
+DEFINED SYMBOLS
+                            *ABS*:00000000 drv_pwmServo.c
+                            *COM*:00000001 mtk19ProcessDataState
+                            *COM*:00000001 nmeaProcessDataState
+                            *COM*:00000001 ubloxProcessDataState
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccGTVLbT.s:23     .data:00000000 $d
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccGTVLbT.s:26     .data:00000000 OutputChannels
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccGTVLbT.s:30     .text:00000000 $t
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccGTVLbT.s:35     .text:00000000 pwmServoInit
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccGTVLbT.s:163    .text:00000120 pwmServoWrite
+                     .debug_frame:00000010 $d
+
+UNDEFINED SYMBOLS
+GPIO_StructInit
+TIM_TimeBaseStructInit
+TIM_OCStructInit
+RCC_AHBPeriphClockCmd
+RCC_APB2PeriphClockCmd
+GPIO_Init
+GPIO_PinAFConfig
+TIM_TimeBaseInit
+TIM_OC1Init
+TIM_OC2Init
+TIM_Cmd
+TIM_CtrlPWMOutputs

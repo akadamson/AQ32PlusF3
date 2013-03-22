@@ -1,0 +1,537 @@
+   1              		.syntax unified
+   2              		.cpu cortex-m4
+   3              		.eabi_attribute 27, 3
+   4              		.fpu fpv4-sp-d16
+   5              		.eabi_attribute 20, 1
+   6              		.eabi_attribute 21, 1
+   7              		.eabi_attribute 23, 3
+   8              		.eabi_attribute 24, 1
+   9              		.eabi_attribute 25, 1
+  10              		.eabi_attribute 26, 1
+  11              		.eabi_attribute 30, 6
+  12              		.eabi_attribute 34, 1
+  13              		.eabi_attribute 18, 4
+  14              		.thumb
+  15              		.file	"magCalibration.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.comm	mtk19ProcessDataState,1,1
+  20              		.comm	nmeaProcessDataState,1,1
+  21              		.comm	ubloxProcessDataState,1,1
+  22              		.global	magCalibrating
+  23              		.bss
+  26              	magCalibrating:
+  27 0000 00       		.space	1
+  28              		.section	.rodata
+  29              		.align	2
+  30              	.LC0:
+  31 0000 0A0A4D61 		.ascii	"\012\012Magnetometer Calibration:\012\012\000"
+  31      676E6574 
+  31      6F6D6574 
+  31      65722043 
+  31      616C6962 
+  32 001e 0000     		.align	2
+  33              	.LC1:
+  34 0020 526F7461 		.ascii	"Rotate magnetometer around all axes multiple times\012"
+  34      7465206D 
+  34      61676E65 
+  34      746F6D65 
+  34      74657220 
+  35 0053 00       		.ascii	"\000"
+  36              		.align	2
+  37              	.LC2:
+  38 0054 4D757374 		.ascii	"Must complete within 60 seconds....\012\012\000"
+  38      20636F6D 
+  38      706C6574 
+  38      65207769 
+  38      7468696E 
+  39 007a 0000     		.align	2
+  40              	.LC3:
+  41 007c 20205365 		.ascii	"  Send a character when ready to begin and another "
+  41      6E642061 
+  41      20636861 
+  41      72616374 
+  41      65722077 
+  42 00af 7768656E 		.ascii	"when complete\012\012\000"
+  42      20636F6D 
+  42      706C6574 
+  42      650A0A00 
+  43 00bf 00       		.align	2
+  44              	.LC4:
+  45 00c0 20205374 		.ascii	"  Start rotations.....\012\012\000"
+  45      61727420 
+  45      726F7461 
+  45      74696F6E 
+  45      732E2E2E 
+  46 00d9 000000   		.align	2
+  47              	.LC5:
+  48 00dc 0D0A4D61 		.ascii	"\015\012Magnetometer Bias Calculation (\000"
+  48      676E6574 
+  48      6F6D6574 
+  48      65722042 
+  48      69617320 
+  49 00fe 0000     		.align	2
+  50              	.LC6:
+  51 0100 2073616D 		.ascii	" samples collected out of 3000 max)\012\012\000"
+  51      706C6573 
+  51      20636F6C 
+  51      6C656374 
+  51      6564206F 
+  52 0126 0000     		.align	2
+  53              	.LC7:
+  54 0128 4D61676E 		.ascii	"Magnetometer Bias Values: \000"
+  54      65746F6D 
+  54      65746572 
+  54      20426961 
+  54      73205661 
+  55 0143 00       		.align	2
+  56              	.LC8:
+  57 0144 2C2000   		.ascii	", \000"
+  58 0147 00       		.align	2
+  59              	.LC9:
+  60 0148 0A00     		.ascii	"\012\000"
+  61 014a 0000     		.align	2
+  62              	.LC10:
+  63 014c 0A0A4D61 		.ascii	"\012\012Magnetometer Calibration Complete.\012\012\000"
+  63      676E6574 
+  63      6F6D6574 
+  63      65722043 
+  63      616C6962 
+  64 0173 00       		.text
+  65              		.align	2
+  66              		.global	magCalibration
+  67              		.thumb
+  68              		.thumb_func
+  70              	magCalibration:
+  71              	.LFB111:
+  72              		.file 1 "../src/calibration/magCalibration.c"
+   1:../src/calibration/magCalibration.c **** /*
+   2:../src/calibration/magCalibration.c ****   October 2012
+   3:../src/calibration/magCalibration.c **** 
+   4:../src/calibration/magCalibration.c ****   aq32Plus Rev -
+   5:../src/calibration/magCalibration.c **** 
+   6:../src/calibration/magCalibration.c ****   Copyright (c) 2012 John Ihlein.  All rights reserved.
+   7:../src/calibration/magCalibration.c **** 
+   8:../src/calibration/magCalibration.c ****   Open Source STM32 Based Multicopter Controller Software
+   9:../src/calibration/magCalibration.c **** 
+  10:../src/calibration/magCalibration.c ****   Includes code and/or ideas from:
+  11:../src/calibration/magCalibration.c **** 
+  12:../src/calibration/magCalibration.c ****   1)AeroQuad
+  13:../src/calibration/magCalibration.c ****   2)BaseFlight
+  14:../src/calibration/magCalibration.c ****   3)CH Robotics
+  15:../src/calibration/magCalibration.c ****   4)MultiWii
+  16:../src/calibration/magCalibration.c ****   5)S.O.H. Madgwick
+  17:../src/calibration/magCalibration.c ****   6)UAVX
+  18:../src/calibration/magCalibration.c **** 
+  19:../src/calibration/magCalibration.c ****   Designed to run on the AQ32 Flight Control Board
+  20:../src/calibration/magCalibration.c **** 
+  21:../src/calibration/magCalibration.c ****   This program is free software: you can redistribute it and/or modify
+  22:../src/calibration/magCalibration.c ****   it under the terms of the GNU General Public License as published by
+  23:../src/calibration/magCalibration.c ****   the Free Software Foundation, either version 3 of the License, or
+  24:../src/calibration/magCalibration.c ****   (at your option) any later version.
+  25:../src/calibration/magCalibration.c **** 
+  26:../src/calibration/magCalibration.c ****   This program is distributed in the hope that it will be useful,
+  27:../src/calibration/magCalibration.c ****   but WITHOUT ANY WARRANTY; without even the implied warranty of
+  28:../src/calibration/magCalibration.c ****   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  29:../src/calibration/magCalibration.c ****   GNU General Public License for more details.
+  30:../src/calibration/magCalibration.c **** 
+  31:../src/calibration/magCalibration.c ****   You should have received a copy of the GNU General Public License
+  32:../src/calibration/magCalibration.c ****   along with this program. If not, see <http://www.gnu.org/licenses/>.
+  33:../src/calibration/magCalibration.c ****  */
+  34:../src/calibration/magCalibration.c **** 
+  35:../src/calibration/magCalibration.c **** ///////////////////////////////////////////////////////////////////////////////
+  36:../src/calibration/magCalibration.c **** 
+  37:../src/calibration/magCalibration.c **** #include "board.h"
+  38:../src/calibration/magCalibration.c **** 
+  39:../src/calibration/magCalibration.c **** ///////////////////////////////////////////////////////////////////////////////
+  40:../src/calibration/magCalibration.c **** 
+  41:../src/calibration/magCalibration.c **** uint8_t magCalibrating = false;
+  42:../src/calibration/magCalibration.c **** 
+  43:../src/calibration/magCalibration.c **** ///////////////////////////////////////////////////////////////////////////////
+  44:../src/calibration/magCalibration.c **** // Mag Calibration
+  45:../src/calibration/magCalibration.c **** ///////////////////////////////////////////////////////////////////////////////
+  46:../src/calibration/magCalibration.c **** 
+  47:../src/calibration/magCalibration.c **** void magCalibration()
+  48:../src/calibration/magCalibration.c **** {
+  73              		.loc 1 48 0
+  74              		.cfi_startproc
+  75              		@ args = 0, pretend = 0, frame = 36032
+  76              		@ frame_needed = 0, uses_anonymous_args = 0
+  77 0000 00B5     		push	{lr}
+  78              	.LCFI0:
+  79              		.cfi_def_cfa_offset 4
+  80              		.cfi_offset 14, -4
+  81 0002 ADF50C4D 		sub	sp, sp, #35840
+  82              	.LCFI1:
+  83              		.cfi_def_cfa_offset 35844
+  84 0006 B5B0     		sub	sp, sp, #212
+  85              	.LCFI2:
+  86              		.cfi_def_cfa_offset 36056
+  49:../src/calibration/magCalibration.c **** 	uint16_t calibrationCounter = 0;
+  87              		.loc 1 49 0
+  88 0008 4FF00003 		mov	r3, #0
+  89 000c 0DF50C42 		add	r2, sp, #35840
+  90 0010 02F1CE02 		add	r2, r2, #206
+  91 0014 1380     		strh	r3, [r2, #0]	@ movhi
+  50:../src/calibration/magCalibration.c **** 	uint16_t population[2][3];
+  51:../src/calibration/magCalibration.c **** 
+  52:../src/calibration/magCalibration.c **** 	float    d[3000][3];       // 3000 Samples = 60 seconds of data at 50 Hz
+  53:../src/calibration/magCalibration.c **** 	float    sphereOrigin[3];
+  54:../src/calibration/magCalibration.c **** 	float    sphereRadius;
+  55:../src/calibration/magCalibration.c **** 
+  56:../src/calibration/magCalibration.c **** 	magCalibrating = true;
+  92              		.loc 1 56 0
+  93 0016 40F20003 		movw	r3, #:lower16:magCalibrating
+  94 001a C0F20003 		movt	r3, #:upper16:magCalibrating
+  95 001e 4FF00102 		mov	r2, #1
+  96 0022 1A70     		strb	r2, [r3, #0]
+  57:../src/calibration/magCalibration.c **** 
+  58:../src/calibration/magCalibration.c **** 	uart1Print("\n\nMagnetometer Calibration:\n\n");
+  97              		.loc 1 58 0
+  98 0024 40F20000 		movw	r0, #:lower16:.LC0
+  99 0028 C0F20000 		movt	r0, #:upper16:.LC0
+ 100 002c FFF7FEFF 		bl	uart1Print
+  59:../src/calibration/magCalibration.c **** 
+  60:../src/calibration/magCalibration.c ****     uart1Print("Rotate magnetometer around all axes multiple times\n");
+ 101              		.loc 1 60 0
+ 102 0030 40F20000 		movw	r0, #:lower16:.LC1
+ 103 0034 C0F20000 		movt	r0, #:upper16:.LC1
+ 104 0038 FFF7FEFF 		bl	uart1Print
+  61:../src/calibration/magCalibration.c ****     uart1Print("Must complete within 60 seconds....\n\n");
+ 105              		.loc 1 61 0
+ 106 003c 40F20000 		movw	r0, #:lower16:.LC2
+ 107 0040 C0F20000 		movt	r0, #:upper16:.LC2
+ 108 0044 FFF7FEFF 		bl	uart1Print
+  62:../src/calibration/magCalibration.c ****     uart1Print("  Send a character when ready to begin and another when complete\n\n");
+ 109              		.loc 1 62 0
+ 110 0048 40F20000 		movw	r0, #:lower16:.LC3
+ 111 004c C0F20000 		movt	r0, #:upper16:.LC3
+ 112 0050 FFF7FEFF 		bl	uart1Print
+  63:../src/calibration/magCalibration.c **** 
+  64:../src/calibration/magCalibration.c ****     while (uart1Available() == false);
+ 113              		.loc 1 64 0
+ 114 0054 00BF     		nop
+ 115              	.L2:
+ 116              		.loc 1 64 0 is_stmt 0 discriminator 1
+ 117 0056 FFF7FEFF 		bl	uart1Available
+ 118 005a 0346     		mov	r3, r0
+ 119 005c 002B     		cmp	r3, #0
+ 120 005e FAD0     		beq	.L2
+  65:../src/calibration/magCalibration.c **** 
+  66:../src/calibration/magCalibration.c ****     uart1Print("  Start rotations.....\n\n");
+ 121              		.loc 1 66 0 is_stmt 1
+ 122 0060 40F20000 		movw	r0, #:lower16:.LC4
+ 123 0064 C0F20000 		movt	r0, #:upper16:.LC4
+ 124 0068 FFF7FEFF 		bl	uart1Print
+  67:../src/calibration/magCalibration.c **** 
+  68:../src/calibration/magCalibration.c ****     uart1Read();
+ 125              		.loc 1 68 0
+ 126 006c FFF7FEFF 		bl	uart1Read
+  69:../src/calibration/magCalibration.c **** 
+  70:../src/calibration/magCalibration.c ****     while ((uart1Available() == false) && (calibrationCounter <= 3000))
+ 127              		.loc 1 70 0
+ 128 0070 81E0     		b	.L3
+ 129              	.L6:
+  71:../src/calibration/magCalibration.c **** 	{
+  72:../src/calibration/magCalibration.c **** 		if (readMag() == true)
+ 130              		.loc 1 72 0
+ 131 0072 FFF7FEFF 		bl	readMag
+ 132 0076 0346     		mov	r3, r0
+ 133 0078 012B     		cmp	r3, #1
+ 134 007a 78D1     		bne	.L4
+  73:../src/calibration/magCalibration.c **** 		{
+  74:../src/calibration/magCalibration.c **** 			d[calibrationCounter][XAXIS] = (float)rawMag[XAXIS].value * magScaleFactor[XAXIS];
+ 135              		.loc 1 74 0
+ 136 007c 0DF50C43 		add	r3, sp, #35840
+ 137 0080 03F1CE03 		add	r3, r3, #206
+ 138 0084 1988     		ldrh	r1, [r3, #0]
+ 139 0086 40F20003 		movw	r3, #:lower16:rawMag
+ 140 008a C0F20003 		movt	r3, #:upper16:rawMag
+ 141 008e 1B88     		ldrh	r3, [r3, #0]
+ 142 0090 1BB2     		sxth	r3, r3
+ 143 0092 07EE903A 		fmsr	s15, r3	@ int
+ 144 0096 B8EEE77A 		fsitos	s14, s15
+ 145 009a 40F20003 		movw	r3, #:lower16:magScaleFactor
+ 146 009e C0F20003 		movt	r3, #:upper16:magScaleFactor
+ 147 00a2 D3ED007A 		flds	s15, [r3, #0]
+ 148 00a6 67EE277A 		fmuls	s15, s14, s15
+ 149 00aa 34AA     		add	r2, sp, #208
+ 150 00ac A2F1B002 		sub	r2, r2, #176
+ 151 00b0 0B46     		mov	r3, r1
+ 152 00b2 4FEA4303 		lsl	r3, r3, #1
+ 153 00b6 5B18     		adds	r3, r3, r1
+ 154 00b8 4FEA8303 		lsl	r3, r3, #2
+ 155 00bc D318     		adds	r3, r2, r3
+ 156 00be C3ED007A 		fsts	s15, [r3, #0]
+  75:../src/calibration/magCalibration.c **** 			d[calibrationCounter][YAXIS] = (float)rawMag[YAXIS].value * magScaleFactor[YAXIS];
+ 157              		.loc 1 75 0
+ 158 00c2 0DF50C42 		add	r2, sp, #35840
+ 159 00c6 02F1CE02 		add	r2, r2, #206
+ 160 00ca 1188     		ldrh	r1, [r2, #0]
+ 161 00cc 40F20003 		movw	r3, #:lower16:rawMag
+ 162 00d0 C0F20003 		movt	r3, #:upper16:rawMag
+ 163 00d4 5B88     		ldrh	r3, [r3, #2]
+ 164 00d6 1BB2     		sxth	r3, r3
+ 165 00d8 07EE903A 		fmsr	s15, r3	@ int
+ 166 00dc B8EEE77A 		fsitos	s14, s15
+ 167 00e0 40F20003 		movw	r3, #:lower16:magScaleFactor
+ 168 00e4 C0F20003 		movt	r3, #:upper16:magScaleFactor
+ 169 00e8 D3ED017A 		flds	s15, [r3, #4]
+ 170 00ec 67EE277A 		fmuls	s15, s14, s15
+ 171 00f0 34AA     		add	r2, sp, #208
+ 172 00f2 A2F1B002 		sub	r2, r2, #176
+ 173 00f6 0B46     		mov	r3, r1
+ 174 00f8 4FEA4303 		lsl	r3, r3, #1
+ 175 00fc 5B18     		adds	r3, r3, r1
+ 176 00fe 4FEA8303 		lsl	r3, r3, #2
+ 177 0102 D318     		adds	r3, r2, r3
+ 178 0104 03F10403 		add	r3, r3, #4
+ 179 0108 C3ED007A 		fsts	s15, [r3, #0]
+  76:../src/calibration/magCalibration.c **** 			d[calibrationCounter][ZAXIS] = (float)rawMag[ZAXIS].value * magScaleFactor[ZAXIS];
+ 180              		.loc 1 76 0
+ 181 010c 0DF50C42 		add	r2, sp, #35840
+ 182 0110 02F1CE02 		add	r2, r2, #206
+ 183 0114 1188     		ldrh	r1, [r2, #0]
+ 184 0116 40F20003 		movw	r3, #:lower16:rawMag
+ 185 011a C0F20003 		movt	r3, #:upper16:rawMag
+ 186 011e 9B88     		ldrh	r3, [r3, #4]
+ 187 0120 1BB2     		sxth	r3, r3
+ 188 0122 07EE903A 		fmsr	s15, r3	@ int
+ 189 0126 B8EEE77A 		fsitos	s14, s15
+ 190 012a 40F20003 		movw	r3, #:lower16:magScaleFactor
+ 191 012e C0F20003 		movt	r3, #:upper16:magScaleFactor
+ 192 0132 D3ED027A 		flds	s15, [r3, #8]
+ 193 0136 67EE277A 		fmuls	s15, s14, s15
+ 194 013a 34AA     		add	r2, sp, #208
+ 195 013c A2F1B002 		sub	r2, r2, #176
+ 196 0140 0B46     		mov	r3, r1
+ 197 0142 4FEA4303 		lsl	r3, r3, #1
+ 198 0146 5B18     		adds	r3, r3, r1
+ 199 0148 4FEA8303 		lsl	r3, r3, #2
+ 200 014c D318     		adds	r3, r2, r3
+ 201 014e 03F10803 		add	r3, r3, #8
+ 202 0152 C3ED007A 		fsts	s15, [r3, #0]
+  77:../src/calibration/magCalibration.c **** 
+  78:../src/calibration/magCalibration.c **** 			calibrationCounter++;
+ 203              		.loc 1 78 0
+ 204 0156 0DF50C42 		add	r2, sp, #35840
+ 205 015a 02F1CE02 		add	r2, r2, #206
+ 206 015e 1388     		ldrh	r3, [r2, #0]	@ movhi
+ 207 0160 03F10103 		add	r3, r3, #1
+ 208 0164 0DF50C42 		add	r2, sp, #35840
+ 209 0168 02F1CE02 		add	r2, r2, #206
+ 210 016c 1380     		strh	r3, [r2, #0]	@ movhi
+ 211              	.L4:
+  79:../src/calibration/magCalibration.c **** 		}
+  80:../src/calibration/magCalibration.c **** 
+  81:../src/calibration/magCalibration.c **** 		delay(20);
+ 212              		.loc 1 81 0
+ 213 016e 4FF01400 		mov	r0, #20
+ 214 0172 FFF7FEFF 		bl	delay
+ 215              	.L3:
+  70:../src/calibration/magCalibration.c ****     while ((uart1Available() == false) && (calibrationCounter <= 3000))
+ 216              		.loc 1 70 0 discriminator 1
+ 217 0176 FFF7FEFF 		bl	uart1Available
+ 218 017a 0346     		mov	r3, r0
+ 219 017c 002B     		cmp	r3, #0
+ 220 017e 09D1     		bne	.L5
+  70:../src/calibration/magCalibration.c ****     while ((uart1Available() == false) && (calibrationCounter <= 3000))
+ 221              		.loc 1 70 0 is_stmt 0 discriminator 2
+ 222 0180 0DF50C43 		add	r3, sp, #35840
+ 223 0184 03F1CE03 		add	r3, r3, #206
+ 224 0188 1A88     		ldrh	r2, [r3, #0]
+ 225 018a 40F6B833 		movw	r3, #3000
+ 226 018e 9A42     		cmp	r2, r3
+ 227 0190 7FF66FAF 		bls	.L6
+ 228              	.L5:
+  82:../src/calibration/magCalibration.c **** 	}
+  83:../src/calibration/magCalibration.c **** 
+  84:../src/calibration/magCalibration.c **** 	itoa(calibrationCounter, numberString, 10);
+ 229              		.loc 1 84 0 is_stmt 1
+ 230 0194 0DF50C42 		add	r2, sp, #35840
+ 231 0198 02F1CE02 		add	r2, r2, #206
+ 232 019c 1388     		ldrh	r3, [r2, #0]
+ 233 019e 1846     		mov	r0, r3
+ 234 01a0 40F20001 		movw	r1, #:lower16:numberString
+ 235 01a4 C0F20001 		movt	r1, #:upper16:numberString
+ 236 01a8 4FF00A02 		mov	r2, #10
+ 237 01ac FFF7FEFF 		bl	itoa
+  85:../src/calibration/magCalibration.c **** 	uart1Print("\r\nMagnetometer Bias Calculation ("); uart1Print(numberString); uart1Print(" samples 
+ 238              		.loc 1 85 0
+ 239 01b0 40F20000 		movw	r0, #:lower16:.LC5
+ 240 01b4 C0F20000 		movt	r0, #:upper16:.LC5
+ 241 01b8 FFF7FEFF 		bl	uart1Print
+ 242 01bc 40F20000 		movw	r0, #:lower16:numberString
+ 243 01c0 C0F20000 		movt	r0, #:upper16:numberString
+ 244 01c4 FFF7FEFF 		bl	uart1Print
+ 245 01c8 40F20000 		movw	r0, #:lower16:.LC6
+ 246 01cc C0F20000 		movt	r0, #:upper16:.LC6
+ 247 01d0 FFF7FEFF 		bl	uart1Print
+  86:../src/calibration/magCalibration.c **** 
+  87:../src/calibration/magCalibration.c **** 	sphereFit(d, calibrationCounter, 100, 0.0f, population, sphereOrigin, &sphereRadius);
+ 248              		.loc 1 87 0
+ 249 01d4 34AB     		add	r3, sp, #208
+ 250 01d6 A3F1B003 		sub	r3, r3, #176
+ 251 01da 0DF50C42 		add	r2, sp, #35840
+ 252 01de 02F1CE02 		add	r2, r2, #206
+ 253 01e2 1188     		ldrh	r1, [r2, #0]
+ 254 01e4 0DF50C42 		add	r2, sp, #35840
+ 255 01e8 02F1C002 		add	r2, r2, #192
+ 256 01ec 0092     		str	r2, [sp, #0]
+ 257 01ee 34AA     		add	r2, sp, #208
+ 258 01f0 A2F1BC02 		sub	r2, r2, #188
+ 259 01f4 0192     		str	r2, [sp, #4]
+ 260 01f6 34AA     		add	r2, sp, #208
+ 261 01f8 A2F1C002 		sub	r2, r2, #192
+ 262 01fc 0292     		str	r2, [sp, #8]
+ 263 01fe 1846     		mov	r0, r3
+ 264 0200 4FF06402 		mov	r2, #100
+ 265 0204 3E4B     		ldr	r3, .L7	@ float
+ 266 0206 FFF7FEFF 		bl	sphereFit
+  88:../src/calibration/magCalibration.c **** 
+  89:../src/calibration/magCalibration.c **** 	eepromConfig.magBias[XAXIS] = sphereOrigin[XAXIS];
+ 267              		.loc 1 89 0
+ 268 020a 34AB     		add	r3, sp, #208
+ 269 020c A3F1BC03 		sub	r3, r3, #188
+ 270 0210 1A68     		ldr	r2, [r3, #0]	@ float
+ 271 0212 40F20003 		movw	r3, #:lower16:eepromConfig
+ 272 0216 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 273 021a 5A63     		str	r2, [r3, #52]	@ float
+  90:../src/calibration/magCalibration.c **** 	eepromConfig.magBias[YAXIS] = sphereOrigin[YAXIS];
+ 274              		.loc 1 90 0
+ 275 021c 34AB     		add	r3, sp, #208
+ 276 021e A3F1BC03 		sub	r3, r3, #188
+ 277 0222 5A68     		ldr	r2, [r3, #4]	@ float
+ 278 0224 40F20003 		movw	r3, #:lower16:eepromConfig
+ 279 0228 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 280 022c 9A63     		str	r2, [r3, #56]	@ float
+  91:../src/calibration/magCalibration.c **** 	eepromConfig.magBias[ZAXIS] = sphereOrigin[ZAXIS];
+ 281              		.loc 1 91 0
+ 282 022e 34AB     		add	r3, sp, #208
+ 283 0230 A3F1BC03 		sub	r3, r3, #188
+ 284 0234 9A68     		ldr	r2, [r3, #8]	@ float
+ 285 0236 40F20003 		movw	r3, #:lower16:eepromConfig
+ 286 023a C0F20003 		movt	r3, #:upper16:eepromConfig
+ 287 023e DA63     		str	r2, [r3, #60]	@ float
+  92:../src/calibration/magCalibration.c **** 
+  93:../src/calibration/magCalibration.c ****     uart1Print("Magnetometer Bias Values: ");
+ 288              		.loc 1 93 0
+ 289 0240 40F20000 		movw	r0, #:lower16:.LC7
+ 290 0244 C0F20000 		movt	r0, #:upper16:.LC7
+ 291 0248 FFF7FEFF 		bl	uart1Print
+  94:../src/calibration/magCalibration.c ****     ftoa(eepromConfig.magBias[XAXIS], numberString); uart1Print(numberString); uart1Print(", ");
+ 292              		.loc 1 94 0
+ 293 024c 40F20003 		movw	r3, #:lower16:eepromConfig
+ 294 0250 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 295 0254 5B6B     		ldr	r3, [r3, #52]	@ float
+ 296 0256 1846     		mov	r0, r3	@ float
+ 297 0258 40F20001 		movw	r1, #:lower16:numberString
+ 298 025c C0F20001 		movt	r1, #:upper16:numberString
+ 299 0260 FFF7FEFF 		bl	ftoa
+ 300 0264 40F20000 		movw	r0, #:lower16:numberString
+ 301 0268 C0F20000 		movt	r0, #:upper16:numberString
+ 302 026c FFF7FEFF 		bl	uart1Print
+ 303 0270 40F20000 		movw	r0, #:lower16:.LC8
+ 304 0274 C0F20000 		movt	r0, #:upper16:.LC8
+ 305 0278 FFF7FEFF 		bl	uart1Print
+  95:../src/calibration/magCalibration.c ****     ftoa(eepromConfig.magBias[YAXIS], numberString); uart1Print(numberString); uart1Print(", ");
+ 306              		.loc 1 95 0
+ 307 027c 40F20003 		movw	r3, #:lower16:eepromConfig
+ 308 0280 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 309 0284 9B6B     		ldr	r3, [r3, #56]	@ float
+ 310 0286 1846     		mov	r0, r3	@ float
+ 311 0288 40F20001 		movw	r1, #:lower16:numberString
+ 312 028c C0F20001 		movt	r1, #:upper16:numberString
+ 313 0290 FFF7FEFF 		bl	ftoa
+ 314 0294 40F20000 		movw	r0, #:lower16:numberString
+ 315 0298 C0F20000 		movt	r0, #:upper16:numberString
+ 316 029c FFF7FEFF 		bl	uart1Print
+ 317 02a0 40F20000 		movw	r0, #:lower16:.LC8
+ 318 02a4 C0F20000 		movt	r0, #:upper16:.LC8
+ 319 02a8 FFF7FEFF 		bl	uart1Print
+  96:../src/calibration/magCalibration.c ****     ftoa(eepromConfig.magBias[ZAXIS], numberString); uart1Print(numberString); uart1Print("\n");
+ 320              		.loc 1 96 0
+ 321 02ac 40F20003 		movw	r3, #:lower16:eepromConfig
+ 322 02b0 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 323 02b4 DB6B     		ldr	r3, [r3, #60]	@ float
+ 324 02b6 1846     		mov	r0, r3	@ float
+ 325 02b8 40F20001 		movw	r1, #:lower16:numberString
+ 326 02bc C0F20001 		movt	r1, #:upper16:numberString
+ 327 02c0 FFF7FEFF 		bl	ftoa
+ 328 02c4 40F20000 		movw	r0, #:lower16:numberString
+ 329 02c8 C0F20000 		movt	r0, #:upper16:numberString
+ 330 02cc FFF7FEFF 		bl	uart1Print
+ 331 02d0 40F20000 		movw	r0, #:lower16:.LC9
+ 332 02d4 C0F20000 		movt	r0, #:upper16:.LC9
+ 333 02d8 FFF7FEFF 		bl	uart1Print
+  97:../src/calibration/magCalibration.c **** 
+  98:../src/calibration/magCalibration.c **** 	uart1Print("\n\nMagnetometer Calibration Complete.\n\n");
+ 334              		.loc 1 98 0
+ 335 02dc 40F20000 		movw	r0, #:lower16:.LC10
+ 336 02e0 C0F20000 		movt	r0, #:upper16:.LC10
+ 337 02e4 FFF7FEFF 		bl	uart1Print
+  99:../src/calibration/magCalibration.c **** 
+ 100:../src/calibration/magCalibration.c **** 	magCalibrating = false;
+ 338              		.loc 1 100 0
+ 339 02e8 40F20003 		movw	r3, #:lower16:magCalibrating
+ 340 02ec C0F20003 		movt	r3, #:upper16:magCalibrating
+ 341 02f0 4FF00002 		mov	r2, #0
+ 342 02f4 1A70     		strb	r2, [r3, #0]
+ 101:../src/calibration/magCalibration.c **** }
+ 343              		.loc 1 101 0
+ 344 02f6 35B0     		add	sp, sp, #212
+ 345 02f8 0DF50C4D 		add	sp, sp, #35840
+ 346 02fc 00BD     		pop	{pc}
+ 347              	.L8:
+ 348 02fe 00BF     		.align	2
+ 349              	.L7:
+ 350 0300 00000000 		.word	0
+ 351              		.cfi_endproc
+ 352              	.LFE111:
+ 354              	.Letext0:
+ 355              		.file 2 "c:\\program files\\codesourcery\\sourcery_codebench_lite_for_arm_eabi\\bin\\../lib/gcc/ar
+ 356              		.file 3 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\src/pid.h"
+ 357              		.file 4 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\src/aq32Plus_F3.h"
+ 358              		.file 5 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\src\\gps/gpsMediaTe
+ 359              		.file 6 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\src\\gps/gpsNMEA.h"
+ 360              		.file 7 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\src\\gps/gpsUblox.h
+ 361              		.file 8 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\Libraries\\CMSIS\\I
+ 362              		.file 9 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\src\\sensors/lsm303
+DEFINED SYMBOLS
+                            *ABS*:00000000 magCalibration.c
+                            *COM*:00000001 mtk19ProcessDataState
+                            *COM*:00000001 nmeaProcessDataState
+                            *COM*:00000001 ubloxProcessDataState
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccsp8lu5.s:26     .bss:00000000 magCalibrating
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccsp8lu5.s:27     .bss:00000000 $d
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccsp8lu5.s:29     .rodata:00000000 $d
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccsp8lu5.s:30     .rodata:00000000 .LC0
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccsp8lu5.s:33     .rodata:00000020 .LC1
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccsp8lu5.s:37     .rodata:00000054 .LC2
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccsp8lu5.s:40     .rodata:0000007c .LC3
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccsp8lu5.s:44     .rodata:000000c0 .LC4
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccsp8lu5.s:47     .rodata:000000dc .LC5
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccsp8lu5.s:50     .rodata:00000100 .LC6
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccsp8lu5.s:53     .rodata:00000128 .LC7
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccsp8lu5.s:56     .rodata:00000144 .LC8
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccsp8lu5.s:59     .rodata:00000148 .LC9
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccsp8lu5.s:62     .rodata:0000014c .LC10
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccsp8lu5.s:65     .text:00000000 $t
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccsp8lu5.s:70     .text:00000000 magCalibration
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccsp8lu5.s:350    .text:00000300 $d
+                     .debug_frame:00000010 $d
+
+UNDEFINED SYMBOLS
+uart1Print
+uart1Available
+uart1Read
+readMag
+rawMag
+magScaleFactor
+delay
+numberString
+itoa
+sphereFit
+eepromConfig
+ftoa

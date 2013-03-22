@@ -1,0 +1,822 @@
+   1              		.syntax unified
+   2              		.cpu cortex-m4
+   3              		.eabi_attribute 27, 3
+   4              		.fpu fpv4-sp-d16
+   5              		.eabi_attribute 20, 1
+   6              		.eabi_attribute 21, 1
+   7              		.eabi_attribute 23, 3
+   8              		.eabi_attribute 24, 1
+   9              		.eabi_attribute 25, 1
+  10              		.eabi_attribute 26, 1
+  11              		.eabi_attribute 30, 6
+  12              		.eabi_attribute 34, 1
+  13              		.eabi_attribute 18, 4
+  14              		.thumb
+  15              		.file	"lowPassFilter.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.comm	mtk19ProcessDataState,1,1
+  20              		.comm	nmeaProcessDataState,1,1
+  21              		.comm	ubloxProcessDataState,1,1
+  22              		.comm	fourthOrder100Hz,96,4
+  23              		.comm	fourthOrder500Hz,96,4
+  24              		.align	2
+  25              		.global	computeFourthOrder100Hz
+  26              		.thumb
+  27              		.thumb_func
+  29              	computeFourthOrder100Hz:
+  30              	.LFB111:
+  31              		.file 1 "../src/lowPassFilter.c"
+   1:../src/lowPassFilter.c **** /*
+   2:../src/lowPassFilter.c ****   December 2012
+   3:../src/lowPassFilter.c **** 
+   4:../src/lowPassFilter.c ****   aq32Plus_F3 Rev -
+   5:../src/lowPassFilter.c **** 
+   6:../src/lowPassFilter.c ****   Copyright (c) 2012 John Ihlein.  All rights reserved.
+   7:../src/lowPassFilter.c **** 
+   8:../src/lowPassFilter.c ****   Open Source STM32 Based Multicopter Controller Software
+   9:../src/lowPassFilter.c **** 
+  10:../src/lowPassFilter.c ****   Includes code and/or ideas from:
+  11:../src/lowPassFilter.c **** 
+  12:../src/lowPassFilter.c ****   1)AeroQuad
+  13:../src/lowPassFilter.c ****   2)BaseFlight
+  14:../src/lowPassFilter.c ****   3)CH Robotics
+  15:../src/lowPassFilter.c ****   4)MultiWii
+  16:../src/lowPassFilter.c ****   5)S.O.H. Madgwick
+  17:../src/lowPassFilter.c ****   6)UAVX
+  18:../src/lowPassFilter.c ****   7)STM DiscoveryF3 demonstration software
+  19:../src/lowPassFilter.c **** 
+  20:../src/lowPassFilter.c ****   Designed to run on the DiscoveryF3 board
+  21:../src/lowPassFilter.c **** 
+  22:../src/lowPassFilter.c ****   This program is free software: you can redistribute it and/or modify
+  23:../src/lowPassFilter.c ****   it under the terms of the GNU General Public License as published by
+  24:../src/lowPassFilter.c ****   the Free Software Foundation, either version 3 of the License, or
+  25:../src/lowPassFilter.c ****   (at your option) any later version.
+  26:../src/lowPassFilter.c **** 
+  27:../src/lowPassFilter.c ****   This program is distributed in the hope that it will be useful,
+  28:../src/lowPassFilter.c ****   but WITHOUT ANY WARRANTY; without even the implied warranty of
+  29:../src/lowPassFilter.c ****   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  30:../src/lowPassFilter.c ****   GNU General Public License for more details.
+  31:../src/lowPassFilter.c **** 
+  32:../src/lowPassFilter.c ****   You should have received a copy of the GNU General Public License
+  33:../src/lowPassFilter.c ****   along with this program. If not, see <http://www.gnu.org/licenses/>.
+  34:../src/lowPassFilter.c **** */
+  35:../src/lowPassFilter.c **** 
+  36:../src/lowPassFilter.c **** ///////////////////////////////////////////////////////////////////////////////
+  37:../src/lowPassFilter.c **** 
+  38:../src/lowPassFilter.c **** #include "board.h"
+  39:../src/lowPassFilter.c **** 
+  40:../src/lowPassFilter.c **** ///////////////////////////////////////////////////////////////////////////////
+  41:../src/lowPassFilter.c **** 
+  42:../src/lowPassFilter.c **** fourthOrderData_t fourthOrder100Hz[3];
+  43:../src/lowPassFilter.c **** fourthOrderData_t fourthOrder500Hz[3];
+  44:../src/lowPassFilter.c **** 
+  45:../src/lowPassFilter.c **** ///////////////////////////////////////////////////////////////////////////////
+  46:../src/lowPassFilter.c **** //  4th Order Low Pass Filter for 100 Hz Data
+  47:../src/lowPassFilter.c **** ///////////////////////////////////////////////////////////////////////////////
+  48:../src/lowPassFilter.c **** 
+  49:../src/lowPassFilter.c **** float computeFourthOrder100Hz(float currentInput, fourthOrderData_t * filterParameters)
+  50:../src/lowPassFilter.c **** {
+  32              		.loc 1 50 0
+  33              		.cfi_startproc
+  34              		@ args = 0, pretend = 0, frame = 16
+  35              		@ frame_needed = 0, uses_anonymous_args = 0
+  36              		@ link register save eliminated.
+  37 0000 84B0     		sub	sp, sp, #16
+  38              	.LCFI0:
+  39              		.cfi_def_cfa_offset 16
+  40 0002 0190     		str	r0, [sp, #4]	@ float
+  41 0004 0091     		str	r1, [sp, #0]
+  51:../src/lowPassFilter.c ****     // cheby2(4,60,12.5/50)
+  52:../src/lowPassFilter.c ****     #define B0_100HZ  0.001893594048567f
+  53:../src/lowPassFilter.c ****     #define B1_100HZ -0.002220262954039f
+  54:../src/lowPassFilter.c ****     #define B2_100HZ  0.003389066536478f
+  55:../src/lowPassFilter.c ****     #define B3_100HZ -0.002220262954039f
+  56:../src/lowPassFilter.c ****     #define B4_100HZ  0.001893594048567f
+  57:../src/lowPassFilter.c **** 
+  58:../src/lowPassFilter.c ****     #define A1_100HZ -3.362256889209355f
+  59:../src/lowPassFilter.c ****     #define A2_100HZ  4.282608240117919f
+  60:../src/lowPassFilter.c ****     #define A3_100HZ -2.444765517272841f
+  61:../src/lowPassFilter.c ****     #define A4_100HZ  0.527149895089809f
+  62:../src/lowPassFilter.c **** 
+  63:../src/lowPassFilter.c ****     float output;
+  64:../src/lowPassFilter.c **** 
+  65:../src/lowPassFilter.c ****     output = B0_100HZ * currentInput +
+  42              		.loc 1 65 0
+  43 0006 9DED017A 		flds	s14, [sp, #4]
+  44 000a DFED387A 		flds	s15, .L2
+  45 000e 27EE277A 		fmuls	s14, s14, s15
+  66:../src/lowPassFilter.c ****              B1_100HZ * filterParameters->inputTm1  +
+  46              		.loc 1 66 0
+  47 0012 009B     		ldr	r3, [sp, #0]
+  48 0014 D3ED006A 		flds	s13, [r3, #0]
+  49 0018 DFED357A 		flds	s15, .L2+4
+  50 001c 66EEA77A 		fmuls	s15, s13, s15
+  65:../src/lowPassFilter.c ****     output = B0_100HZ * currentInput +
+  51              		.loc 1 65 0
+  52 0020 37EE277A 		fadds	s14, s14, s15
+  67:../src/lowPassFilter.c ****              B2_100HZ * filterParameters->inputTm2  +
+  53              		.loc 1 67 0
+  54 0024 009B     		ldr	r3, [sp, #0]
+  55 0026 D3ED016A 		flds	s13, [r3, #4]
+  56 002a DFED327A 		flds	s15, .L2+8
+  57 002e 66EEA77A 		fmuls	s15, s13, s15
+  66:../src/lowPassFilter.c ****              B1_100HZ * filterParameters->inputTm1  +
+  58              		.loc 1 66 0
+  59 0032 37EE277A 		fadds	s14, s14, s15
+  68:../src/lowPassFilter.c ****              B3_100HZ * filterParameters->inputTm3  +
+  60              		.loc 1 68 0
+  61 0036 009B     		ldr	r3, [sp, #0]
+  62 0038 D3ED026A 		flds	s13, [r3, #8]
+  63 003c DFED2C7A 		flds	s15, .L2+4
+  64 0040 66EEA77A 		fmuls	s15, s13, s15
+  67:../src/lowPassFilter.c ****              B2_100HZ * filterParameters->inputTm2  +
+  65              		.loc 1 67 0
+  66 0044 37EE277A 		fadds	s14, s14, s15
+  69:../src/lowPassFilter.c ****              B4_100HZ * filterParameters->inputTm4  -
+  67              		.loc 1 69 0
+  68 0048 009B     		ldr	r3, [sp, #0]
+  69 004a D3ED036A 		flds	s13, [r3, #12]
+  70 004e DFED277A 		flds	s15, .L2
+  71 0052 66EEA77A 		fmuls	s15, s13, s15
+  68:../src/lowPassFilter.c ****              B3_100HZ * filterParameters->inputTm3  +
+  72              		.loc 1 68 0
+  73 0056 37EE277A 		fadds	s14, s14, s15
+  70:../src/lowPassFilter.c ****              A1_100HZ * filterParameters->outputTm1 -
+  74              		.loc 1 70 0
+  75 005a 009B     		ldr	r3, [sp, #0]
+  76 005c D3ED046A 		flds	s13, [r3, #16]
+  77 0060 DFED257A 		flds	s15, .L2+12
+  78 0064 66EEA77A 		fmuls	s15, s13, s15
+  69:../src/lowPassFilter.c ****              B4_100HZ * filterParameters->inputTm4  -
+  79              		.loc 1 69 0
+  80 0068 37EE277A 		fadds	s14, s14, s15
+  71:../src/lowPassFilter.c ****              A2_100HZ * filterParameters->outputTm2 -
+  81              		.loc 1 71 0
+  82 006c 009B     		ldr	r3, [sp, #0]
+  83 006e D3ED056A 		flds	s13, [r3, #20]
+  84 0072 DFED227A 		flds	s15, .L2+16
+  85 0076 66EEA77A 		fmuls	s15, s13, s15
+  70:../src/lowPassFilter.c ****              A1_100HZ * filterParameters->outputTm1 -
+  86              		.loc 1 70 0
+  87 007a 37EE677A 		fsubs	s14, s14, s15
+  72:../src/lowPassFilter.c ****              A3_100HZ * filterParameters->outputTm3 -
+  88              		.loc 1 72 0
+  89 007e 009B     		ldr	r3, [sp, #0]
+  90 0080 D3ED066A 		flds	s13, [r3, #24]
+  91 0084 DFED1E7A 		flds	s15, .L2+20
+  92 0088 66EEA77A 		fmuls	s15, s13, s15
+  71:../src/lowPassFilter.c ****              A2_100HZ * filterParameters->outputTm2 -
+  93              		.loc 1 71 0
+  94 008c 37EE277A 		fadds	s14, s14, s15
+  73:../src/lowPassFilter.c ****              A4_100HZ * filterParameters->outputTm4;
+  95              		.loc 1 73 0
+  96 0090 009B     		ldr	r3, [sp, #0]
+  97 0092 D3ED076A 		flds	s13, [r3, #28]
+  98 0096 DFED1B7A 		flds	s15, .L2+24
+  99 009a 66EEA77A 		fmuls	s15, s13, s15
+  65:../src/lowPassFilter.c ****     output = B0_100HZ * currentInput +
+ 100              		.loc 1 65 0
+ 101 009e 77EE677A 		fsubs	s15, s14, s15
+ 102 00a2 CDED037A 		fsts	s15, [sp, #12]
+  74:../src/lowPassFilter.c **** 
+  75:../src/lowPassFilter.c ****     filterParameters->inputTm4 = filterParameters->inputTm3;
+ 103              		.loc 1 75 0
+ 104 00a6 009B     		ldr	r3, [sp, #0]
+ 105 00a8 9A68     		ldr	r2, [r3, #8]	@ float
+ 106 00aa 009B     		ldr	r3, [sp, #0]
+ 107 00ac DA60     		str	r2, [r3, #12]	@ float
+  76:../src/lowPassFilter.c ****     filterParameters->inputTm3 = filterParameters->inputTm2;
+ 108              		.loc 1 76 0
+ 109 00ae 009B     		ldr	r3, [sp, #0]
+ 110 00b0 5A68     		ldr	r2, [r3, #4]	@ float
+ 111 00b2 009B     		ldr	r3, [sp, #0]
+ 112 00b4 9A60     		str	r2, [r3, #8]	@ float
+  77:../src/lowPassFilter.c ****     filterParameters->inputTm2 = filterParameters->inputTm1;
+ 113              		.loc 1 77 0
+ 114 00b6 009B     		ldr	r3, [sp, #0]
+ 115 00b8 1A68     		ldr	r2, [r3, #0]	@ float
+ 116 00ba 009B     		ldr	r3, [sp, #0]
+ 117 00bc 5A60     		str	r2, [r3, #4]	@ float
+  78:../src/lowPassFilter.c ****     filterParameters->inputTm1 = currentInput;
+ 118              		.loc 1 78 0
+ 119 00be 009B     		ldr	r3, [sp, #0]
+ 120 00c0 019A     		ldr	r2, [sp, #4]	@ float
+ 121 00c2 1A60     		str	r2, [r3, #0]	@ float
+  79:../src/lowPassFilter.c **** 
+  80:../src/lowPassFilter.c ****     filterParameters->outputTm4 = filterParameters->outputTm3;
+ 122              		.loc 1 80 0
+ 123 00c4 009B     		ldr	r3, [sp, #0]
+ 124 00c6 9A69     		ldr	r2, [r3, #24]	@ float
+ 125 00c8 009B     		ldr	r3, [sp, #0]
+ 126 00ca DA61     		str	r2, [r3, #28]	@ float
+  81:../src/lowPassFilter.c ****     filterParameters->outputTm3 = filterParameters->outputTm2;
+ 127              		.loc 1 81 0
+ 128 00cc 009B     		ldr	r3, [sp, #0]
+ 129 00ce 5A69     		ldr	r2, [r3, #20]	@ float
+ 130 00d0 009B     		ldr	r3, [sp, #0]
+ 131 00d2 9A61     		str	r2, [r3, #24]	@ float
+  82:../src/lowPassFilter.c ****     filterParameters->outputTm2 = filterParameters->outputTm1;
+ 132              		.loc 1 82 0
+ 133 00d4 009B     		ldr	r3, [sp, #0]
+ 134 00d6 1A69     		ldr	r2, [r3, #16]	@ float
+ 135 00d8 009B     		ldr	r3, [sp, #0]
+ 136 00da 5A61     		str	r2, [r3, #20]	@ float
+  83:../src/lowPassFilter.c ****     filterParameters->outputTm1 = output;
+ 137              		.loc 1 83 0
+ 138 00dc 009B     		ldr	r3, [sp, #0]
+ 139 00de 039A     		ldr	r2, [sp, #12]	@ float
+ 140 00e0 1A61     		str	r2, [r3, #16]	@ float
+  84:../src/lowPassFilter.c **** 
+  85:../src/lowPassFilter.c ****     return output;
+ 141              		.loc 1 85 0
+ 142 00e2 039B     		ldr	r3, [sp, #12]	@ float
+  86:../src/lowPassFilter.c **** }
+ 143              		.loc 1 86 0
+ 144 00e4 1846     		mov	r0, r3	@ float
+ 145 00e6 04B0     		add	sp, sp, #16
+ 146 00e8 7047     		bx	lr
+ 147              	.L3:
+ 148 00ea 00BF     		.align	2
+ 149              	.L2:
+ 150 00ec 7932F83A 		.word	989344377
+ 151 00f0 D58111BB 		.word	-1156480555
+ 152 00f4 1A1B5E3B 		.word	996023066
+ 153 00f8 382F5740 		.word	1079455544
+ 154 00fc 200B8940 		.word	1082723104
+ 155 0100 0A771C40 		.word	1075607306
+ 156 0104 4CF3063F 		.word	1057420108
+ 157              		.cfi_endproc
+ 158              	.LFE111:
+ 160              		.align	2
+ 161              		.global	setupFourthOrder100Hz
+ 162              		.thumb
+ 163              		.thumb_func
+ 165              	setupFourthOrder100Hz:
+ 166              	.LFB112:
+  87:../src/lowPassFilter.c **** 
+  88:../src/lowPassFilter.c **** ///////////////////////////////////////////////////////////////////////////////
+  89:../src/lowPassFilter.c **** 
+  90:../src/lowPassFilter.c **** void setupFourthOrder100Hz(void)
+  91:../src/lowPassFilter.c **** {
+ 167              		.loc 1 91 0
+ 168              		.cfi_startproc
+ 169              		@ args = 0, pretend = 0, frame = 0
+ 170              		@ frame_needed = 0, uses_anonymous_args = 0
+ 171              		@ link register save eliminated.
+  92:../src/lowPassFilter.c ****     fourthOrder100Hz[AX_FILTER].inputTm1 = 0.0f;
+ 172              		.loc 1 92 0
+ 173 0108 40F20003 		movw	r3, #:lower16:fourthOrder100Hz
+ 174 010c C0F20003 		movt	r3, #:upper16:fourthOrder100Hz
+ 175 0110 464A     		ldr	r2, .L5	@ float
+ 176 0112 1A60     		str	r2, [r3, #0]	@ float
+  93:../src/lowPassFilter.c ****     fourthOrder100Hz[AX_FILTER].inputTm2 = 0.0f;
+ 177              		.loc 1 93 0
+ 178 0114 40F20003 		movw	r3, #:lower16:fourthOrder100Hz
+ 179 0118 C0F20003 		movt	r3, #:upper16:fourthOrder100Hz
+ 180 011c 434A     		ldr	r2, .L5	@ float
+ 181 011e 5A60     		str	r2, [r3, #4]	@ float
+  94:../src/lowPassFilter.c ****     fourthOrder100Hz[AX_FILTER].inputTm3 = 0.0f;
+ 182              		.loc 1 94 0
+ 183 0120 40F20003 		movw	r3, #:lower16:fourthOrder100Hz
+ 184 0124 C0F20003 		movt	r3, #:upper16:fourthOrder100Hz
+ 185 0128 404A     		ldr	r2, .L5	@ float
+ 186 012a 9A60     		str	r2, [r3, #8]	@ float
+  95:../src/lowPassFilter.c ****     fourthOrder100Hz[AX_FILTER].inputTm4 = 0.0f;
+ 187              		.loc 1 95 0
+ 188 012c 40F20003 		movw	r3, #:lower16:fourthOrder100Hz
+ 189 0130 C0F20003 		movt	r3, #:upper16:fourthOrder100Hz
+ 190 0134 3D4A     		ldr	r2, .L5	@ float
+ 191 0136 DA60     		str	r2, [r3, #12]	@ float
+  96:../src/lowPassFilter.c **** 
+  97:../src/lowPassFilter.c ****     fourthOrder100Hz[AX_FILTER].outputTm1 = 0.0f;
+ 192              		.loc 1 97 0
+ 193 0138 40F20003 		movw	r3, #:lower16:fourthOrder100Hz
+ 194 013c C0F20003 		movt	r3, #:upper16:fourthOrder100Hz
+ 195 0140 3A4A     		ldr	r2, .L5	@ float
+ 196 0142 1A61     		str	r2, [r3, #16]	@ float
+  98:../src/lowPassFilter.c ****     fourthOrder100Hz[AX_FILTER].outputTm2 = 0.0f;
+ 197              		.loc 1 98 0
+ 198 0144 40F20003 		movw	r3, #:lower16:fourthOrder100Hz
+ 199 0148 C0F20003 		movt	r3, #:upper16:fourthOrder100Hz
+ 200 014c 374A     		ldr	r2, .L5	@ float
+ 201 014e 5A61     		str	r2, [r3, #20]	@ float
+  99:../src/lowPassFilter.c ****     fourthOrder100Hz[AX_FILTER].outputTm3 = 0.0f;
+ 202              		.loc 1 99 0
+ 203 0150 40F20003 		movw	r3, #:lower16:fourthOrder100Hz
+ 204 0154 C0F20003 		movt	r3, #:upper16:fourthOrder100Hz
+ 205 0158 344A     		ldr	r2, .L5	@ float
+ 206 015a 9A61     		str	r2, [r3, #24]	@ float
+ 100:../src/lowPassFilter.c ****     fourthOrder100Hz[AX_FILTER].outputTm4 = 0.0f;
+ 207              		.loc 1 100 0
+ 208 015c 40F20003 		movw	r3, #:lower16:fourthOrder100Hz
+ 209 0160 C0F20003 		movt	r3, #:upper16:fourthOrder100Hz
+ 210 0164 314A     		ldr	r2, .L5	@ float
+ 211 0166 DA61     		str	r2, [r3, #28]	@ float
+ 101:../src/lowPassFilter.c **** 
+ 102:../src/lowPassFilter.c ****     /////////////////////////////////////
+ 103:../src/lowPassFilter.c **** 
+ 104:../src/lowPassFilter.c ****     fourthOrder100Hz[AY_FILTER].inputTm1 = 0.0f;
+ 212              		.loc 1 104 0
+ 213 0168 40F20003 		movw	r3, #:lower16:fourthOrder100Hz
+ 214 016c C0F20003 		movt	r3, #:upper16:fourthOrder100Hz
+ 215 0170 2E4A     		ldr	r2, .L5	@ float
+ 216 0172 1A62     		str	r2, [r3, #32]	@ float
+ 105:../src/lowPassFilter.c ****     fourthOrder100Hz[AY_FILTER].inputTm2 = 0.0f;
+ 217              		.loc 1 105 0
+ 218 0174 40F20003 		movw	r3, #:lower16:fourthOrder100Hz
+ 219 0178 C0F20003 		movt	r3, #:upper16:fourthOrder100Hz
+ 220 017c 2B4A     		ldr	r2, .L5	@ float
+ 221 017e 5A62     		str	r2, [r3, #36]	@ float
+ 106:../src/lowPassFilter.c ****     fourthOrder100Hz[AY_FILTER].inputTm3 = 0.0f;
+ 222              		.loc 1 106 0
+ 223 0180 40F20003 		movw	r3, #:lower16:fourthOrder100Hz
+ 224 0184 C0F20003 		movt	r3, #:upper16:fourthOrder100Hz
+ 225 0188 284A     		ldr	r2, .L5	@ float
+ 226 018a 9A62     		str	r2, [r3, #40]	@ float
+ 107:../src/lowPassFilter.c ****     fourthOrder100Hz[AY_FILTER].inputTm4 = 0.0f;
+ 227              		.loc 1 107 0
+ 228 018c 40F20003 		movw	r3, #:lower16:fourthOrder100Hz
+ 229 0190 C0F20003 		movt	r3, #:upper16:fourthOrder100Hz
+ 230 0194 254A     		ldr	r2, .L5	@ float
+ 231 0196 DA62     		str	r2, [r3, #44]	@ float
+ 108:../src/lowPassFilter.c **** 
+ 109:../src/lowPassFilter.c ****     fourthOrder100Hz[AY_FILTER].outputTm1 = 0.0f;
+ 232              		.loc 1 109 0
+ 233 0198 40F20003 		movw	r3, #:lower16:fourthOrder100Hz
+ 234 019c C0F20003 		movt	r3, #:upper16:fourthOrder100Hz
+ 235 01a0 224A     		ldr	r2, .L5	@ float
+ 236 01a2 1A63     		str	r2, [r3, #48]	@ float
+ 110:../src/lowPassFilter.c ****     fourthOrder100Hz[AY_FILTER].outputTm2 = 0.0f;
+ 237              		.loc 1 110 0
+ 238 01a4 40F20003 		movw	r3, #:lower16:fourthOrder100Hz
+ 239 01a8 C0F20003 		movt	r3, #:upper16:fourthOrder100Hz
+ 240 01ac 1F4A     		ldr	r2, .L5	@ float
+ 241 01ae 5A63     		str	r2, [r3, #52]	@ float
+ 111:../src/lowPassFilter.c ****     fourthOrder100Hz[AY_FILTER].outputTm3 = 0.0f;
+ 242              		.loc 1 111 0
+ 243 01b0 40F20003 		movw	r3, #:lower16:fourthOrder100Hz
+ 244 01b4 C0F20003 		movt	r3, #:upper16:fourthOrder100Hz
+ 245 01b8 1C4A     		ldr	r2, .L5	@ float
+ 246 01ba 9A63     		str	r2, [r3, #56]	@ float
+ 112:../src/lowPassFilter.c ****     fourthOrder100Hz[AY_FILTER].outputTm4 = 0.0f;
+ 247              		.loc 1 112 0
+ 248 01bc 40F20003 		movw	r3, #:lower16:fourthOrder100Hz
+ 249 01c0 C0F20003 		movt	r3, #:upper16:fourthOrder100Hz
+ 250 01c4 194A     		ldr	r2, .L5	@ float
+ 251 01c6 DA63     		str	r2, [r3, #60]	@ float
+ 113:../src/lowPassFilter.c **** 
+ 114:../src/lowPassFilter.c ****     /////////////////////////////////////
+ 115:../src/lowPassFilter.c **** 
+ 116:../src/lowPassFilter.c ****     fourthOrder100Hz[AZ_FILTER].inputTm1 = -9.8065f;
+ 252              		.loc 1 116 0
+ 253 01c8 40F20003 		movw	r3, #:lower16:fourthOrder100Hz
+ 254 01cc C0F20003 		movt	r3, #:upper16:fourthOrder100Hz
+ 255 01d0 174A     		ldr	r2, .L5+4	@ float
+ 256 01d2 1A64     		str	r2, [r3, #64]	@ float
+ 117:../src/lowPassFilter.c ****     fourthOrder100Hz[AZ_FILTER].inputTm2 = -9.8065f;
+ 257              		.loc 1 117 0
+ 258 01d4 40F20003 		movw	r3, #:lower16:fourthOrder100Hz
+ 259 01d8 C0F20003 		movt	r3, #:upper16:fourthOrder100Hz
+ 260 01dc 144A     		ldr	r2, .L5+4	@ float
+ 261 01de 5A64     		str	r2, [r3, #68]	@ float
+ 118:../src/lowPassFilter.c ****     fourthOrder100Hz[AZ_FILTER].inputTm3 = -9.8065f;
+ 262              		.loc 1 118 0
+ 263 01e0 40F20003 		movw	r3, #:lower16:fourthOrder100Hz
+ 264 01e4 C0F20003 		movt	r3, #:upper16:fourthOrder100Hz
+ 265 01e8 114A     		ldr	r2, .L5+4	@ float
+ 266 01ea 9A64     		str	r2, [r3, #72]	@ float
+ 119:../src/lowPassFilter.c ****     fourthOrder100Hz[AZ_FILTER].inputTm4 = -9.8065f;
+ 267              		.loc 1 119 0
+ 268 01ec 40F20003 		movw	r3, #:lower16:fourthOrder100Hz
+ 269 01f0 C0F20003 		movt	r3, #:upper16:fourthOrder100Hz
+ 270 01f4 0E4A     		ldr	r2, .L5+4	@ float
+ 271 01f6 DA64     		str	r2, [r3, #76]	@ float
+ 120:../src/lowPassFilter.c **** 
+ 121:../src/lowPassFilter.c ****     fourthOrder100Hz[AZ_FILTER].outputTm1 = -9.8065f;
+ 272              		.loc 1 121 0
+ 273 01f8 40F20003 		movw	r3, #:lower16:fourthOrder100Hz
+ 274 01fc C0F20003 		movt	r3, #:upper16:fourthOrder100Hz
+ 275 0200 0B4A     		ldr	r2, .L5+4	@ float
+ 276 0202 1A65     		str	r2, [r3, #80]	@ float
+ 122:../src/lowPassFilter.c ****     fourthOrder100Hz[AZ_FILTER].outputTm2 = -9.8065f;
+ 277              		.loc 1 122 0
+ 278 0204 40F20003 		movw	r3, #:lower16:fourthOrder100Hz
+ 279 0208 C0F20003 		movt	r3, #:upper16:fourthOrder100Hz
+ 280 020c 084A     		ldr	r2, .L5+4	@ float
+ 281 020e 5A65     		str	r2, [r3, #84]	@ float
+ 123:../src/lowPassFilter.c ****     fourthOrder100Hz[AZ_FILTER].outputTm3 = -9.8065f;
+ 282              		.loc 1 123 0
+ 283 0210 40F20003 		movw	r3, #:lower16:fourthOrder100Hz
+ 284 0214 C0F20003 		movt	r3, #:upper16:fourthOrder100Hz
+ 285 0218 054A     		ldr	r2, .L5+4	@ float
+ 286 021a 9A65     		str	r2, [r3, #88]	@ float
+ 124:../src/lowPassFilter.c ****     fourthOrder100Hz[AZ_FILTER].outputTm4 = -9.8065f;
+ 287              		.loc 1 124 0
+ 288 021c 40F20003 		movw	r3, #:lower16:fourthOrder100Hz
+ 289 0220 C0F20003 		movt	r3, #:upper16:fourthOrder100Hz
+ 290 0224 024A     		ldr	r2, .L5+4	@ float
+ 291 0226 DA65     		str	r2, [r3, #92]	@ float
+ 125:../src/lowPassFilter.c **** }
+ 292              		.loc 1 125 0
+ 293 0228 7047     		bx	lr
+ 294              	.L6:
+ 295 022a 00BF     		.align	2
+ 296              	.L5:
+ 297 022c 00000000 		.word	0
+ 298 0230 6DE71CC1 		.word	-1055070355
+ 299              		.cfi_endproc
+ 300              	.LFE112:
+ 302              		.align	2
+ 303              		.global	computeFourthOrder500Hz
+ 304              		.thumb
+ 305              		.thumb_func
+ 307              	computeFourthOrder500Hz:
+ 308              	.LFB113:
+ 126:../src/lowPassFilter.c **** 
+ 127:../src/lowPassFilter.c **** ///////////////////////////////////////////////////////////////////////////////
+ 128:../src/lowPassFilter.c **** //  4th Order Low Pass Filter for 500 Hz Data
+ 129:../src/lowPassFilter.c **** ///////////////////////////////////////////////////////////////////////////////
+ 130:../src/lowPassFilter.c **** 
+ 131:../src/lowPassFilter.c **** float computeFourthOrder500Hz(float currentInput, fourthOrderData_t * filterParameters)
+ 132:../src/lowPassFilter.c **** {
+ 309              		.loc 1 132 0
+ 310              		.cfi_startproc
+ 311              		@ args = 0, pretend = 0, frame = 16
+ 312              		@ frame_needed = 0, uses_anonymous_args = 0
+ 313              		@ link register save eliminated.
+ 314 0234 84B0     		sub	sp, sp, #16
+ 315              	.LCFI1:
+ 316              		.cfi_def_cfa_offset 16
+ 317 0236 0190     		str	r0, [sp, #4]	@ float
+ 318 0238 0091     		str	r1, [sp, #0]
+ 133:../src/lowPassFilter.c ****     // cheby2(4,60,12.5/250)
+ 134:../src/lowPassFilter.c ****     #define B0_500HZ  0.000987786751039f
+ 135:../src/lowPassFilter.c ****     #define B1_500HZ -0.003762348901931f
+ 136:../src/lowPassFilter.c ****     #define B2_500HZ  0.005553744695291f
+ 137:../src/lowPassFilter.c ****     #define B3_500HZ -0.003762348901931f
+ 138:../src/lowPassFilter.c ****     #define B4_500HZ  0.000987786751039f
+ 139:../src/lowPassFilter.c **** 
+ 140:../src/lowPassFilter.c ****     #define A1_500HZ -3.878129734998889f
+ 141:../src/lowPassFilter.c ****     #define A2_500HZ  5.641762572815879f
+ 142:../src/lowPassFilter.c ****     #define A3_500HZ -3.648875955419102f
+ 143:../src/lowPassFilter.c ****     #define A4_500HZ  0.885247737995618f
+ 144:../src/lowPassFilter.c **** 
+ 145:../src/lowPassFilter.c ****     float output;
+ 146:../src/lowPassFilter.c **** 
+ 147:../src/lowPassFilter.c ****     output = B0_500HZ * currentInput +
+ 319              		.loc 1 147 0
+ 320 023a 9DED017A 		flds	s14, [sp, #4]
+ 321 023e DFED387A 		flds	s15, .L8
+ 322 0242 27EE277A 		fmuls	s14, s14, s15
+ 148:../src/lowPassFilter.c ****     		 B1_500HZ * filterParameters->inputTm1  +
+ 323              		.loc 1 148 0
+ 324 0246 009B     		ldr	r3, [sp, #0]
+ 325 0248 D3ED006A 		flds	s13, [r3, #0]
+ 326 024c DFED357A 		flds	s15, .L8+4
+ 327 0250 66EEA77A 		fmuls	s15, s13, s15
+ 147:../src/lowPassFilter.c ****     output = B0_500HZ * currentInput +
+ 328              		.loc 1 147 0
+ 329 0254 37EE277A 		fadds	s14, s14, s15
+ 149:../src/lowPassFilter.c ****     		 B2_500HZ * filterParameters->inputTm2  +
+ 330              		.loc 1 149 0
+ 331 0258 009B     		ldr	r3, [sp, #0]
+ 332 025a D3ED016A 		flds	s13, [r3, #4]
+ 333 025e DFED327A 		flds	s15, .L8+8
+ 334 0262 66EEA77A 		fmuls	s15, s13, s15
+ 148:../src/lowPassFilter.c ****     		 B1_500HZ * filterParameters->inputTm1  +
+ 335              		.loc 1 148 0
+ 336 0266 37EE277A 		fadds	s14, s14, s15
+ 150:../src/lowPassFilter.c ****     		 B3_500HZ * filterParameters->inputTm3  +
+ 337              		.loc 1 150 0
+ 338 026a 009B     		ldr	r3, [sp, #0]
+ 339 026c D3ED026A 		flds	s13, [r3, #8]
+ 340 0270 DFED2C7A 		flds	s15, .L8+4
+ 341 0274 66EEA77A 		fmuls	s15, s13, s15
+ 149:../src/lowPassFilter.c ****     		 B2_500HZ * filterParameters->inputTm2  +
+ 342              		.loc 1 149 0
+ 343 0278 37EE277A 		fadds	s14, s14, s15
+ 151:../src/lowPassFilter.c ****     		 B4_500HZ * filterParameters->inputTm4  -
+ 344              		.loc 1 151 0
+ 345 027c 009B     		ldr	r3, [sp, #0]
+ 346 027e D3ED036A 		flds	s13, [r3, #12]
+ 347 0282 DFED277A 		flds	s15, .L8
+ 348 0286 66EEA77A 		fmuls	s15, s13, s15
+ 150:../src/lowPassFilter.c ****     		 B3_500HZ * filterParameters->inputTm3  +
+ 349              		.loc 1 150 0
+ 350 028a 37EE277A 		fadds	s14, s14, s15
+ 152:../src/lowPassFilter.c ****     		 A1_500HZ * filterParameters->outputTm1 -
+ 351              		.loc 1 152 0
+ 352 028e 009B     		ldr	r3, [sp, #0]
+ 353 0290 D3ED046A 		flds	s13, [r3, #16]
+ 354 0294 DFED257A 		flds	s15, .L8+12
+ 355 0298 66EEA77A 		fmuls	s15, s13, s15
+ 151:../src/lowPassFilter.c ****     		 B4_500HZ * filterParameters->inputTm4  -
+ 356              		.loc 1 151 0
+ 357 029c 37EE277A 		fadds	s14, s14, s15
+ 153:../src/lowPassFilter.c ****     		 A2_500HZ * filterParameters->outputTm2 -
+ 358              		.loc 1 153 0
+ 359 02a0 009B     		ldr	r3, [sp, #0]
+ 360 02a2 D3ED056A 		flds	s13, [r3, #20]
+ 361 02a6 DFED227A 		flds	s15, .L8+16
+ 362 02aa 66EEA77A 		fmuls	s15, s13, s15
+ 152:../src/lowPassFilter.c ****     		 A1_500HZ * filterParameters->outputTm1 -
+ 363              		.loc 1 152 0
+ 364 02ae 37EE677A 		fsubs	s14, s14, s15
+ 154:../src/lowPassFilter.c ****     		 A3_500HZ * filterParameters->outputTm3 -
+ 365              		.loc 1 154 0
+ 366 02b2 009B     		ldr	r3, [sp, #0]
+ 367 02b4 D3ED066A 		flds	s13, [r3, #24]
+ 368 02b8 DFED1E7A 		flds	s15, .L8+20
+ 369 02bc 66EEA77A 		fmuls	s15, s13, s15
+ 153:../src/lowPassFilter.c ****     		 A2_500HZ * filterParameters->outputTm2 -
+ 370              		.loc 1 153 0
+ 371 02c0 37EE277A 		fadds	s14, s14, s15
+ 155:../src/lowPassFilter.c ****     		 A4_500HZ * filterParameters->outputTm4;
+ 372              		.loc 1 155 0
+ 373 02c4 009B     		ldr	r3, [sp, #0]
+ 374 02c6 D3ED076A 		flds	s13, [r3, #28]
+ 375 02ca DFED1B7A 		flds	s15, .L8+24
+ 376 02ce 66EEA77A 		fmuls	s15, s13, s15
+ 147:../src/lowPassFilter.c ****     output = B0_500HZ * currentInput +
+ 377              		.loc 1 147 0
+ 378 02d2 77EE677A 		fsubs	s15, s14, s15
+ 379 02d6 CDED037A 		fsts	s15, [sp, #12]
+ 156:../src/lowPassFilter.c **** 
+ 157:../src/lowPassFilter.c ****     filterParameters->inputTm4 = filterParameters->inputTm3;
+ 380              		.loc 1 157 0
+ 381 02da 009B     		ldr	r3, [sp, #0]
+ 382 02dc 9A68     		ldr	r2, [r3, #8]	@ float
+ 383 02de 009B     		ldr	r3, [sp, #0]
+ 384 02e0 DA60     		str	r2, [r3, #12]	@ float
+ 158:../src/lowPassFilter.c ****     filterParameters->inputTm3 = filterParameters->inputTm2;
+ 385              		.loc 1 158 0
+ 386 02e2 009B     		ldr	r3, [sp, #0]
+ 387 02e4 5A68     		ldr	r2, [r3, #4]	@ float
+ 388 02e6 009B     		ldr	r3, [sp, #0]
+ 389 02e8 9A60     		str	r2, [r3, #8]	@ float
+ 159:../src/lowPassFilter.c ****     filterParameters->inputTm2 = filterParameters->inputTm1;
+ 390              		.loc 1 159 0
+ 391 02ea 009B     		ldr	r3, [sp, #0]
+ 392 02ec 1A68     		ldr	r2, [r3, #0]	@ float
+ 393 02ee 009B     		ldr	r3, [sp, #0]
+ 394 02f0 5A60     		str	r2, [r3, #4]	@ float
+ 160:../src/lowPassFilter.c ****     filterParameters->inputTm1 = currentInput;
+ 395              		.loc 1 160 0
+ 396 02f2 009B     		ldr	r3, [sp, #0]
+ 397 02f4 019A     		ldr	r2, [sp, #4]	@ float
+ 398 02f6 1A60     		str	r2, [r3, #0]	@ float
+ 161:../src/lowPassFilter.c **** 
+ 162:../src/lowPassFilter.c ****     filterParameters->outputTm4 = filterParameters->outputTm3;
+ 399              		.loc 1 162 0
+ 400 02f8 009B     		ldr	r3, [sp, #0]
+ 401 02fa 9A69     		ldr	r2, [r3, #24]	@ float
+ 402 02fc 009B     		ldr	r3, [sp, #0]
+ 403 02fe DA61     		str	r2, [r3, #28]	@ float
+ 163:../src/lowPassFilter.c ****     filterParameters->outputTm3 = filterParameters->outputTm2;
+ 404              		.loc 1 163 0
+ 405 0300 009B     		ldr	r3, [sp, #0]
+ 406 0302 5A69     		ldr	r2, [r3, #20]	@ float
+ 407 0304 009B     		ldr	r3, [sp, #0]
+ 408 0306 9A61     		str	r2, [r3, #24]	@ float
+ 164:../src/lowPassFilter.c ****     filterParameters->outputTm2 = filterParameters->outputTm1;
+ 409              		.loc 1 164 0
+ 410 0308 009B     		ldr	r3, [sp, #0]
+ 411 030a 1A69     		ldr	r2, [r3, #16]	@ float
+ 412 030c 009B     		ldr	r3, [sp, #0]
+ 413 030e 5A61     		str	r2, [r3, #20]	@ float
+ 165:../src/lowPassFilter.c ****     filterParameters->outputTm1 = output;
+ 414              		.loc 1 165 0
+ 415 0310 009B     		ldr	r3, [sp, #0]
+ 416 0312 039A     		ldr	r2, [sp, #12]	@ float
+ 417 0314 1A61     		str	r2, [r3, #16]	@ float
+ 166:../src/lowPassFilter.c **** 
+ 167:../src/lowPassFilter.c ****     return output;
+ 418              		.loc 1 167 0
+ 419 0316 039B     		ldr	r3, [sp, #12]	@ float
+ 168:../src/lowPassFilter.c **** }
+ 420              		.loc 1 168 0
+ 421 0318 1846     		mov	r0, r3	@ float
+ 422 031a 04B0     		add	sp, sp, #16
+ 423 031c 7047     		bx	lr
+ 424              	.L9:
+ 425 031e 00BF     		.align	2
+ 426              	.L8:
+ 427 0320 A078813A 		.word	981563552
+ 428 0324 BD9176BB 		.word	-1149857347
+ 429 0328 30FCB53B 		.word	1001782320
+ 430 032c 47337840 		.word	1081619271
+ 431 0330 5289B440 		.word	1085573458
+ 432 0334 2F876940 		.word	1080657711
+ 433 0338 999F623F 		.word	1063427993
+ 434              		.cfi_endproc
+ 435              	.LFE113:
+ 437              		.align	2
+ 438              		.global	setupFourthOrder500Hz
+ 439              		.thumb
+ 440              		.thumb_func
+ 442              	setupFourthOrder500Hz:
+ 443              	.LFB114:
+ 169:../src/lowPassFilter.c **** 
+ 170:../src/lowPassFilter.c **** ///////////////////////////////////////////////////////////////////////////////
+ 171:../src/lowPassFilter.c **** 
+ 172:../src/lowPassFilter.c **** void setupFourthOrder500Hz(void)
+ 173:../src/lowPassFilter.c **** {
+ 444              		.loc 1 173 0
+ 445              		.cfi_startproc
+ 446              		@ args = 0, pretend = 0, frame = 0
+ 447              		@ frame_needed = 0, uses_anonymous_args = 0
+ 448              		@ link register save eliminated.
+ 174:../src/lowPassFilter.c ****     fourthOrder500Hz[AX_FILTER].inputTm1 = 0.0f;
+ 449              		.loc 1 174 0
+ 450 033c 40F20003 		movw	r3, #:lower16:fourthOrder500Hz
+ 451 0340 C0F20003 		movt	r3, #:upper16:fourthOrder500Hz
+ 452 0344 464A     		ldr	r2, .L11	@ float
+ 453 0346 1A60     		str	r2, [r3, #0]	@ float
+ 175:../src/lowPassFilter.c ****     fourthOrder500Hz[AX_FILTER].inputTm2 = 0.0f;
+ 454              		.loc 1 175 0
+ 455 0348 40F20003 		movw	r3, #:lower16:fourthOrder500Hz
+ 456 034c C0F20003 		movt	r3, #:upper16:fourthOrder500Hz
+ 457 0350 434A     		ldr	r2, .L11	@ float
+ 458 0352 5A60     		str	r2, [r3, #4]	@ float
+ 176:../src/lowPassFilter.c ****     fourthOrder500Hz[AX_FILTER].inputTm3 = 0.0f;
+ 459              		.loc 1 176 0
+ 460 0354 40F20003 		movw	r3, #:lower16:fourthOrder500Hz
+ 461 0358 C0F20003 		movt	r3, #:upper16:fourthOrder500Hz
+ 462 035c 404A     		ldr	r2, .L11	@ float
+ 463 035e 9A60     		str	r2, [r3, #8]	@ float
+ 177:../src/lowPassFilter.c ****     fourthOrder500Hz[AX_FILTER].inputTm4 = 0.0f;
+ 464              		.loc 1 177 0
+ 465 0360 40F20003 		movw	r3, #:lower16:fourthOrder500Hz
+ 466 0364 C0F20003 		movt	r3, #:upper16:fourthOrder500Hz
+ 467 0368 3D4A     		ldr	r2, .L11	@ float
+ 468 036a DA60     		str	r2, [r3, #12]	@ float
+ 178:../src/lowPassFilter.c **** 
+ 179:../src/lowPassFilter.c ****     fourthOrder500Hz[AX_FILTER].outputTm1 = 0.0f;
+ 469              		.loc 1 179 0
+ 470 036c 40F20003 		movw	r3, #:lower16:fourthOrder500Hz
+ 471 0370 C0F20003 		movt	r3, #:upper16:fourthOrder500Hz
+ 472 0374 3A4A     		ldr	r2, .L11	@ float
+ 473 0376 1A61     		str	r2, [r3, #16]	@ float
+ 180:../src/lowPassFilter.c ****     fourthOrder500Hz[AX_FILTER].outputTm2 = 0.0f;
+ 474              		.loc 1 180 0
+ 475 0378 40F20003 		movw	r3, #:lower16:fourthOrder500Hz
+ 476 037c C0F20003 		movt	r3, #:upper16:fourthOrder500Hz
+ 477 0380 374A     		ldr	r2, .L11	@ float
+ 478 0382 5A61     		str	r2, [r3, #20]	@ float
+ 181:../src/lowPassFilter.c ****     fourthOrder500Hz[AX_FILTER].outputTm3 = 0.0f;
+ 479              		.loc 1 181 0
+ 480 0384 40F20003 		movw	r3, #:lower16:fourthOrder500Hz
+ 481 0388 C0F20003 		movt	r3, #:upper16:fourthOrder500Hz
+ 482 038c 344A     		ldr	r2, .L11	@ float
+ 483 038e 9A61     		str	r2, [r3, #24]	@ float
+ 182:../src/lowPassFilter.c ****     fourthOrder500Hz[AX_FILTER].outputTm4 = 0.0f;
+ 484              		.loc 1 182 0
+ 485 0390 40F20003 		movw	r3, #:lower16:fourthOrder500Hz
+ 486 0394 C0F20003 		movt	r3, #:upper16:fourthOrder500Hz
+ 487 0398 314A     		ldr	r2, .L11	@ float
+ 488 039a DA61     		str	r2, [r3, #28]	@ float
+ 183:../src/lowPassFilter.c **** 
+ 184:../src/lowPassFilter.c ****     /////////////////////////////////////
+ 185:../src/lowPassFilter.c **** 
+ 186:../src/lowPassFilter.c ****     fourthOrder500Hz[AY_FILTER].inputTm1 = 0.0f;
+ 489              		.loc 1 186 0
+ 490 039c 40F20003 		movw	r3, #:lower16:fourthOrder500Hz
+ 491 03a0 C0F20003 		movt	r3, #:upper16:fourthOrder500Hz
+ 492 03a4 2E4A     		ldr	r2, .L11	@ float
+ 493 03a6 1A62     		str	r2, [r3, #32]	@ float
+ 187:../src/lowPassFilter.c ****     fourthOrder500Hz[AY_FILTER].inputTm2 = 0.0f;
+ 494              		.loc 1 187 0
+ 495 03a8 40F20003 		movw	r3, #:lower16:fourthOrder500Hz
+ 496 03ac C0F20003 		movt	r3, #:upper16:fourthOrder500Hz
+ 497 03b0 2B4A     		ldr	r2, .L11	@ float
+ 498 03b2 5A62     		str	r2, [r3, #36]	@ float
+ 188:../src/lowPassFilter.c ****     fourthOrder500Hz[AY_FILTER].inputTm3 = 0.0f;
+ 499              		.loc 1 188 0
+ 500 03b4 40F20003 		movw	r3, #:lower16:fourthOrder500Hz
+ 501 03b8 C0F20003 		movt	r3, #:upper16:fourthOrder500Hz
+ 502 03bc 284A     		ldr	r2, .L11	@ float
+ 503 03be 9A62     		str	r2, [r3, #40]	@ float
+ 189:../src/lowPassFilter.c ****     fourthOrder500Hz[AY_FILTER].inputTm4 = 0.0f;
+ 504              		.loc 1 189 0
+ 505 03c0 40F20003 		movw	r3, #:lower16:fourthOrder500Hz
+ 506 03c4 C0F20003 		movt	r3, #:upper16:fourthOrder500Hz
+ 507 03c8 254A     		ldr	r2, .L11	@ float
+ 508 03ca DA62     		str	r2, [r3, #44]	@ float
+ 190:../src/lowPassFilter.c **** 
+ 191:../src/lowPassFilter.c ****     fourthOrder500Hz[AY_FILTER].outputTm1 = 0.0f;
+ 509              		.loc 1 191 0
+ 510 03cc 40F20003 		movw	r3, #:lower16:fourthOrder500Hz
+ 511 03d0 C0F20003 		movt	r3, #:upper16:fourthOrder500Hz
+ 512 03d4 224A     		ldr	r2, .L11	@ float
+ 513 03d6 1A63     		str	r2, [r3, #48]	@ float
+ 192:../src/lowPassFilter.c ****     fourthOrder500Hz[AY_FILTER].outputTm2 = 0.0f;
+ 514              		.loc 1 192 0
+ 515 03d8 40F20003 		movw	r3, #:lower16:fourthOrder500Hz
+ 516 03dc C0F20003 		movt	r3, #:upper16:fourthOrder500Hz
+ 517 03e0 1F4A     		ldr	r2, .L11	@ float
+ 518 03e2 5A63     		str	r2, [r3, #52]	@ float
+ 193:../src/lowPassFilter.c ****     fourthOrder500Hz[AY_FILTER].outputTm3 = 0.0f;
+ 519              		.loc 1 193 0
+ 520 03e4 40F20003 		movw	r3, #:lower16:fourthOrder500Hz
+ 521 03e8 C0F20003 		movt	r3, #:upper16:fourthOrder500Hz
+ 522 03ec 1C4A     		ldr	r2, .L11	@ float
+ 523 03ee 9A63     		str	r2, [r3, #56]	@ float
+ 194:../src/lowPassFilter.c ****     fourthOrder500Hz[AY_FILTER].outputTm4 = 0.0f;
+ 524              		.loc 1 194 0
+ 525 03f0 40F20003 		movw	r3, #:lower16:fourthOrder500Hz
+ 526 03f4 C0F20003 		movt	r3, #:upper16:fourthOrder500Hz
+ 527 03f8 194A     		ldr	r2, .L11	@ float
+ 528 03fa DA63     		str	r2, [r3, #60]	@ float
+ 195:../src/lowPassFilter.c **** 
+ 196:../src/lowPassFilter.c ****     /////////////////////////////////////
+ 197:../src/lowPassFilter.c **** 
+ 198:../src/lowPassFilter.c ****     fourthOrder500Hz[AZ_FILTER].inputTm1 = -9.8065f;
+ 529              		.loc 1 198 0
+ 530 03fc 40F20003 		movw	r3, #:lower16:fourthOrder500Hz
+ 531 0400 C0F20003 		movt	r3, #:upper16:fourthOrder500Hz
+ 532 0404 174A     		ldr	r2, .L11+4	@ float
+ 533 0406 1A64     		str	r2, [r3, #64]	@ float
+ 199:../src/lowPassFilter.c ****     fourthOrder500Hz[AZ_FILTER].inputTm2 = -9.8065f;
+ 534              		.loc 1 199 0
+ 535 0408 40F20003 		movw	r3, #:lower16:fourthOrder500Hz
+ 536 040c C0F20003 		movt	r3, #:upper16:fourthOrder500Hz
+ 537 0410 144A     		ldr	r2, .L11+4	@ float
+ 538 0412 5A64     		str	r2, [r3, #68]	@ float
+ 200:../src/lowPassFilter.c ****     fourthOrder500Hz[AZ_FILTER].inputTm3 = -9.8065f;
+ 539              		.loc 1 200 0
+ 540 0414 40F20003 		movw	r3, #:lower16:fourthOrder500Hz
+ 541 0418 C0F20003 		movt	r3, #:upper16:fourthOrder500Hz
+ 542 041c 114A     		ldr	r2, .L11+4	@ float
+ 543 041e 9A64     		str	r2, [r3, #72]	@ float
+ 201:../src/lowPassFilter.c ****     fourthOrder500Hz[AZ_FILTER].inputTm4 = -9.8065f;
+ 544              		.loc 1 201 0
+ 545 0420 40F20003 		movw	r3, #:lower16:fourthOrder500Hz
+ 546 0424 C0F20003 		movt	r3, #:upper16:fourthOrder500Hz
+ 547 0428 0E4A     		ldr	r2, .L11+4	@ float
+ 548 042a DA64     		str	r2, [r3, #76]	@ float
+ 202:../src/lowPassFilter.c **** 
+ 203:../src/lowPassFilter.c ****     fourthOrder500Hz[AZ_FILTER].outputTm1 = -9.8065f;
+ 549              		.loc 1 203 0
+ 550 042c 40F20003 		movw	r3, #:lower16:fourthOrder500Hz
+ 551 0430 C0F20003 		movt	r3, #:upper16:fourthOrder500Hz
+ 552 0434 0B4A     		ldr	r2, .L11+4	@ float
+ 553 0436 1A65     		str	r2, [r3, #80]	@ float
+ 204:../src/lowPassFilter.c ****     fourthOrder500Hz[AZ_FILTER].outputTm2 = -9.8065f;
+ 554              		.loc 1 204 0
+ 555 0438 40F20003 		movw	r3, #:lower16:fourthOrder500Hz
+ 556 043c C0F20003 		movt	r3, #:upper16:fourthOrder500Hz
+ 557 0440 084A     		ldr	r2, .L11+4	@ float
+ 558 0442 5A65     		str	r2, [r3, #84]	@ float
+ 205:../src/lowPassFilter.c ****     fourthOrder500Hz[AZ_FILTER].outputTm3 = -9.8065f;
+ 559              		.loc 1 205 0
+ 560 0444 40F20003 		movw	r3, #:lower16:fourthOrder500Hz
+ 561 0448 C0F20003 		movt	r3, #:upper16:fourthOrder500Hz
+ 562 044c 054A     		ldr	r2, .L11+4	@ float
+ 563 044e 9A65     		str	r2, [r3, #88]	@ float
+ 206:../src/lowPassFilter.c ****     fourthOrder500Hz[AZ_FILTER].outputTm4 = -9.8065f;
+ 564              		.loc 1 206 0
+ 565 0450 40F20003 		movw	r3, #:lower16:fourthOrder500Hz
+ 566 0454 C0F20003 		movt	r3, #:upper16:fourthOrder500Hz
+ 567 0458 024A     		ldr	r2, .L11+4	@ float
+ 568 045a DA65     		str	r2, [r3, #92]	@ float
+ 207:../src/lowPassFilter.c **** }
+ 569              		.loc 1 207 0
+ 570 045c 7047     		bx	lr
+ 571              	.L12:
+ 572 045e 00BF     		.align	2
+ 573              	.L11:
+ 574 0460 00000000 		.word	0
+ 575 0464 6DE71CC1 		.word	-1055070355
+ 576              		.cfi_endproc
+ 577              	.LFE114:
+ 579              	.Letext0:
+ 580              		.file 2 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\src\\gps/gpsMediaTe
+ 581              		.file 3 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\src\\gps/gpsNMEA.h"
+ 582              		.file 4 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\src\\gps/gpsUblox.h
+ 583              		.file 5 "../src/lowPassFilter.h"
+ 584              		.file 6 "c:\\program files\\codesourcery\\sourcery_codebench_lite_for_arm_eabi\\bin\\../lib/gcc/ar
+ 585              		.file 7 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\Libraries\\CMSIS\\I
+DEFINED SYMBOLS
+                            *ABS*:00000000 lowPassFilter.c
+                            *COM*:00000001 mtk19ProcessDataState
+                            *COM*:00000001 nmeaProcessDataState
+                            *COM*:00000001 ubloxProcessDataState
+                            *COM*:00000060 fourthOrder100Hz
+                            *COM*:00000060 fourthOrder500Hz
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccsGGiKg.s:24     .text:00000000 $t
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccsGGiKg.s:29     .text:00000000 computeFourthOrder100Hz
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccsGGiKg.s:150    .text:000000ec $d
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccsGGiKg.s:160    .text:00000108 $t
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccsGGiKg.s:165    .text:00000108 setupFourthOrder100Hz
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccsGGiKg.s:297    .text:0000022c $d
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccsGGiKg.s:302    .text:00000234 $t
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccsGGiKg.s:307    .text:00000234 computeFourthOrder500Hz
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccsGGiKg.s:427    .text:00000320 $d
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccsGGiKg.s:437    .text:0000033c $t
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccsGGiKg.s:442    .text:0000033c setupFourthOrder500Hz
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccsGGiKg.s:574    .text:00000460 $d
+                     .debug_frame:00000010 $d
+
+NO UNDEFINED SYMBOLS

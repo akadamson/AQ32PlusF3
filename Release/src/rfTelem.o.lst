@@ -1,0 +1,3222 @@
+   1              		.syntax unified
+   2              		.cpu cortex-m4
+   3              		.eabi_attribute 27, 3
+   4              		.fpu fpv4-sp-d16
+   5              		.eabi_attribute 20, 1
+   6              		.eabi_attribute 21, 1
+   7              		.eabi_attribute 23, 3
+   8              		.eabi_attribute 24, 1
+   9              		.eabi_attribute 25, 1
+  10              		.eabi_attribute 26, 1
+  11              		.eabi_attribute 30, 6
+  12              		.eabi_attribute 34, 1
+  13              		.eabi_attribute 18, 4
+  14              		.thumb
+  15              		.file	"rfTelem.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.comm	mtk19ProcessDataState,1,1
+  20              		.comm	nmeaProcessDataState,1,1
+  21              		.comm	ubloxProcessDataState,1,1
+  22              		.global	rfBusy
+  23              		.bss
+  26              	rfBusy:
+  27 0000 00       		.space	1
+  28              	rfQueryType:
+  29 0001 00       		.space	1
+  30              	validRFCommand:
+  31 0002 00       		.space	1
+  32              		.text
+  33              		.align	2
+  34              		.global	readFloatRF
+  35              		.thumb
+  36              		.thumb_func
+  38              	readFloatRF:
+  39              	.LFB111:
+  40              		.file 1 "../src/rfTelem.c"
+   1:../src/rfTelem.c **** /*
+   2:../src/rfTelem.c ****   October 2012
+   3:../src/rfTelem.c **** 
+   4:../src/rfTelem.c ****   aq32Plus Rev -
+   5:../src/rfTelem.c **** 
+   6:../src/rfTelem.c ****   Copyright (c) 2012 John Ihlein.  All rights reserved.
+   7:../src/rfTelem.c **** 
+   8:../src/rfTelem.c ****   Open Source STM32 Based Multicopter Controller Software
+   9:../src/rfTelem.c **** 
+  10:../src/rfTelem.c ****   Includes code and/or ideas from:
+  11:../src/rfTelem.c **** 
+  12:../src/rfTelem.c ****   1)AeroQuad
+  13:../src/rfTelem.c ****   2)BaseFlight
+  14:../src/rfTelem.c ****   3)CH Robotics
+  15:../src/rfTelem.c ****   4)MultiWii
+  16:../src/rfTelem.c ****   5)S.O.H. Madgwick
+  17:../src/rfTelem.c ****   6)UAVX
+  18:../src/rfTelem.c **** 
+  19:../src/rfTelem.c ****   Designed to run on the AQ32 Flight Control Board
+  20:../src/rfTelem.c **** 
+  21:../src/rfTelem.c ****   This program is free software: you can redistribute it and/or modify
+  22:../src/rfTelem.c ****   it under the terms of the GNU General Public License as published by
+  23:../src/rfTelem.c ****   the Free Software Foundation, either version 3 of the License, or
+  24:../src/rfTelem.c ****   (at your option) any later version.
+  25:../src/rfTelem.c **** 
+  26:../src/rfTelem.c ****   This program is distributed in the hope that it will be useful,
+  27:../src/rfTelem.c ****   but WITHOUT ANY WARRANTY; without even the implied warranty of
+  28:../src/rfTelem.c ****   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  29:../src/rfTelem.c ****   GNU General Public License for more details.
+  30:../src/rfTelem.c **** 
+  31:../src/rfTelem.c ****   You should have received a copy of the GNU General Public License
+  32:../src/rfTelem.c ****   along with this program. If not, see <http://www.gnu.org/licenses/>.
+  33:../src/rfTelem.c **** */
+  34:../src/rfTelem.c **** 
+  35:../src/rfTelem.c **** ///////////////////////////////////////////////////////////////////////////////
+  36:../src/rfTelem.c **** 
+  37:../src/rfTelem.c **** #include "board.h"
+  38:../src/rfTelem.c **** 
+  39:../src/rfTelem.c **** ///////////////////////////////////////////////////////////////////////////////
+  40:../src/rfTelem.c **** 
+  41:../src/rfTelem.c **** uint8_t rfBusy = false;
+  42:../src/rfTelem.c **** 
+  43:../src/rfTelem.c **** static volatile uint8_t rfQueryType;
+  44:../src/rfTelem.c **** static volatile uint8_t validRFCommand = false;
+  45:../src/rfTelem.c **** 
+  46:../src/rfTelem.c **** ///////////////////////////////////////////////////////////////////////////////
+  47:../src/rfTelem.c **** // Read Float from RF Comm
+  48:../src/rfTelem.c **** ///////////////////////////////////////////////////////////////////////////////
+  49:../src/rfTelem.c **** 
+  50:../src/rfTelem.c **** float readFloatRF(void)
+  51:../src/rfTelem.c **** {
+  41              		.loc 1 51 0
+  42              		.cfi_startproc
+  43              		@ args = 0, pretend = 0, frame = 16
+  44              		@ frame_needed = 0, uses_anonymous_args = 0
+  45 0000 10B5     		push	{r4, lr}
+  46              	.LCFI0:
+  47              		.cfi_def_cfa_offset 8
+  48              		.cfi_offset 14, -4
+  49              		.cfi_offset 4, -8
+  50 0002 84B0     		sub	sp, sp, #16
+  51              	.LCFI1:
+  52              		.cfi_def_cfa_offset 24
+  52:../src/rfTelem.c ****     uint8_t index    = 0;
+  53              		.loc 1 52 0
+  54 0004 4FF00003 		mov	r3, #0
+  55 0008 8DF80F30 		strb	r3, [sp, #15]
+  53:../src/rfTelem.c ****     uint8_t timeout  = 0;
+  56              		.loc 1 53 0
+  57 000c 4FF00003 		mov	r3, #0
+  58 0010 8DF80E30 		strb	r3, [sp, #14]
+  54:../src/rfTelem.c ****     char    data[13] = "";
+  59              		.loc 1 54 0
+  60 0014 4FF00003 		mov	r3, #0
+  61 0018 0093     		str	r3, [sp, #0]
+  62 001a 01AB     		add	r3, sp, #4
+  63 001c 4FF00002 		mov	r2, #0
+  64 0020 1A60     		str	r2, [r3, #0]
+  65 0022 03F10403 		add	r3, r3, #4
+  66 0026 4FF00002 		mov	r2, #0
+  67 002a 1A60     		str	r2, [r3, #0]
+  68 002c 03F10403 		add	r3, r3, #4
+  69 0030 4FF00002 		mov	r2, #0
+  70 0034 1A70     		strb	r2, [r3, #0]
+  71 0036 03F10103 		add	r3, r3, #1
+  72              	.L6:
+  55:../src/rfTelem.c **** 
+  56:../src/rfTelem.c ****     do
+  57:../src/rfTelem.c ****     {
+  58:../src/rfTelem.c ****         if (telemetryAvailable() == false)
+  73              		.loc 1 58 0
+  74 003a FFF7FEFF 		bl	telemetryAvailable
+  75 003e 0346     		mov	r3, r0
+  76 0040 002B     		cmp	r3, #0
+  77 0042 0AD1     		bne	.L2
+  59:../src/rfTelem.c ****         {
+  60:../src/rfTelem.c ****             delay(10);
+  78              		.loc 1 60 0
+  79 0044 4FF00A00 		mov	r0, #10
+  80 0048 FFF7FEFF 		bl	delay
+  61:../src/rfTelem.c ****             timeout++;
+  81              		.loc 1 61 0
+  82 004c 9DF80E30 		ldrb	r3, [sp, #14]
+  83 0050 03F10103 		add	r3, r3, #1
+  84 0054 8DF80E30 		strb	r3, [sp, #14]
+  85 0058 13E0     		b	.L3
+  86              	.L2:
+  62:../src/rfTelem.c ****         }
+  63:../src/rfTelem.c ****         else
+  64:../src/rfTelem.c ****         {
+  65:../src/rfTelem.c ****             data[index] = telemetryRead();
+  87              		.loc 1 65 0
+  88 005a 9DF80F40 		ldrb	r4, [sp, #15]	@ zero_extendqisi2
+  89 005e FFF7FEFF 		bl	telemetryRead
+  90 0062 0346     		mov	r3, r0
+  91 0064 1A46     		mov	r2, r3
+  92 0066 04A9     		add	r1, sp, #16
+  93 0068 0B19     		adds	r3, r1, r4
+  94 006a 03F8102C 		strb	r2, [r3, #-16]
+  66:../src/rfTelem.c ****             timeout = 0;
+  95              		.loc 1 66 0
+  96 006e 4FF00003 		mov	r3, #0
+  97 0072 8DF80E30 		strb	r3, [sp, #14]
+  67:../src/rfTelem.c ****             index++;
+  98              		.loc 1 67 0
+  99 0076 9DF80F30 		ldrb	r3, [sp, #15]
+ 100 007a 03F10103 		add	r3, r3, #1
+ 101 007e 8DF80F30 		strb	r3, [sp, #15]
+ 102              	.L3:
+  68:../src/rfTelem.c ****         }
+  69:../src/rfTelem.c ****     }
+  70:../src/rfTelem.c ****     while ((index == 0 || data[index-1] != ';') && (timeout < 5) && (index < sizeof(data)-1));
+ 103              		.loc 1 70 0
+ 104 0082 9DF80F30 		ldrb	r3, [sp, #15]	@ zero_extendqisi2
+ 105 0086 002B     		cmp	r3, #0
+ 106 0088 09D0     		beq	.L4
+ 107              		.loc 1 70 0 is_stmt 0 discriminator 2
+ 108 008a 9DF80F30 		ldrb	r3, [sp, #15]	@ zero_extendqisi2
+ 109 008e 03F1FF33 		add	r3, r3, #-1
+ 110 0092 04AA     		add	r2, sp, #16
+ 111 0094 D318     		adds	r3, r2, r3
+ 112 0096 13F8103C 		ldrb	r3, [r3, #-16]	@ zero_extendqisi2
+ 113 009a 3B2B     		cmp	r3, #59
+ 114 009c 07D0     		beq	.L5
+ 115              	.L4:
+ 116              		.loc 1 70 0 discriminator 1
+ 117 009e 9DF80E30 		ldrb	r3, [sp, #14]	@ zero_extendqisi2
+ 118 00a2 042B     		cmp	r3, #4
+ 119 00a4 03D8     		bhi	.L5
+ 120 00a6 9DF80F30 		ldrb	r3, [sp, #15]	@ zero_extendqisi2
+ 121 00aa 0B2B     		cmp	r3, #11
+ 122 00ac C5D9     		bls	.L6
+ 123              	.L5:
+  71:../src/rfTelem.c **** 
+  72:../src/rfTelem.c ****     data[index] = '\0';
+ 124              		.loc 1 72 0 is_stmt 1
+ 125 00ae 9DF80F30 		ldrb	r3, [sp, #15]	@ zero_extendqisi2
+ 126 00b2 04A9     		add	r1, sp, #16
+ 127 00b4 CB18     		adds	r3, r1, r3
+ 128 00b6 4FF00002 		mov	r2, #0
+ 129 00ba 03F8102C 		strb	r2, [r3, #-16]
+  73:../src/rfTelem.c **** 
+  74:../src/rfTelem.c ****     return stringToFloat(data);
+ 130              		.loc 1 74 0
+ 131 00be 6B46     		mov	r3, sp
+ 132 00c0 1846     		mov	r0, r3
+ 133 00c2 FFF7FEFF 		bl	stringToFloat
+ 134 00c6 0346     		mov	r3, r0	@ float
+  75:../src/rfTelem.c **** }
+ 135              		.loc 1 75 0
+ 136 00c8 1846     		mov	r0, r3	@ float
+ 137 00ca 04B0     		add	sp, sp, #16
+ 138 00cc 10BD     		pop	{r4, pc}
+ 139              		.cfi_endproc
+ 140              	.LFE111:
+ 142 00ce 00BF     		.align	2
+ 143              		.global	readRFPID
+ 144              		.thumb
+ 145              		.thumb_func
+ 147              	readRFPID:
+ 148              	.LFB112:
+  76:../src/rfTelem.c **** 
+  77:../src/rfTelem.c **** ///////////////////////////////////////////////////////////////////////////////
+  78:../src/rfTelem.c **** // Read PID Values from RF Comm
+  79:../src/rfTelem.c **** ///////////////////////////////////////////////////////////////////////////////
+  80:../src/rfTelem.c **** 
+  81:../src/rfTelem.c **** void readRFPID(unsigned char PIDid)
+  82:../src/rfTelem.c **** {
+ 149              		.loc 1 82 0
+ 150              		.cfi_startproc
+ 151              		@ args = 0, pretend = 0, frame = 16
+ 152              		@ frame_needed = 0, uses_anonymous_args = 0
+ 153 00d0 00B5     		push	{lr}
+ 154              	.LCFI2:
+ 155              		.cfi_def_cfa_offset 4
+ 156              		.cfi_offset 14, -4
+ 157 00d2 85B0     		sub	sp, sp, #20
+ 158              	.LCFI3:
+ 159              		.cfi_def_cfa_offset 24
+ 160 00d4 0346     		mov	r3, r0
+ 161 00d6 8DF80730 		strb	r3, [sp, #7]
+  83:../src/rfTelem.c ****   struct PIDdata* pid = &eepromConfig.PID[PIDid];
+ 162              		.loc 1 83 0
+ 163 00da 9DF80720 		ldrb	r2, [sp, #7]	@ zero_extendqisi2
+ 164 00de 1346     		mov	r3, r2
+ 165 00e0 4FEA8303 		lsl	r3, r3, #2
+ 166 00e4 9B18     		adds	r3, r3, r2
+ 167 00e6 4FEAC303 		lsl	r3, r3, #3
+ 168 00ea 1A46     		mov	r2, r3
+ 169 00ec 1A4B     		ldr	r3, .L8
+ 170 00ee D318     		adds	r3, r2, r3
+ 171 00f0 0393     		str	r3, [sp, #12]
+  84:../src/rfTelem.c **** 
+  85:../src/rfTelem.c ****   pid->B              = readFloatRF();
+ 172              		.loc 1 85 0
+ 173 00f2 FFF7FEFF 		bl	readFloatRF
+ 174 00f6 0246     		mov	r2, r0	@ float
+ 175 00f8 039B     		ldr	r3, [sp, #12]
+ 176 00fa 1A60     		str	r2, [r3, #0]	@ float
+  86:../src/rfTelem.c ****   pid->P              = readFloatRF();
+ 177              		.loc 1 86 0
+ 178 00fc FFF7FEFF 		bl	readFloatRF
+ 179 0100 0246     		mov	r2, r0	@ float
+ 180 0102 039B     		ldr	r3, [sp, #12]
+ 181 0104 5A60     		str	r2, [r3, #4]	@ float
+  87:../src/rfTelem.c ****   pid->I              = readFloatRF();
+ 182              		.loc 1 87 0
+ 183 0106 FFF7FEFF 		bl	readFloatRF
+ 184 010a 0246     		mov	r2, r0	@ float
+ 185 010c 039B     		ldr	r3, [sp, #12]
+ 186 010e 9A60     		str	r2, [r3, #8]	@ float
+  88:../src/rfTelem.c ****   pid->D              = readFloatRF();
+ 187              		.loc 1 88 0
+ 188 0110 FFF7FEFF 		bl	readFloatRF
+ 189 0114 0246     		mov	r2, r0	@ float
+ 190 0116 039B     		ldr	r3, [sp, #12]
+ 191 0118 DA60     		str	r2, [r3, #12]	@ float
+  89:../src/rfTelem.c ****   pid->windupGuard    = readFloatRF();
+ 192              		.loc 1 89 0
+ 193 011a FFF7FEFF 		bl	readFloatRF
+ 194 011e 0246     		mov	r2, r0	@ float
+ 195 0120 039B     		ldr	r3, [sp, #12]
+ 196 0122 5A61     		str	r2, [r3, #20]	@ float
+  90:../src/rfTelem.c ****   pid->iTerm          = 0.0f;
+ 197              		.loc 1 90 0
+ 198 0124 039B     		ldr	r3, [sp, #12]
+ 199 0126 0D4A     		ldr	r2, .L8+4	@ float
+ 200 0128 1A61     		str	r2, [r3, #16]	@ float
+  91:../src/rfTelem.c ****   pid->lastDcalcValue = 0.0f;
+ 201              		.loc 1 91 0
+ 202 012a 039B     		ldr	r3, [sp, #12]
+ 203 012c 0B4A     		ldr	r2, .L8+4	@ float
+ 204 012e 9A61     		str	r2, [r3, #24]	@ float
+  92:../src/rfTelem.c ****   pid->lastDterm      = 0.0f;
+ 205              		.loc 1 92 0
+ 206 0130 039B     		ldr	r3, [sp, #12]
+ 207 0132 0A4A     		ldr	r2, .L8+4	@ float
+ 208 0134 DA61     		str	r2, [r3, #28]	@ float
+  93:../src/rfTelem.c ****   pid->lastLastDterm  = 0.0f;
+ 209              		.loc 1 93 0
+ 210 0136 039B     		ldr	r3, [sp, #12]
+ 211 0138 084A     		ldr	r2, .L8+4	@ float
+ 212 013a 1A62     		str	r2, [r3, #32]	@ float
+  94:../src/rfTelem.c ****   pid->dErrorCalc     = (uint8_t)readFloatRF();
+ 213              		.loc 1 94 0
+ 214 013c FFF7FEFF 		bl	readFloatRF
+ 215 0140 07EE900A 		fmsr	s15, r0
+ 216 0144 FCEEE77A 		ftouizs	s15, s15
+ 217 0148 17EE903A 		fmrs	r3, s15	@ int
+ 218 014c DAB2     		uxtb	r2, r3
+ 219 014e 039B     		ldr	r3, [sp, #12]
+ 220 0150 83F82420 		strb	r2, [r3, #36]
+  95:../src/rfTelem.c **** }
+ 221              		.loc 1 95 0
+ 222 0154 05B0     		add	sp, sp, #20
+ 223 0156 00BD     		pop	{pc}
+ 224              	.L9:
+ 225              		.align	2
+ 226              	.L8:
+ 227 0158 98000000 		.word	eepromConfig+152
+ 228 015c 00000000 		.word	0
+ 229              		.cfi_endproc
+ 230              	.LFE112:
+ 232              		.section	.rodata
+ 233              		.align	2
+ 234              	.LC0:
+ 235 0000 0A00     		.ascii	"\012\000"
+ 236 0002 0000     		.align	2
+ 237              	.LC1:
+ 238 0004 526F6C6C 		.ascii	"Roll Rate PID:  \000"
+ 238      20526174 
+ 238      65205049 
+ 238      443A2020 
+ 238      00
+ 239              		.global	__aeabi_f2d
+ 240 0015 000000   		.align	2
+ 241              	.LC2:
+ 242 0018 25382E34 		.ascii	"%8.4f, \000"
+ 242      662C2000 
+ 243              		.align	2
+ 244              	.LC3:
+ 245 0020 4572726F 		.ascii	"Error\012\000"
+ 245      720A00
+ 246 0027 00       		.align	2
+ 247              	.LC4:
+ 248 0028 53746174 		.ascii	"State\012\000"
+ 248      650A00
+ 249 002f 00       		.align	2
+ 250              	.LC5:
+ 251 0030 50697463 		.ascii	"Pitch Rate PID: \000"
+ 251      68205261 
+ 251      74652050 
+ 251      49443A20 
+ 251      00
+ 252 0041 000000   		.align	2
+ 253              	.LC6:
+ 254 0044 59617720 		.ascii	"Yaw Rate PID:   \000"
+ 254      52617465 
+ 254      20504944 
+ 254      3A202020 
+ 254      00
+ 255 0055 000000   		.align	2
+ 256              	.LC7:
+ 257 0058 526F6C6C 		.ascii	"Roll Attitude PID:  \000"
+ 257      20417474 
+ 257      69747564 
+ 257      65205049 
+ 257      443A2020 
+ 258 006d 000000   		.align	2
+ 259              	.LC8:
+ 260 0070 50697463 		.ascii	"Pitch Attitude PID: \000"
+ 260      68204174 
+ 260      74697475 
+ 260      64652050 
+ 260      49443A20 
+ 261 0085 000000   		.align	2
+ 262              	.LC9:
+ 263 0088 48656164 		.ascii	"Heading PID:        \000"
+ 263      696E6720 
+ 263      5049443A 
+ 263      20202020 
+ 263      20202020 
+ 264 009d 000000   		.align	2
+ 265              	.LC10:
+ 266 00a0 6E446F74 		.ascii	"nDot PID:  \000"
+ 266      20504944 
+ 266      3A202000 
+ 267              		.align	2
+ 268              	.LC11:
+ 269 00ac 65446F74 		.ascii	"eDot PID:  \000"
+ 269      20504944 
+ 269      3A202000 
+ 270              		.align	2
+ 271              	.LC12:
+ 272 00b8 68446F74 		.ascii	"hDot PID:  \000"
+ 272      20504944 
+ 272      3A202000 
+ 273              		.align	2
+ 274              	.LC13:
+ 275 00c4 6E205049 		.ascii	"n PID:  \000"
+ 275      443A2020 
+ 275      00
+ 276 00cd 000000   		.align	2
+ 277              	.LC14:
+ 278 00d0 65205049 		.ascii	"e PID:  \000"
+ 278      443A2020 
+ 278      00
+ 279 00d9 000000   		.align	2
+ 280              	.LC15:
+ 281 00dc 68205049 		.ascii	"h PID:  \000"
+ 281      443A2020 
+ 281      00
+ 282 00e5 000000   		.align	2
+ 283              	.LC16:
+ 284 00e8 0A526F6C 		.ascii	"\012Roll Rate PID Received....\012\000"
+ 284      6C205261 
+ 284      74652050 
+ 284      49442052 
+ 284      65636569 
+ 285 0105 000000   		.align	2
+ 286              	.LC17:
+ 287 0108 0A506974 		.ascii	"\012Pitch Rate PID Received....\012\000"
+ 287      63682052 
+ 287      61746520 
+ 287      50494420 
+ 287      52656365 
+ 288 0126 0000     		.align	2
+ 289              	.LC18:
+ 290 0128 0A596177 		.ascii	"\012Yaw Rate PID Received....\012\000"
+ 290      20526174 
+ 290      65205049 
+ 290      44205265 
+ 290      63656976 
+ 291              		.align	2
+ 292              	.LC19:
+ 293 0144 0A526F6C 		.ascii	"\012Roll Attitude PID Received....\012\000"
+ 293      6C204174 
+ 293      74697475 
+ 293      64652050 
+ 293      49442052 
+ 294 0165 000000   		.align	2
+ 295              	.LC20:
+ 296 0168 0A506974 		.ascii	"\012Pitch Attitude PID Received....\012\000"
+ 296      63682041 
+ 296      74746974 
+ 296      75646520 
+ 296      50494420 
+ 297 018a 0000     		.align	2
+ 298              	.LC21:
+ 299 018c 0A486561 		.ascii	"\012Heading PID Received....\012\000"
+ 299      64696E67 
+ 299      20504944 
+ 299      20526563 
+ 299      65697665 
+ 300 01a7 00       		.align	2
+ 301              	.LC22:
+ 302 01a8 0A6E446F 		.ascii	"\012nDot PID Received....\012\000"
+ 302      74205049 
+ 302      44205265 
+ 302      63656976 
+ 302      65642E2E 
+ 303              		.align	2
+ 304              	.LC23:
+ 305 01c0 0A65446F 		.ascii	"\012eDot PID Received....\012\000"
+ 305      74205049 
+ 305      44205265 
+ 305      63656976 
+ 305      65642E2E 
+ 306              		.align	2
+ 307              	.LC24:
+ 308 01d8 0A68446F 		.ascii	"\012hDot PID Received....\012\000"
+ 308      74205049 
+ 308      44205265 
+ 308      63656976 
+ 308      65642E2E 
+ 309              		.align	2
+ 310              	.LC25:
+ 311 01f0 0A6E2050 		.ascii	"\012n PID Received....\012\000"
+ 311      49442052 
+ 311      65636569 
+ 311      7665642E 
+ 311      2E2E2E0A 
+ 312 0205 000000   		.align	2
+ 313              	.LC26:
+ 314 0208 0A652050 		.ascii	"\012e PID Received....\012\000"
+ 314      49442052 
+ 314      65636569 
+ 314      7665642E 
+ 314      2E2E2E0A 
+ 315 021d 000000   		.align	2
+ 316              	.LC27:
+ 317 0220 0A682050 		.ascii	"\012h PID Received....\012\000"
+ 317      49442052 
+ 317      65636569 
+ 317      7665642E 
+ 317      2E2E2E0A 
+ 318 0235 000000   		.align	2
+ 319              	.LC28:
+ 320 0238 0A577269 		.ascii	"\012Writing EEPROM Parameters....\012\000"
+ 320      74696E67 
+ 320      20454550 
+ 320      524F4D20 
+ 320      50617261 
+ 321              		.align	2
+ 322              	.LC29:
+ 323 0258 27612720 		.ascii	"'a' Rate PIDs                              'A' Set "
+ 323      52617465 
+ 323      20504944 
+ 323      73202020 
+ 323      20202020 
+ 324 028b 526F6C6C 		.ascii	"Roll Rate PID Data   AB;P;I;D;windupGuard;dErrorCal"
+ 324      20526174 
+ 324      65205049 
+ 324      44204461 
+ 324      74612020 
+ 325 02be 630A00   		.ascii	"c\012\000"
+ 326 02c1 000000   		.align	2
+ 327              	.LC30:
+ 328 02c4 27622720 		.ascii	"'b' Attitude PIDs                          'B' Set "
+ 328      41747469 
+ 328      74756465 
+ 328      20504944 
+ 328      73202020 
+ 329 02f7 50697463 		.ascii	"Pitch Rate PID Data  BB;P;I;D;windupGuard;dErrorCal"
+ 329      68205261 
+ 329      74652050 
+ 329      49442044 
+ 329      61746120 
+ 330 032a 630A00   		.ascii	"c\012\000"
+ 331 032d 000000   		.align	2
+ 332              	.LC31:
+ 333 0330 27632720 		.ascii	"'c' Velocity PIDs                          'C' Set "
+ 333      56656C6F 
+ 333      63697479 
+ 333      20504944 
+ 333      73202020 
+ 334 0363 59617720 		.ascii	"Yaw Rate PID Data    CB;P;I;D;windupGuard;dErrorCal"
+ 334      52617465 
+ 334      20504944 
+ 334      20446174 
+ 334      61202020 
+ 335 0396 630A00   		.ascii	"c\012\000"
+ 336 0399 000000   		.align	2
+ 337              	.LC32:
+ 338 039c 27642720 		.ascii	"'d' Position PIDs                          'D' Set "
+ 338      506F7369 
+ 338      74696F6E 
+ 338      20504944 
+ 338      73202020 
+ 339 03cf 526F6C6C 		.ascii	"Roll Att PID Data    DB;P;I;D;windupGuard;dErrorCal"
+ 339      20417474 
+ 339      20504944 
+ 339      20446174 
+ 339      61202020 
+ 340 0402 630A00   		.ascii	"c\012\000"
+ 341 0405 000000   		.align	2
+ 342              	.LC33:
+ 343 0408 27782720 		.ascii	"'x' Terminate Serial Communication         'E' Set "
+ 343      5465726D 
+ 343      696E6174 
+ 343      65205365 
+ 343      7269616C 
+ 344 043b 50697463 		.ascii	"Pitch Att PID Data   EB;P;I;D;windupGuard;dErrorCal"
+ 344      68204174 
+ 344      74205049 
+ 344      44204461 
+ 344      74612020 
+ 345 046e 630A00   		.ascii	"c\012\000"
+ 346 0471 000000   		.align	2
+ 347              	.LC34:
+ 348 0474 27312720 		.ascii	"'1' High Speed Telemetry 1 Enable          'F' Set "
+ 348      48696768 
+ 348      20537065 
+ 348      65642054 
+ 348      656C656D 
+ 349 04a7 48646720 		.ascii	"Hdg Hold PID Data    FB;P;I;D;windupGuard;dErrorCal"
+ 349      486F6C64 
+ 349      20504944 
+ 349      20446174 
+ 349      61202020 
+ 350 04da 630A00   		.ascii	"c\012\000"
+ 351 04dd 000000   		.align	2
+ 352              	.LC35:
+ 353 04e0 27322720 		.ascii	"'2' High Speed Telemetry 2 Enable          'G' Set "
+ 353      48696768 
+ 353      20537065 
+ 353      65642054 
+ 353      656C656D 
+ 354 0513 6E446F74 		.ascii	"nDot PID Data        GB;P;I;D;windupGuard;dErrorCal"
+ 354      20504944 
+ 354      20446174 
+ 354      61202020 
+ 354      20202020 
+ 355 0546 630A00   		.ascii	"c\012\000"
+ 356 0549 000000   		.align	2
+ 357              	.LC36:
+ 358 054c 27332720 		.ascii	"'3' High Speed Telemetry 3 Enable          'H' Set "
+ 358      48696768 
+ 358      20537065 
+ 358      65642054 
+ 358      656C656D 
+ 359 057f 65446F74 		.ascii	"eDot PID Data        HB;P;I;D;windupGuard;dErrorCal"
+ 359      20504944 
+ 359      20446174 
+ 359      61202020 
+ 359      20202020 
+ 360 05b2 630A00   		.ascii	"c\012\000"
+ 361 05b5 000000   		.align	2
+ 362              	.LC37:
+ 363 05b8 27342720 		.ascii	"'4' High Speed Telemetry 4 Enable          'I' Set "
+ 363      48696768 
+ 363      20537065 
+ 363      65642054 
+ 363      656C656D 
+ 364 05eb 68446F74 		.ascii	"hDot PID Data        IB;P;I;D;windupGuard;dErrorCal"
+ 364      20504944 
+ 364      20446174 
+ 364      61202020 
+ 364      20202020 
+ 365 061e 630A00   		.ascii	"c\012\000"
+ 366 0621 000000   		.align	2
+ 367              	.LC38:
+ 368 0624 27352720 		.ascii	"'5' High Speed Telemetry 5 Enable          'J' Set "
+ 368      48696768 
+ 368      20537065 
+ 368      65642054 
+ 368      656C656D 
+ 369 0657 6E205049 		.ascii	"n PID Data           JB;P;I;D;windupGuard;dErrorCal"
+ 369      44204461 
+ 369      74612020 
+ 369      20202020 
+ 369      20202020 
+ 370 068a 630A00   		.ascii	"c\012\000"
+ 371 068d 000000   		.align	2
+ 372              	.LC39:
+ 373 0690 27362720 		.ascii	"'6' High Speed Telemetry 6 Enable          'K' Set "
+ 373      48696768 
+ 373      20537065 
+ 373      65642054 
+ 373      656C656D 
+ 374 06c3 65205049 		.ascii	"e PID Data           KB;P;I;D;windupGuard;dErrorCal"
+ 374      44204461 
+ 374      74612020 
+ 374      20202020 
+ 374      20202020 
+ 375 06f6 630A00   		.ascii	"c\012\000"
+ 376 06f9 000000   		.align	2
+ 377              	.LC40:
+ 378 06fc 27372720 		.ascii	"'7' High Speed Telemetry 7 Enable          'L' Set "
+ 378      48696768 
+ 378      20537065 
+ 378      65642054 
+ 378      656C656D 
+ 379 072f 68205049 		.ascii	"h PID Data           LB;P;I;D;windupGuard;dErrorCal"
+ 379      44204461 
+ 379      74612020 
+ 379      20202020 
+ 379      20202020 
+ 380 0762 630A00   		.ascii	"c\012\000"
+ 381 0765 000000   		.align	2
+ 382              	.LC41:
+ 383 0768 27382720 		.ascii	"'8' High Speed Telemetry 8 Enable          'W' Writ"
+ 383      48696768 
+ 383      20537065 
+ 383      65642054 
+ 383      656C656D 
+ 384 079b 65204545 		.ascii	"e EEPROM Parameters\012\000"
+ 384      50524F4D 
+ 384      20506172 
+ 384      616D6574 
+ 384      6572730A 
+ 385              		.align	2
+ 386              	.LC42:
+ 387 07b0 27392720 		.ascii	"'9' High Speed Telemetry 9 Enable\012\000"
+ 387      48696768 
+ 387      20537065 
+ 387      65642054 
+ 387      656C656D 
+ 388 07d3 00       		.align	2
+ 389              	.LC43:
+ 390 07d4 27302720 		.ascii	"'0' High Speed Telemetry Disable           '?' Comm"
+ 390      48696768 
+ 390      20537065 
+ 390      65642054 
+ 390      656C656D 
+ 391 0807 616E6420 		.ascii	"and Summary\012\000"
+ 391      53756D6D 
+ 391      6172790A 
+ 391      00
+ 392              		.text
+ 393              		.align	2
+ 394              		.global	rfCom
+ 395              		.thumb
+ 396              		.thumb_func
+ 398              	rfCom:
+ 399              	.LFB113:
+  96:../src/rfTelem.c **** 
+  97:../src/rfTelem.c **** ///////////////////////////////////////////////////////////////////////////////
+  98:../src/rfTelem.c **** // RF Telem Communication
+  99:../src/rfTelem.c **** ///////////////////////////////////////////////////////////////////////////////
+ 100:../src/rfTelem.c **** 
+ 101:../src/rfTelem.c **** void rfCom(void)
+ 102:../src/rfTelem.c **** {
+ 400              		.loc 1 102 0
+ 401              		.cfi_startproc
+ 402              		@ args = 0, pretend = 0, frame = 0
+ 403              		@ frame_needed = 0, uses_anonymous_args = 0
+ 404 0160 00B5     		push	{lr}
+ 405              	.LCFI4:
+ 406              		.cfi_def_cfa_offset 4
+ 407              		.cfi_offset 14, -4
+ 408 0162 83B0     		sub	sp, sp, #12
+ 409              	.LCFI5:
+ 410              		.cfi_def_cfa_offset 16
+ 103:../src/rfTelem.c ****     if (telemetryAvailable() && !validRFCommand)
+ 411              		.loc 1 103 0
+ 412 0164 FFF7FEFF 		bl	telemetryAvailable
+ 413 0168 0346     		mov	r3, r0
+ 414 016a 002B     		cmp	r3, #0
+ 415 016c 10D0     		beq	.L11
+ 416              		.loc 1 103 0 is_stmt 0 discriminator 1
+ 417 016e 40F20003 		movw	r3, #:lower16:validRFCommand
+ 418 0172 C0F20003 		movt	r3, #:upper16:validRFCommand
+ 419 0176 1B78     		ldrb	r3, [r3, #0]
+ 420 0178 DBB2     		uxtb	r3, r3
+ 421 017a 002B     		cmp	r3, #0
+ 422 017c 08D1     		bne	.L11
+ 104:../src/rfTelem.c ****     	rfQueryType = telemetryRead();
+ 423              		.loc 1 104 0 is_stmt 1
+ 424 017e FFF7FEFF 		bl	telemetryRead
+ 425 0182 0346     		mov	r3, r0
+ 426 0184 1A46     		mov	r2, r3
+ 427 0186 40F20003 		movw	r3, #:lower16:rfQueryType
+ 428 018a C0F20003 		movt	r3, #:upper16:rfQueryType
+ 429 018e 1A70     		strb	r2, [r3, #0]
+ 430              	.L11:
+ 105:../src/rfTelem.c **** 
+ 106:../src/rfTelem.c ****     switch (rfQueryType)
+ 431              		.loc 1 106 0
+ 432 0190 40F20003 		movw	r3, #:lower16:rfQueryType
+ 433 0194 C0F20003 		movt	r3, #:upper16:rfQueryType
+ 434 0198 1B78     		ldrb	r3, [r3, #0]
+ 435 019a DBB2     		uxtb	r3, r3
+ 436 019c A3F13003 		sub	r3, r3, #48
+ 437 01a0 482B     		cmp	r3, #72
+ 438 01a2 01F2C183 		bhi	.L10
+ 439 01a6 01A2     		adr	r2, .L42
+ 440 01a8 52F823F0 		ldr	pc, [r2, r3, lsl #2]
+ 441              		.align	2
+ 442              	.L42:
+ 443 01ac C1150000 		.word	.L13+1
+ 444 01b0 8F140000 		.word	.L14+1
+ 445 01b4 B1140000 		.word	.L15+1
+ 446 01b8 D3140000 		.word	.L16+1
+ 447 01bc F5140000 		.word	.L17+1
+ 448 01c0 17150000 		.word	.L18+1
+ 449 01c4 39150000 		.word	.L19+1
+ 450 01c8 5B150000 		.word	.L20+1
+ 451 01cc 7D150000 		.word	.L21+1
+ 452 01d0 9F150000 		.word	.L22+1
+ 453 01d4 29190000 		.word	.L10+1
+ 454 01d8 29190000 		.word	.L10+1
+ 455 01dc 29190000 		.word	.L10+1
+ 456 01e0 29190000 		.word	.L10+1
+ 457 01e4 29190000 		.word	.L10+1
+ 458 01e8 4D180000 		.word	.L23+1
+ 459 01ec 29190000 		.word	.L10+1
+ 460 01f0 D5150000 		.word	.L24+1
+ 461 01f4 07160000 		.word	.L25+1
+ 462 01f8 39160000 		.word	.L26+1
+ 463 01fc 6B160000 		.word	.L27+1
+ 464 0200 9D160000 		.word	.L28+1
+ 465 0204 CF160000 		.word	.L29+1
+ 466 0208 01170000 		.word	.L30+1
+ 467 020c 33170000 		.word	.L31+1
+ 468 0210 65170000 		.word	.L32+1
+ 469 0214 97170000 		.word	.L33+1
+ 470 0218 C9170000 		.word	.L34+1
+ 471 021c FB170000 		.word	.L35+1
+ 472 0220 29190000 		.word	.L10+1
+ 473 0224 29190000 		.word	.L10+1
+ 474 0228 29190000 		.word	.L10+1
+ 475 022c 29190000 		.word	.L10+1
+ 476 0230 29190000 		.word	.L10+1
+ 477 0234 29190000 		.word	.L10+1
+ 478 0238 29190000 		.word	.L10+1
+ 479 023c 29190000 		.word	.L10+1
+ 480 0240 29190000 		.word	.L10+1
+ 481 0244 29190000 		.word	.L10+1
+ 482 0248 2D180000 		.word	.L36+1
+ 483 024c 29190000 		.word	.L10+1
+ 484 0250 29190000 		.word	.L10+1
+ 485 0254 29190000 		.word	.L10+1
+ 486 0258 29190000 		.word	.L10+1
+ 487 025c 29190000 		.word	.L10+1
+ 488 0260 29190000 		.word	.L10+1
+ 489 0264 29190000 		.word	.L10+1
+ 490 0268 29190000 		.word	.L10+1
+ 491 026c 29190000 		.word	.L10+1
+ 492 0270 D1020000 		.word	.L37+1
+ 493 0274 41070000 		.word	.L38+1
+ 494 0278 B10B0000 		.word	.L39+1
+ 495 027c 21100000 		.word	.L40+1
+ 496 0280 29190000 		.word	.L10+1
+ 497 0284 29190000 		.word	.L10+1
+ 498 0288 29190000 		.word	.L10+1
+ 499 028c 29190000 		.word	.L10+1
+ 500 0290 29190000 		.word	.L10+1
+ 501 0294 29190000 		.word	.L10+1
+ 502 0298 29190000 		.word	.L10+1
+ 503 029c 29190000 		.word	.L10+1
+ 504 02a0 29190000 		.word	.L10+1
+ 505 02a4 29190000 		.word	.L10+1
+ 506 02a8 29190000 		.word	.L10+1
+ 507 02ac 29190000 		.word	.L10+1
+ 508 02b0 29190000 		.word	.L10+1
+ 509 02b4 29190000 		.word	.L10+1
+ 510 02b8 29190000 		.word	.L10+1
+ 511 02bc 29190000 		.word	.L10+1
+ 512 02c0 29190000 		.word	.L10+1
+ 513 02c4 29190000 		.word	.L10+1
+ 514 02c8 29190000 		.word	.L10+1
+ 515 02cc 29190000 		.word	.L10+1
+ 516              	.L37:
+ 107:../src/rfTelem.c ****     {
+ 108:../src/rfTelem.c ****         ///////////////////////////////
+ 109:../src/rfTelem.c **** 
+ 110:../src/rfTelem.c ****     case 'a': // Rate PIDs
+ 111:../src/rfTelem.c ****         telemetryPrint("\n");
+ 517              		.loc 1 111 0
+ 518 02d0 40F20000 		movw	r0, #:lower16:.LC0
+ 519 02d4 C0F20000 		movt	r0, #:upper16:.LC0
+ 520 02d8 FFF7FEFF 		bl	telemetryPrint
+ 112:../src/rfTelem.c **** 
+ 113:../src/rfTelem.c ****         telemetryPrint("Roll Rate PID:  ");
+ 521              		.loc 1 113 0
+ 522 02dc 40F20000 		movw	r0, #:lower16:.LC1
+ 523 02e0 C0F20000 		movt	r0, #:upper16:.LC1
+ 524 02e4 FFF7FEFF 		bl	telemetryPrint
+ 114:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[ROLL_RATE_PID].B);           telemet
+ 525              		.loc 1 114 0
+ 526 02e8 40F20003 		movw	r3, #:lower16:eepromConfig
+ 527 02ec C0F20003 		movt	r3, #:upper16:eepromConfig
+ 528 02f0 D3F89830 		ldr	r3, [r3, #152]	@ float
+ 529 02f4 1846     		mov	r0, r3	@ float
+ 530 02f6 FFF7FEFF 		bl	__aeabi_f2d
+ 531 02fa 0246     		mov	r2, r0
+ 532 02fc 0B46     		mov	r3, r1
+ 533 02fe CDE90023 		strd	r2, [sp]
+ 534 0302 40F20000 		movw	r0, #:lower16:numberString
+ 535 0306 C0F20000 		movt	r0, #:upper16:numberString
+ 536 030a 4FF01001 		mov	r1, #16
+ 537 030e 40F20002 		movw	r2, #:lower16:.LC2
+ 538 0312 C0F20002 		movt	r2, #:upper16:.LC2
+ 539 0316 FFF7FEFF 		bl	snprintf
+ 540 031a 40F20000 		movw	r0, #:lower16:numberString
+ 541 031e C0F20000 		movt	r0, #:upper16:numberString
+ 542 0322 FFF7FEFF 		bl	telemetryPrint
+ 115:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[ROLL_RATE_PID].P);           telemet
+ 543              		.loc 1 115 0
+ 544 0326 40F20003 		movw	r3, #:lower16:eepromConfig
+ 545 032a C0F20003 		movt	r3, #:upper16:eepromConfig
+ 546 032e D3F89C30 		ldr	r3, [r3, #156]	@ float
+ 547 0332 1846     		mov	r0, r3	@ float
+ 548 0334 FFF7FEFF 		bl	__aeabi_f2d
+ 549 0338 0246     		mov	r2, r0
+ 550 033a 0B46     		mov	r3, r1
+ 551 033c CDE90023 		strd	r2, [sp]
+ 552 0340 40F20000 		movw	r0, #:lower16:numberString
+ 553 0344 C0F20000 		movt	r0, #:upper16:numberString
+ 554 0348 4FF01001 		mov	r1, #16
+ 555 034c 40F20002 		movw	r2, #:lower16:.LC2
+ 556 0350 C0F20002 		movt	r2, #:upper16:.LC2
+ 557 0354 FFF7FEFF 		bl	snprintf
+ 558 0358 40F20000 		movw	r0, #:lower16:numberString
+ 559 035c C0F20000 		movt	r0, #:upper16:numberString
+ 560 0360 FFF7FEFF 		bl	telemetryPrint
+ 116:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[ROLL_RATE_PID].I);           telemet
+ 561              		.loc 1 116 0
+ 562 0364 40F20003 		movw	r3, #:lower16:eepromConfig
+ 563 0368 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 564 036c D3F8A030 		ldr	r3, [r3, #160]	@ float
+ 565 0370 1846     		mov	r0, r3	@ float
+ 566 0372 FFF7FEFF 		bl	__aeabi_f2d
+ 567 0376 0246     		mov	r2, r0
+ 568 0378 0B46     		mov	r3, r1
+ 569 037a CDE90023 		strd	r2, [sp]
+ 570 037e 40F20000 		movw	r0, #:lower16:numberString
+ 571 0382 C0F20000 		movt	r0, #:upper16:numberString
+ 572 0386 4FF01001 		mov	r1, #16
+ 573 038a 40F20002 		movw	r2, #:lower16:.LC2
+ 574 038e C0F20002 		movt	r2, #:upper16:.LC2
+ 575 0392 FFF7FEFF 		bl	snprintf
+ 576 0396 40F20000 		movw	r0, #:lower16:numberString
+ 577 039a C0F20000 		movt	r0, #:upper16:numberString
+ 578 039e FFF7FEFF 		bl	telemetryPrint
+ 117:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[ROLL_RATE_PID].D);           telemet
+ 579              		.loc 1 117 0
+ 580 03a2 40F20003 		movw	r3, #:lower16:eepromConfig
+ 581 03a6 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 582 03aa D3F8A430 		ldr	r3, [r3, #164]	@ float
+ 583 03ae 1846     		mov	r0, r3	@ float
+ 584 03b0 FFF7FEFF 		bl	__aeabi_f2d
+ 585 03b4 0246     		mov	r2, r0
+ 586 03b6 0B46     		mov	r3, r1
+ 587 03b8 CDE90023 		strd	r2, [sp]
+ 588 03bc 40F20000 		movw	r0, #:lower16:numberString
+ 589 03c0 C0F20000 		movt	r0, #:upper16:numberString
+ 590 03c4 4FF01001 		mov	r1, #16
+ 591 03c8 40F20002 		movw	r2, #:lower16:.LC2
+ 592 03cc C0F20002 		movt	r2, #:upper16:.LC2
+ 593 03d0 FFF7FEFF 		bl	snprintf
+ 594 03d4 40F20000 		movw	r0, #:lower16:numberString
+ 595 03d8 C0F20000 		movt	r0, #:upper16:numberString
+ 596 03dc FFF7FEFF 		bl	telemetryPrint
+ 118:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[ROLL_RATE_PID].windupGuard); telemet
+ 597              		.loc 1 118 0
+ 598 03e0 40F20003 		movw	r3, #:lower16:eepromConfig
+ 599 03e4 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 600 03e8 D3F8AC30 		ldr	r3, [r3, #172]	@ float
+ 601 03ec 1846     		mov	r0, r3	@ float
+ 602 03ee FFF7FEFF 		bl	__aeabi_f2d
+ 603 03f2 0246     		mov	r2, r0
+ 604 03f4 0B46     		mov	r3, r1
+ 605 03f6 CDE90023 		strd	r2, [sp]
+ 606 03fa 40F20000 		movw	r0, #:lower16:numberString
+ 607 03fe C0F20000 		movt	r0, #:upper16:numberString
+ 608 0402 4FF01001 		mov	r1, #16
+ 609 0406 40F20002 		movw	r2, #:lower16:.LC2
+ 610 040a C0F20002 		movt	r2, #:upper16:.LC2
+ 611 040e FFF7FEFF 		bl	snprintf
+ 612 0412 40F20000 		movw	r0, #:lower16:numberString
+ 613 0416 C0F20000 		movt	r0, #:upper16:numberString
+ 614 041a FFF7FEFF 		bl	telemetryPrint
+ 119:../src/rfTelem.c ****         if  (eepromConfig.PID[ROLL_RATE_PID].dErrorCalc)
+ 615              		.loc 1 119 0
+ 616 041e 40F20003 		movw	r3, #:lower16:eepromConfig
+ 617 0422 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 618 0426 93F8BC30 		ldrb	r3, [r3, #188]	@ zero_extendqisi2
+ 619 042a 002B     		cmp	r3, #0
+ 620 042c 06D0     		beq	.L43
+ 120:../src/rfTelem.c ****             telemetryPrint("Error\n");
+ 621              		.loc 1 120 0
+ 622 042e 40F20000 		movw	r0, #:lower16:.LC3
+ 623 0432 C0F20000 		movt	r0, #:upper16:.LC3
+ 624 0436 FFF7FEFF 		bl	telemetryPrint
+ 625 043a 05E0     		b	.L44
+ 626              	.L43:
+ 121:../src/rfTelem.c ****         else
+ 122:../src/rfTelem.c ****             telemetryPrint("State\n");
+ 627              		.loc 1 122 0
+ 628 043c 40F20000 		movw	r0, #:lower16:.LC4
+ 629 0440 C0F20000 		movt	r0, #:upper16:.LC4
+ 630 0444 FFF7FEFF 		bl	telemetryPrint
+ 631              	.L44:
+ 123:../src/rfTelem.c **** 
+ 124:../src/rfTelem.c ****         telemetryPrint("Pitch Rate PID: ");
+ 632              		.loc 1 124 0
+ 633 0448 40F20000 		movw	r0, #:lower16:.LC5
+ 634 044c C0F20000 		movt	r0, #:upper16:.LC5
+ 635 0450 FFF7FEFF 		bl	telemetryPrint
+ 125:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[PITCH_RATE_PID].B);           teleme
+ 636              		.loc 1 125 0
+ 637 0454 40F20003 		movw	r3, #:lower16:eepromConfig
+ 638 0458 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 639 045c D3F8C030 		ldr	r3, [r3, #192]	@ float
+ 640 0460 1846     		mov	r0, r3	@ float
+ 641 0462 FFF7FEFF 		bl	__aeabi_f2d
+ 642 0466 0246     		mov	r2, r0
+ 643 0468 0B46     		mov	r3, r1
+ 644 046a CDE90023 		strd	r2, [sp]
+ 645 046e 40F20000 		movw	r0, #:lower16:numberString
+ 646 0472 C0F20000 		movt	r0, #:upper16:numberString
+ 647 0476 4FF01001 		mov	r1, #16
+ 648 047a 40F20002 		movw	r2, #:lower16:.LC2
+ 649 047e C0F20002 		movt	r2, #:upper16:.LC2
+ 650 0482 FFF7FEFF 		bl	snprintf
+ 651 0486 40F20000 		movw	r0, #:lower16:numberString
+ 652 048a C0F20000 		movt	r0, #:upper16:numberString
+ 653 048e FFF7FEFF 		bl	telemetryPrint
+ 126:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[PITCH_RATE_PID].P);           teleme
+ 654              		.loc 1 126 0
+ 655 0492 40F20003 		movw	r3, #:lower16:eepromConfig
+ 656 0496 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 657 049a D3F8C430 		ldr	r3, [r3, #196]	@ float
+ 658 049e 1846     		mov	r0, r3	@ float
+ 659 04a0 FFF7FEFF 		bl	__aeabi_f2d
+ 660 04a4 0246     		mov	r2, r0
+ 661 04a6 0B46     		mov	r3, r1
+ 662 04a8 CDE90023 		strd	r2, [sp]
+ 663 04ac 40F20000 		movw	r0, #:lower16:numberString
+ 664 04b0 C0F20000 		movt	r0, #:upper16:numberString
+ 665 04b4 4FF01001 		mov	r1, #16
+ 666 04b8 40F20002 		movw	r2, #:lower16:.LC2
+ 667 04bc C0F20002 		movt	r2, #:upper16:.LC2
+ 668 04c0 FFF7FEFF 		bl	snprintf
+ 669 04c4 40F20000 		movw	r0, #:lower16:numberString
+ 670 04c8 C0F20000 		movt	r0, #:upper16:numberString
+ 671 04cc FFF7FEFF 		bl	telemetryPrint
+ 127:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[PITCH_RATE_PID].I);           teleme
+ 672              		.loc 1 127 0
+ 673 04d0 40F20003 		movw	r3, #:lower16:eepromConfig
+ 674 04d4 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 675 04d8 D3F8C830 		ldr	r3, [r3, #200]	@ float
+ 676 04dc 1846     		mov	r0, r3	@ float
+ 677 04de FFF7FEFF 		bl	__aeabi_f2d
+ 678 04e2 0246     		mov	r2, r0
+ 679 04e4 0B46     		mov	r3, r1
+ 680 04e6 CDE90023 		strd	r2, [sp]
+ 681 04ea 40F20000 		movw	r0, #:lower16:numberString
+ 682 04ee C0F20000 		movt	r0, #:upper16:numberString
+ 683 04f2 4FF01001 		mov	r1, #16
+ 684 04f6 40F20002 		movw	r2, #:lower16:.LC2
+ 685 04fa C0F20002 		movt	r2, #:upper16:.LC2
+ 686 04fe FFF7FEFF 		bl	snprintf
+ 687 0502 40F20000 		movw	r0, #:lower16:numberString
+ 688 0506 C0F20000 		movt	r0, #:upper16:numberString
+ 689 050a FFF7FEFF 		bl	telemetryPrint
+ 128:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[PITCH_RATE_PID].D);           teleme
+ 690              		.loc 1 128 0
+ 691 050e 40F20003 		movw	r3, #:lower16:eepromConfig
+ 692 0512 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 693 0516 D3F8CC30 		ldr	r3, [r3, #204]	@ float
+ 694 051a 1846     		mov	r0, r3	@ float
+ 695 051c FFF7FEFF 		bl	__aeabi_f2d
+ 696 0520 0246     		mov	r2, r0
+ 697 0522 0B46     		mov	r3, r1
+ 698 0524 CDE90023 		strd	r2, [sp]
+ 699 0528 40F20000 		movw	r0, #:lower16:numberString
+ 700 052c C0F20000 		movt	r0, #:upper16:numberString
+ 701 0530 4FF01001 		mov	r1, #16
+ 702 0534 40F20002 		movw	r2, #:lower16:.LC2
+ 703 0538 C0F20002 		movt	r2, #:upper16:.LC2
+ 704 053c FFF7FEFF 		bl	snprintf
+ 705 0540 40F20000 		movw	r0, #:lower16:numberString
+ 706 0544 C0F20000 		movt	r0, #:upper16:numberString
+ 707 0548 FFF7FEFF 		bl	telemetryPrint
+ 129:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[PITCH_RATE_PID].windupGuard); teleme
+ 708              		.loc 1 129 0
+ 709 054c 40F20003 		movw	r3, #:lower16:eepromConfig
+ 710 0550 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 711 0554 D3F8D430 		ldr	r3, [r3, #212]	@ float
+ 712 0558 1846     		mov	r0, r3	@ float
+ 713 055a FFF7FEFF 		bl	__aeabi_f2d
+ 714 055e 0246     		mov	r2, r0
+ 715 0560 0B46     		mov	r3, r1
+ 716 0562 CDE90023 		strd	r2, [sp]
+ 717 0566 40F20000 		movw	r0, #:lower16:numberString
+ 718 056a C0F20000 		movt	r0, #:upper16:numberString
+ 719 056e 4FF01001 		mov	r1, #16
+ 720 0572 40F20002 		movw	r2, #:lower16:.LC2
+ 721 0576 C0F20002 		movt	r2, #:upper16:.LC2
+ 722 057a FFF7FEFF 		bl	snprintf
+ 723 057e 40F20000 		movw	r0, #:lower16:numberString
+ 724 0582 C0F20000 		movt	r0, #:upper16:numberString
+ 725 0586 FFF7FEFF 		bl	telemetryPrint
+ 130:../src/rfTelem.c ****         if  (eepromConfig.PID[PITCH_RATE_PID].dErrorCalc)
+ 726              		.loc 1 130 0
+ 727 058a 40F20003 		movw	r3, #:lower16:eepromConfig
+ 728 058e C0F20003 		movt	r3, #:upper16:eepromConfig
+ 729 0592 93F8E430 		ldrb	r3, [r3, #228]	@ zero_extendqisi2
+ 730 0596 002B     		cmp	r3, #0
+ 731 0598 06D0     		beq	.L45
+ 131:../src/rfTelem.c ****             telemetryPrint("Error\n");
+ 732              		.loc 1 131 0
+ 733 059a 40F20000 		movw	r0, #:lower16:.LC3
+ 734 059e C0F20000 		movt	r0, #:upper16:.LC3
+ 735 05a2 FFF7FEFF 		bl	telemetryPrint
+ 736 05a6 05E0     		b	.L46
+ 737              	.L45:
+ 132:../src/rfTelem.c ****         else
+ 133:../src/rfTelem.c ****             telemetryPrint("State\n");
+ 738              		.loc 1 133 0
+ 739 05a8 40F20000 		movw	r0, #:lower16:.LC4
+ 740 05ac C0F20000 		movt	r0, #:upper16:.LC4
+ 741 05b0 FFF7FEFF 		bl	telemetryPrint
+ 742              	.L46:
+ 134:../src/rfTelem.c **** 
+ 135:../src/rfTelem.c ****         telemetryPrint("Yaw Rate PID:   ");
+ 743              		.loc 1 135 0
+ 744 05b4 40F20000 		movw	r0, #:lower16:.LC6
+ 745 05b8 C0F20000 		movt	r0, #:upper16:.LC6
+ 746 05bc FFF7FEFF 		bl	telemetryPrint
+ 136:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[YAW_RATE_PID].B);           telemetr
+ 747              		.loc 1 136 0
+ 748 05c0 40F20003 		movw	r3, #:lower16:eepromConfig
+ 749 05c4 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 750 05c8 D3F8E830 		ldr	r3, [r3, #232]	@ float
+ 751 05cc 1846     		mov	r0, r3	@ float
+ 752 05ce FFF7FEFF 		bl	__aeabi_f2d
+ 753 05d2 0246     		mov	r2, r0
+ 754 05d4 0B46     		mov	r3, r1
+ 755 05d6 CDE90023 		strd	r2, [sp]
+ 756 05da 40F20000 		movw	r0, #:lower16:numberString
+ 757 05de C0F20000 		movt	r0, #:upper16:numberString
+ 758 05e2 4FF01001 		mov	r1, #16
+ 759 05e6 40F20002 		movw	r2, #:lower16:.LC2
+ 760 05ea C0F20002 		movt	r2, #:upper16:.LC2
+ 761 05ee FFF7FEFF 		bl	snprintf
+ 762 05f2 40F20000 		movw	r0, #:lower16:numberString
+ 763 05f6 C0F20000 		movt	r0, #:upper16:numberString
+ 764 05fa FFF7FEFF 		bl	telemetryPrint
+ 137:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[YAW_RATE_PID].P);           telemetr
+ 765              		.loc 1 137 0
+ 766 05fe 40F20003 		movw	r3, #:lower16:eepromConfig
+ 767 0602 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 768 0606 D3F8EC30 		ldr	r3, [r3, #236]	@ float
+ 769 060a 1846     		mov	r0, r3	@ float
+ 770 060c FFF7FEFF 		bl	__aeabi_f2d
+ 771 0610 0246     		mov	r2, r0
+ 772 0612 0B46     		mov	r3, r1
+ 773 0614 CDE90023 		strd	r2, [sp]
+ 774 0618 40F20000 		movw	r0, #:lower16:numberString
+ 775 061c C0F20000 		movt	r0, #:upper16:numberString
+ 776 0620 4FF01001 		mov	r1, #16
+ 777 0624 40F20002 		movw	r2, #:lower16:.LC2
+ 778 0628 C0F20002 		movt	r2, #:upper16:.LC2
+ 779 062c FFF7FEFF 		bl	snprintf
+ 780 0630 40F20000 		movw	r0, #:lower16:numberString
+ 781 0634 C0F20000 		movt	r0, #:upper16:numberString
+ 782 0638 FFF7FEFF 		bl	telemetryPrint
+ 138:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[YAW_RATE_PID].I);           telemetr
+ 783              		.loc 1 138 0
+ 784 063c 40F20003 		movw	r3, #:lower16:eepromConfig
+ 785 0640 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 786 0644 D3F8F030 		ldr	r3, [r3, #240]	@ float
+ 787 0648 1846     		mov	r0, r3	@ float
+ 788 064a FFF7FEFF 		bl	__aeabi_f2d
+ 789 064e 0246     		mov	r2, r0
+ 790 0650 0B46     		mov	r3, r1
+ 791 0652 CDE90023 		strd	r2, [sp]
+ 792 0656 40F20000 		movw	r0, #:lower16:numberString
+ 793 065a C0F20000 		movt	r0, #:upper16:numberString
+ 794 065e 4FF01001 		mov	r1, #16
+ 795 0662 40F20002 		movw	r2, #:lower16:.LC2
+ 796 0666 C0F20002 		movt	r2, #:upper16:.LC2
+ 797 066a FFF7FEFF 		bl	snprintf
+ 798 066e 40F20000 		movw	r0, #:lower16:numberString
+ 799 0672 C0F20000 		movt	r0, #:upper16:numberString
+ 800 0676 FFF7FEFF 		bl	telemetryPrint
+ 139:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[YAW_RATE_PID].D);           telemetr
+ 801              		.loc 1 139 0
+ 802 067a 40F20003 		movw	r3, #:lower16:eepromConfig
+ 803 067e C0F20003 		movt	r3, #:upper16:eepromConfig
+ 804 0682 D3F8F430 		ldr	r3, [r3, #244]	@ float
+ 805 0686 1846     		mov	r0, r3	@ float
+ 806 0688 FFF7FEFF 		bl	__aeabi_f2d
+ 807 068c 0246     		mov	r2, r0
+ 808 068e 0B46     		mov	r3, r1
+ 809 0690 CDE90023 		strd	r2, [sp]
+ 810 0694 40F20000 		movw	r0, #:lower16:numberString
+ 811 0698 C0F20000 		movt	r0, #:upper16:numberString
+ 812 069c 4FF01001 		mov	r1, #16
+ 813 06a0 40F20002 		movw	r2, #:lower16:.LC2
+ 814 06a4 C0F20002 		movt	r2, #:upper16:.LC2
+ 815 06a8 FFF7FEFF 		bl	snprintf
+ 816 06ac 40F20000 		movw	r0, #:lower16:numberString
+ 817 06b0 C0F20000 		movt	r0, #:upper16:numberString
+ 818 06b4 FFF7FEFF 		bl	telemetryPrint
+ 140:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[YAW_RATE_PID].windupGuard); telemetr
+ 819              		.loc 1 140 0
+ 820 06b8 40F20003 		movw	r3, #:lower16:eepromConfig
+ 821 06bc C0F20003 		movt	r3, #:upper16:eepromConfig
+ 822 06c0 D3F8FC30 		ldr	r3, [r3, #252]	@ float
+ 823 06c4 1846     		mov	r0, r3	@ float
+ 824 06c6 FFF7FEFF 		bl	__aeabi_f2d
+ 825 06ca 0246     		mov	r2, r0
+ 826 06cc 0B46     		mov	r3, r1
+ 827 06ce CDE90023 		strd	r2, [sp]
+ 828 06d2 40F20000 		movw	r0, #:lower16:numberString
+ 829 06d6 C0F20000 		movt	r0, #:upper16:numberString
+ 830 06da 4FF01001 		mov	r1, #16
+ 831 06de 40F20002 		movw	r2, #:lower16:.LC2
+ 832 06e2 C0F20002 		movt	r2, #:upper16:.LC2
+ 833 06e6 FFF7FEFF 		bl	snprintf
+ 834 06ea 40F20000 		movw	r0, #:lower16:numberString
+ 835 06ee C0F20000 		movt	r0, #:upper16:numberString
+ 836 06f2 FFF7FEFF 		bl	telemetryPrint
+ 141:../src/rfTelem.c ****         if  (eepromConfig.PID[YAW_RATE_PID].dErrorCalc)
+ 837              		.loc 1 141 0
+ 838 06f6 40F20003 		movw	r3, #:lower16:eepromConfig
+ 839 06fa C0F20003 		movt	r3, #:upper16:eepromConfig
+ 840 06fe 93F80C31 		ldrb	r3, [r3, #268]	@ zero_extendqisi2
+ 841 0702 002B     		cmp	r3, #0
+ 842 0704 06D0     		beq	.L47
+ 142:../src/rfTelem.c ****             telemetryPrint("Error\n");
+ 843              		.loc 1 142 0
+ 844 0706 40F20000 		movw	r0, #:lower16:.LC3
+ 845 070a C0F20000 		movt	r0, #:upper16:.LC3
+ 846 070e FFF7FEFF 		bl	telemetryPrint
+ 847 0712 05E0     		b	.L48
+ 848              	.L47:
+ 143:../src/rfTelem.c ****         else
+ 144:../src/rfTelem.c ****             telemetryPrint("State\n");
+ 849              		.loc 1 144 0
+ 850 0714 40F20000 		movw	r0, #:lower16:.LC4
+ 851 0718 C0F20000 		movt	r0, #:upper16:.LC4
+ 852 071c FFF7FEFF 		bl	telemetryPrint
+ 853              	.L48:
+ 145:../src/rfTelem.c **** 
+ 146:../src/rfTelem.c ****         rfQueryType = 'x';
+ 854              		.loc 1 146 0
+ 855 0720 40F20003 		movw	r3, #:lower16:rfQueryType
+ 856 0724 C0F20003 		movt	r3, #:upper16:rfQueryType
+ 857 0728 4FF07802 		mov	r2, #120
+ 858 072c 1A70     		strb	r2, [r3, #0]
+ 147:../src/rfTelem.c ****         validRFCommand = false;
+ 859              		.loc 1 147 0
+ 860 072e 40F20003 		movw	r3, #:lower16:validRFCommand
+ 861 0732 C0F20003 		movt	r3, #:upper16:validRFCommand
+ 862 0736 4FF00002 		mov	r2, #0
+ 863 073a 1A70     		strb	r2, [r3, #0]
+ 148:../src/rfTelem.c ****         break;
+ 864              		.loc 1 148 0
+ 865 073c 01F0F4B8 		b	.L10
+ 866              	.L38:
+ 149:../src/rfTelem.c **** 
+ 150:../src/rfTelem.c ****     ///////////////////////////////
+ 151:../src/rfTelem.c **** 
+ 152:../src/rfTelem.c ****     case 'b': // Attitude PIDs
+ 153:../src/rfTelem.c ****         telemetryPrint("\n");
+ 867              		.loc 1 153 0
+ 868 0740 40F20000 		movw	r0, #:lower16:.LC0
+ 869 0744 C0F20000 		movt	r0, #:upper16:.LC0
+ 870 0748 FFF7FEFF 		bl	telemetryPrint
+ 154:../src/rfTelem.c **** 
+ 155:../src/rfTelem.c ****         telemetryPrint("Roll Attitude PID:  ");
+ 871              		.loc 1 155 0
+ 872 074c 40F20000 		movw	r0, #:lower16:.LC7
+ 873 0750 C0F20000 		movt	r0, #:upper16:.LC7
+ 874 0754 FFF7FEFF 		bl	telemetryPrint
+ 156:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[ROLL_ATT_PID].B);           telemetr
+ 875              		.loc 1 156 0
+ 876 0758 40F20003 		movw	r3, #:lower16:eepromConfig
+ 877 075c C0F20003 		movt	r3, #:upper16:eepromConfig
+ 878 0760 D3F81031 		ldr	r3, [r3, #272]	@ float
+ 879 0764 1846     		mov	r0, r3	@ float
+ 880 0766 FFF7FEFF 		bl	__aeabi_f2d
+ 881 076a 0246     		mov	r2, r0
+ 882 076c 0B46     		mov	r3, r1
+ 883 076e CDE90023 		strd	r2, [sp]
+ 884 0772 40F20000 		movw	r0, #:lower16:numberString
+ 885 0776 C0F20000 		movt	r0, #:upper16:numberString
+ 886 077a 4FF01001 		mov	r1, #16
+ 887 077e 40F20002 		movw	r2, #:lower16:.LC2
+ 888 0782 C0F20002 		movt	r2, #:upper16:.LC2
+ 889 0786 FFF7FEFF 		bl	snprintf
+ 890 078a 40F20000 		movw	r0, #:lower16:numberString
+ 891 078e C0F20000 		movt	r0, #:upper16:numberString
+ 892 0792 FFF7FEFF 		bl	telemetryPrint
+ 157:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[ROLL_ATT_PID].P);           telemetr
+ 893              		.loc 1 157 0
+ 894 0796 40F20003 		movw	r3, #:lower16:eepromConfig
+ 895 079a C0F20003 		movt	r3, #:upper16:eepromConfig
+ 896 079e D3F81431 		ldr	r3, [r3, #276]	@ float
+ 897 07a2 1846     		mov	r0, r3	@ float
+ 898 07a4 FFF7FEFF 		bl	__aeabi_f2d
+ 899 07a8 0246     		mov	r2, r0
+ 900 07aa 0B46     		mov	r3, r1
+ 901 07ac CDE90023 		strd	r2, [sp]
+ 902 07b0 40F20000 		movw	r0, #:lower16:numberString
+ 903 07b4 C0F20000 		movt	r0, #:upper16:numberString
+ 904 07b8 4FF01001 		mov	r1, #16
+ 905 07bc 40F20002 		movw	r2, #:lower16:.LC2
+ 906 07c0 C0F20002 		movt	r2, #:upper16:.LC2
+ 907 07c4 FFF7FEFF 		bl	snprintf
+ 908 07c8 40F20000 		movw	r0, #:lower16:numberString
+ 909 07cc C0F20000 		movt	r0, #:upper16:numberString
+ 910 07d0 FFF7FEFF 		bl	telemetryPrint
+ 158:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[ROLL_ATT_PID].I);           telemetr
+ 911              		.loc 1 158 0
+ 912 07d4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 913 07d8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 914 07dc D3F81831 		ldr	r3, [r3, #280]	@ float
+ 915 07e0 1846     		mov	r0, r3	@ float
+ 916 07e2 FFF7FEFF 		bl	__aeabi_f2d
+ 917 07e6 0246     		mov	r2, r0
+ 918 07e8 0B46     		mov	r3, r1
+ 919 07ea CDE90023 		strd	r2, [sp]
+ 920 07ee 40F20000 		movw	r0, #:lower16:numberString
+ 921 07f2 C0F20000 		movt	r0, #:upper16:numberString
+ 922 07f6 4FF01001 		mov	r1, #16
+ 923 07fa 40F20002 		movw	r2, #:lower16:.LC2
+ 924 07fe C0F20002 		movt	r2, #:upper16:.LC2
+ 925 0802 FFF7FEFF 		bl	snprintf
+ 926 0806 40F20000 		movw	r0, #:lower16:numberString
+ 927 080a C0F20000 		movt	r0, #:upper16:numberString
+ 928 080e FFF7FEFF 		bl	telemetryPrint
+ 159:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[ROLL_ATT_PID].D);           telemetr
+ 929              		.loc 1 159 0
+ 930 0812 40F20003 		movw	r3, #:lower16:eepromConfig
+ 931 0816 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 932 081a D3F81C31 		ldr	r3, [r3, #284]	@ float
+ 933 081e 1846     		mov	r0, r3	@ float
+ 934 0820 FFF7FEFF 		bl	__aeabi_f2d
+ 935 0824 0246     		mov	r2, r0
+ 936 0826 0B46     		mov	r3, r1
+ 937 0828 CDE90023 		strd	r2, [sp]
+ 938 082c 40F20000 		movw	r0, #:lower16:numberString
+ 939 0830 C0F20000 		movt	r0, #:upper16:numberString
+ 940 0834 4FF01001 		mov	r1, #16
+ 941 0838 40F20002 		movw	r2, #:lower16:.LC2
+ 942 083c C0F20002 		movt	r2, #:upper16:.LC2
+ 943 0840 FFF7FEFF 		bl	snprintf
+ 944 0844 40F20000 		movw	r0, #:lower16:numberString
+ 945 0848 C0F20000 		movt	r0, #:upper16:numberString
+ 946 084c FFF7FEFF 		bl	telemetryPrint
+ 160:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[ROLL_ATT_PID].windupGuard); telemetr
+ 947              		.loc 1 160 0
+ 948 0850 40F20003 		movw	r3, #:lower16:eepromConfig
+ 949 0854 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 950 0858 D3F82431 		ldr	r3, [r3, #292]	@ float
+ 951 085c 1846     		mov	r0, r3	@ float
+ 952 085e FFF7FEFF 		bl	__aeabi_f2d
+ 953 0862 0246     		mov	r2, r0
+ 954 0864 0B46     		mov	r3, r1
+ 955 0866 CDE90023 		strd	r2, [sp]
+ 956 086a 40F20000 		movw	r0, #:lower16:numberString
+ 957 086e C0F20000 		movt	r0, #:upper16:numberString
+ 958 0872 4FF01001 		mov	r1, #16
+ 959 0876 40F20002 		movw	r2, #:lower16:.LC2
+ 960 087a C0F20002 		movt	r2, #:upper16:.LC2
+ 961 087e FFF7FEFF 		bl	snprintf
+ 962 0882 40F20000 		movw	r0, #:lower16:numberString
+ 963 0886 C0F20000 		movt	r0, #:upper16:numberString
+ 964 088a FFF7FEFF 		bl	telemetryPrint
+ 161:../src/rfTelem.c ****         if  (eepromConfig.PID[ROLL_ATT_PID].dErrorCalc)
+ 965              		.loc 1 161 0
+ 966 088e 40F20003 		movw	r3, #:lower16:eepromConfig
+ 967 0892 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 968 0896 93F83431 		ldrb	r3, [r3, #308]	@ zero_extendqisi2
+ 969 089a 002B     		cmp	r3, #0
+ 970 089c 06D0     		beq	.L49
+ 162:../src/rfTelem.c ****             telemetryPrint("Error\n");
+ 971              		.loc 1 162 0
+ 972 089e 40F20000 		movw	r0, #:lower16:.LC3
+ 973 08a2 C0F20000 		movt	r0, #:upper16:.LC3
+ 974 08a6 FFF7FEFF 		bl	telemetryPrint
+ 975 08aa 05E0     		b	.L50
+ 976              	.L49:
+ 163:../src/rfTelem.c ****         else
+ 164:../src/rfTelem.c ****             telemetryPrint("State\n");
+ 977              		.loc 1 164 0
+ 978 08ac 40F20000 		movw	r0, #:lower16:.LC4
+ 979 08b0 C0F20000 		movt	r0, #:upper16:.LC4
+ 980 08b4 FFF7FEFF 		bl	telemetryPrint
+ 981              	.L50:
+ 165:../src/rfTelem.c **** 
+ 166:../src/rfTelem.c ****         telemetryPrint("Pitch Attitude PID: ");
+ 982              		.loc 1 166 0
+ 983 08b8 40F20000 		movw	r0, #:lower16:.LC8
+ 984 08bc C0F20000 		movt	r0, #:upper16:.LC8
+ 985 08c0 FFF7FEFF 		bl	telemetryPrint
+ 167:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[PITCH_ATT_PID].B);           telemet
+ 986              		.loc 1 167 0
+ 987 08c4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 988 08c8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 989 08cc D3F83831 		ldr	r3, [r3, #312]	@ float
+ 990 08d0 1846     		mov	r0, r3	@ float
+ 991 08d2 FFF7FEFF 		bl	__aeabi_f2d
+ 992 08d6 0246     		mov	r2, r0
+ 993 08d8 0B46     		mov	r3, r1
+ 994 08da CDE90023 		strd	r2, [sp]
+ 995 08de 40F20000 		movw	r0, #:lower16:numberString
+ 996 08e2 C0F20000 		movt	r0, #:upper16:numberString
+ 997 08e6 4FF01001 		mov	r1, #16
+ 998 08ea 40F20002 		movw	r2, #:lower16:.LC2
+ 999 08ee C0F20002 		movt	r2, #:upper16:.LC2
+ 1000 08f2 FFF7FEFF 		bl	snprintf
+ 1001 08f6 40F20000 		movw	r0, #:lower16:numberString
+ 1002 08fa C0F20000 		movt	r0, #:upper16:numberString
+ 1003 08fe FFF7FEFF 		bl	telemetryPrint
+ 168:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[PITCH_ATT_PID].P);           telemet
+ 1004              		.loc 1 168 0
+ 1005 0902 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1006 0906 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1007 090a D3F83C31 		ldr	r3, [r3, #316]	@ float
+ 1008 090e 1846     		mov	r0, r3	@ float
+ 1009 0910 FFF7FEFF 		bl	__aeabi_f2d
+ 1010 0914 0246     		mov	r2, r0
+ 1011 0916 0B46     		mov	r3, r1
+ 1012 0918 CDE90023 		strd	r2, [sp]
+ 1013 091c 40F20000 		movw	r0, #:lower16:numberString
+ 1014 0920 C0F20000 		movt	r0, #:upper16:numberString
+ 1015 0924 4FF01001 		mov	r1, #16
+ 1016 0928 40F20002 		movw	r2, #:lower16:.LC2
+ 1017 092c C0F20002 		movt	r2, #:upper16:.LC2
+ 1018 0930 FFF7FEFF 		bl	snprintf
+ 1019 0934 40F20000 		movw	r0, #:lower16:numberString
+ 1020 0938 C0F20000 		movt	r0, #:upper16:numberString
+ 1021 093c FFF7FEFF 		bl	telemetryPrint
+ 169:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[PITCH_ATT_PID].I);           telemet
+ 1022              		.loc 1 169 0
+ 1023 0940 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1024 0944 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1025 0948 D3F84031 		ldr	r3, [r3, #320]	@ float
+ 1026 094c 1846     		mov	r0, r3	@ float
+ 1027 094e FFF7FEFF 		bl	__aeabi_f2d
+ 1028 0952 0246     		mov	r2, r0
+ 1029 0954 0B46     		mov	r3, r1
+ 1030 0956 CDE90023 		strd	r2, [sp]
+ 1031 095a 40F20000 		movw	r0, #:lower16:numberString
+ 1032 095e C0F20000 		movt	r0, #:upper16:numberString
+ 1033 0962 4FF01001 		mov	r1, #16
+ 1034 0966 40F20002 		movw	r2, #:lower16:.LC2
+ 1035 096a C0F20002 		movt	r2, #:upper16:.LC2
+ 1036 096e FFF7FEFF 		bl	snprintf
+ 1037 0972 40F20000 		movw	r0, #:lower16:numberString
+ 1038 0976 C0F20000 		movt	r0, #:upper16:numberString
+ 1039 097a FFF7FEFF 		bl	telemetryPrint
+ 170:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[PITCH_ATT_PID].D);           telemet
+ 1040              		.loc 1 170 0
+ 1041 097e 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1042 0982 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1043 0986 D3F84431 		ldr	r3, [r3, #324]	@ float
+ 1044 098a 1846     		mov	r0, r3	@ float
+ 1045 098c FFF7FEFF 		bl	__aeabi_f2d
+ 1046 0990 0246     		mov	r2, r0
+ 1047 0992 0B46     		mov	r3, r1
+ 1048 0994 CDE90023 		strd	r2, [sp]
+ 1049 0998 40F20000 		movw	r0, #:lower16:numberString
+ 1050 099c C0F20000 		movt	r0, #:upper16:numberString
+ 1051 09a0 4FF01001 		mov	r1, #16
+ 1052 09a4 40F20002 		movw	r2, #:lower16:.LC2
+ 1053 09a8 C0F20002 		movt	r2, #:upper16:.LC2
+ 1054 09ac FFF7FEFF 		bl	snprintf
+ 1055 09b0 40F20000 		movw	r0, #:lower16:numberString
+ 1056 09b4 C0F20000 		movt	r0, #:upper16:numberString
+ 1057 09b8 FFF7FEFF 		bl	telemetryPrint
+ 171:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[PITCH_ATT_PID].windupGuard); telemet
+ 1058              		.loc 1 171 0
+ 1059 09bc 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1060 09c0 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1061 09c4 D3F84C31 		ldr	r3, [r3, #332]	@ float
+ 1062 09c8 1846     		mov	r0, r3	@ float
+ 1063 09ca FFF7FEFF 		bl	__aeabi_f2d
+ 1064 09ce 0246     		mov	r2, r0
+ 1065 09d0 0B46     		mov	r3, r1
+ 1066 09d2 CDE90023 		strd	r2, [sp]
+ 1067 09d6 40F20000 		movw	r0, #:lower16:numberString
+ 1068 09da C0F20000 		movt	r0, #:upper16:numberString
+ 1069 09de 4FF01001 		mov	r1, #16
+ 1070 09e2 40F20002 		movw	r2, #:lower16:.LC2
+ 1071 09e6 C0F20002 		movt	r2, #:upper16:.LC2
+ 1072 09ea FFF7FEFF 		bl	snprintf
+ 1073 09ee 40F20000 		movw	r0, #:lower16:numberString
+ 1074 09f2 C0F20000 		movt	r0, #:upper16:numberString
+ 1075 09f6 FFF7FEFF 		bl	telemetryPrint
+ 172:../src/rfTelem.c ****         if  (eepromConfig.PID[PITCH_ATT_PID].dErrorCalc)
+ 1076              		.loc 1 172 0
+ 1077 09fa 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1078 09fe C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1079 0a02 93F85C31 		ldrb	r3, [r3, #348]	@ zero_extendqisi2
+ 1080 0a06 002B     		cmp	r3, #0
+ 1081 0a08 06D0     		beq	.L51
+ 173:../src/rfTelem.c ****             telemetryPrint("Error\n");
+ 1082              		.loc 1 173 0
+ 1083 0a0a 40F20000 		movw	r0, #:lower16:.LC3
+ 1084 0a0e C0F20000 		movt	r0, #:upper16:.LC3
+ 1085 0a12 FFF7FEFF 		bl	telemetryPrint
+ 1086 0a16 05E0     		b	.L52
+ 1087              	.L51:
+ 174:../src/rfTelem.c ****         else
+ 175:../src/rfTelem.c ****             telemetryPrint("State\n");
+ 1088              		.loc 1 175 0
+ 1089 0a18 40F20000 		movw	r0, #:lower16:.LC4
+ 1090 0a1c C0F20000 		movt	r0, #:upper16:.LC4
+ 1091 0a20 FFF7FEFF 		bl	telemetryPrint
+ 1092              	.L52:
+ 176:../src/rfTelem.c **** 
+ 177:../src/rfTelem.c ****         telemetryPrint("Heading PID:        ");
+ 1093              		.loc 1 177 0
+ 1094 0a24 40F20000 		movw	r0, #:lower16:.LC9
+ 1095 0a28 C0F20000 		movt	r0, #:upper16:.LC9
+ 1096 0a2c FFF7FEFF 		bl	telemetryPrint
+ 178:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[HEADING_PID].B);           telemetry
+ 1097              		.loc 1 178 0
+ 1098 0a30 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1099 0a34 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1100 0a38 D3F86031 		ldr	r3, [r3, #352]	@ float
+ 1101 0a3c 1846     		mov	r0, r3	@ float
+ 1102 0a3e FFF7FEFF 		bl	__aeabi_f2d
+ 1103 0a42 0246     		mov	r2, r0
+ 1104 0a44 0B46     		mov	r3, r1
+ 1105 0a46 CDE90023 		strd	r2, [sp]
+ 1106 0a4a 40F20000 		movw	r0, #:lower16:numberString
+ 1107 0a4e C0F20000 		movt	r0, #:upper16:numberString
+ 1108 0a52 4FF01001 		mov	r1, #16
+ 1109 0a56 40F20002 		movw	r2, #:lower16:.LC2
+ 1110 0a5a C0F20002 		movt	r2, #:upper16:.LC2
+ 1111 0a5e FFF7FEFF 		bl	snprintf
+ 1112 0a62 40F20000 		movw	r0, #:lower16:numberString
+ 1113 0a66 C0F20000 		movt	r0, #:upper16:numberString
+ 1114 0a6a FFF7FEFF 		bl	telemetryPrint
+ 179:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[HEADING_PID].P);           telemetry
+ 1115              		.loc 1 179 0
+ 1116 0a6e 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1117 0a72 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1118 0a76 D3F86431 		ldr	r3, [r3, #356]	@ float
+ 1119 0a7a 1846     		mov	r0, r3	@ float
+ 1120 0a7c FFF7FEFF 		bl	__aeabi_f2d
+ 1121 0a80 0246     		mov	r2, r0
+ 1122 0a82 0B46     		mov	r3, r1
+ 1123 0a84 CDE90023 		strd	r2, [sp]
+ 1124 0a88 40F20000 		movw	r0, #:lower16:numberString
+ 1125 0a8c C0F20000 		movt	r0, #:upper16:numberString
+ 1126 0a90 4FF01001 		mov	r1, #16
+ 1127 0a94 40F20002 		movw	r2, #:lower16:.LC2
+ 1128 0a98 C0F20002 		movt	r2, #:upper16:.LC2
+ 1129 0a9c FFF7FEFF 		bl	snprintf
+ 1130 0aa0 40F20000 		movw	r0, #:lower16:numberString
+ 1131 0aa4 C0F20000 		movt	r0, #:upper16:numberString
+ 1132 0aa8 FFF7FEFF 		bl	telemetryPrint
+ 180:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[HEADING_PID].I);           telemetry
+ 1133              		.loc 1 180 0
+ 1134 0aac 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1135 0ab0 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1136 0ab4 D3F86831 		ldr	r3, [r3, #360]	@ float
+ 1137 0ab8 1846     		mov	r0, r3	@ float
+ 1138 0aba FFF7FEFF 		bl	__aeabi_f2d
+ 1139 0abe 0246     		mov	r2, r0
+ 1140 0ac0 0B46     		mov	r3, r1
+ 1141 0ac2 CDE90023 		strd	r2, [sp]
+ 1142 0ac6 40F20000 		movw	r0, #:lower16:numberString
+ 1143 0aca C0F20000 		movt	r0, #:upper16:numberString
+ 1144 0ace 4FF01001 		mov	r1, #16
+ 1145 0ad2 40F20002 		movw	r2, #:lower16:.LC2
+ 1146 0ad6 C0F20002 		movt	r2, #:upper16:.LC2
+ 1147 0ada FFF7FEFF 		bl	snprintf
+ 1148 0ade 40F20000 		movw	r0, #:lower16:numberString
+ 1149 0ae2 C0F20000 		movt	r0, #:upper16:numberString
+ 1150 0ae6 FFF7FEFF 		bl	telemetryPrint
+ 181:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[HEADING_PID].D);           telemetry
+ 1151              		.loc 1 181 0
+ 1152 0aea 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1153 0aee C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1154 0af2 D3F86C31 		ldr	r3, [r3, #364]	@ float
+ 1155 0af6 1846     		mov	r0, r3	@ float
+ 1156 0af8 FFF7FEFF 		bl	__aeabi_f2d
+ 1157 0afc 0246     		mov	r2, r0
+ 1158 0afe 0B46     		mov	r3, r1
+ 1159 0b00 CDE90023 		strd	r2, [sp]
+ 1160 0b04 40F20000 		movw	r0, #:lower16:numberString
+ 1161 0b08 C0F20000 		movt	r0, #:upper16:numberString
+ 1162 0b0c 4FF01001 		mov	r1, #16
+ 1163 0b10 40F20002 		movw	r2, #:lower16:.LC2
+ 1164 0b14 C0F20002 		movt	r2, #:upper16:.LC2
+ 1165 0b18 FFF7FEFF 		bl	snprintf
+ 1166 0b1c 40F20000 		movw	r0, #:lower16:numberString
+ 1167 0b20 C0F20000 		movt	r0, #:upper16:numberString
+ 1168 0b24 FFF7FEFF 		bl	telemetryPrint
+ 182:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[HEADING_PID].windupGuard); telemetry
+ 1169              		.loc 1 182 0
+ 1170 0b28 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1171 0b2c C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1172 0b30 D3F87431 		ldr	r3, [r3, #372]	@ float
+ 1173 0b34 1846     		mov	r0, r3	@ float
+ 1174 0b36 FFF7FEFF 		bl	__aeabi_f2d
+ 1175 0b3a 0246     		mov	r2, r0
+ 1176 0b3c 0B46     		mov	r3, r1
+ 1177 0b3e CDE90023 		strd	r2, [sp]
+ 1178 0b42 40F20000 		movw	r0, #:lower16:numberString
+ 1179 0b46 C0F20000 		movt	r0, #:upper16:numberString
+ 1180 0b4a 4FF01001 		mov	r1, #16
+ 1181 0b4e 40F20002 		movw	r2, #:lower16:.LC2
+ 1182 0b52 C0F20002 		movt	r2, #:upper16:.LC2
+ 1183 0b56 FFF7FEFF 		bl	snprintf
+ 1184 0b5a 40F20000 		movw	r0, #:lower16:numberString
+ 1185 0b5e C0F20000 		movt	r0, #:upper16:numberString
+ 1186 0b62 FFF7FEFF 		bl	telemetryPrint
+ 183:../src/rfTelem.c ****         if  (eepromConfig.PID[HEADING_PID].dErrorCalc)
+ 1187              		.loc 1 183 0
+ 1188 0b66 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1189 0b6a C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1190 0b6e 93F88431 		ldrb	r3, [r3, #388]	@ zero_extendqisi2
+ 1191 0b72 002B     		cmp	r3, #0
+ 1192 0b74 06D0     		beq	.L53
+ 184:../src/rfTelem.c ****             telemetryPrint("Error\n");
+ 1193              		.loc 1 184 0
+ 1194 0b76 40F20000 		movw	r0, #:lower16:.LC3
+ 1195 0b7a C0F20000 		movt	r0, #:upper16:.LC3
+ 1196 0b7e FFF7FEFF 		bl	telemetryPrint
+ 1197 0b82 05E0     		b	.L54
+ 1198              	.L53:
+ 185:../src/rfTelem.c ****         else
+ 186:../src/rfTelem.c ****             telemetryPrint("State\n");
+ 1199              		.loc 1 186 0
+ 1200 0b84 40F20000 		movw	r0, #:lower16:.LC4
+ 1201 0b88 C0F20000 		movt	r0, #:upper16:.LC4
+ 1202 0b8c FFF7FEFF 		bl	telemetryPrint
+ 1203              	.L54:
+ 187:../src/rfTelem.c **** 
+ 188:../src/rfTelem.c ****         rfQueryType = 'x';
+ 1204              		.loc 1 188 0
+ 1205 0b90 40F20003 		movw	r3, #:lower16:rfQueryType
+ 1206 0b94 C0F20003 		movt	r3, #:upper16:rfQueryType
+ 1207 0b98 4FF07802 		mov	r2, #120
+ 1208 0b9c 1A70     		strb	r2, [r3, #0]
+ 189:../src/rfTelem.c ****         validRFCommand = false;
+ 1209              		.loc 1 189 0
+ 1210 0b9e 40F20003 		movw	r3, #:lower16:validRFCommand
+ 1211 0ba2 C0F20003 		movt	r3, #:upper16:validRFCommand
+ 1212 0ba6 4FF00002 		mov	r2, #0
+ 1213 0baa 1A70     		strb	r2, [r3, #0]
+ 190:../src/rfTelem.c ****         break;
+ 1214              		.loc 1 190 0
+ 1215 0bac 00F0BCBE 		b	.L10
+ 1216              	.L39:
+ 191:../src/rfTelem.c **** 
+ 192:../src/rfTelem.c ****     ///////////////////////////////
+ 193:../src/rfTelem.c **** 
+ 194:../src/rfTelem.c ****     case 'c': // Velocity PIDs
+ 195:../src/rfTelem.c ****         telemetryPrint("\n");
+ 1217              		.loc 1 195 0
+ 1218 0bb0 40F20000 		movw	r0, #:lower16:.LC0
+ 1219 0bb4 C0F20000 		movt	r0, #:upper16:.LC0
+ 1220 0bb8 FFF7FEFF 		bl	telemetryPrint
+ 196:../src/rfTelem.c **** 
+ 197:../src/rfTelem.c ****         telemetryPrint("nDot PID:  ");
+ 1221              		.loc 1 197 0
+ 1222 0bbc 40F20000 		movw	r0, #:lower16:.LC10
+ 1223 0bc0 C0F20000 		movt	r0, #:upper16:.LC10
+ 1224 0bc4 FFF7FEFF 		bl	telemetryPrint
+ 198:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[NDOT_PID].B);           telemetryPri
+ 1225              		.loc 1 198 0
+ 1226 0bc8 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1227 0bcc C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1228 0bd0 D3F88831 		ldr	r3, [r3, #392]	@ float
+ 1229 0bd4 1846     		mov	r0, r3	@ float
+ 1230 0bd6 FFF7FEFF 		bl	__aeabi_f2d
+ 1231 0bda 0246     		mov	r2, r0
+ 1232 0bdc 0B46     		mov	r3, r1
+ 1233 0bde CDE90023 		strd	r2, [sp]
+ 1234 0be2 40F20000 		movw	r0, #:lower16:numberString
+ 1235 0be6 C0F20000 		movt	r0, #:upper16:numberString
+ 1236 0bea 4FF01001 		mov	r1, #16
+ 1237 0bee 40F20002 		movw	r2, #:lower16:.LC2
+ 1238 0bf2 C0F20002 		movt	r2, #:upper16:.LC2
+ 1239 0bf6 FFF7FEFF 		bl	snprintf
+ 1240 0bfa 40F20000 		movw	r0, #:lower16:numberString
+ 1241 0bfe C0F20000 		movt	r0, #:upper16:numberString
+ 1242 0c02 FFF7FEFF 		bl	telemetryPrint
+ 199:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[NDOT_PID].P);           telemetryPri
+ 1243              		.loc 1 199 0
+ 1244 0c06 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1245 0c0a C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1246 0c0e D3F88C31 		ldr	r3, [r3, #396]	@ float
+ 1247 0c12 1846     		mov	r0, r3	@ float
+ 1248 0c14 FFF7FEFF 		bl	__aeabi_f2d
+ 1249 0c18 0246     		mov	r2, r0
+ 1250 0c1a 0B46     		mov	r3, r1
+ 1251 0c1c CDE90023 		strd	r2, [sp]
+ 1252 0c20 40F20000 		movw	r0, #:lower16:numberString
+ 1253 0c24 C0F20000 		movt	r0, #:upper16:numberString
+ 1254 0c28 4FF01001 		mov	r1, #16
+ 1255 0c2c 40F20002 		movw	r2, #:lower16:.LC2
+ 1256 0c30 C0F20002 		movt	r2, #:upper16:.LC2
+ 1257 0c34 FFF7FEFF 		bl	snprintf
+ 1258 0c38 40F20000 		movw	r0, #:lower16:numberString
+ 1259 0c3c C0F20000 		movt	r0, #:upper16:numberString
+ 1260 0c40 FFF7FEFF 		bl	telemetryPrint
+ 200:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[NDOT_PID].I);           telemetryPri
+ 1261              		.loc 1 200 0
+ 1262 0c44 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1263 0c48 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1264 0c4c D3F89031 		ldr	r3, [r3, #400]	@ float
+ 1265 0c50 1846     		mov	r0, r3	@ float
+ 1266 0c52 FFF7FEFF 		bl	__aeabi_f2d
+ 1267 0c56 0246     		mov	r2, r0
+ 1268 0c58 0B46     		mov	r3, r1
+ 1269 0c5a CDE90023 		strd	r2, [sp]
+ 1270 0c5e 40F20000 		movw	r0, #:lower16:numberString
+ 1271 0c62 C0F20000 		movt	r0, #:upper16:numberString
+ 1272 0c66 4FF01001 		mov	r1, #16
+ 1273 0c6a 40F20002 		movw	r2, #:lower16:.LC2
+ 1274 0c6e C0F20002 		movt	r2, #:upper16:.LC2
+ 1275 0c72 FFF7FEFF 		bl	snprintf
+ 1276 0c76 40F20000 		movw	r0, #:lower16:numberString
+ 1277 0c7a C0F20000 		movt	r0, #:upper16:numberString
+ 1278 0c7e FFF7FEFF 		bl	telemetryPrint
+ 201:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[NDOT_PID].D);           telemetryPri
+ 1279              		.loc 1 201 0
+ 1280 0c82 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1281 0c86 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1282 0c8a D3F89431 		ldr	r3, [r3, #404]	@ float
+ 1283 0c8e 1846     		mov	r0, r3	@ float
+ 1284 0c90 FFF7FEFF 		bl	__aeabi_f2d
+ 1285 0c94 0246     		mov	r2, r0
+ 1286 0c96 0B46     		mov	r3, r1
+ 1287 0c98 CDE90023 		strd	r2, [sp]
+ 1288 0c9c 40F20000 		movw	r0, #:lower16:numberString
+ 1289 0ca0 C0F20000 		movt	r0, #:upper16:numberString
+ 1290 0ca4 4FF01001 		mov	r1, #16
+ 1291 0ca8 40F20002 		movw	r2, #:lower16:.LC2
+ 1292 0cac C0F20002 		movt	r2, #:upper16:.LC2
+ 1293 0cb0 FFF7FEFF 		bl	snprintf
+ 1294 0cb4 40F20000 		movw	r0, #:lower16:numberString
+ 1295 0cb8 C0F20000 		movt	r0, #:upper16:numberString
+ 1296 0cbc FFF7FEFF 		bl	telemetryPrint
+ 202:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[NDOT_PID].windupGuard); telemetryPri
+ 1297              		.loc 1 202 0
+ 1298 0cc0 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1299 0cc4 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1300 0cc8 D3F89C31 		ldr	r3, [r3, #412]	@ float
+ 1301 0ccc 1846     		mov	r0, r3	@ float
+ 1302 0cce FFF7FEFF 		bl	__aeabi_f2d
+ 1303 0cd2 0246     		mov	r2, r0
+ 1304 0cd4 0B46     		mov	r3, r1
+ 1305 0cd6 CDE90023 		strd	r2, [sp]
+ 1306 0cda 40F20000 		movw	r0, #:lower16:numberString
+ 1307 0cde C0F20000 		movt	r0, #:upper16:numberString
+ 1308 0ce2 4FF01001 		mov	r1, #16
+ 1309 0ce6 40F20002 		movw	r2, #:lower16:.LC2
+ 1310 0cea C0F20002 		movt	r2, #:upper16:.LC2
+ 1311 0cee FFF7FEFF 		bl	snprintf
+ 1312 0cf2 40F20000 		movw	r0, #:lower16:numberString
+ 1313 0cf6 C0F20000 		movt	r0, #:upper16:numberString
+ 1314 0cfa FFF7FEFF 		bl	telemetryPrint
+ 203:../src/rfTelem.c ****         if  (eepromConfig.PID[NDOT_PID].dErrorCalc)
+ 1315              		.loc 1 203 0
+ 1316 0cfe 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1317 0d02 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1318 0d06 93F8AC31 		ldrb	r3, [r3, #428]	@ zero_extendqisi2
+ 1319 0d0a 002B     		cmp	r3, #0
+ 1320 0d0c 06D0     		beq	.L55
+ 204:../src/rfTelem.c ****             telemetryPrint("Error\n");
+ 1321              		.loc 1 204 0
+ 1322 0d0e 40F20000 		movw	r0, #:lower16:.LC3
+ 1323 0d12 C0F20000 		movt	r0, #:upper16:.LC3
+ 1324 0d16 FFF7FEFF 		bl	telemetryPrint
+ 1325 0d1a 05E0     		b	.L56
+ 1326              	.L55:
+ 205:../src/rfTelem.c ****         else
+ 206:../src/rfTelem.c ****             telemetryPrint("State\n");
+ 1327              		.loc 1 206 0
+ 1328 0d1c 40F20000 		movw	r0, #:lower16:.LC4
+ 1329 0d20 C0F20000 		movt	r0, #:upper16:.LC4
+ 1330 0d24 FFF7FEFF 		bl	telemetryPrint
+ 1331              	.L56:
+ 207:../src/rfTelem.c **** 
+ 208:../src/rfTelem.c ****         telemetryPrint("eDot PID:  ");
+ 1332              		.loc 1 208 0
+ 1333 0d28 40F20000 		movw	r0, #:lower16:.LC11
+ 1334 0d2c C0F20000 		movt	r0, #:upper16:.LC11
+ 1335 0d30 FFF7FEFF 		bl	telemetryPrint
+ 209:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[EDOT_PID].B);           telemetryPri
+ 1336              		.loc 1 209 0
+ 1337 0d34 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1338 0d38 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1339 0d3c D3F8B031 		ldr	r3, [r3, #432]	@ float
+ 1340 0d40 1846     		mov	r0, r3	@ float
+ 1341 0d42 FFF7FEFF 		bl	__aeabi_f2d
+ 1342 0d46 0246     		mov	r2, r0
+ 1343 0d48 0B46     		mov	r3, r1
+ 1344 0d4a CDE90023 		strd	r2, [sp]
+ 1345 0d4e 40F20000 		movw	r0, #:lower16:numberString
+ 1346 0d52 C0F20000 		movt	r0, #:upper16:numberString
+ 1347 0d56 4FF01001 		mov	r1, #16
+ 1348 0d5a 40F20002 		movw	r2, #:lower16:.LC2
+ 1349 0d5e C0F20002 		movt	r2, #:upper16:.LC2
+ 1350 0d62 FFF7FEFF 		bl	snprintf
+ 1351 0d66 40F20000 		movw	r0, #:lower16:numberString
+ 1352 0d6a C0F20000 		movt	r0, #:upper16:numberString
+ 1353 0d6e FFF7FEFF 		bl	telemetryPrint
+ 210:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[EDOT_PID].P);           telemetryPri
+ 1354              		.loc 1 210 0
+ 1355 0d72 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1356 0d76 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1357 0d7a D3F8B431 		ldr	r3, [r3, #436]	@ float
+ 1358 0d7e 1846     		mov	r0, r3	@ float
+ 1359 0d80 FFF7FEFF 		bl	__aeabi_f2d
+ 1360 0d84 0246     		mov	r2, r0
+ 1361 0d86 0B46     		mov	r3, r1
+ 1362 0d88 CDE90023 		strd	r2, [sp]
+ 1363 0d8c 40F20000 		movw	r0, #:lower16:numberString
+ 1364 0d90 C0F20000 		movt	r0, #:upper16:numberString
+ 1365 0d94 4FF01001 		mov	r1, #16
+ 1366 0d98 40F20002 		movw	r2, #:lower16:.LC2
+ 1367 0d9c C0F20002 		movt	r2, #:upper16:.LC2
+ 1368 0da0 FFF7FEFF 		bl	snprintf
+ 1369 0da4 40F20000 		movw	r0, #:lower16:numberString
+ 1370 0da8 C0F20000 		movt	r0, #:upper16:numberString
+ 1371 0dac FFF7FEFF 		bl	telemetryPrint
+ 211:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[EDOT_PID].I);           telemetryPri
+ 1372              		.loc 1 211 0
+ 1373 0db0 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1374 0db4 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1375 0db8 D3F8B831 		ldr	r3, [r3, #440]	@ float
+ 1376 0dbc 1846     		mov	r0, r3	@ float
+ 1377 0dbe FFF7FEFF 		bl	__aeabi_f2d
+ 1378 0dc2 0246     		mov	r2, r0
+ 1379 0dc4 0B46     		mov	r3, r1
+ 1380 0dc6 CDE90023 		strd	r2, [sp]
+ 1381 0dca 40F20000 		movw	r0, #:lower16:numberString
+ 1382 0dce C0F20000 		movt	r0, #:upper16:numberString
+ 1383 0dd2 4FF01001 		mov	r1, #16
+ 1384 0dd6 40F20002 		movw	r2, #:lower16:.LC2
+ 1385 0dda C0F20002 		movt	r2, #:upper16:.LC2
+ 1386 0dde FFF7FEFF 		bl	snprintf
+ 1387 0de2 40F20000 		movw	r0, #:lower16:numberString
+ 1388 0de6 C0F20000 		movt	r0, #:upper16:numberString
+ 1389 0dea FFF7FEFF 		bl	telemetryPrint
+ 212:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[EDOT_PID].D);           telemetryPri
+ 1390              		.loc 1 212 0
+ 1391 0dee 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1392 0df2 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1393 0df6 D3F8BC31 		ldr	r3, [r3, #444]	@ float
+ 1394 0dfa 1846     		mov	r0, r3	@ float
+ 1395 0dfc FFF7FEFF 		bl	__aeabi_f2d
+ 1396 0e00 0246     		mov	r2, r0
+ 1397 0e02 0B46     		mov	r3, r1
+ 1398 0e04 CDE90023 		strd	r2, [sp]
+ 1399 0e08 40F20000 		movw	r0, #:lower16:numberString
+ 1400 0e0c C0F20000 		movt	r0, #:upper16:numberString
+ 1401 0e10 4FF01001 		mov	r1, #16
+ 1402 0e14 40F20002 		movw	r2, #:lower16:.LC2
+ 1403 0e18 C0F20002 		movt	r2, #:upper16:.LC2
+ 1404 0e1c FFF7FEFF 		bl	snprintf
+ 1405 0e20 40F20000 		movw	r0, #:lower16:numberString
+ 1406 0e24 C0F20000 		movt	r0, #:upper16:numberString
+ 1407 0e28 FFF7FEFF 		bl	telemetryPrint
+ 213:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[EDOT_PID].windupGuard); telemetryPri
+ 1408              		.loc 1 213 0
+ 1409 0e2c 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1410 0e30 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1411 0e34 D3F8C431 		ldr	r3, [r3, #452]	@ float
+ 1412 0e38 1846     		mov	r0, r3	@ float
+ 1413 0e3a FFF7FEFF 		bl	__aeabi_f2d
+ 1414 0e3e 0246     		mov	r2, r0
+ 1415 0e40 0B46     		mov	r3, r1
+ 1416 0e42 CDE90023 		strd	r2, [sp]
+ 1417 0e46 40F20000 		movw	r0, #:lower16:numberString
+ 1418 0e4a C0F20000 		movt	r0, #:upper16:numberString
+ 1419 0e4e 4FF01001 		mov	r1, #16
+ 1420 0e52 40F20002 		movw	r2, #:lower16:.LC2
+ 1421 0e56 C0F20002 		movt	r2, #:upper16:.LC2
+ 1422 0e5a FFF7FEFF 		bl	snprintf
+ 1423 0e5e 40F20000 		movw	r0, #:lower16:numberString
+ 1424 0e62 C0F20000 		movt	r0, #:upper16:numberString
+ 1425 0e66 FFF7FEFF 		bl	telemetryPrint
+ 214:../src/rfTelem.c ****         if  (eepromConfig.PID[EDOT_PID].dErrorCalc)
+ 1426              		.loc 1 214 0
+ 1427 0e6a 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1428 0e6e C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1429 0e72 93F8D431 		ldrb	r3, [r3, #468]	@ zero_extendqisi2
+ 1430 0e76 002B     		cmp	r3, #0
+ 1431 0e78 06D0     		beq	.L57
+ 215:../src/rfTelem.c ****             telemetryPrint("Error\n");
+ 1432              		.loc 1 215 0
+ 1433 0e7a 40F20000 		movw	r0, #:lower16:.LC3
+ 1434 0e7e C0F20000 		movt	r0, #:upper16:.LC3
+ 1435 0e82 FFF7FEFF 		bl	telemetryPrint
+ 1436 0e86 05E0     		b	.L58
+ 1437              	.L57:
+ 216:../src/rfTelem.c ****         else
+ 217:../src/rfTelem.c ****             telemetryPrint("State\n");
+ 1438              		.loc 1 217 0
+ 1439 0e88 40F20000 		movw	r0, #:lower16:.LC4
+ 1440 0e8c C0F20000 		movt	r0, #:upper16:.LC4
+ 1441 0e90 FFF7FEFF 		bl	telemetryPrint
+ 1442              	.L58:
+ 218:../src/rfTelem.c **** 
+ 219:../src/rfTelem.c ****         telemetryPrint("hDot PID:  ");
+ 1443              		.loc 1 219 0
+ 1444 0e94 40F20000 		movw	r0, #:lower16:.LC12
+ 1445 0e98 C0F20000 		movt	r0, #:upper16:.LC12
+ 1446 0e9c FFF7FEFF 		bl	telemetryPrint
+ 220:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[HDOT_PID].B);           telemetryPri
+ 1447              		.loc 1 220 0
+ 1448 0ea0 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1449 0ea4 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1450 0ea8 D3F8D831 		ldr	r3, [r3, #472]	@ float
+ 1451 0eac 1846     		mov	r0, r3	@ float
+ 1452 0eae FFF7FEFF 		bl	__aeabi_f2d
+ 1453 0eb2 0246     		mov	r2, r0
+ 1454 0eb4 0B46     		mov	r3, r1
+ 1455 0eb6 CDE90023 		strd	r2, [sp]
+ 1456 0eba 40F20000 		movw	r0, #:lower16:numberString
+ 1457 0ebe C0F20000 		movt	r0, #:upper16:numberString
+ 1458 0ec2 4FF01001 		mov	r1, #16
+ 1459 0ec6 40F20002 		movw	r2, #:lower16:.LC2
+ 1460 0eca C0F20002 		movt	r2, #:upper16:.LC2
+ 1461 0ece FFF7FEFF 		bl	snprintf
+ 1462 0ed2 40F20000 		movw	r0, #:lower16:numberString
+ 1463 0ed6 C0F20000 		movt	r0, #:upper16:numberString
+ 1464 0eda FFF7FEFF 		bl	telemetryPrint
+ 221:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[HDOT_PID].P);           telemetryPri
+ 1465              		.loc 1 221 0
+ 1466 0ede 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1467 0ee2 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1468 0ee6 D3F8DC31 		ldr	r3, [r3, #476]	@ float
+ 1469 0eea 1846     		mov	r0, r3	@ float
+ 1470 0eec FFF7FEFF 		bl	__aeabi_f2d
+ 1471 0ef0 0246     		mov	r2, r0
+ 1472 0ef2 0B46     		mov	r3, r1
+ 1473 0ef4 CDE90023 		strd	r2, [sp]
+ 1474 0ef8 40F20000 		movw	r0, #:lower16:numberString
+ 1475 0efc C0F20000 		movt	r0, #:upper16:numberString
+ 1476 0f00 4FF01001 		mov	r1, #16
+ 1477 0f04 40F20002 		movw	r2, #:lower16:.LC2
+ 1478 0f08 C0F20002 		movt	r2, #:upper16:.LC2
+ 1479 0f0c FFF7FEFF 		bl	snprintf
+ 1480 0f10 40F20000 		movw	r0, #:lower16:numberString
+ 1481 0f14 C0F20000 		movt	r0, #:upper16:numberString
+ 1482 0f18 FFF7FEFF 		bl	telemetryPrint
+ 222:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[HDOT_PID].I);           telemetryPri
+ 1483              		.loc 1 222 0
+ 1484 0f1c 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1485 0f20 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1486 0f24 D3F8E031 		ldr	r3, [r3, #480]	@ float
+ 1487 0f28 1846     		mov	r0, r3	@ float
+ 1488 0f2a FFF7FEFF 		bl	__aeabi_f2d
+ 1489 0f2e 0246     		mov	r2, r0
+ 1490 0f30 0B46     		mov	r3, r1
+ 1491 0f32 CDE90023 		strd	r2, [sp]
+ 1492 0f36 40F20000 		movw	r0, #:lower16:numberString
+ 1493 0f3a C0F20000 		movt	r0, #:upper16:numberString
+ 1494 0f3e 4FF01001 		mov	r1, #16
+ 1495 0f42 40F20002 		movw	r2, #:lower16:.LC2
+ 1496 0f46 C0F20002 		movt	r2, #:upper16:.LC2
+ 1497 0f4a FFF7FEFF 		bl	snprintf
+ 1498 0f4e 40F20000 		movw	r0, #:lower16:numberString
+ 1499 0f52 C0F20000 		movt	r0, #:upper16:numberString
+ 1500 0f56 FFF7FEFF 		bl	telemetryPrint
+ 223:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[HDOT_PID].D);           telemetryPri
+ 1501              		.loc 1 223 0
+ 1502 0f5a 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1503 0f5e C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1504 0f62 D3F8E431 		ldr	r3, [r3, #484]	@ float
+ 1505 0f66 1846     		mov	r0, r3	@ float
+ 1506 0f68 FFF7FEFF 		bl	__aeabi_f2d
+ 1507 0f6c 0246     		mov	r2, r0
+ 1508 0f6e 0B46     		mov	r3, r1
+ 1509 0f70 CDE90023 		strd	r2, [sp]
+ 1510 0f74 40F20000 		movw	r0, #:lower16:numberString
+ 1511 0f78 C0F20000 		movt	r0, #:upper16:numberString
+ 1512 0f7c 4FF01001 		mov	r1, #16
+ 1513 0f80 40F20002 		movw	r2, #:lower16:.LC2
+ 1514 0f84 C0F20002 		movt	r2, #:upper16:.LC2
+ 1515 0f88 FFF7FEFF 		bl	snprintf
+ 1516 0f8c 40F20000 		movw	r0, #:lower16:numberString
+ 1517 0f90 C0F20000 		movt	r0, #:upper16:numberString
+ 1518 0f94 FFF7FEFF 		bl	telemetryPrint
+ 224:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[HDOT_PID].windupGuard); telemetryPri
+ 1519              		.loc 1 224 0
+ 1520 0f98 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1521 0f9c C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1522 0fa0 D3F8EC31 		ldr	r3, [r3, #492]	@ float
+ 1523 0fa4 1846     		mov	r0, r3	@ float
+ 1524 0fa6 FFF7FEFF 		bl	__aeabi_f2d
+ 1525 0faa 0246     		mov	r2, r0
+ 1526 0fac 0B46     		mov	r3, r1
+ 1527 0fae CDE90023 		strd	r2, [sp]
+ 1528 0fb2 40F20000 		movw	r0, #:lower16:numberString
+ 1529 0fb6 C0F20000 		movt	r0, #:upper16:numberString
+ 1530 0fba 4FF01001 		mov	r1, #16
+ 1531 0fbe 40F20002 		movw	r2, #:lower16:.LC2
+ 1532 0fc2 C0F20002 		movt	r2, #:upper16:.LC2
+ 1533 0fc6 FFF7FEFF 		bl	snprintf
+ 1534 0fca 40F20000 		movw	r0, #:lower16:numberString
+ 1535 0fce C0F20000 		movt	r0, #:upper16:numberString
+ 1536 0fd2 FFF7FEFF 		bl	telemetryPrint
+ 225:../src/rfTelem.c ****         if  (eepromConfig.PID[HDOT_PID].dErrorCalc)
+ 1537              		.loc 1 225 0
+ 1538 0fd6 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1539 0fda C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1540 0fde 93F8FC31 		ldrb	r3, [r3, #508]	@ zero_extendqisi2
+ 1541 0fe2 002B     		cmp	r3, #0
+ 1542 0fe4 06D0     		beq	.L59
+ 226:../src/rfTelem.c ****             telemetryPrint("Error\n");
+ 1543              		.loc 1 226 0
+ 1544 0fe6 40F20000 		movw	r0, #:lower16:.LC3
+ 1545 0fea C0F20000 		movt	r0, #:upper16:.LC3
+ 1546 0fee FFF7FEFF 		bl	telemetryPrint
+ 1547 0ff2 05E0     		b	.L60
+ 1548              	.L59:
+ 227:../src/rfTelem.c ****         else
+ 228:../src/rfTelem.c ****             telemetryPrint("State\n");
+ 1549              		.loc 1 228 0
+ 1550 0ff4 40F20000 		movw	r0, #:lower16:.LC4
+ 1551 0ff8 C0F20000 		movt	r0, #:upper16:.LC4
+ 1552 0ffc FFF7FEFF 		bl	telemetryPrint
+ 1553              	.L60:
+ 229:../src/rfTelem.c **** 
+ 230:../src/rfTelem.c ****         rfQueryType = 'x';
+ 1554              		.loc 1 230 0
+ 1555 1000 40F20003 		movw	r3, #:lower16:rfQueryType
+ 1556 1004 C0F20003 		movt	r3, #:upper16:rfQueryType
+ 1557 1008 4FF07802 		mov	r2, #120
+ 1558 100c 1A70     		strb	r2, [r3, #0]
+ 231:../src/rfTelem.c ****         validRFCommand = false;
+ 1559              		.loc 1 231 0
+ 1560 100e 40F20003 		movw	r3, #:lower16:validRFCommand
+ 1561 1012 C0F20003 		movt	r3, #:upper16:validRFCommand
+ 1562 1016 4FF00002 		mov	r2, #0
+ 1563 101a 1A70     		strb	r2, [r3, #0]
+ 232:../src/rfTelem.c ****         break;
+ 1564              		.loc 1 232 0
+ 1565 101c 00F084BC 		b	.L10
+ 1566              	.L40:
+ 233:../src/rfTelem.c **** 
+ 234:../src/rfTelem.c ****     ///////////////////////////////
+ 235:../src/rfTelem.c **** 
+ 236:../src/rfTelem.c ****     case 'd': // Position PIDs
+ 237:../src/rfTelem.c ****         telemetryPrint("\n");
+ 1567              		.loc 1 237 0
+ 1568 1020 40F20000 		movw	r0, #:lower16:.LC0
+ 1569 1024 C0F20000 		movt	r0, #:upper16:.LC0
+ 1570 1028 FFF7FEFF 		bl	telemetryPrint
+ 238:../src/rfTelem.c **** 
+ 239:../src/rfTelem.c ****         telemetryPrint("n PID:  ");
+ 1571              		.loc 1 239 0
+ 1572 102c 40F20000 		movw	r0, #:lower16:.LC13
+ 1573 1030 C0F20000 		movt	r0, #:upper16:.LC13
+ 1574 1034 FFF7FEFF 		bl	telemetryPrint
+ 240:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[N_PID].B);           telemetryPrint(
+ 1575              		.loc 1 240 0
+ 1576 1038 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1577 103c C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1578 1040 D3F80032 		ldr	r3, [r3, #512]	@ float
+ 1579 1044 1846     		mov	r0, r3	@ float
+ 1580 1046 FFF7FEFF 		bl	__aeabi_f2d
+ 1581 104a 0246     		mov	r2, r0
+ 1582 104c 0B46     		mov	r3, r1
+ 1583 104e CDE90023 		strd	r2, [sp]
+ 1584 1052 40F20000 		movw	r0, #:lower16:numberString
+ 1585 1056 C0F20000 		movt	r0, #:upper16:numberString
+ 1586 105a 4FF01001 		mov	r1, #16
+ 1587 105e 40F20002 		movw	r2, #:lower16:.LC2
+ 1588 1062 C0F20002 		movt	r2, #:upper16:.LC2
+ 1589 1066 FFF7FEFF 		bl	snprintf
+ 1590 106a 40F20000 		movw	r0, #:lower16:numberString
+ 1591 106e C0F20000 		movt	r0, #:upper16:numberString
+ 1592 1072 FFF7FEFF 		bl	telemetryPrint
+ 241:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[N_PID].P);           telemetryPrint(
+ 1593              		.loc 1 241 0
+ 1594 1076 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1595 107a C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1596 107e D3F80432 		ldr	r3, [r3, #516]	@ float
+ 1597 1082 1846     		mov	r0, r3	@ float
+ 1598 1084 FFF7FEFF 		bl	__aeabi_f2d
+ 1599 1088 0246     		mov	r2, r0
+ 1600 108a 0B46     		mov	r3, r1
+ 1601 108c CDE90023 		strd	r2, [sp]
+ 1602 1090 40F20000 		movw	r0, #:lower16:numberString
+ 1603 1094 C0F20000 		movt	r0, #:upper16:numberString
+ 1604 1098 4FF01001 		mov	r1, #16
+ 1605 109c 40F20002 		movw	r2, #:lower16:.LC2
+ 1606 10a0 C0F20002 		movt	r2, #:upper16:.LC2
+ 1607 10a4 FFF7FEFF 		bl	snprintf
+ 1608 10a8 40F20000 		movw	r0, #:lower16:numberString
+ 1609 10ac C0F20000 		movt	r0, #:upper16:numberString
+ 1610 10b0 FFF7FEFF 		bl	telemetryPrint
+ 242:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[N_PID].I);           telemetryPrint(
+ 1611              		.loc 1 242 0
+ 1612 10b4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1613 10b8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1614 10bc D3F80832 		ldr	r3, [r3, #520]	@ float
+ 1615 10c0 1846     		mov	r0, r3	@ float
+ 1616 10c2 FFF7FEFF 		bl	__aeabi_f2d
+ 1617 10c6 0246     		mov	r2, r0
+ 1618 10c8 0B46     		mov	r3, r1
+ 1619 10ca CDE90023 		strd	r2, [sp]
+ 1620 10ce 40F20000 		movw	r0, #:lower16:numberString
+ 1621 10d2 C0F20000 		movt	r0, #:upper16:numberString
+ 1622 10d6 4FF01001 		mov	r1, #16
+ 1623 10da 40F20002 		movw	r2, #:lower16:.LC2
+ 1624 10de C0F20002 		movt	r2, #:upper16:.LC2
+ 1625 10e2 FFF7FEFF 		bl	snprintf
+ 1626 10e6 40F20000 		movw	r0, #:lower16:numberString
+ 1627 10ea C0F20000 		movt	r0, #:upper16:numberString
+ 1628 10ee FFF7FEFF 		bl	telemetryPrint
+ 243:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[N_PID].D);           telemetryPrint(
+ 1629              		.loc 1 243 0
+ 1630 10f2 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1631 10f6 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1632 10fa D3F80C32 		ldr	r3, [r3, #524]	@ float
+ 1633 10fe 1846     		mov	r0, r3	@ float
+ 1634 1100 FFF7FEFF 		bl	__aeabi_f2d
+ 1635 1104 0246     		mov	r2, r0
+ 1636 1106 0B46     		mov	r3, r1
+ 1637 1108 CDE90023 		strd	r2, [sp]
+ 1638 110c 40F20000 		movw	r0, #:lower16:numberString
+ 1639 1110 C0F20000 		movt	r0, #:upper16:numberString
+ 1640 1114 4FF01001 		mov	r1, #16
+ 1641 1118 40F20002 		movw	r2, #:lower16:.LC2
+ 1642 111c C0F20002 		movt	r2, #:upper16:.LC2
+ 1643 1120 FFF7FEFF 		bl	snprintf
+ 1644 1124 40F20000 		movw	r0, #:lower16:numberString
+ 1645 1128 C0F20000 		movt	r0, #:upper16:numberString
+ 1646 112c FFF7FEFF 		bl	telemetryPrint
+ 244:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[N_PID].windupGuard); telemetryPrint(
+ 1647              		.loc 1 244 0
+ 1648 1130 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1649 1134 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1650 1138 D3F81432 		ldr	r3, [r3, #532]	@ float
+ 1651 113c 1846     		mov	r0, r3	@ float
+ 1652 113e FFF7FEFF 		bl	__aeabi_f2d
+ 1653 1142 0246     		mov	r2, r0
+ 1654 1144 0B46     		mov	r3, r1
+ 1655 1146 CDE90023 		strd	r2, [sp]
+ 1656 114a 40F20000 		movw	r0, #:lower16:numberString
+ 1657 114e C0F20000 		movt	r0, #:upper16:numberString
+ 1658 1152 4FF01001 		mov	r1, #16
+ 1659 1156 40F20002 		movw	r2, #:lower16:.LC2
+ 1660 115a C0F20002 		movt	r2, #:upper16:.LC2
+ 1661 115e FFF7FEFF 		bl	snprintf
+ 1662 1162 40F20000 		movw	r0, #:lower16:numberString
+ 1663 1166 C0F20000 		movt	r0, #:upper16:numberString
+ 1664 116a FFF7FEFF 		bl	telemetryPrint
+ 245:../src/rfTelem.c ****         if  (eepromConfig.PID[N_PID].dErrorCalc)
+ 1665              		.loc 1 245 0
+ 1666 116e 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1667 1172 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1668 1176 93F82432 		ldrb	r3, [r3, #548]	@ zero_extendqisi2
+ 1669 117a 002B     		cmp	r3, #0
+ 1670 117c 06D0     		beq	.L61
+ 246:../src/rfTelem.c ****             telemetryPrint("Error\n");
+ 1671              		.loc 1 246 0
+ 1672 117e 40F20000 		movw	r0, #:lower16:.LC3
+ 1673 1182 C0F20000 		movt	r0, #:upper16:.LC3
+ 1674 1186 FFF7FEFF 		bl	telemetryPrint
+ 1675 118a 05E0     		b	.L62
+ 1676              	.L61:
+ 247:../src/rfTelem.c ****         else
+ 248:../src/rfTelem.c ****             telemetryPrint("State\n");
+ 1677              		.loc 1 248 0
+ 1678 118c 40F20000 		movw	r0, #:lower16:.LC4
+ 1679 1190 C0F20000 		movt	r0, #:upper16:.LC4
+ 1680 1194 FFF7FEFF 		bl	telemetryPrint
+ 1681              	.L62:
+ 249:../src/rfTelem.c **** 
+ 250:../src/rfTelem.c ****         telemetryPrint("e PID:  ");
+ 1682              		.loc 1 250 0
+ 1683 1198 40F20000 		movw	r0, #:lower16:.LC14
+ 1684 119c C0F20000 		movt	r0, #:upper16:.LC14
+ 1685 11a0 FFF7FEFF 		bl	telemetryPrint
+ 251:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[E_PID].B);           telemetryPrint(
+ 1686              		.loc 1 251 0
+ 1687 11a4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1688 11a8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1689 11ac D3F82832 		ldr	r3, [r3, #552]	@ float
+ 1690 11b0 1846     		mov	r0, r3	@ float
+ 1691 11b2 FFF7FEFF 		bl	__aeabi_f2d
+ 1692 11b6 0246     		mov	r2, r0
+ 1693 11b8 0B46     		mov	r3, r1
+ 1694 11ba CDE90023 		strd	r2, [sp]
+ 1695 11be 40F20000 		movw	r0, #:lower16:numberString
+ 1696 11c2 C0F20000 		movt	r0, #:upper16:numberString
+ 1697 11c6 4FF01001 		mov	r1, #16
+ 1698 11ca 40F20002 		movw	r2, #:lower16:.LC2
+ 1699 11ce C0F20002 		movt	r2, #:upper16:.LC2
+ 1700 11d2 FFF7FEFF 		bl	snprintf
+ 1701 11d6 40F20000 		movw	r0, #:lower16:numberString
+ 1702 11da C0F20000 		movt	r0, #:upper16:numberString
+ 1703 11de FFF7FEFF 		bl	telemetryPrint
+ 252:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[E_PID].P);           telemetryPrint(
+ 1704              		.loc 1 252 0
+ 1705 11e2 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1706 11e6 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1707 11ea D3F82C32 		ldr	r3, [r3, #556]	@ float
+ 1708 11ee 1846     		mov	r0, r3	@ float
+ 1709 11f0 FFF7FEFF 		bl	__aeabi_f2d
+ 1710 11f4 0246     		mov	r2, r0
+ 1711 11f6 0B46     		mov	r3, r1
+ 1712 11f8 CDE90023 		strd	r2, [sp]
+ 1713 11fc 40F20000 		movw	r0, #:lower16:numberString
+ 1714 1200 C0F20000 		movt	r0, #:upper16:numberString
+ 1715 1204 4FF01001 		mov	r1, #16
+ 1716 1208 40F20002 		movw	r2, #:lower16:.LC2
+ 1717 120c C0F20002 		movt	r2, #:upper16:.LC2
+ 1718 1210 FFF7FEFF 		bl	snprintf
+ 1719 1214 40F20000 		movw	r0, #:lower16:numberString
+ 1720 1218 C0F20000 		movt	r0, #:upper16:numberString
+ 1721 121c FFF7FEFF 		bl	telemetryPrint
+ 253:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[E_PID].I);           telemetryPrint(
+ 1722              		.loc 1 253 0
+ 1723 1220 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1724 1224 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1725 1228 D3F83032 		ldr	r3, [r3, #560]	@ float
+ 1726 122c 1846     		mov	r0, r3	@ float
+ 1727 122e FFF7FEFF 		bl	__aeabi_f2d
+ 1728 1232 0246     		mov	r2, r0
+ 1729 1234 0B46     		mov	r3, r1
+ 1730 1236 CDE90023 		strd	r2, [sp]
+ 1731 123a 40F20000 		movw	r0, #:lower16:numberString
+ 1732 123e C0F20000 		movt	r0, #:upper16:numberString
+ 1733 1242 4FF01001 		mov	r1, #16
+ 1734 1246 40F20002 		movw	r2, #:lower16:.LC2
+ 1735 124a C0F20002 		movt	r2, #:upper16:.LC2
+ 1736 124e FFF7FEFF 		bl	snprintf
+ 1737 1252 40F20000 		movw	r0, #:lower16:numberString
+ 1738 1256 C0F20000 		movt	r0, #:upper16:numberString
+ 1739 125a FFF7FEFF 		bl	telemetryPrint
+ 254:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[E_PID].D);           telemetryPrint(
+ 1740              		.loc 1 254 0
+ 1741 125e 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1742 1262 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1743 1266 D3F83432 		ldr	r3, [r3, #564]	@ float
+ 1744 126a 1846     		mov	r0, r3	@ float
+ 1745 126c FFF7FEFF 		bl	__aeabi_f2d
+ 1746 1270 0246     		mov	r2, r0
+ 1747 1272 0B46     		mov	r3, r1
+ 1748 1274 CDE90023 		strd	r2, [sp]
+ 1749 1278 40F20000 		movw	r0, #:lower16:numberString
+ 1750 127c C0F20000 		movt	r0, #:upper16:numberString
+ 1751 1280 4FF01001 		mov	r1, #16
+ 1752 1284 40F20002 		movw	r2, #:lower16:.LC2
+ 1753 1288 C0F20002 		movt	r2, #:upper16:.LC2
+ 1754 128c FFF7FEFF 		bl	snprintf
+ 1755 1290 40F20000 		movw	r0, #:lower16:numberString
+ 1756 1294 C0F20000 		movt	r0, #:upper16:numberString
+ 1757 1298 FFF7FEFF 		bl	telemetryPrint
+ 255:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[E_PID].windupGuard); telemetryPrint(
+ 1758              		.loc 1 255 0
+ 1759 129c 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1760 12a0 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1761 12a4 D3F83C32 		ldr	r3, [r3, #572]	@ float
+ 1762 12a8 1846     		mov	r0, r3	@ float
+ 1763 12aa FFF7FEFF 		bl	__aeabi_f2d
+ 1764 12ae 0246     		mov	r2, r0
+ 1765 12b0 0B46     		mov	r3, r1
+ 1766 12b2 CDE90023 		strd	r2, [sp]
+ 1767 12b6 40F20000 		movw	r0, #:lower16:numberString
+ 1768 12ba C0F20000 		movt	r0, #:upper16:numberString
+ 1769 12be 4FF01001 		mov	r1, #16
+ 1770 12c2 40F20002 		movw	r2, #:lower16:.LC2
+ 1771 12c6 C0F20002 		movt	r2, #:upper16:.LC2
+ 1772 12ca FFF7FEFF 		bl	snprintf
+ 1773 12ce 40F20000 		movw	r0, #:lower16:numberString
+ 1774 12d2 C0F20000 		movt	r0, #:upper16:numberString
+ 1775 12d6 FFF7FEFF 		bl	telemetryPrint
+ 256:../src/rfTelem.c ****         if  (eepromConfig.PID[E_PID].dErrorCalc)
+ 1776              		.loc 1 256 0
+ 1777 12da 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1778 12de C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1779 12e2 93F84C32 		ldrb	r3, [r3, #588]	@ zero_extendqisi2
+ 1780 12e6 002B     		cmp	r3, #0
+ 1781 12e8 06D0     		beq	.L63
+ 257:../src/rfTelem.c ****             telemetryPrint("Error\n");
+ 1782              		.loc 1 257 0
+ 1783 12ea 40F20000 		movw	r0, #:lower16:.LC3
+ 1784 12ee C0F20000 		movt	r0, #:upper16:.LC3
+ 1785 12f2 FFF7FEFF 		bl	telemetryPrint
+ 1786 12f6 05E0     		b	.L64
+ 1787              	.L63:
+ 258:../src/rfTelem.c ****         else
+ 259:../src/rfTelem.c ****             telemetryPrint("State\n");
+ 1788              		.loc 1 259 0
+ 1789 12f8 40F20000 		movw	r0, #:lower16:.LC4
+ 1790 12fc C0F20000 		movt	r0, #:upper16:.LC4
+ 1791 1300 FFF7FEFF 		bl	telemetryPrint
+ 1792              	.L64:
+ 260:../src/rfTelem.c **** 
+ 261:../src/rfTelem.c ****         telemetryPrint("h PID:  ");
+ 1793              		.loc 1 261 0
+ 1794 1304 40F20000 		movw	r0, #:lower16:.LC15
+ 1795 1308 C0F20000 		movt	r0, #:upper16:.LC15
+ 1796 130c FFF7FEFF 		bl	telemetryPrint
+ 262:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[H_PID].B);           telemetryPrint(
+ 1797              		.loc 1 262 0
+ 1798 1310 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1799 1314 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1800 1318 D3F85032 		ldr	r3, [r3, #592]	@ float
+ 1801 131c 1846     		mov	r0, r3	@ float
+ 1802 131e FFF7FEFF 		bl	__aeabi_f2d
+ 1803 1322 0246     		mov	r2, r0
+ 1804 1324 0B46     		mov	r3, r1
+ 1805 1326 CDE90023 		strd	r2, [sp]
+ 1806 132a 40F20000 		movw	r0, #:lower16:numberString
+ 1807 132e C0F20000 		movt	r0, #:upper16:numberString
+ 1808 1332 4FF01001 		mov	r1, #16
+ 1809 1336 40F20002 		movw	r2, #:lower16:.LC2
+ 1810 133a C0F20002 		movt	r2, #:upper16:.LC2
+ 1811 133e FFF7FEFF 		bl	snprintf
+ 1812 1342 40F20000 		movw	r0, #:lower16:numberString
+ 1813 1346 C0F20000 		movt	r0, #:upper16:numberString
+ 1814 134a FFF7FEFF 		bl	telemetryPrint
+ 263:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[H_PID].P);           telemetryPrint(
+ 1815              		.loc 1 263 0
+ 1816 134e 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1817 1352 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1818 1356 D3F85432 		ldr	r3, [r3, #596]	@ float
+ 1819 135a 1846     		mov	r0, r3	@ float
+ 1820 135c FFF7FEFF 		bl	__aeabi_f2d
+ 1821 1360 0246     		mov	r2, r0
+ 1822 1362 0B46     		mov	r3, r1
+ 1823 1364 CDE90023 		strd	r2, [sp]
+ 1824 1368 40F20000 		movw	r0, #:lower16:numberString
+ 1825 136c C0F20000 		movt	r0, #:upper16:numberString
+ 1826 1370 4FF01001 		mov	r1, #16
+ 1827 1374 40F20002 		movw	r2, #:lower16:.LC2
+ 1828 1378 C0F20002 		movt	r2, #:upper16:.LC2
+ 1829 137c FFF7FEFF 		bl	snprintf
+ 1830 1380 40F20000 		movw	r0, #:lower16:numberString
+ 1831 1384 C0F20000 		movt	r0, #:upper16:numberString
+ 1832 1388 FFF7FEFF 		bl	telemetryPrint
+ 264:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[H_PID].I);           telemetryPrint(
+ 1833              		.loc 1 264 0
+ 1834 138c 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1835 1390 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1836 1394 D3F85832 		ldr	r3, [r3, #600]	@ float
+ 1837 1398 1846     		mov	r0, r3	@ float
+ 1838 139a FFF7FEFF 		bl	__aeabi_f2d
+ 1839 139e 0246     		mov	r2, r0
+ 1840 13a0 0B46     		mov	r3, r1
+ 1841 13a2 CDE90023 		strd	r2, [sp]
+ 1842 13a6 40F20000 		movw	r0, #:lower16:numberString
+ 1843 13aa C0F20000 		movt	r0, #:upper16:numberString
+ 1844 13ae 4FF01001 		mov	r1, #16
+ 1845 13b2 40F20002 		movw	r2, #:lower16:.LC2
+ 1846 13b6 C0F20002 		movt	r2, #:upper16:.LC2
+ 1847 13ba FFF7FEFF 		bl	snprintf
+ 1848 13be 40F20000 		movw	r0, #:lower16:numberString
+ 1849 13c2 C0F20000 		movt	r0, #:upper16:numberString
+ 1850 13c6 FFF7FEFF 		bl	telemetryPrint
+ 265:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[H_PID].D);           telemetryPrint(
+ 1851              		.loc 1 265 0
+ 1852 13ca 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1853 13ce C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1854 13d2 D3F85C32 		ldr	r3, [r3, #604]	@ float
+ 1855 13d6 1846     		mov	r0, r3	@ float
+ 1856 13d8 FFF7FEFF 		bl	__aeabi_f2d
+ 1857 13dc 0246     		mov	r2, r0
+ 1858 13de 0B46     		mov	r3, r1
+ 1859 13e0 CDE90023 		strd	r2, [sp]
+ 1860 13e4 40F20000 		movw	r0, #:lower16:numberString
+ 1861 13e8 C0F20000 		movt	r0, #:upper16:numberString
+ 1862 13ec 4FF01001 		mov	r1, #16
+ 1863 13f0 40F20002 		movw	r2, #:lower16:.LC2
+ 1864 13f4 C0F20002 		movt	r2, #:upper16:.LC2
+ 1865 13f8 FFF7FEFF 		bl	snprintf
+ 1866 13fc 40F20000 		movw	r0, #:lower16:numberString
+ 1867 1400 C0F20000 		movt	r0, #:upper16:numberString
+ 1868 1404 FFF7FEFF 		bl	telemetryPrint
+ 266:../src/rfTelem.c ****         snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[H_PID].windupGuard); telemetryPrint(
+ 1869              		.loc 1 266 0
+ 1870 1408 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1871 140c C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1872 1410 D3F86432 		ldr	r3, [r3, #612]	@ float
+ 1873 1414 1846     		mov	r0, r3	@ float
+ 1874 1416 FFF7FEFF 		bl	__aeabi_f2d
+ 1875 141a 0246     		mov	r2, r0
+ 1876 141c 0B46     		mov	r3, r1
+ 1877 141e CDE90023 		strd	r2, [sp]
+ 1878 1422 40F20000 		movw	r0, #:lower16:numberString
+ 1879 1426 C0F20000 		movt	r0, #:upper16:numberString
+ 1880 142a 4FF01001 		mov	r1, #16
+ 1881 142e 40F20002 		movw	r2, #:lower16:.LC2
+ 1882 1432 C0F20002 		movt	r2, #:upper16:.LC2
+ 1883 1436 FFF7FEFF 		bl	snprintf
+ 1884 143a 40F20000 		movw	r0, #:lower16:numberString
+ 1885 143e C0F20000 		movt	r0, #:upper16:numberString
+ 1886 1442 FFF7FEFF 		bl	telemetryPrint
+ 267:../src/rfTelem.c ****         if  (eepromConfig.PID[H_PID].dErrorCalc)
+ 1887              		.loc 1 267 0
+ 1888 1446 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1889 144a C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1890 144e 93F87432 		ldrb	r3, [r3, #628]	@ zero_extendqisi2
+ 1891 1452 002B     		cmp	r3, #0
+ 1892 1454 06D0     		beq	.L65
+ 268:../src/rfTelem.c ****             telemetryPrint("Error\n");
+ 1893              		.loc 1 268 0
+ 1894 1456 40F20000 		movw	r0, #:lower16:.LC3
+ 1895 145a C0F20000 		movt	r0, #:upper16:.LC3
+ 1896 145e FFF7FEFF 		bl	telemetryPrint
+ 1897 1462 05E0     		b	.L66
+ 1898              	.L65:
+ 269:../src/rfTelem.c ****         else
+ 270:../src/rfTelem.c ****             telemetryPrint("State\n");
+ 1899              		.loc 1 270 0
+ 1900 1464 40F20000 		movw	r0, #:lower16:.LC4
+ 1901 1468 C0F20000 		movt	r0, #:upper16:.LC4
+ 1902 146c FFF7FEFF 		bl	telemetryPrint
+ 1903              	.L66:
+ 271:../src/rfTelem.c **** 
+ 272:../src/rfTelem.c ****         rfQueryType = 'x';
+ 1904              		.loc 1 272 0
+ 1905 1470 40F20003 		movw	r3, #:lower16:rfQueryType
+ 1906 1474 C0F20003 		movt	r3, #:upper16:rfQueryType
+ 1907 1478 4FF07802 		mov	r2, #120
+ 1908 147c 1A70     		strb	r2, [r3, #0]
+ 273:../src/rfTelem.c ****         validRFCommand = false;
+ 1909              		.loc 1 273 0
+ 1910 147e 40F20003 		movw	r3, #:lower16:validRFCommand
+ 1911 1482 C0F20003 		movt	r3, #:upper16:validRFCommand
+ 1912 1486 4FF00002 		mov	r2, #0
+ 1913 148a 1A70     		strb	r2, [r3, #0]
+ 274:../src/rfTelem.c ****         break;
+ 1914              		.loc 1 274 0
+ 1915 148c 4CE2     		b	.L10
+ 1916              	.L14:
+ 275:../src/rfTelem.c **** 
+ 276:../src/rfTelem.c ****         ///////////////////////////////
+ 277:../src/rfTelem.c **** 
+ 278:../src/rfTelem.c ****         case 'x':
+ 279:../src/rfTelem.c ****         	break;
+ 280:../src/rfTelem.c **** 
+ 281:../src/rfTelem.c ****         ///////////////////////////////
+ 282:../src/rfTelem.c **** 
+ 283:../src/rfTelem.c ****         case '1': // Turn high speed telemetry 1 on
+ 284:../src/rfTelem.c ****         	highSpeedTelemDisable();
+ 1917              		.loc 1 284 0
+ 1918 148e FFF7FEFF 		bl	highSpeedTelemDisable
+ 285:../src/rfTelem.c ****           	highSpeedTelem1Enabled = true;
+ 1919              		.loc 1 285 0
+ 1920 1492 40F20003 		movw	r3, #:lower16:highSpeedTelem1Enabled
+ 1921 1496 C0F20003 		movt	r3, #:upper16:highSpeedTelem1Enabled
+ 1922 149a 4FF00102 		mov	r2, #1
+ 1923 149e 1A70     		strb	r2, [r3, #0]
+ 286:../src/rfTelem.c **** 
+ 287:../src/rfTelem.c ****         	rfQueryType = 'x';
+ 1924              		.loc 1 287 0
+ 1925 14a0 40F20003 		movw	r3, #:lower16:rfQueryType
+ 1926 14a4 C0F20003 		movt	r3, #:upper16:rfQueryType
+ 1927 14a8 4FF07802 		mov	r2, #120
+ 1928 14ac 1A70     		strb	r2, [r3, #0]
+ 288:../src/rfTelem.c ****             break;
+ 1929              		.loc 1 288 0
+ 1930 14ae 3BE2     		b	.L10
+ 1931              	.L15:
+ 289:../src/rfTelem.c **** 
+ 290:../src/rfTelem.c ****         ///////////////////////////////
+ 291:../src/rfTelem.c **** 
+ 292:../src/rfTelem.c ****         case '2': // Turn high speed telemetry 2 on
+ 293:../src/rfTelem.c ****            	highSpeedTelemDisable();
+ 1932              		.loc 1 293 0
+ 1933 14b0 FFF7FEFF 		bl	highSpeedTelemDisable
+ 294:../src/rfTelem.c ****            	highSpeedTelem2Enabled = true;
+ 1934              		.loc 1 294 0
+ 1935 14b4 40F20003 		movw	r3, #:lower16:highSpeedTelem2Enabled
+ 1936 14b8 C0F20003 		movt	r3, #:upper16:highSpeedTelem2Enabled
+ 1937 14bc 4FF00102 		mov	r2, #1
+ 1938 14c0 1A70     		strb	r2, [r3, #0]
+ 295:../src/rfTelem.c **** 
+ 296:../src/rfTelem.c ****             rfQueryType = 'x';
+ 1939              		.loc 1 296 0
+ 1940 14c2 40F20003 		movw	r3, #:lower16:rfQueryType
+ 1941 14c6 C0F20003 		movt	r3, #:upper16:rfQueryType
+ 1942 14ca 4FF07802 		mov	r2, #120
+ 1943 14ce 1A70     		strb	r2, [r3, #0]
+ 297:../src/rfTelem.c ****            	break;
+ 1944              		.loc 1 297 0
+ 1945 14d0 2AE2     		b	.L10
+ 1946              	.L16:
+ 298:../src/rfTelem.c **** 
+ 299:../src/rfTelem.c ****         ///////////////////////////////
+ 300:../src/rfTelem.c **** 
+ 301:../src/rfTelem.c ****         case '3': // Turn high speed telemetry 3 on
+ 302:../src/rfTelem.c ****            	highSpeedTelemDisable();
+ 1947              		.loc 1 302 0
+ 1948 14d2 FFF7FEFF 		bl	highSpeedTelemDisable
+ 303:../src/rfTelem.c ****            	highSpeedTelem3Enabled = true;
+ 1949              		.loc 1 303 0
+ 1950 14d6 40F20003 		movw	r3, #:lower16:highSpeedTelem3Enabled
+ 1951 14da C0F20003 		movt	r3, #:upper16:highSpeedTelem3Enabled
+ 1952 14de 4FF00102 		mov	r2, #1
+ 1953 14e2 1A70     		strb	r2, [r3, #0]
+ 304:../src/rfTelem.c **** 
+ 305:../src/rfTelem.c ****             rfQueryType = 'x';
+ 1954              		.loc 1 305 0
+ 1955 14e4 40F20003 		movw	r3, #:lower16:rfQueryType
+ 1956 14e8 C0F20003 		movt	r3, #:upper16:rfQueryType
+ 1957 14ec 4FF07802 		mov	r2, #120
+ 1958 14f0 1A70     		strb	r2, [r3, #0]
+ 306:../src/rfTelem.c ****            	break;
+ 1959              		.loc 1 306 0
+ 1960 14f2 19E2     		b	.L10
+ 1961              	.L17:
+ 307:../src/rfTelem.c **** 
+ 308:../src/rfTelem.c ****         ///////////////////////////////
+ 309:../src/rfTelem.c **** 
+ 310:../src/rfTelem.c ****         case '4': // Turn high speed telemetry 4 on
+ 311:../src/rfTelem.c ****            	highSpeedTelemDisable();
+ 1962              		.loc 1 311 0
+ 1963 14f4 FFF7FEFF 		bl	highSpeedTelemDisable
+ 312:../src/rfTelem.c ****            	highSpeedTelem4Enabled = true;
+ 1964              		.loc 1 312 0
+ 1965 14f8 40F20003 		movw	r3, #:lower16:highSpeedTelem4Enabled
+ 1966 14fc C0F20003 		movt	r3, #:upper16:highSpeedTelem4Enabled
+ 1967 1500 4FF00102 		mov	r2, #1
+ 1968 1504 1A70     		strb	r2, [r3, #0]
+ 313:../src/rfTelem.c **** 
+ 314:../src/rfTelem.c ****             rfQueryType = 'x';
+ 1969              		.loc 1 314 0
+ 1970 1506 40F20003 		movw	r3, #:lower16:rfQueryType
+ 1971 150a C0F20003 		movt	r3, #:upper16:rfQueryType
+ 1972 150e 4FF07802 		mov	r2, #120
+ 1973 1512 1A70     		strb	r2, [r3, #0]
+ 315:../src/rfTelem.c ****            	break;
+ 1974              		.loc 1 315 0
+ 1975 1514 08E2     		b	.L10
+ 1976              	.L18:
+ 316:../src/rfTelem.c **** 
+ 317:../src/rfTelem.c ****         ///////////////////////////////
+ 318:../src/rfTelem.c **** 
+ 319:../src/rfTelem.c ****         case '5': // Turn high speed telemetry 5 on
+ 320:../src/rfTelem.c ****            	highSpeedTelemDisable();
+ 1977              		.loc 1 320 0
+ 1978 1516 FFF7FEFF 		bl	highSpeedTelemDisable
+ 321:../src/rfTelem.c ****            	highSpeedTelem5Enabled = true;
+ 1979              		.loc 1 321 0
+ 1980 151a 40F20003 		movw	r3, #:lower16:highSpeedTelem5Enabled
+ 1981 151e C0F20003 		movt	r3, #:upper16:highSpeedTelem5Enabled
+ 1982 1522 4FF00102 		mov	r2, #1
+ 1983 1526 1A70     		strb	r2, [r3, #0]
+ 322:../src/rfTelem.c **** 
+ 323:../src/rfTelem.c ****             rfQueryType = 'x';
+ 1984              		.loc 1 323 0
+ 1985 1528 40F20003 		movw	r3, #:lower16:rfQueryType
+ 1986 152c C0F20003 		movt	r3, #:upper16:rfQueryType
+ 1987 1530 4FF07802 		mov	r2, #120
+ 1988 1534 1A70     		strb	r2, [r3, #0]
+ 324:../src/rfTelem.c ****            	break;
+ 1989              		.loc 1 324 0
+ 1990 1536 F7E1     		b	.L10
+ 1991              	.L19:
+ 325:../src/rfTelem.c **** 
+ 326:../src/rfTelem.c ****         ///////////////////////////////
+ 327:../src/rfTelem.c **** 
+ 328:../src/rfTelem.c ****         case '6': // Turn high speed telemetry 6 on
+ 329:../src/rfTelem.c ****            	highSpeedTelemDisable();
+ 1992              		.loc 1 329 0
+ 1993 1538 FFF7FEFF 		bl	highSpeedTelemDisable
+ 330:../src/rfTelem.c ****            	highSpeedTelem6Enabled = true;
+ 1994              		.loc 1 330 0
+ 1995 153c 40F20003 		movw	r3, #:lower16:highSpeedTelem6Enabled
+ 1996 1540 C0F20003 		movt	r3, #:upper16:highSpeedTelem6Enabled
+ 1997 1544 4FF00102 		mov	r2, #1
+ 1998 1548 1A70     		strb	r2, [r3, #0]
+ 331:../src/rfTelem.c **** 
+ 332:../src/rfTelem.c ****             rfQueryType = 'x';
+ 1999              		.loc 1 332 0
+ 2000 154a 40F20003 		movw	r3, #:lower16:rfQueryType
+ 2001 154e C0F20003 		movt	r3, #:upper16:rfQueryType
+ 2002 1552 4FF07802 		mov	r2, #120
+ 2003 1556 1A70     		strb	r2, [r3, #0]
+ 333:../src/rfTelem.c ****            	break;
+ 2004              		.loc 1 333 0
+ 2005 1558 E6E1     		b	.L10
+ 2006              	.L20:
+ 334:../src/rfTelem.c **** 
+ 335:../src/rfTelem.c ****         ///////////////////////////////
+ 336:../src/rfTelem.c **** 
+ 337:../src/rfTelem.c ****         case '7': // Turn high speed telemetry 7 on
+ 338:../src/rfTelem.c ****            	highSpeedTelemDisable();
+ 2007              		.loc 1 338 0
+ 2008 155a FFF7FEFF 		bl	highSpeedTelemDisable
+ 339:../src/rfTelem.c ****            	highSpeedTelem7Enabled = true;
+ 2009              		.loc 1 339 0
+ 2010 155e 40F20003 		movw	r3, #:lower16:highSpeedTelem7Enabled
+ 2011 1562 C0F20003 		movt	r3, #:upper16:highSpeedTelem7Enabled
+ 2012 1566 4FF00102 		mov	r2, #1
+ 2013 156a 1A70     		strb	r2, [r3, #0]
+ 340:../src/rfTelem.c **** 
+ 341:../src/rfTelem.c ****             rfQueryType = 'x';
+ 2014              		.loc 1 341 0
+ 2015 156c 40F20003 		movw	r3, #:lower16:rfQueryType
+ 2016 1570 C0F20003 		movt	r3, #:upper16:rfQueryType
+ 2017 1574 4FF07802 		mov	r2, #120
+ 2018 1578 1A70     		strb	r2, [r3, #0]
+ 342:../src/rfTelem.c ****            	break;
+ 2019              		.loc 1 342 0
+ 2020 157a D5E1     		b	.L10
+ 2021              	.L21:
+ 343:../src/rfTelem.c **** 
+ 344:../src/rfTelem.c ****         ///////////////////////////////
+ 345:../src/rfTelem.c **** 
+ 346:../src/rfTelem.c ****         case '8': // Turn high speed telemetry 8 on
+ 347:../src/rfTelem.c ****            	highSpeedTelemDisable();
+ 2022              		.loc 1 347 0
+ 2023 157c FFF7FEFF 		bl	highSpeedTelemDisable
+ 348:../src/rfTelem.c ****            	highSpeedTelem8Enabled = true;
+ 2024              		.loc 1 348 0
+ 2025 1580 40F20003 		movw	r3, #:lower16:highSpeedTelem8Enabled
+ 2026 1584 C0F20003 		movt	r3, #:upper16:highSpeedTelem8Enabled
+ 2027 1588 4FF00102 		mov	r2, #1
+ 2028 158c 1A70     		strb	r2, [r3, #0]
+ 349:../src/rfTelem.c **** 
+ 350:../src/rfTelem.c ****             rfQueryType = 'x';
+ 2029              		.loc 1 350 0
+ 2030 158e 40F20003 		movw	r3, #:lower16:rfQueryType
+ 2031 1592 C0F20003 		movt	r3, #:upper16:rfQueryType
+ 2032 1596 4FF07802 		mov	r2, #120
+ 2033 159a 1A70     		strb	r2, [r3, #0]
+ 351:../src/rfTelem.c ****            	break;
+ 2034              		.loc 1 351 0
+ 2035 159c C4E1     		b	.L10
+ 2036              	.L22:
+ 352:../src/rfTelem.c **** 
+ 353:../src/rfTelem.c ****         ///////////////////////////////
+ 354:../src/rfTelem.c **** 
+ 355:../src/rfTelem.c ****         case '9': // Turn high speed telemetry 9 on
+ 356:../src/rfTelem.c ****            	highSpeedTelemDisable();
+ 2037              		.loc 1 356 0
+ 2038 159e FFF7FEFF 		bl	highSpeedTelemDisable
+ 357:../src/rfTelem.c ****            	highSpeedTelem9Enabled = true;
+ 2039              		.loc 1 357 0
+ 2040 15a2 40F20003 		movw	r3, #:lower16:highSpeedTelem9Enabled
+ 2041 15a6 C0F20003 		movt	r3, #:upper16:highSpeedTelem9Enabled
+ 2042 15aa 4FF00102 		mov	r2, #1
+ 2043 15ae 1A70     		strb	r2, [r3, #0]
+ 358:../src/rfTelem.c **** 
+ 359:../src/rfTelem.c ****             rfQueryType = 'x';
+ 2044              		.loc 1 359 0
+ 2045 15b0 40F20003 		movw	r3, #:lower16:rfQueryType
+ 2046 15b4 C0F20003 		movt	r3, #:upper16:rfQueryType
+ 2047 15b8 4FF07802 		mov	r2, #120
+ 2048 15bc 1A70     		strb	r2, [r3, #0]
+ 360:../src/rfTelem.c ****            	break;
+ 2049              		.loc 1 360 0
+ 2050 15be B3E1     		b	.L10
+ 2051              	.L13:
+ 361:../src/rfTelem.c **** 
+ 362:../src/rfTelem.c ****         ///////////////////////////////
+ 363:../src/rfTelem.c **** 
+ 364:../src/rfTelem.c ****         case '0': // Disable high speed telemetry 0
+ 365:../src/rfTelem.c ****            	highSpeedTelemDisable();
+ 2052              		.loc 1 365 0
+ 2053 15c0 FFF7FEFF 		bl	highSpeedTelemDisable
+ 366:../src/rfTelem.c **** 
+ 367:../src/rfTelem.c ****             rfQueryType = 'x';
+ 2054              		.loc 1 367 0
+ 2055 15c4 40F20003 		movw	r3, #:lower16:rfQueryType
+ 2056 15c8 C0F20003 		movt	r3, #:upper16:rfQueryType
+ 2057 15cc 4FF07802 		mov	r2, #120
+ 2058 15d0 1A70     		strb	r2, [r3, #0]
+ 368:../src/rfTelem.c ****            	break;
+ 2059              		.loc 1 368 0
+ 2060 15d2 A9E1     		b	.L10
+ 2061              	.L24:
+ 369:../src/rfTelem.c **** 
+ 370:../src/rfTelem.c ****         ///////////////////////////////
+ 371:../src/rfTelem.c **** 
+ 372:../src/rfTelem.c ****         ///////////////////////////////////////////////////////////////////////
+ 373:../src/rfTelem.c ****         ///////////////////////////////////////////////////////////////////////
+ 374:../src/rfTelem.c ****         ///////////////////////////////////////////////////////////////////////
+ 375:../src/rfTelem.c ****         ///////////////////////////////////////////////////////////////////////
+ 376:../src/rfTelem.c **** 
+ 377:../src/rfTelem.c ****         ///////////////////////////////
+ 378:../src/rfTelem.c **** 
+ 379:../src/rfTelem.c ****         case 'A': // Read Roll Rate PID Values
+ 380:../src/rfTelem.c ****             readRFPID(ROLL_RATE_PID);
+ 2062              		.loc 1 380 0
+ 2063 15d4 4FF00000 		mov	r0, #0
+ 2064 15d8 FFF7FEFF 		bl	readRFPID
+ 381:../src/rfTelem.c ****             telemetryPrint( "\nRoll Rate PID Received....\n" );
+ 2065              		.loc 1 381 0
+ 2066 15dc 40F20000 		movw	r0, #:lower16:.LC16
+ 2067 15e0 C0F20000 		movt	r0, #:upper16:.LC16
+ 2068 15e4 FFF7FEFF 		bl	telemetryPrint
+ 382:../src/rfTelem.c **** 
+ 383:../src/rfTelem.c ****         	rfQueryType = 'a';
+ 2069              		.loc 1 383 0
+ 2070 15e8 40F20003 		movw	r3, #:lower16:rfQueryType
+ 2071 15ec C0F20003 		movt	r3, #:upper16:rfQueryType
+ 2072 15f0 4FF06102 		mov	r2, #97
+ 2073 15f4 1A70     		strb	r2, [r3, #0]
+ 384:../src/rfTelem.c ****         	validRFCommand = true;
+ 2074              		.loc 1 384 0
+ 2075 15f6 40F20003 		movw	r3, #:lower16:validRFCommand
+ 2076 15fa C0F20003 		movt	r3, #:upper16:validRFCommand
+ 2077 15fe 4FF00102 		mov	r2, #1
+ 2078 1602 1A70     		strb	r2, [r3, #0]
+ 385:../src/rfTelem.c ****         	break;
+ 2079              		.loc 1 385 0
+ 2080 1604 90E1     		b	.L10
+ 2081              	.L25:
+ 386:../src/rfTelem.c **** 
+ 387:../src/rfTelem.c ****         ///////////////////////////////
+ 388:../src/rfTelem.c **** 
+ 389:../src/rfTelem.c ****         case 'B': // Read Pitch Rate PID Values
+ 390:../src/rfTelem.c ****             readRFPID(PITCH_RATE_PID);
+ 2082              		.loc 1 390 0
+ 2083 1606 4FF00100 		mov	r0, #1
+ 2084 160a FFF7FEFF 		bl	readRFPID
+ 391:../src/rfTelem.c ****             telemetryPrint( "\nPitch Rate PID Received....\n" );
+ 2085              		.loc 1 391 0
+ 2086 160e 40F20000 		movw	r0, #:lower16:.LC17
+ 2087 1612 C0F20000 		movt	r0, #:upper16:.LC17
+ 2088 1616 FFF7FEFF 		bl	telemetryPrint
+ 392:../src/rfTelem.c **** 
+ 393:../src/rfTelem.c ****         	rfQueryType = 'a';
+ 2089              		.loc 1 393 0
+ 2090 161a 40F20003 		movw	r3, #:lower16:rfQueryType
+ 2091 161e C0F20003 		movt	r3, #:upper16:rfQueryType
+ 2092 1622 4FF06102 		mov	r2, #97
+ 2093 1626 1A70     		strb	r2, [r3, #0]
+ 394:../src/rfTelem.c ****         	validRFCommand = true;
+ 2094              		.loc 1 394 0
+ 2095 1628 40F20003 		movw	r3, #:lower16:validRFCommand
+ 2096 162c C0F20003 		movt	r3, #:upper16:validRFCommand
+ 2097 1630 4FF00102 		mov	r2, #1
+ 2098 1634 1A70     		strb	r2, [r3, #0]
+ 395:../src/rfTelem.c ****         	break;
+ 2099              		.loc 1 395 0
+ 2100 1636 77E1     		b	.L10
+ 2101              	.L26:
+ 396:../src/rfTelem.c **** 
+ 397:../src/rfTelem.c ****         ///////////////////////////////
+ 398:../src/rfTelem.c **** 
+ 399:../src/rfTelem.c ****         case 'C': // Read Yaw Rate PID Values
+ 400:../src/rfTelem.c ****             readRFPID(YAW_RATE_PID);
+ 2102              		.loc 1 400 0
+ 2103 1638 4FF00200 		mov	r0, #2
+ 2104 163c FFF7FEFF 		bl	readRFPID
+ 401:../src/rfTelem.c ****             telemetryPrint( "\nYaw Rate PID Received....\n" );
+ 2105              		.loc 1 401 0
+ 2106 1640 40F20000 		movw	r0, #:lower16:.LC18
+ 2107 1644 C0F20000 		movt	r0, #:upper16:.LC18
+ 2108 1648 FFF7FEFF 		bl	telemetryPrint
+ 402:../src/rfTelem.c **** 
+ 403:../src/rfTelem.c ****         	rfQueryType = 'a';
+ 2109              		.loc 1 403 0
+ 2110 164c 40F20003 		movw	r3, #:lower16:rfQueryType
+ 2111 1650 C0F20003 		movt	r3, #:upper16:rfQueryType
+ 2112 1654 4FF06102 		mov	r2, #97
+ 2113 1658 1A70     		strb	r2, [r3, #0]
+ 404:../src/rfTelem.c ****         	validRFCommand = true;
+ 2114              		.loc 1 404 0
+ 2115 165a 40F20003 		movw	r3, #:lower16:validRFCommand
+ 2116 165e C0F20003 		movt	r3, #:upper16:validRFCommand
+ 2117 1662 4FF00102 		mov	r2, #1
+ 2118 1666 1A70     		strb	r2, [r3, #0]
+ 405:../src/rfTelem.c ****         	break;
+ 2119              		.loc 1 405 0
+ 2120 1668 5EE1     		b	.L10
+ 2121              	.L27:
+ 406:../src/rfTelem.c **** 
+ 407:../src/rfTelem.c ****         ///////////////////////////////
+ 408:../src/rfTelem.c **** 
+ 409:../src/rfTelem.c ****         case 'D': // Read Roll Attitude PID Values
+ 410:../src/rfTelem.c ****             readRFPID(ROLL_ATT_PID);
+ 2122              		.loc 1 410 0
+ 2123 166a 4FF00300 		mov	r0, #3
+ 2124 166e FFF7FEFF 		bl	readRFPID
+ 411:../src/rfTelem.c ****             telemetryPrint( "\nRoll Attitude PID Received....\n" );
+ 2125              		.loc 1 411 0
+ 2126 1672 40F20000 		movw	r0, #:lower16:.LC19
+ 2127 1676 C0F20000 		movt	r0, #:upper16:.LC19
+ 2128 167a FFF7FEFF 		bl	telemetryPrint
+ 412:../src/rfTelem.c **** 
+ 413:../src/rfTelem.c ****         	rfQueryType = 'b';
+ 2129              		.loc 1 413 0
+ 2130 167e 40F20003 		movw	r3, #:lower16:rfQueryType
+ 2131 1682 C0F20003 		movt	r3, #:upper16:rfQueryType
+ 2132 1686 4FF06202 		mov	r2, #98
+ 2133 168a 1A70     		strb	r2, [r3, #0]
+ 414:../src/rfTelem.c ****         	validRFCommand = true;
+ 2134              		.loc 1 414 0
+ 2135 168c 40F20003 		movw	r3, #:lower16:validRFCommand
+ 2136 1690 C0F20003 		movt	r3, #:upper16:validRFCommand
+ 2137 1694 4FF00102 		mov	r2, #1
+ 2138 1698 1A70     		strb	r2, [r3, #0]
+ 415:../src/rfTelem.c ****         	break;
+ 2139              		.loc 1 415 0
+ 2140 169a 45E1     		b	.L10
+ 2141              	.L28:
+ 416:../src/rfTelem.c **** 
+ 417:../src/rfTelem.c ****         ///////////////////////////////
+ 418:../src/rfTelem.c **** 
+ 419:../src/rfTelem.c ****         case 'E': // Read Pitch Attitude PID Values
+ 420:../src/rfTelem.c ****             readRFPID(PITCH_ATT_PID);
+ 2142              		.loc 1 420 0
+ 2143 169c 4FF00400 		mov	r0, #4
+ 2144 16a0 FFF7FEFF 		bl	readRFPID
+ 421:../src/rfTelem.c ****             telemetryPrint( "\nPitch Attitude PID Received....\n" );
+ 2145              		.loc 1 421 0
+ 2146 16a4 40F20000 		movw	r0, #:lower16:.LC20
+ 2147 16a8 C0F20000 		movt	r0, #:upper16:.LC20
+ 2148 16ac FFF7FEFF 		bl	telemetryPrint
+ 422:../src/rfTelem.c **** 
+ 423:../src/rfTelem.c ****         	rfQueryType = 'b';
+ 2149              		.loc 1 423 0
+ 2150 16b0 40F20003 		movw	r3, #:lower16:rfQueryType
+ 2151 16b4 C0F20003 		movt	r3, #:upper16:rfQueryType
+ 2152 16b8 4FF06202 		mov	r2, #98
+ 2153 16bc 1A70     		strb	r2, [r3, #0]
+ 424:../src/rfTelem.c ****         	validRFCommand = true;
+ 2154              		.loc 1 424 0
+ 2155 16be 40F20003 		movw	r3, #:lower16:validRFCommand
+ 2156 16c2 C0F20003 		movt	r3, #:upper16:validRFCommand
+ 2157 16c6 4FF00102 		mov	r2, #1
+ 2158 16ca 1A70     		strb	r2, [r3, #0]
+ 425:../src/rfTelem.c ****         	break;
+ 2159              		.loc 1 425 0
+ 2160 16cc 2CE1     		b	.L10
+ 2161              	.L29:
+ 426:../src/rfTelem.c **** 
+ 427:../src/rfTelem.c ****         ///////////////////////////////
+ 428:../src/rfTelem.c **** 
+ 429:../src/rfTelem.c ****         case 'F': // Read Heading Hold PID Values
+ 430:../src/rfTelem.c ****             readRFPID(HEADING_PID);
+ 2162              		.loc 1 430 0
+ 2163 16ce 4FF00500 		mov	r0, #5
+ 2164 16d2 FFF7FEFF 		bl	readRFPID
+ 431:../src/rfTelem.c ****             telemetryPrint( "\nHeading PID Received....\n" );
+ 2165              		.loc 1 431 0
+ 2166 16d6 40F20000 		movw	r0, #:lower16:.LC21
+ 2167 16da C0F20000 		movt	r0, #:upper16:.LC21
+ 2168 16de FFF7FEFF 		bl	telemetryPrint
+ 432:../src/rfTelem.c **** 
+ 433:../src/rfTelem.c ****         	rfQueryType = 'b';
+ 2169              		.loc 1 433 0
+ 2170 16e2 40F20003 		movw	r3, #:lower16:rfQueryType
+ 2171 16e6 C0F20003 		movt	r3, #:upper16:rfQueryType
+ 2172 16ea 4FF06202 		mov	r2, #98
+ 2173 16ee 1A70     		strb	r2, [r3, #0]
+ 434:../src/rfTelem.c ****         	validRFCommand = true;
+ 2174              		.loc 1 434 0
+ 2175 16f0 40F20003 		movw	r3, #:lower16:validRFCommand
+ 2176 16f4 C0F20003 		movt	r3, #:upper16:validRFCommand
+ 2177 16f8 4FF00102 		mov	r2, #1
+ 2178 16fc 1A70     		strb	r2, [r3, #0]
+ 435:../src/rfTelem.c ****         	break;
+ 2179              		.loc 1 435 0
+ 2180 16fe 13E1     		b	.L10
+ 2181              	.L30:
+ 436:../src/rfTelem.c **** 
+ 437:../src/rfTelem.c ****         ///////////////////////////////
+ 438:../src/rfTelem.c **** 
+ 439:../src/rfTelem.c ****         case 'G': // Read nDot PID Values
+ 440:../src/rfTelem.c ****             readRFPID(NDOT_PID);
+ 2182              		.loc 1 440 0
+ 2183 1700 4FF00600 		mov	r0, #6
+ 2184 1704 FFF7FEFF 		bl	readRFPID
+ 441:../src/rfTelem.c ****             telemetryPrint( "\nnDot PID Received....\n" );
+ 2185              		.loc 1 441 0
+ 2186 1708 40F20000 		movw	r0, #:lower16:.LC22
+ 2187 170c C0F20000 		movt	r0, #:upper16:.LC22
+ 2188 1710 FFF7FEFF 		bl	telemetryPrint
+ 442:../src/rfTelem.c **** 
+ 443:../src/rfTelem.c ****         	rfQueryType = 'c';
+ 2189              		.loc 1 443 0
+ 2190 1714 40F20003 		movw	r3, #:lower16:rfQueryType
+ 2191 1718 C0F20003 		movt	r3, #:upper16:rfQueryType
+ 2192 171c 4FF06302 		mov	r2, #99
+ 2193 1720 1A70     		strb	r2, [r3, #0]
+ 444:../src/rfTelem.c ****         	validRFCommand = true;
+ 2194              		.loc 1 444 0
+ 2195 1722 40F20003 		movw	r3, #:lower16:validRFCommand
+ 2196 1726 C0F20003 		movt	r3, #:upper16:validRFCommand
+ 2197 172a 4FF00102 		mov	r2, #1
+ 2198 172e 1A70     		strb	r2, [r3, #0]
+ 445:../src/rfTelem.c ****         	break;
+ 2199              		.loc 1 445 0
+ 2200 1730 FAE0     		b	.L10
+ 2201              	.L31:
+ 446:../src/rfTelem.c **** 
+ 447:../src/rfTelem.c ****         ///////////////////////////////
+ 448:../src/rfTelem.c **** 
+ 449:../src/rfTelem.c ****         case 'H': // Read eDot PID Values
+ 450:../src/rfTelem.c ****             readRFPID(EDOT_PID);
+ 2202              		.loc 1 450 0
+ 2203 1732 4FF00700 		mov	r0, #7
+ 2204 1736 FFF7FEFF 		bl	readRFPID
+ 451:../src/rfTelem.c ****             telemetryPrint( "\neDot PID Received....\n" );
+ 2205              		.loc 1 451 0
+ 2206 173a 40F20000 		movw	r0, #:lower16:.LC23
+ 2207 173e C0F20000 		movt	r0, #:upper16:.LC23
+ 2208 1742 FFF7FEFF 		bl	telemetryPrint
+ 452:../src/rfTelem.c **** 
+ 453:../src/rfTelem.c ****             rfQueryType = 'c';
+ 2209              		.loc 1 453 0
+ 2210 1746 40F20003 		movw	r3, #:lower16:rfQueryType
+ 2211 174a C0F20003 		movt	r3, #:upper16:rfQueryType
+ 2212 174e 4FF06302 		mov	r2, #99
+ 2213 1752 1A70     		strb	r2, [r3, #0]
+ 454:../src/rfTelem.c ****             validRFCommand = true;
+ 2214              		.loc 1 454 0
+ 2215 1754 40F20003 		movw	r3, #:lower16:validRFCommand
+ 2216 1758 C0F20003 		movt	r3, #:upper16:validRFCommand
+ 2217 175c 4FF00102 		mov	r2, #1
+ 2218 1760 1A70     		strb	r2, [r3, #0]
+ 455:../src/rfTelem.c ****             break;
+ 2219              		.loc 1 455 0
+ 2220 1762 E1E0     		b	.L10
+ 2221              	.L32:
+ 456:../src/rfTelem.c **** 
+ 457:../src/rfTelem.c ****         ///////////////////////////////
+ 458:../src/rfTelem.c **** 
+ 459:../src/rfTelem.c ****         case 'I': // Read hDot PID Values
+ 460:../src/rfTelem.c ****             readRFPID(HDOT_PID);
+ 2222              		.loc 1 460 0
+ 2223 1764 4FF00800 		mov	r0, #8
+ 2224 1768 FFF7FEFF 		bl	readRFPID
+ 461:../src/rfTelem.c ****             telemetryPrint( "\nhDot PID Received....\n" );
+ 2225              		.loc 1 461 0
+ 2226 176c 40F20000 		movw	r0, #:lower16:.LC24
+ 2227 1770 C0F20000 		movt	r0, #:upper16:.LC24
+ 2228 1774 FFF7FEFF 		bl	telemetryPrint
+ 462:../src/rfTelem.c **** 
+ 463:../src/rfTelem.c ****           	rfQueryType = 'c';
+ 2229              		.loc 1 463 0
+ 2230 1778 40F20003 		movw	r3, #:lower16:rfQueryType
+ 2231 177c C0F20003 		movt	r3, #:upper16:rfQueryType
+ 2232 1780 4FF06302 		mov	r2, #99
+ 2233 1784 1A70     		strb	r2, [r3, #0]
+ 464:../src/rfTelem.c ****           	validRFCommand = true;
+ 2234              		.loc 1 464 0
+ 2235 1786 40F20003 		movw	r3, #:lower16:validRFCommand
+ 2236 178a C0F20003 		movt	r3, #:upper16:validRFCommand
+ 2237 178e 4FF00102 		mov	r2, #1
+ 2238 1792 1A70     		strb	r2, [r3, #0]
+ 465:../src/rfTelem.c ****           	break;
+ 2239              		.loc 1 465 0
+ 2240 1794 C8E0     		b	.L10
+ 2241              	.L33:
+ 466:../src/rfTelem.c **** 
+ 467:../src/rfTelem.c ****        	///////////////////////////////
+ 468:../src/rfTelem.c **** 
+ 469:../src/rfTelem.c ****         case 'J': // Read n PID Values
+ 470:../src/rfTelem.c ****             readRFPID(N_PID);
+ 2242              		.loc 1 470 0
+ 2243 1796 4FF00900 		mov	r0, #9
+ 2244 179a FFF7FEFF 		bl	readRFPID
+ 471:../src/rfTelem.c ****             telemetryPrint( "\nn PID Received....\n" );
+ 2245              		.loc 1 471 0
+ 2246 179e 40F20000 		movw	r0, #:lower16:.LC25
+ 2247 17a2 C0F20000 		movt	r0, #:upper16:.LC25
+ 2248 17a6 FFF7FEFF 		bl	telemetryPrint
+ 472:../src/rfTelem.c **** 
+ 473:../src/rfTelem.c ****             rfQueryType = 'd';
+ 2249              		.loc 1 473 0
+ 2250 17aa 40F20003 		movw	r3, #:lower16:rfQueryType
+ 2251 17ae C0F20003 		movt	r3, #:upper16:rfQueryType
+ 2252 17b2 4FF06402 		mov	r2, #100
+ 2253 17b6 1A70     		strb	r2, [r3, #0]
+ 474:../src/rfTelem.c ****             validRFCommand = true;
+ 2254              		.loc 1 474 0
+ 2255 17b8 40F20003 		movw	r3, #:lower16:validRFCommand
+ 2256 17bc C0F20003 		movt	r3, #:upper16:validRFCommand
+ 2257 17c0 4FF00102 		mov	r2, #1
+ 2258 17c4 1A70     		strb	r2, [r3, #0]
+ 475:../src/rfTelem.c ****             break;
+ 2259              		.loc 1 475 0
+ 2260 17c6 AFE0     		b	.L10
+ 2261              	.L34:
+ 476:../src/rfTelem.c **** 
+ 477:../src/rfTelem.c ****         ///////////////////////////////
+ 478:../src/rfTelem.c **** 
+ 479:../src/rfTelem.c ****         case 'K': // Read e PID Values
+ 480:../src/rfTelem.c ****             readRFPID(E_PID);
+ 2262              		.loc 1 480 0
+ 2263 17c8 4FF00A00 		mov	r0, #10
+ 2264 17cc FFF7FEFF 		bl	readRFPID
+ 481:../src/rfTelem.c ****             telemetryPrint( "\ne PID Received....\n" );
+ 2265              		.loc 1 481 0
+ 2266 17d0 40F20000 		movw	r0, #:lower16:.LC26
+ 2267 17d4 C0F20000 		movt	r0, #:upper16:.LC26
+ 2268 17d8 FFF7FEFF 		bl	telemetryPrint
+ 482:../src/rfTelem.c **** 
+ 483:../src/rfTelem.c ****             rfQueryType = 'd';
+ 2269              		.loc 1 483 0
+ 2270 17dc 40F20003 		movw	r3, #:lower16:rfQueryType
+ 2271 17e0 C0F20003 		movt	r3, #:upper16:rfQueryType
+ 2272 17e4 4FF06402 		mov	r2, #100
+ 2273 17e8 1A70     		strb	r2, [r3, #0]
+ 484:../src/rfTelem.c ****             validRFCommand = true;
+ 2274              		.loc 1 484 0
+ 2275 17ea 40F20003 		movw	r3, #:lower16:validRFCommand
+ 2276 17ee C0F20003 		movt	r3, #:upper16:validRFCommand
+ 2277 17f2 4FF00102 		mov	r2, #1
+ 2278 17f6 1A70     		strb	r2, [r3, #0]
+ 485:../src/rfTelem.c ****             break;
+ 2279              		.loc 1 485 0
+ 2280 17f8 96E0     		b	.L10
+ 2281              	.L35:
+ 486:../src/rfTelem.c **** 
+ 487:../src/rfTelem.c ****         ///////////////////////////////
+ 488:../src/rfTelem.c **** 
+ 489:../src/rfTelem.c ****         case 'L': // Read h PID Values
+ 490:../src/rfTelem.c ****             readRFPID(H_PID);
+ 2282              		.loc 1 490 0
+ 2283 17fa 4FF00B00 		mov	r0, #11
+ 2284 17fe FFF7FEFF 		bl	readRFPID
+ 491:../src/rfTelem.c ****             telemetryPrint( "\nh PID Received....\n" );
+ 2285              		.loc 1 491 0
+ 2286 1802 40F20000 		movw	r0, #:lower16:.LC27
+ 2287 1806 C0F20000 		movt	r0, #:upper16:.LC27
+ 2288 180a FFF7FEFF 		bl	telemetryPrint
+ 492:../src/rfTelem.c **** 
+ 493:../src/rfTelem.c ****             rfQueryType = 'd';
+ 2289              		.loc 1 493 0
+ 2290 180e 40F20003 		movw	r3, #:lower16:rfQueryType
+ 2291 1812 C0F20003 		movt	r3, #:upper16:rfQueryType
+ 2292 1816 4FF06402 		mov	r2, #100
+ 2293 181a 1A70     		strb	r2, [r3, #0]
+ 494:../src/rfTelem.c ****             validRFCommand = true;
+ 2294              		.loc 1 494 0
+ 2295 181c 40F20003 		movw	r3, #:lower16:validRFCommand
+ 2296 1820 C0F20003 		movt	r3, #:upper16:validRFCommand
+ 2297 1824 4FF00102 		mov	r2, #1
+ 2298 1828 1A70     		strb	r2, [r3, #0]
+ 495:../src/rfTelem.c ****             break;
+ 2299              		.loc 1 495 0
+ 2300 182a 7DE0     		b	.L10
+ 2301              	.L36:
+ 496:../src/rfTelem.c **** 
+ 497:../src/rfTelem.c ****         ///////////////////////////////
+ 498:../src/rfTelem.c **** 
+ 499:../src/rfTelem.c ****         case 'W': // Write EEPROM Parameters
+ 500:../src/rfTelem.c ****             telemetryPrint("\nWriting EEPROM Parameters....\n");
+ 2302              		.loc 1 500 0
+ 2303 182c 40F20000 		movw	r0, #:lower16:.LC28
+ 2304 1830 C0F20000 		movt	r0, #:upper16:.LC28
+ 2305 1834 FFF7FEFF 		bl	telemetryPrint
+ 501:../src/rfTelem.c ****             writeEEPROM();
+ 2306              		.loc 1 501 0
+ 2307 1838 FFF7FEFF 		bl	writeEEPROM
+ 502:../src/rfTelem.c **** 
+ 503:../src/rfTelem.c ****             rfQueryType = 'x';
+ 2308              		.loc 1 503 0
+ 2309 183c 40F20003 		movw	r3, #:lower16:rfQueryType
+ 2310 1840 C0F20003 		movt	r3, #:upper16:rfQueryType
+ 2311 1844 4FF07802 		mov	r2, #120
+ 2312 1848 1A70     		strb	r2, [r3, #0]
+ 504:../src/rfTelem.c ****          	break;
+ 2313              		.loc 1 504 0
+ 2314 184a 6DE0     		b	.L10
+ 2315              	.L23:
+ 505:../src/rfTelem.c **** 
+ 506:../src/rfTelem.c ****         ///////////////////////////////
+ 507:../src/rfTelem.c **** 
+ 508:../src/rfTelem.c ****         case '?': // Command Summary
+ 509:../src/rfTelem.c **** 
+ 510:../src/rfTelem.c ****         	telemetryPrint("\n");
+ 2316              		.loc 1 510 0
+ 2317 184c 40F20000 		movw	r0, #:lower16:.LC0
+ 2318 1850 C0F20000 		movt	r0, #:upper16:.LC0
+ 2319 1854 FFF7FEFF 		bl	telemetryPrint
+ 511:../src/rfTelem.c ****         	telemetryPrint("'a' Rate PIDs                              'A' Set Roll Rate PID Data   AB
+ 2320              		.loc 1 511 0
+ 2321 1858 40F20000 		movw	r0, #:lower16:.LC29
+ 2322 185c C0F20000 		movt	r0, #:upper16:.LC29
+ 2323 1860 FFF7FEFF 		bl	telemetryPrint
+ 512:../src/rfTelem.c ****    		    telemetryPrint("'b' Attitude PIDs                          'B' Set Pitch Rate PID Data  BB
+ 2324              		.loc 1 512 0
+ 2325 1864 40F20000 		movw	r0, #:lower16:.LC30
+ 2326 1868 C0F20000 		movt	r0, #:upper16:.LC30
+ 2327 186c FFF7FEFF 		bl	telemetryPrint
+ 513:../src/rfTelem.c ****    		    telemetryPrint("'c' Velocity PIDs                          'C' Set Yaw Rate PID Data    CB
+ 2328              		.loc 1 513 0
+ 2329 1870 40F20000 		movw	r0, #:lower16:.LC31
+ 2330 1874 C0F20000 		movt	r0, #:upper16:.LC31
+ 2331 1878 FFF7FEFF 		bl	telemetryPrint
+ 514:../src/rfTelem.c ****    		    telemetryPrint("'d' Position PIDs                          'D' Set Roll Att PID Data    DB
+ 2332              		.loc 1 514 0
+ 2333 187c 40F20000 		movw	r0, #:lower16:.LC32
+ 2334 1880 C0F20000 		movt	r0, #:upper16:.LC32
+ 2335 1884 FFF7FEFF 		bl	telemetryPrint
+ 515:../src/rfTelem.c ****    		    telemetryPrint("'x' Terminate Serial Communication         'E' Set Pitch Att PID Data   EB
+ 2336              		.loc 1 515 0
+ 2337 1888 40F20000 		movw	r0, #:lower16:.LC33
+ 2338 188c C0F20000 		movt	r0, #:upper16:.LC33
+ 2339 1890 FFF7FEFF 		bl	telemetryPrint
+ 516:../src/rfTelem.c ****    		    telemetryPrint("'1' High Speed Telemetry 1 Enable          'F' Set Hdg Hold PID Data    FB
+ 2340              		.loc 1 516 0
+ 2341 1894 40F20000 		movw	r0, #:lower16:.LC34
+ 2342 1898 C0F20000 		movt	r0, #:upper16:.LC34
+ 2343 189c FFF7FEFF 		bl	telemetryPrint
+ 517:../src/rfTelem.c ****    		    telemetryPrint("'2' High Speed Telemetry 2 Enable          'G' Set nDot PID Data        GB
+ 2344              		.loc 1 517 0
+ 2345 18a0 40F20000 		movw	r0, #:lower16:.LC35
+ 2346 18a4 C0F20000 		movt	r0, #:upper16:.LC35
+ 2347 18a8 FFF7FEFF 		bl	telemetryPrint
+ 518:../src/rfTelem.c ****    		    telemetryPrint("'3' High Speed Telemetry 3 Enable          'H' Set eDot PID Data        HB
+ 2348              		.loc 1 518 0
+ 2349 18ac 40F20000 		movw	r0, #:lower16:.LC36
+ 2350 18b0 C0F20000 		movt	r0, #:upper16:.LC36
+ 2351 18b4 FFF7FEFF 		bl	telemetryPrint
+ 519:../src/rfTelem.c ****    		    telemetryPrint("'4' High Speed Telemetry 4 Enable          'I' Set hDot PID Data        IB
+ 2352              		.loc 1 519 0
+ 2353 18b8 40F20000 		movw	r0, #:lower16:.LC37
+ 2354 18bc C0F20000 		movt	r0, #:upper16:.LC37
+ 2355 18c0 FFF7FEFF 		bl	telemetryPrint
+ 520:../src/rfTelem.c ****    		    telemetryPrint("'5' High Speed Telemetry 5 Enable          'J' Set n PID Data           JB
+ 2356              		.loc 1 520 0
+ 2357 18c4 40F20000 		movw	r0, #:lower16:.LC38
+ 2358 18c8 C0F20000 		movt	r0, #:upper16:.LC38
+ 2359 18cc FFF7FEFF 		bl	telemetryPrint
+ 521:../src/rfTelem.c ****    		    telemetryPrint("'6' High Speed Telemetry 6 Enable          'K' Set e PID Data           KB
+ 2360              		.loc 1 521 0
+ 2361 18d0 40F20000 		movw	r0, #:lower16:.LC39
+ 2362 18d4 C0F20000 		movt	r0, #:upper16:.LC39
+ 2363 18d8 FFF7FEFF 		bl	telemetryPrint
+ 522:../src/rfTelem.c ****    		    telemetryPrint("'7' High Speed Telemetry 7 Enable          'L' Set h PID Data           LB
+ 2364              		.loc 1 522 0
+ 2365 18dc 40F20000 		movw	r0, #:lower16:.LC40
+ 2366 18e0 C0F20000 		movt	r0, #:upper16:.LC40
+ 2367 18e4 FFF7FEFF 		bl	telemetryPrint
+ 523:../src/rfTelem.c **** 		   	telemetryPrint("'8' High Speed Telemetry 8 Enable          'W' Write EEPROM Parameters\n");
+ 2368              		.loc 1 523 0
+ 2369 18e8 40F20000 		movw	r0, #:lower16:.LC41
+ 2370 18ec C0F20000 		movt	r0, #:upper16:.LC41
+ 2371 18f0 FFF7FEFF 		bl	telemetryPrint
+ 524:../src/rfTelem.c **** 		   	telemetryPrint("'9' High Speed Telemetry 9 Enable\n");
+ 2372              		.loc 1 524 0
+ 2373 18f4 40F20000 		movw	r0, #:lower16:.LC42
+ 2374 18f8 C0F20000 		movt	r0, #:upper16:.LC42
+ 2375 18fc FFF7FEFF 		bl	telemetryPrint
+ 525:../src/rfTelem.c **** 		   	telemetryPrint("'0' High Speed Telemetry Disable           '?' Command Summary\n");
+ 2376              		.loc 1 525 0
+ 2377 1900 40F20000 		movw	r0, #:lower16:.LC43
+ 2378 1904 C0F20000 		movt	r0, #:upper16:.LC43
+ 2379 1908 FFF7FEFF 		bl	telemetryPrint
+ 526:../src/rfTelem.c ****    		    telemetryPrint("\n");
+ 2380              		.loc 1 526 0
+ 2381 190c 40F20000 		movw	r0, #:lower16:.LC0
+ 2382 1910 C0F20000 		movt	r0, #:upper16:.LC0
+ 2383 1914 FFF7FEFF 		bl	telemetryPrint
+ 527:../src/rfTelem.c **** 
+ 528:../src/rfTelem.c ****   		    rfQueryType = 'x';
+ 2384              		.loc 1 528 0
+ 2385 1918 40F20003 		movw	r3, #:lower16:rfQueryType
+ 2386 191c C0F20003 		movt	r3, #:upper16:rfQueryType
+ 2387 1920 4FF07802 		mov	r2, #120
+ 2388 1924 1A70     		strb	r2, [r3, #0]
+ 529:../src/rfTelem.c ****   		    break;
+ 2389              		.loc 1 529 0
+ 2390 1926 00BF     		nop
+ 2391              	.L10:
+ 530:../src/rfTelem.c **** 
+ 531:../src/rfTelem.c ****             ///////////////////////////////
+ 532:../src/rfTelem.c ****     }
+ 533:../src/rfTelem.c **** }
+ 2392              		.loc 1 533 0
+ 2393 1928 03B0     		add	sp, sp, #12
+ 2394 192a 00BD     		pop	{pc}
+ 2395              		.cfi_endproc
+ 2396              	.LFE113:
+ 2398              	.Letext0:
+ 2399              		.file 2 "c:\\program files\\codesourcery\\sourcery_codebench_lite_for_arm_eabi\\bin\\../lib/gcc/ar
+ 2400              		.file 3 "../src/pid.h"
+ 2401              		.file 4 "../src/aq32Plus_F3.h"
+ 2402              		.file 5 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\src\\gps/gpsMediaTe
+ 2403              		.file 6 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\src\\gps/gpsNMEA.h"
+ 2404              		.file 7 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\src\\gps/gpsUblox.h
+ 2405              		.file 8 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\Libraries\\CMSIS\\I
+ 2406              		.file 9 "../src/cli.h"
+DEFINED SYMBOLS
+                            *ABS*:00000000 rfTelem.c
+                            *COM*:00000001 mtk19ProcessDataState
+                            *COM*:00000001 nmeaProcessDataState
+                            *COM*:00000001 ubloxProcessDataState
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:26     .bss:00000000 rfBusy
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:27     .bss:00000000 $d
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:28     .bss:00000001 rfQueryType
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:30     .bss:00000002 validRFCommand
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:33     .text:00000000 $t
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:38     .text:00000000 readFloatRF
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:147    .text:000000d0 readRFPID
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:227    .text:00000158 $d
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:233    .rodata:00000000 $d
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:234    .rodata:00000000 .LC0
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:237    .rodata:00000004 .LC1
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:241    .rodata:00000018 .LC2
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:244    .rodata:00000020 .LC3
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:247    .rodata:00000028 .LC4
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:250    .rodata:00000030 .LC5
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:253    .rodata:00000044 .LC6
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:256    .rodata:00000058 .LC7
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:259    .rodata:00000070 .LC8
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:262    .rodata:00000088 .LC9
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:265    .rodata:000000a0 .LC10
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:268    .rodata:000000ac .LC11
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:271    .rodata:000000b8 .LC12
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:274    .rodata:000000c4 .LC13
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:277    .rodata:000000d0 .LC14
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:280    .rodata:000000dc .LC15
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:283    .rodata:000000e8 .LC16
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:286    .rodata:00000108 .LC17
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:289    .rodata:00000128 .LC18
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:292    .rodata:00000144 .LC19
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:295    .rodata:00000168 .LC20
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:298    .rodata:0000018c .LC21
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:301    .rodata:000001a8 .LC22
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:304    .rodata:000001c0 .LC23
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:307    .rodata:000001d8 .LC24
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:310    .rodata:000001f0 .LC25
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:313    .rodata:00000208 .LC26
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:316    .rodata:00000220 .LC27
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:319    .rodata:00000238 .LC28
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:322    .rodata:00000258 .LC29
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:327    .rodata:000002c4 .LC30
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:332    .rodata:00000330 .LC31
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:337    .rodata:0000039c .LC32
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:342    .rodata:00000408 .LC33
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:347    .rodata:00000474 .LC34
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:352    .rodata:000004e0 .LC35
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:357    .rodata:0000054c .LC36
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:362    .rodata:000005b8 .LC37
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:367    .rodata:00000624 .LC38
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:372    .rodata:00000690 .LC39
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:377    .rodata:000006fc .LC40
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:382    .rodata:00000768 .LC41
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:386    .rodata:000007b0 .LC42
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:389    .rodata:000007d4 .LC43
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:393    .text:00000160 $t
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:398    .text:00000160 rfCom
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:443    .text:000001ac $d
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccFrdQtt.s:518    .text:000002d0 $t
+                     .debug_frame:00000010 $d
+
+UNDEFINED SYMBOLS
+telemetryAvailable
+delay
+telemetryRead
+stringToFloat
+eepromConfig
+__aeabi_f2d
+telemetryPrint
+numberString
+snprintf
+highSpeedTelemDisable
+highSpeedTelem1Enabled
+highSpeedTelem2Enabled
+highSpeedTelem3Enabled
+highSpeedTelem4Enabled
+highSpeedTelem5Enabled
+highSpeedTelem6Enabled
+highSpeedTelem7Enabled
+highSpeedTelem8Enabled
+highSpeedTelem9Enabled
+writeEEPROM

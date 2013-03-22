@@ -1,0 +1,2962 @@
+   1              		.syntax unified
+   2              		.cpu cortex-m4
+   3              		.eabi_attribute 27, 3
+   4              		.fpu fpv4-sp-d16
+   5              		.eabi_attribute 20, 1
+   6              		.eabi_attribute 21, 1
+   7              		.eabi_attribute 23, 3
+   8              		.eabi_attribute 24, 1
+   9              		.eabi_attribute 25, 1
+  10              		.eabi_attribute 26, 1
+  11              		.eabi_attribute 30, 6
+  12              		.eabi_attribute 34, 1
+  13              		.eabi_attribute 18, 4
+  14              		.thumb
+  15              		.file	"stm32f30x_flash.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.align	2
+  20              		.global	FLASH_SetLatency
+  21              		.thumb
+  22              		.thumb_func
+  24              	FLASH_SetLatency:
+  25              	.LFB111:
+  26              		.file 1 "../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c"
+   1:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** /**
+   2:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   ******************************************************************************
+   3:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @file    stm32f30x_flash.c
+   4:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @author  MCD Application Team
+   5:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @version V1.0.1
+   6:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @date    23-October-2012
+   7:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @brief   This file provides firmware functions to manage the following 
+   8:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *          functionalities of the FLASH peripheral:
+   9:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *            + FLASH Interface configuration
+  10:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *            + FLASH Memory Programming
+  11:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *            + Option Bytes Programming
+  12:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *            + Interrupts and flags management
+  13:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *  
+  14:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   @verbatim
+  15:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   
+  16:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****  ===============================================================================
+  17:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****                       ##### How to use this driver #####
+  18:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****  ===============================================================================
+  19:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     [..] This driver provides functions to configure and program the FLASH 
+  20:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****          memory of all STM32F30x devices. These functions are split in 4 groups:
+  21:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****          (#) FLASH Interface configuration functions: this group includes the
+  22:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****              management of following features:
+  23:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****              (++) Set the latency.
+  24:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****              (++) Enable/Disable the Half Cycle Access.
+  25:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****              (++) Enable/Disable the prefetch buffer.
+  26:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****          (#) FLASH Memory Programming functions: this group includes all needed
+  27:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****              functions to erase and program the main memory:
+  28:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****              (++) Lock and Unlock the FLASH interface.
+  29:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****              (++) Erase function: Erase page, erase all pages.
+  30:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****              (++) Program functions: Half Word and Word write.
+  31:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****          (#) FLASH Option Bytes Programming functions: this group includes all 
+  32:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****              needed functions to manage the Option Bytes:
+  33:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****              (++) Lock and Unlock the Flash Option bytes.
+  34:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****              (++) Launch the Option Bytes loader
+  35:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****              (++) Erase the Option Bytes
+  36:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****              (++) Set/Reset the write protection
+  37:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****              (++) Set the Read protection Level
+  38:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****              (++) Program the user option Bytes
+  39:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****              (++) Set/Reset the BOOT1 bit
+  40:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****              (++) Enable/Disable the VDDA Analog Monitoring
+  41:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****              (++) Enable/Disable the SRAM parity
+  42:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****              (++) Get the user option bytes
+  43:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****              (++) Get the Write protection
+  44:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****              (++) Get the read protection status
+  45:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****          (#) FLASH Interrupts and flags management functions: this group includes 
+  46:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****              all needed functions to:
+  47:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****              (++) Enable/Disable the FLASH interrupt sources.
+  48:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****              (++) Get flags status.
+  49:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****              (++) Clear flags.
+  50:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****              (++) Get FLASH operation status.
+  51:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****              (++) Wait for last FLASH operation.
+  52:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****  
+  53:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   @endverbatim
+  54:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****                       
+  55:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   ******************************************************************************
+  56:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @attention
+  57:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *
+  58:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * <h2><center>&copy; COPYRIGHT 2012 STMicroelectronics</center></h2>
+  59:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *
+  60:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * Licensed under MCD-ST Liberty SW License Agreement V2, (the "License");
+  61:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * You may not use this file except in compliance with the License.
+  62:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * You may obtain a copy of the License at:
+  63:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *
+  64:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *        http://www.st.com/software_license_agreement_liberty_v2
+  65:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *
+  66:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * Unless required by applicable law or agreed to in writing, software 
+  67:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * distributed under the License is distributed on an "AS IS" BASIS, 
+  68:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  69:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * See the License for the specific language governing permissions and
+  70:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * limitations under the License.
+  71:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *
+  72:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   ******************************************************************************
+  73:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   */
+  74:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+  75:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** /* Includes ------------------------------------------------------------------*/
+  76:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** #include "stm32f30x_flash.h"
+  77:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+  78:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** /** @addtogroup STM32F30x_StdPeriph_Driver
+  79:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @{
+  80:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   */
+  81:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+  82:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** /** @defgroup FLASH 
+  83:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @brief FLASH driver modules
+  84:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @{
+  85:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   */ 
+  86:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+  87:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** /* Private typedef -----------------------------------------------------------*/
+  88:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** /* Private define ------------------------------------------------------------*/
+  89:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+  90:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** /* FLASH Mask */
+  91:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** #define RDPRT_MASK                 ((uint32_t)0x00000002)
+  92:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** #define WRP01_MASK                 ((uint32_t)0x0000FFFF)
+  93:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** #define WRP23_MASK                 ((uint32_t)0xFFFF0000)
+  94:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****  
+  95:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** /* Private macro -------------------------------------------------------------*/
+  96:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** /* Private variables ---------------------------------------------------------*/
+  97:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** /* Private function prototypes -----------------------------------------------*/
+  98:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** /* Private functions ---------------------------------------------------------*/
+  99:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 100:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** /** @defgroup FLASH_Private_Functions
+ 101:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @{
+ 102:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   */ 
+ 103:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 104:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** /** @defgroup FLASH_Group1 FLASH Interface configuration functions
+ 105:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *  @brief   FLASH Interface configuration functions 
+ 106:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****  *
+ 107:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 108:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** @verbatim   
+ 109:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****  ===============================================================================
+ 110:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****             ##### FLASH Interface configuration functions #####
+ 111:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****  ===============================================================================
+ 112:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     [..] This group includes the following functions:
+ 113:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****          (+) void FLASH_SetLatency(uint32_t FLASH_Latency); 
+ 114:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****          (+) void FLASH_HalfCycleAccessCmd(uint32_t FLASH_HalfCycleAccess);     
+ 115:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****          (+) void FLASH_PrefetchBufferCmd(FunctionalState NewState);
+ 116:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     [..] The unlock sequence is not needed for these functions.
+ 117:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****  
+ 118:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** @endverbatim
+ 119:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @{
+ 120:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   */
+ 121:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****  
+ 122:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** /**
+ 123:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @brief  Sets the code latency value.
+ 124:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @param  FLASH_Latency: specifies the FLASH Latency value.
+ 125:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *          This parameter can be one of the following values:
+ 126:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *            @arg FLASH_Latency_0: FLASH Zero Latency cycle
+ 127:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *            @arg FLASH_Latency_1: FLASH One Latency cycle
+ 128:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *            @arg FLASH_Latency_2: FLASH Two Latency cycles      
+ 129:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @retval None
+ 130:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   */
+ 131:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** void FLASH_SetLatency(uint32_t FLASH_Latency)
+ 132:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** {
+  27              		.loc 1 132 0
+  28              		.cfi_startproc
+  29              		@ args = 0, pretend = 0, frame = 16
+  30              		@ frame_needed = 0, uses_anonymous_args = 0
+  31              		@ link register save eliminated.
+  32 0000 84B0     		sub	sp, sp, #16
+  33              	.LCFI0:
+  34              		.cfi_def_cfa_offset 16
+  35 0002 0190     		str	r0, [sp, #4]
+ 133:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****    uint32_t tmpreg = 0;
+  36              		.loc 1 133 0
+  37 0004 4FF00003 		mov	r3, #0
+  38 0008 0393     		str	r3, [sp, #12]
+ 134:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   
+ 135:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Check the parameters */
+ 136:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   assert_param(IS_FLASH_LATENCY(FLASH_Latency));
+ 137:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   
+ 138:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Read the ACR register */
+ 139:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   tmpreg = FLASH->ACR;  
+  39              		.loc 1 139 0
+  40 000a 4FF40053 		mov	r3, #8192
+  41 000e C4F20203 		movt	r3, 16386
+  42 0012 1B68     		ldr	r3, [r3, #0]
+  43 0014 0393     		str	r3, [sp, #12]
+ 140:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   
+ 141:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Sets the Latency value */
+ 142:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   tmpreg &= (uint32_t) (~((uint32_t)FLASH_ACR_LATENCY));
+  44              		.loc 1 142 0
+  45 0016 039B     		ldr	r3, [sp, #12]
+  46 0018 23F00303 		bic	r3, r3, #3
+  47 001c 0393     		str	r3, [sp, #12]
+ 143:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   tmpreg |= FLASH_Latency;
+  48              		.loc 1 143 0
+  49 001e 039A     		ldr	r2, [sp, #12]
+  50 0020 019B     		ldr	r3, [sp, #4]
+  51 0022 1343     		orrs	r3, r3, r2
+  52 0024 0393     		str	r3, [sp, #12]
+ 144:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   
+ 145:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Write the ACR register */
+ 146:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   FLASH->ACR = tmpreg;
+  53              		.loc 1 146 0
+  54 0026 4FF40053 		mov	r3, #8192
+  55 002a C4F20203 		movt	r3, 16386
+  56 002e 039A     		ldr	r2, [sp, #12]
+  57 0030 1A60     		str	r2, [r3, #0]
+ 147:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** }
+  58              		.loc 1 147 0
+  59 0032 04B0     		add	sp, sp, #16
+  60 0034 7047     		bx	lr
+  61              		.cfi_endproc
+  62              	.LFE111:
+  64 0036 00BF     		.align	2
+  65              		.global	FLASH_HalfCycleAccessCmd
+  66              		.thumb
+  67              		.thumb_func
+  69              	FLASH_HalfCycleAccessCmd:
+  70              	.LFB112:
+ 148:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 149:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** /**
+ 150:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @brief  Enables or disables the Half cycle flash access.
+ 151:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @param  FLASH_HalfCycleAccess: specifies the FLASH Half cycle Access mode.
+ 152:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *          This parameter can be one of the following values:
+ 153:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *            @arg FLASH_HalfCycleAccess_Enable: FLASH Half Cycle Enable
+ 154:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *            @arg FLASH_HalfCycleAccess_Disable: FLASH Half Cycle Disable
+ 155:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @retval None
+ 156:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   */
+ 157:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** void FLASH_HalfCycleAccessCmd(FunctionalState NewState)
+ 158:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** {
+  71              		.loc 1 158 0
+  72              		.cfi_startproc
+  73              		@ args = 0, pretend = 0, frame = 8
+  74              		@ frame_needed = 0, uses_anonymous_args = 0
+  75              		@ link register save eliminated.
+  76 0038 82B0     		sub	sp, sp, #8
+  77              	.LCFI1:
+  78              		.cfi_def_cfa_offset 8
+  79 003a 0346     		mov	r3, r0
+  80 003c 8DF80730 		strb	r3, [sp, #7]
+ 159:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Check the parameters */
+ 160:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   assert_param(IS_FUNCTIONAL_STATE(NewState));
+ 161:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****    
+ 162:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   if(NewState != DISABLE)
+  81              		.loc 1 162 0
+  82 0040 9DF80730 		ldrb	r3, [sp, #7]	@ zero_extendqisi2
+  83 0044 002B     		cmp	r3, #0
+  84 0046 0CD0     		beq	.L3
+ 163:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   {
+ 164:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     FLASH->ACR |= FLASH_ACR_HLFCYA;
+  85              		.loc 1 164 0
+  86 0048 4FF40053 		mov	r3, #8192
+  87 004c C4F20203 		movt	r3, 16386
+  88 0050 4FF40052 		mov	r2, #8192
+  89 0054 C4F20202 		movt	r2, 16386
+  90 0058 1268     		ldr	r2, [r2, #0]
+  91 005a 42F00802 		orr	r2, r2, #8
+  92 005e 1A60     		str	r2, [r3, #0]
+  93 0060 0BE0     		b	.L2
+  94              	.L3:
+ 165:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   }
+ 166:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   else
+ 167:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   {
+ 168:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     FLASH->ACR &= (uint32_t)(~((uint32_t)FLASH_ACR_HLFCYA));
+  95              		.loc 1 168 0
+  96 0062 4FF40053 		mov	r3, #8192
+  97 0066 C4F20203 		movt	r3, 16386
+  98 006a 4FF40052 		mov	r2, #8192
+  99 006e C4F20202 		movt	r2, 16386
+ 100 0072 1268     		ldr	r2, [r2, #0]
+ 101 0074 22F00802 		bic	r2, r2, #8
+ 102 0078 1A60     		str	r2, [r3, #0]
+ 103              	.L2:
+ 169:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   }
+ 170:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** }
+ 104              		.loc 1 170 0
+ 105 007a 02B0     		add	sp, sp, #8
+ 106 007c 7047     		bx	lr
+ 107              		.cfi_endproc
+ 108              	.LFE112:
+ 110 007e 00BF     		.align	2
+ 111              		.global	FLASH_PrefetchBufferCmd
+ 112              		.thumb
+ 113              		.thumb_func
+ 115              	FLASH_PrefetchBufferCmd:
+ 116              	.LFB113:
+ 171:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 172:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** /**
+ 173:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @brief  Enables or disables the Prefetch Buffer.
+ 174:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @param  NewState: new state of the Prefetch Buffer.
+ 175:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *          This parameter  can be: ENABLE or DISABLE.
+ 176:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @retval None
+ 177:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   */
+ 178:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** void FLASH_PrefetchBufferCmd(FunctionalState NewState)
+ 179:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** {
+ 117              		.loc 1 179 0
+ 118              		.cfi_startproc
+ 119              		@ args = 0, pretend = 0, frame = 8
+ 120              		@ frame_needed = 0, uses_anonymous_args = 0
+ 121              		@ link register save eliminated.
+ 122 0080 82B0     		sub	sp, sp, #8
+ 123              	.LCFI2:
+ 124              		.cfi_def_cfa_offset 8
+ 125 0082 0346     		mov	r3, r0
+ 126 0084 8DF80730 		strb	r3, [sp, #7]
+ 180:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Check the parameters */
+ 181:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   assert_param(IS_FUNCTIONAL_STATE(NewState));
+ 182:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****    
+ 183:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   if(NewState != DISABLE)
+ 127              		.loc 1 183 0
+ 128 0088 9DF80730 		ldrb	r3, [sp, #7]	@ zero_extendqisi2
+ 129 008c 002B     		cmp	r3, #0
+ 130 008e 0CD0     		beq	.L6
+ 184:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   {
+ 185:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     FLASH->ACR |= FLASH_ACR_PRFTBE;
+ 131              		.loc 1 185 0
+ 132 0090 4FF40053 		mov	r3, #8192
+ 133 0094 C4F20203 		movt	r3, 16386
+ 134 0098 4FF40052 		mov	r2, #8192
+ 135 009c C4F20202 		movt	r2, 16386
+ 136 00a0 1268     		ldr	r2, [r2, #0]
+ 137 00a2 42F01002 		orr	r2, r2, #16
+ 138 00a6 1A60     		str	r2, [r3, #0]
+ 139 00a8 0BE0     		b	.L5
+ 140              	.L6:
+ 186:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   }
+ 187:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   else
+ 188:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   {
+ 189:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     FLASH->ACR &= (uint32_t)(~((uint32_t)FLASH_ACR_PRFTBE));
+ 141              		.loc 1 189 0
+ 142 00aa 4FF40053 		mov	r3, #8192
+ 143 00ae C4F20203 		movt	r3, 16386
+ 144 00b2 4FF40052 		mov	r2, #8192
+ 145 00b6 C4F20202 		movt	r2, 16386
+ 146 00ba 1268     		ldr	r2, [r2, #0]
+ 147 00bc 22F01002 		bic	r2, r2, #16
+ 148 00c0 1A60     		str	r2, [r3, #0]
+ 149              	.L5:
+ 190:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   }
+ 191:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** }
+ 150              		.loc 1 191 0
+ 151 00c2 02B0     		add	sp, sp, #8
+ 152 00c4 7047     		bx	lr
+ 153              		.cfi_endproc
+ 154              	.LFE113:
+ 156 00c6 00BF     		.align	2
+ 157              		.global	FLASH_Unlock
+ 158              		.thumb
+ 159              		.thumb_func
+ 161              	FLASH_Unlock:
+ 162              	.LFB114:
+ 192:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 193:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** /**
+ 194:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @}
+ 195:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   */
+ 196:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 197:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** /** @defgroup FLASH_Group2 FLASH Memory Programming functions
+ 198:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****  *  @brief   FLASH Memory Programming functions
+ 199:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****  *
+ 200:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** @verbatim   
+ 201:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****  ===============================================================================
+ 202:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****               ##### FLASH Memory Programming functions #####
+ 203:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****  ===============================================================================   
+ 204:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     [..] This group includes the following functions:
+ 205:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****          (+) void FLASH_Unlock(void);
+ 206:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****          (+) void FLASH_Lock(void);
+ 207:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****          (+) FLASH_Status FLASH_ErasePage(uint32_t Page_Address);
+ 208:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****          (+) FLASH_Status FLASH_EraseAllPages(void);
+ 209:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****          (+) FLASH_Status FLASH_ProgramWord(uint32_t Address, uint32_t Data);
+ 210:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****          (+) FLASH_Status FLASH_ProgramHalfWord(uint32_t Address, uint16_t Data);
+ 211:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     [..] Any operation of erase or program should follow these steps:
+ 212:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****          (#) Call the FLASH_Unlock() function to enable the FLASH control register 
+ 213:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****              program memory access.
+ 214:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****          (#) Call the desired function to erase page or program data.
+ 215:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****          (#) Call the FLASH_Lock() function to disable the FLASH control register 
+ 216:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****              access (recommended to protect the FLASH memory against possible 
+ 217:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****              unwanted operation).
+ 218:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     
+ 219:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** @endverbatim
+ 220:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @{
+ 221:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   */
+ 222:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 223:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** /**
+ 224:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @brief  Unlocks the FLASH control register access
+ 225:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @param  None
+ 226:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @retval None
+ 227:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   */
+ 228:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** void FLASH_Unlock(void)
+ 229:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** {
+ 163              		.loc 1 229 0
+ 164              		.cfi_startproc
+ 165              		@ args = 0, pretend = 0, frame = 0
+ 166              		@ frame_needed = 0, uses_anonymous_args = 0
+ 167              		@ link register save eliminated.
+ 230:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   if((FLASH->CR & FLASH_CR_LOCK) != RESET)
+ 168              		.loc 1 230 0
+ 169 00c8 4FF40053 		mov	r3, #8192
+ 170 00cc C4F20203 		movt	r3, 16386
+ 171 00d0 1B69     		ldr	r3, [r3, #16]
+ 172 00d2 03F08003 		and	r3, r3, #128
+ 173 00d6 002B     		cmp	r3, #0
+ 174 00d8 11D0     		beq	.L8
+ 231:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   {
+ 232:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     /* Authorize the FLASH Registers access */
+ 233:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     FLASH->KEYR = FLASH_KEY1;
+ 175              		.loc 1 233 0
+ 176 00da 4FF40053 		mov	r3, #8192
+ 177 00de C4F20203 		movt	r3, 16386
+ 178 00e2 40F22312 		movw	r2, #291
+ 179 00e6 C4F26752 		movt	r2, 17767
+ 180 00ea 5A60     		str	r2, [r3, #4]
+ 234:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     FLASH->KEYR = FLASH_KEY2;
+ 181              		.loc 1 234 0
+ 182 00ec 4FF40053 		mov	r3, #8192
+ 183 00f0 C4F20203 		movt	r3, 16386
+ 184 00f4 48F6AB12 		movw	r2, #35243
+ 185 00f8 CCF6EF52 		movt	r2, 52719
+ 186 00fc 5A60     		str	r2, [r3, #4]
+ 187              	.L8:
+ 235:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   }  
+ 236:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** }
+ 188              		.loc 1 236 0
+ 189 00fe 7047     		bx	lr
+ 190              		.cfi_endproc
+ 191              	.LFE114:
+ 193              		.align	2
+ 194              		.global	FLASH_Lock
+ 195              		.thumb
+ 196              		.thumb_func
+ 198              	FLASH_Lock:
+ 199              	.LFB115:
+ 237:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 238:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** /**
+ 239:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @brief  Locks the FLASH control register access
+ 240:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @param  None
+ 241:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @retval None
+ 242:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   */
+ 243:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** void FLASH_Lock(void)
+ 244:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** {
+ 200              		.loc 1 244 0
+ 201              		.cfi_startproc
+ 202              		@ args = 0, pretend = 0, frame = 0
+ 203              		@ frame_needed = 0, uses_anonymous_args = 0
+ 204              		@ link register save eliminated.
+ 245:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Set the LOCK Bit to lock the FLASH Registers access */
+ 246:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   FLASH->CR |= FLASH_CR_LOCK;
+ 205              		.loc 1 246 0
+ 206 0100 4FF40053 		mov	r3, #8192
+ 207 0104 C4F20203 		movt	r3, 16386
+ 208 0108 4FF40052 		mov	r2, #8192
+ 209 010c C4F20202 		movt	r2, 16386
+ 210 0110 1269     		ldr	r2, [r2, #16]
+ 211 0112 42F08002 		orr	r2, r2, #128
+ 212 0116 1A61     		str	r2, [r3, #16]
+ 247:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** }
+ 213              		.loc 1 247 0
+ 214 0118 7047     		bx	lr
+ 215              		.cfi_endproc
+ 216              	.LFE115:
+ 218 011a 00BF     		.align	2
+ 219              		.global	FLASH_ErasePage
+ 220              		.thumb
+ 221              		.thumb_func
+ 223              	FLASH_ErasePage:
+ 224              	.LFB116:
+ 248:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 249:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** /**
+ 250:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @brief  Erases a specified page in program memory.
+ 251:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @note   To correctly run this function, the FLASH_Unlock() function
+ 252:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *         must be called before.
+ 253:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @note   Call the FLASH_Lock() to disable the flash memory access 
+ 254:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *         (recommended to protect the FLASH memory against possible unwanted operation)  
+ 255:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @param  Page_Address: The page address in program memory to be erased.
+ 256:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @note   A Page is erased in the Program memory only if the address to load 
+ 257:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *         is the start address of a page (multiple of 1024 bytes).  
+ 258:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @retval FLASH Status: The returned value can be: 
+ 259:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *         FLASH_ERROR_PROGRAM, FLASH_ERROR_WRP, FLASH_COMPLETE or FLASH_TIMEOUT.
+ 260:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   */
+ 261:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** FLASH_Status FLASH_ErasePage(uint32_t Page_Address)
+ 262:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** {
+ 225              		.loc 1 262 0
+ 226              		.cfi_startproc
+ 227              		@ args = 0, pretend = 0, frame = 16
+ 228              		@ frame_needed = 0, uses_anonymous_args = 0
+ 229 011c 00B5     		push	{lr}
+ 230              	.LCFI3:
+ 231              		.cfi_def_cfa_offset 4
+ 232              		.cfi_offset 14, -4
+ 233 011e 85B0     		sub	sp, sp, #20
+ 234              	.LCFI4:
+ 235              		.cfi_def_cfa_offset 24
+ 236 0120 0190     		str	r0, [sp, #4]
+ 263:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   FLASH_Status status = FLASH_COMPLETE;
+ 237              		.loc 1 263 0
+ 238 0122 4FF00403 		mov	r3, #4
+ 239 0126 8DF80F30 		strb	r3, [sp, #15]
+ 264:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 265:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Check the parameters */
+ 266:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   assert_param(IS_FLASH_PROGRAM_ADDRESS(Page_Address));
+ 267:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****  
+ 268:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Wait for last operation to be completed */
+ 269:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   status = FLASH_WaitForLastOperation(FLASH_ER_PRG_TIMEOUT);
+ 240              		.loc 1 269 0
+ 241 012a 4FF43020 		mov	r0, #720896
+ 242 012e FFF7FEFF 		bl	FLASH_WaitForLastOperation
+ 243 0132 0346     		mov	r3, r0
+ 244 0134 8DF80F30 		strb	r3, [sp, #15]
+ 270:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   
+ 271:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   if(status == FLASH_COMPLETE)
+ 245              		.loc 1 271 0
+ 246 0138 9DF80F30 		ldrb	r3, [sp, #15]	@ zero_extendqisi2
+ 247 013c 042B     		cmp	r3, #4
+ 248 013e 30D1     		bne	.L12
+ 272:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   { 
+ 273:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     /* If the previous operation is completed, proceed to erase the page */
+ 274:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     FLASH->CR |= FLASH_CR_PER;
+ 249              		.loc 1 274 0
+ 250 0140 4FF40053 		mov	r3, #8192
+ 251 0144 C4F20203 		movt	r3, 16386
+ 252 0148 4FF40052 		mov	r2, #8192
+ 253 014c C4F20202 		movt	r2, 16386
+ 254 0150 1269     		ldr	r2, [r2, #16]
+ 255 0152 42F00202 		orr	r2, r2, #2
+ 256 0156 1A61     		str	r2, [r3, #16]
+ 275:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     FLASH->AR  = Page_Address; 
+ 257              		.loc 1 275 0
+ 258 0158 4FF40053 		mov	r3, #8192
+ 259 015c C4F20203 		movt	r3, 16386
+ 260 0160 019A     		ldr	r2, [sp, #4]
+ 261 0162 5A61     		str	r2, [r3, #20]
+ 276:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     FLASH->CR |= FLASH_CR_STRT;
+ 262              		.loc 1 276 0
+ 263 0164 4FF40053 		mov	r3, #8192
+ 264 0168 C4F20203 		movt	r3, 16386
+ 265 016c 4FF40052 		mov	r2, #8192
+ 266 0170 C4F20202 		movt	r2, 16386
+ 267 0174 1269     		ldr	r2, [r2, #16]
+ 268 0176 42F04002 		orr	r2, r2, #64
+ 269 017a 1A61     		str	r2, [r3, #16]
+ 277:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     
+ 278:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     /* Wait for last operation to be completed */
+ 279:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     status = FLASH_WaitForLastOperation(FLASH_ER_PRG_TIMEOUT);
+ 270              		.loc 1 279 0
+ 271 017c 4FF43020 		mov	r0, #720896
+ 272 0180 FFF7FEFF 		bl	FLASH_WaitForLastOperation
+ 273 0184 0346     		mov	r3, r0
+ 274 0186 8DF80F30 		strb	r3, [sp, #15]
+ 280:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     
+ 281:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     /* Disable the PER Bit */
+ 282:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     FLASH->CR &= ~FLASH_CR_PER;
+ 275              		.loc 1 282 0
+ 276 018a 4FF40053 		mov	r3, #8192
+ 277 018e C4F20203 		movt	r3, 16386
+ 278 0192 4FF40052 		mov	r2, #8192
+ 279 0196 C4F20202 		movt	r2, 16386
+ 280 019a 1269     		ldr	r2, [r2, #16]
+ 281 019c 22F00202 		bic	r2, r2, #2
+ 282 01a0 1A61     		str	r2, [r3, #16]
+ 283              	.L12:
+ 283:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   }
+ 284:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     
+ 285:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Return the Erase Status */
+ 286:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   return status;
+ 284              		.loc 1 286 0
+ 285 01a2 9DF80F30 		ldrb	r3, [sp, #15]	@ zero_extendqisi2
+ 287:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** }
+ 286              		.loc 1 287 0
+ 287 01a6 1846     		mov	r0, r3
+ 288 01a8 05B0     		add	sp, sp, #20
+ 289 01aa 00BD     		pop	{pc}
+ 290              		.cfi_endproc
+ 291              	.LFE116:
+ 293              		.align	2
+ 294              		.global	FLASH_EraseAllPages
+ 295              		.thumb
+ 296              		.thumb_func
+ 298              	FLASH_EraseAllPages:
+ 299              	.LFB117:
+ 288:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 289:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** /**
+ 290:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @brief  Erases all FLASH pages.
+ 291:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @note   To correctly run this function, the FLASH_Unlock() function
+ 292:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *         must be called before.
+ 293:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *         all the FLASH_Lock() to disable the flash memory access 
+ 294:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *         (recommended to protect the FLASH memory against possible unwanted operation)
+ 295:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @param  None
+ 296:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @retval FLASH Status: The returned value can be: FLASH_ERROR_PG,
+ 297:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *         FLASH_ERROR_WRP, FLASH_COMPLETE or FLASH_TIMEOUT.
+ 298:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   */
+ 299:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** FLASH_Status FLASH_EraseAllPages(void)
+ 300:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** {
+ 300              		.loc 1 300 0
+ 301              		.cfi_startproc
+ 302              		@ args = 0, pretend = 0, frame = 8
+ 303              		@ frame_needed = 0, uses_anonymous_args = 0
+ 304 01ac 00B5     		push	{lr}
+ 305              	.LCFI5:
+ 306              		.cfi_def_cfa_offset 4
+ 307              		.cfi_offset 14, -4
+ 308 01ae 83B0     		sub	sp, sp, #12
+ 309              	.LCFI6:
+ 310              		.cfi_def_cfa_offset 16
+ 301:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   FLASH_Status status = FLASH_COMPLETE;
+ 311              		.loc 1 301 0
+ 312 01b0 4FF00403 		mov	r3, #4
+ 313 01b4 8DF80730 		strb	r3, [sp, #7]
+ 302:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 303:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Wait for last operation to be completed */
+ 304:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   status = FLASH_WaitForLastOperation(FLASH_ER_PRG_TIMEOUT);
+ 314              		.loc 1 304 0
+ 315 01b8 4FF43020 		mov	r0, #720896
+ 316 01bc FFF7FEFF 		bl	FLASH_WaitForLastOperation
+ 317 01c0 0346     		mov	r3, r0
+ 318 01c2 8DF80730 		strb	r3, [sp, #7]
+ 305:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   
+ 306:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   if(status == FLASH_COMPLETE)
+ 319              		.loc 1 306 0
+ 320 01c6 9DF80730 		ldrb	r3, [sp, #7]	@ zero_extendqisi2
+ 321 01ca 042B     		cmp	r3, #4
+ 322 01cc 2AD1     		bne	.L14
+ 307:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   {
+ 308:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     /* if the previous operation is completed, proceed to erase all pages */
+ 309:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****      FLASH->CR |= FLASH_CR_MER;
+ 323              		.loc 1 309 0
+ 324 01ce 4FF40053 		mov	r3, #8192
+ 325 01d2 C4F20203 		movt	r3, 16386
+ 326 01d6 4FF40052 		mov	r2, #8192
+ 327 01da C4F20202 		movt	r2, 16386
+ 328 01de 1269     		ldr	r2, [r2, #16]
+ 329 01e0 42F00402 		orr	r2, r2, #4
+ 330 01e4 1A61     		str	r2, [r3, #16]
+ 310:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****      FLASH->CR |= FLASH_CR_STRT;
+ 331              		.loc 1 310 0
+ 332 01e6 4FF40053 		mov	r3, #8192
+ 333 01ea C4F20203 		movt	r3, 16386
+ 334 01ee 4FF40052 		mov	r2, #8192
+ 335 01f2 C4F20202 		movt	r2, 16386
+ 336 01f6 1269     		ldr	r2, [r2, #16]
+ 337 01f8 42F04002 		orr	r2, r2, #64
+ 338 01fc 1A61     		str	r2, [r3, #16]
+ 311:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     
+ 312:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     /* Wait for last operation to be completed */
+ 313:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     status = FLASH_WaitForLastOperation(FLASH_ER_PRG_TIMEOUT);
+ 339              		.loc 1 313 0
+ 340 01fe 4FF43020 		mov	r0, #720896
+ 341 0202 FFF7FEFF 		bl	FLASH_WaitForLastOperation
+ 342 0206 0346     		mov	r3, r0
+ 343 0208 8DF80730 		strb	r3, [sp, #7]
+ 314:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 315:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     /* Disable the MER Bit */
+ 316:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     FLASH->CR &= ~FLASH_CR_MER;
+ 344              		.loc 1 316 0
+ 345 020c 4FF40053 		mov	r3, #8192
+ 346 0210 C4F20203 		movt	r3, 16386
+ 347 0214 4FF40052 		mov	r2, #8192
+ 348 0218 C4F20202 		movt	r2, 16386
+ 349 021c 1269     		ldr	r2, [r2, #16]
+ 350 021e 22F00402 		bic	r2, r2, #4
+ 351 0222 1A61     		str	r2, [r3, #16]
+ 352              	.L14:
+ 317:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   }
+ 318:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 319:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Return the Erase Status */
+ 320:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   return status;
+ 353              		.loc 1 320 0
+ 354 0224 9DF80730 		ldrb	r3, [sp, #7]	@ zero_extendqisi2
+ 321:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** }
+ 355              		.loc 1 321 0
+ 356 0228 1846     		mov	r0, r3
+ 357 022a 03B0     		add	sp, sp, #12
+ 358 022c 00BD     		pop	{pc}
+ 359              		.cfi_endproc
+ 360              	.LFE117:
+ 362 022e 00BF     		.align	2
+ 363              		.global	FLASH_ProgramWord
+ 364              		.thumb
+ 365              		.thumb_func
+ 367              	FLASH_ProgramWord:
+ 368              	.LFB118:
+ 322:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 323:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** /**
+ 324:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @brief  Programs a word at a specified address.
+ 325:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @note   To correctly run this function, the FLASH_Unlock() function
+ 326:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *         must be called before.
+ 327:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *         Call the FLASH_Lock() to disable the flash memory access 
+ 328:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *         (recommended to protect the FLASH memory against possible unwanted operation)  
+ 329:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @param  Address: specifies the address to be programmed.
+ 330:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @param  Data: specifies the data to be programmed.
+ 331:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @retval FLASH Status: The returned value can be: FLASH_ERROR_PG,
+ 332:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *         FLASH_ERROR_WRP, FLASH_COMPLETE or FLASH_TIMEOUT. 
+ 333:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   */
+ 334:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** FLASH_Status FLASH_ProgramWord(uint32_t Address, uint32_t Data)
+ 335:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** {
+ 369              		.loc 1 335 0
+ 370              		.cfi_startproc
+ 371              		@ args = 0, pretend = 0, frame = 16
+ 372              		@ frame_needed = 0, uses_anonymous_args = 0
+ 373 0230 00B5     		push	{lr}
+ 374              	.LCFI7:
+ 375              		.cfi_def_cfa_offset 4
+ 376              		.cfi_offset 14, -4
+ 377 0232 85B0     		sub	sp, sp, #20
+ 378              	.LCFI8:
+ 379              		.cfi_def_cfa_offset 24
+ 380 0234 0190     		str	r0, [sp, #4]
+ 381 0236 0091     		str	r1, [sp, #0]
+ 336:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   FLASH_Status status = FLASH_COMPLETE;
+ 382              		.loc 1 336 0
+ 383 0238 4FF00403 		mov	r3, #4
+ 384 023c 8DF80F30 		strb	r3, [sp, #15]
+ 337:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   __IO uint32_t tmp = 0;
+ 385              		.loc 1 337 0
+ 386 0240 4FF00003 		mov	r3, #0
+ 387 0244 0293     		str	r3, [sp, #8]
+ 338:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 339:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Check the parameters */
+ 340:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   assert_param(IS_FLASH_PROGRAM_ADDRESS(Address));
+ 341:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 342:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Wait for last operation to be completed */
+ 343:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   status = FLASH_WaitForLastOperation(FLASH_ER_PRG_TIMEOUT);
+ 388              		.loc 1 343 0
+ 389 0246 4FF43020 		mov	r0, #720896
+ 390 024a FFF7FEFF 		bl	FLASH_WaitForLastOperation
+ 391 024e 0346     		mov	r3, r0
+ 392 0250 8DF80F30 		strb	r3, [sp, #15]
+ 344:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   
+ 345:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   if(status == FLASH_COMPLETE)
+ 393              		.loc 1 345 0
+ 394 0254 9DF80F30 		ldrb	r3, [sp, #15]	@ zero_extendqisi2
+ 395 0258 042B     		cmp	r3, #4
+ 396 025a 44D1     		bne	.L16
+ 346:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   {
+ 347:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     /* If the previous operation is completed, proceed to program the new first 
+ 348:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     half word */
+ 349:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     FLASH->CR |= FLASH_CR_PG;
+ 397              		.loc 1 349 0
+ 398 025c 4FF40053 		mov	r3, #8192
+ 399 0260 C4F20203 		movt	r3, 16386
+ 400 0264 4FF40052 		mov	r2, #8192
+ 401 0268 C4F20202 		movt	r2, 16386
+ 402 026c 1269     		ldr	r2, [r2, #16]
+ 403 026e 42F00102 		orr	r2, r2, #1
+ 404 0272 1A61     		str	r2, [r3, #16]
+ 350:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   
+ 351:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     *(__IO uint16_t*)Address = (uint16_t)Data;
+ 405              		.loc 1 351 0
+ 406 0274 019B     		ldr	r3, [sp, #4]
+ 407 0276 009A     		ldr	r2, [sp, #0]
+ 408 0278 92B2     		uxth	r2, r2
+ 409 027a 1A80     		strh	r2, [r3, #0]	@ movhi
+ 352:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     
+ 353:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     /* Wait for last operation to be completed */
+ 354:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     status = FLASH_WaitForLastOperation(FLASH_ER_PRG_TIMEOUT);
+ 410              		.loc 1 354 0
+ 411 027c 4FF43020 		mov	r0, #720896
+ 412 0280 FFF7FEFF 		bl	FLASH_WaitForLastOperation
+ 413 0284 0346     		mov	r3, r0
+ 414 0286 8DF80F30 		strb	r3, [sp, #15]
+ 355:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****  
+ 356:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     if(status == FLASH_COMPLETE)
+ 415              		.loc 1 356 0
+ 416 028a 9DF80F30 		ldrb	r3, [sp, #15]	@ zero_extendqisi2
+ 417 028e 042B     		cmp	r3, #4
+ 418 0290 1DD1     		bne	.L17
+ 357:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     {
+ 358:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       /* If the previous operation is completed, proceed to program the new second 
+ 359:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       half word */
+ 360:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       tmp = Address + 2;
+ 419              		.loc 1 360 0
+ 420 0292 019B     		ldr	r3, [sp, #4]
+ 421 0294 03F10203 		add	r3, r3, #2
+ 422 0298 0293     		str	r3, [sp, #8]
+ 361:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 362:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       *(__IO uint16_t*) tmp = Data >> 16;
+ 423              		.loc 1 362 0
+ 424 029a 029B     		ldr	r3, [sp, #8]
+ 425 029c 009A     		ldr	r2, [sp, #0]
+ 426 029e 4FEA1242 		lsr	r2, r2, #16
+ 427 02a2 92B2     		uxth	r2, r2
+ 428 02a4 1A80     		strh	r2, [r3, #0]	@ movhi
+ 363:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     
+ 364:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       /* Wait for last operation to be completed */
+ 365:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       status = FLASH_WaitForLastOperation(FLASH_ER_PRG_TIMEOUT);
+ 429              		.loc 1 365 0
+ 430 02a6 4FF43020 		mov	r0, #720896
+ 431 02aa FFF7FEFF 		bl	FLASH_WaitForLastOperation
+ 432 02ae 0346     		mov	r3, r0
+ 433 02b0 8DF80F30 		strb	r3, [sp, #15]
+ 366:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****         
+ 367:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       /* Disable the PG Bit */
+ 368:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       FLASH->CR &= ~FLASH_CR_PG;
+ 434              		.loc 1 368 0
+ 435 02b4 4FF40053 		mov	r3, #8192
+ 436 02b8 C4F20203 		movt	r3, 16386
+ 437 02bc 4FF40052 		mov	r2, #8192
+ 438 02c0 C4F20202 		movt	r2, 16386
+ 439 02c4 1269     		ldr	r2, [r2, #16]
+ 440 02c6 22F00102 		bic	r2, r2, #1
+ 441 02ca 1A61     		str	r2, [r3, #16]
+ 442 02cc 0BE0     		b	.L16
+ 443              	.L17:
+ 369:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     }
+ 370:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     else
+ 371:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     {
+ 372:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       /* Disable the PG Bit */
+ 373:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       FLASH->CR &= ~FLASH_CR_PG;
+ 444              		.loc 1 373 0
+ 445 02ce 4FF40053 		mov	r3, #8192
+ 446 02d2 C4F20203 		movt	r3, 16386
+ 447 02d6 4FF40052 		mov	r2, #8192
+ 448 02da C4F20202 		movt	r2, 16386
+ 449 02de 1269     		ldr	r2, [r2, #16]
+ 450 02e0 22F00102 		bic	r2, r2, #1
+ 451 02e4 1A61     		str	r2, [r3, #16]
+ 452              	.L16:
+ 374:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     }
+ 375:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   }
+ 376:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****    
+ 377:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Return the Program Status */
+ 378:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   return status;
+ 453              		.loc 1 378 0
+ 454 02e6 9DF80F30 		ldrb	r3, [sp, #15]	@ zero_extendqisi2
+ 379:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** }
+ 455              		.loc 1 379 0
+ 456 02ea 1846     		mov	r0, r3
+ 457 02ec 05B0     		add	sp, sp, #20
+ 458 02ee 00BD     		pop	{pc}
+ 459              		.cfi_endproc
+ 460              	.LFE118:
+ 462              		.align	2
+ 463              		.global	FLASH_ProgramHalfWord
+ 464              		.thumb
+ 465              		.thumb_func
+ 467              	FLASH_ProgramHalfWord:
+ 468              	.LFB119:
+ 380:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 381:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** /**
+ 382:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @brief  Programs a half word at a specified address.
+ 383:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @note   To correctly run this function, the FLASH_Unlock() function
+ 384:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *         must be called before.
+ 385:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *         Call the FLASH_Lock() to disable the flash memory access 
+ 386:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *         (recommended to protect the FLASH memory against possible unwanted operation) 
+ 387:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @param  Address: specifies the address to be programmed.
+ 388:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @param  Data: specifies the data to be programmed.
+ 389:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @retval FLASH Status: The returned value can be: FLASH_ERROR_PG,
+ 390:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *         FLASH_ERROR_WRP, FLASH_COMPLETE or FLASH_TIMEOUT. 
+ 391:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   */
+ 392:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** FLASH_Status FLASH_ProgramHalfWord(uint32_t Address, uint16_t Data)
+ 393:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** {
+ 469              		.loc 1 393 0
+ 470              		.cfi_startproc
+ 471              		@ args = 0, pretend = 0, frame = 16
+ 472              		@ frame_needed = 0, uses_anonymous_args = 0
+ 473 02f0 00B5     		push	{lr}
+ 474              	.LCFI9:
+ 475              		.cfi_def_cfa_offset 4
+ 476              		.cfi_offset 14, -4
+ 477 02f2 85B0     		sub	sp, sp, #20
+ 478              	.LCFI10:
+ 479              		.cfi_def_cfa_offset 24
+ 480 02f4 0190     		str	r0, [sp, #4]
+ 481 02f6 0B46     		mov	r3, r1
+ 482 02f8 ADF80230 		strh	r3, [sp, #2]	@ movhi
+ 394:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   FLASH_Status status = FLASH_COMPLETE;
+ 483              		.loc 1 394 0
+ 484 02fc 4FF00403 		mov	r3, #4
+ 485 0300 8DF80F30 		strb	r3, [sp, #15]
+ 395:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 396:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Check the parameters */
+ 397:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   assert_param(IS_FLASH_PROGRAM_ADDRESS(Address));
+ 398:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 399:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Wait for last operation to be completed */
+ 400:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   status = FLASH_WaitForLastOperation(FLASH_ER_PRG_TIMEOUT);
+ 486              		.loc 1 400 0
+ 487 0304 4FF43020 		mov	r0, #720896
+ 488 0308 FFF7FEFF 		bl	FLASH_WaitForLastOperation
+ 489 030c 0346     		mov	r3, r0
+ 490 030e 8DF80F30 		strb	r3, [sp, #15]
+ 401:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   
+ 402:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   if(status == FLASH_COMPLETE)
+ 491              		.loc 1 402 0
+ 492 0312 9DF80F30 		ldrb	r3, [sp, #15]	@ zero_extendqisi2
+ 493 0316 042B     		cmp	r3, #4
+ 494 0318 22D1     		bne	.L19
+ 403:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   {
+ 404:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     /* If the previous operation is completed, proceed to program the new data */
+ 405:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     FLASH->CR |= FLASH_CR_PG;
+ 495              		.loc 1 405 0
+ 496 031a 4FF40053 		mov	r3, #8192
+ 497 031e C4F20203 		movt	r3, 16386
+ 498 0322 4FF40052 		mov	r2, #8192
+ 499 0326 C4F20202 		movt	r2, 16386
+ 500 032a 1269     		ldr	r2, [r2, #16]
+ 501 032c 42F00102 		orr	r2, r2, #1
+ 502 0330 1A61     		str	r2, [r3, #16]
+ 406:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   
+ 407:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     *(__IO uint16_t*)Address = Data;
+ 503              		.loc 1 407 0
+ 504 0332 019B     		ldr	r3, [sp, #4]
+ 505 0334 BDF80220 		ldrh	r2, [sp, #2]	@ movhi
+ 506 0338 1A80     		strh	r2, [r3, #0]	@ movhi
+ 408:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 409:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     /* Wait for last operation to be completed */
+ 410:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     status = FLASH_WaitForLastOperation(FLASH_ER_PRG_TIMEOUT);
+ 507              		.loc 1 410 0
+ 508 033a 4FF43020 		mov	r0, #720896
+ 509 033e FFF7FEFF 		bl	FLASH_WaitForLastOperation
+ 510 0342 0346     		mov	r3, r0
+ 511 0344 8DF80F30 		strb	r3, [sp, #15]
+ 411:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     
+ 412:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     /* Disable the PG Bit */
+ 413:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     FLASH->CR &= ~FLASH_CR_PG;
+ 512              		.loc 1 413 0
+ 513 0348 4FF40053 		mov	r3, #8192
+ 514 034c C4F20203 		movt	r3, 16386
+ 515 0350 4FF40052 		mov	r2, #8192
+ 516 0354 C4F20202 		movt	r2, 16386
+ 517 0358 1269     		ldr	r2, [r2, #16]
+ 518 035a 22F00102 		bic	r2, r2, #1
+ 519 035e 1A61     		str	r2, [r3, #16]
+ 520              	.L19:
+ 414:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   } 
+ 415:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   
+ 416:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Return the Program Status */
+ 417:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   return status;
+ 521              		.loc 1 417 0
+ 522 0360 9DF80F30 		ldrb	r3, [sp, #15]	@ zero_extendqisi2
+ 418:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** }
+ 523              		.loc 1 418 0
+ 524 0364 1846     		mov	r0, r3
+ 525 0366 05B0     		add	sp, sp, #20
+ 526 0368 00BD     		pop	{pc}
+ 527              		.cfi_endproc
+ 528              	.LFE119:
+ 530 036a 00BF     		.align	2
+ 531              		.global	FLASH_OB_Unlock
+ 532              		.thumb
+ 533              		.thumb_func
+ 535              	FLASH_OB_Unlock:
+ 536              	.LFB120:
+ 419:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 420:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** /**
+ 421:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @}
+ 422:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   */
+ 423:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   
+ 424:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** /** @defgroup FLASH_Group3 Option Bytes Programming functions
+ 425:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****  *  @brief   Option Bytes Programming functions 
+ 426:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****  *
+ 427:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** @verbatim   
+ 428:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****  ===============================================================================
+ 429:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****                 ##### Option Bytes Programming functions #####
+ 430:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****  ===============================================================================  
+ 431:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     [..] This group includes the following functions:
+ 432:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****          (+) void FLASH_OB_Unlock(void);
+ 433:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****          (+) void FLASH_OB_Lock(void);
+ 434:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****          (+) void FLASH_OB_Erase(void);
+ 435:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****          (+) FLASH_Status FLASH_OB_WRPConfig(uint32_t OB_WRP, FunctionalState NewState);
+ 436:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****          (+) FLASH_Status FLASH_OB_RDPConfig(uint8_t OB_RDP);
+ 437:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****          (+) FLASH_Status FLASH_OB_UserConfig(uint8_t OB_IWDG, uint8_t OB_STOP, uint8_t OB_STDBY);
+ 438:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****          (+) FLASH_Status FLASH_OB_BOOTConfig(uint8_t OB_BOOT1);
+ 439:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****          (+) FLASH_Status FLASH_OB_VDDAConfig(uint8_t OB_VDDA_ANALOG);
+ 440:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****          (+) FLASH_Status FLASH_OB_SRMParityConfig(uint8_t OB_SRAM_Parity);
+ 441:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****          (+) FLASH_Status FLASH_OB_WriteUser(uint8_t OB_USER);					
+ 442:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****          (+) FLASH_Status FLASH_OB_Launch(void);
+ 443:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****          (+) uint32_t FLASH_OB_GetUser(void);						
+ 444:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****          (+) uint8_t FLASH_OB_GetWRP(void);						
+ 445:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****          (+) uint8_t FLASH_OB_GetRDP(void);							
+ 446:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     [..] Any operation of erase or program should follow these steps:
+ 447:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****          (#) Call the FLASH_OB_Unlock() function to enable the FLASH option control 
+ 448:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****              register access.
+ 449:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****          (#) Call one or several functions to program the desired Option Bytes:
+ 450:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****              (++) void FLASH_OB_WRPConfig(uint32_t OB_WRP, FunctionalState NewState); 
+ 451:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****                   => to Enable/Disable the desired sector write protection.
+ 452:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****              (++) FLASH_Status FLASH_OB_RDPConfig(uint8_t OB_RDP) => to set the 
+ 453:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****                   desired read Protection Level.
+ 454:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****              (++) FLASH_Status FLASH_OB_UserConfig(uint8_t OB_IWDG, uint8_t OB_STOP, uint8_t OB_STD
+ 455:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****                   => to configure the user Option Bytes.
+ 456:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****  	         (++) FLASH_Status FLASH_OB_BOOTConfig(uint8_t OB_BOOT1); 
+ 457:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****                   => to set the boot1 mode
+ 458:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****              (++) FLASH_Status FLASH_OB_VDDAConfig(uint8_t OB_VDDA_ANALOG); 
+ 459:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****                   => to Enable/Disable the VDDA monotoring.
+ 460:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****              (++) FLASH_Status FLASH_OB_SRMParityConfig(uint8_t OB_SRAM_Parity); 
+ 461:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****                   => to Enable/Disable the SRAM Parity check.		 
+ 462:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 	         (++) FLASH_Status FLASH_OB_WriteUser(uint8_t OB_USER); 
+ 463:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****                   => to write all user option bytes: OB_IWDG, OB_STOP, OB_STDBY, 
+ 464:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****                      OB_BOOT1, OB_VDDA_ANALOG and OB_VDD_SD12.  
+ 465:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****          (#) Once all needed Option Bytes to be programmed are correctly written, 
+ 466:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****              call the FLASH_OB_Launch() function to launch the Option Bytes 
+ 467:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****              programming process.
+ 468:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****          (#@) When changing the IWDG mode from HW to SW or from SW to HW, a system 
+ 469:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****               reset is needed to make the change effective.  
+ 470:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****          (#) Call the FLASH_OB_Lock() function to disable the FLASH option control 
+ 471:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****              register access (recommended to protect the Option Bytes against 
+ 472:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****              possible unwanted operations).
+ 473:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     
+ 474:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** @endverbatim
+ 475:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @{
+ 476:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   */
+ 477:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 478:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** /**
+ 479:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @brief  Unlocks the option bytes block access.
+ 480:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @param  None
+ 481:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @retval None
+ 482:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   */
+ 483:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** void FLASH_OB_Unlock(void)
+ 484:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** {
+ 537              		.loc 1 484 0
+ 538              		.cfi_startproc
+ 539              		@ args = 0, pretend = 0, frame = 0
+ 540              		@ frame_needed = 0, uses_anonymous_args = 0
+ 541              		@ link register save eliminated.
+ 485:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   if((FLASH->CR & FLASH_CR_OPTWRE) == RESET)
+ 542              		.loc 1 485 0
+ 543 036c 4FF40053 		mov	r3, #8192
+ 544 0370 C4F20203 		movt	r3, 16386
+ 545 0374 1B69     		ldr	r3, [r3, #16]
+ 546 0376 03F40073 		and	r3, r3, #512
+ 547 037a 002B     		cmp	r3, #0
+ 548 037c 11D1     		bne	.L20
+ 486:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   { 
+ 487:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     /* Unlocking the option bytes block access */
+ 488:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     FLASH->OPTKEYR = FLASH_OPTKEY1;
+ 549              		.loc 1 488 0
+ 550 037e 4FF40053 		mov	r3, #8192
+ 551 0382 C4F20203 		movt	r3, 16386
+ 552 0386 40F22312 		movw	r2, #291
+ 553 038a C4F26752 		movt	r2, 17767
+ 554 038e 9A60     		str	r2, [r3, #8]
+ 489:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     FLASH->OPTKEYR = FLASH_OPTKEY2;
+ 555              		.loc 1 489 0
+ 556 0390 4FF40053 		mov	r3, #8192
+ 557 0394 C4F20203 		movt	r3, 16386
+ 558 0398 48F6AB12 		movw	r2, #35243
+ 559 039c CCF6EF52 		movt	r2, 52719
+ 560 03a0 9A60     		str	r2, [r3, #8]
+ 561              	.L20:
+ 490:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   }
+ 491:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** }
+ 562              		.loc 1 491 0
+ 563 03a2 7047     		bx	lr
+ 564              		.cfi_endproc
+ 565              	.LFE120:
+ 567              		.align	2
+ 568              		.global	FLASH_OB_Lock
+ 569              		.thumb
+ 570              		.thumb_func
+ 572              	FLASH_OB_Lock:
+ 573              	.LFB121:
+ 492:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 493:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** /**
+ 494:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @brief  Locks the option bytes block access.
+ 495:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @param  None
+ 496:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @retval None
+ 497:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   */
+ 498:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** void FLASH_OB_Lock(void)
+ 499:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** {
+ 574              		.loc 1 499 0
+ 575              		.cfi_startproc
+ 576              		@ args = 0, pretend = 0, frame = 0
+ 577              		@ frame_needed = 0, uses_anonymous_args = 0
+ 578              		@ link register save eliminated.
+ 500:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Set the OPTWREN Bit to lock the option bytes block access */
+ 501:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   FLASH->CR &= ~FLASH_CR_OPTWRE;
+ 579              		.loc 1 501 0
+ 580 03a4 4FF40053 		mov	r3, #8192
+ 581 03a8 C4F20203 		movt	r3, 16386
+ 582 03ac 4FF40052 		mov	r2, #8192
+ 583 03b0 C4F20202 		movt	r2, 16386
+ 584 03b4 1269     		ldr	r2, [r2, #16]
+ 585 03b6 22F40072 		bic	r2, r2, #512
+ 586 03ba 1A61     		str	r2, [r3, #16]
+ 502:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** }
+ 587              		.loc 1 502 0
+ 588 03bc 7047     		bx	lr
+ 589              		.cfi_endproc
+ 590              	.LFE121:
+ 592 03be 00BF     		.align	2
+ 593              		.global	FLASH_OB_Launch
+ 594              		.thumb
+ 595              		.thumb_func
+ 597              	FLASH_OB_Launch:
+ 598              	.LFB122:
+ 503:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 504:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** /**
+ 505:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @brief  Launch the option byte loading.
+ 506:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @param  None
+ 507:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @retval None
+ 508:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   */
+ 509:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** void FLASH_OB_Launch(void)
+ 510:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** {
+ 599              		.loc 1 510 0
+ 600              		.cfi_startproc
+ 601              		@ args = 0, pretend = 0, frame = 0
+ 602              		@ frame_needed = 0, uses_anonymous_args = 0
+ 603              		@ link register save eliminated.
+ 511:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Set the OBL_Launch bit to launch the option byte loading */
+ 512:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   FLASH->CR |= FLASH_CR_OBL_LAUNCH; 
+ 604              		.loc 1 512 0
+ 605 03c0 4FF40053 		mov	r3, #8192
+ 606 03c4 C4F20203 		movt	r3, 16386
+ 607 03c8 4FF40052 		mov	r2, #8192
+ 608 03cc C4F20202 		movt	r2, 16386
+ 609 03d0 1269     		ldr	r2, [r2, #16]
+ 610 03d2 42F40052 		orr	r2, r2, #8192
+ 611 03d6 1A61     		str	r2, [r3, #16]
+ 513:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** }
+ 612              		.loc 1 513 0
+ 613 03d8 7047     		bx	lr
+ 614              		.cfi_endproc
+ 615              	.LFE122:
+ 617 03da 00BF     		.align	2
+ 618              		.global	FLASH_OB_Erase
+ 619              		.thumb
+ 620              		.thumb_func
+ 622              	FLASH_OB_Erase:
+ 623              	.LFB123:
+ 514:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 515:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** /**
+ 516:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @brief  Erases the FLASH option bytes.
+ 517:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @note   This functions erases all option bytes except the Read protection (RDP). 
+ 518:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @param  None
+ 519:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @retval FLASH Status: The returned value can be: FLASH_ERROR_PG,
+ 520:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *         FLASH_ERROR_WRP, FLASH_COMPLETE or FLASH_TIMEOUT.
+ 521:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   */
+ 522:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** FLASH_Status FLASH_OB_Erase(void)
+ 523:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** {
+ 624              		.loc 1 523 0
+ 625              		.cfi_startproc
+ 626              		@ args = 0, pretend = 0, frame = 8
+ 627              		@ frame_needed = 0, uses_anonymous_args = 0
+ 628 03dc 00B5     		push	{lr}
+ 629              	.LCFI11:
+ 630              		.cfi_def_cfa_offset 4
+ 631              		.cfi_offset 14, -4
+ 632 03de 83B0     		sub	sp, sp, #12
+ 633              	.LCFI12:
+ 634              		.cfi_def_cfa_offset 16
+ 524:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   uint16_t rdptmp = OB_RDP_Level_0;
+ 635              		.loc 1 524 0
+ 636 03e0 4FF0AA03 		mov	r3, #170
+ 637 03e4 ADF80630 		strh	r3, [sp, #6]	@ movhi
+ 525:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 526:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   FLASH_Status status = FLASH_COMPLETE;
+ 638              		.loc 1 526 0
+ 639 03e8 4FF00403 		mov	r3, #4
+ 640 03ec 8DF80530 		strb	r3, [sp, #5]
+ 527:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 528:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Get the actual read protection Option Byte value */ 
+ 529:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   if(FLASH_OB_GetRDP() != RESET)
+ 641              		.loc 1 529 0
+ 642 03f0 FFF7FEFF 		bl	FLASH_OB_GetRDP
+ 643 03f4 0346     		mov	r3, r0
+ 644 03f6 002B     		cmp	r3, #0
+ 645 03f8 03D0     		beq	.L25
+ 530:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   {
+ 531:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     rdptmp = 0x00;  
+ 646              		.loc 1 531 0
+ 647 03fa 4FF00003 		mov	r3, #0
+ 648 03fe ADF80630 		strh	r3, [sp, #6]	@ movhi
+ 649              	.L25:
+ 532:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   }
+ 533:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 534:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Wait for last operation to be completed */
+ 535:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   status = FLASH_WaitForLastOperation(FLASH_ER_PRG_TIMEOUT);
+ 650              		.loc 1 535 0
+ 651 0402 4FF43020 		mov	r0, #720896
+ 652 0406 FFF7FEFF 		bl	FLASH_WaitForLastOperation
+ 653 040a 0346     		mov	r3, r0
+ 654 040c 8DF80530 		strb	r3, [sp, #5]
+ 536:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 537:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   if(status == FLASH_COMPLETE)
+ 655              		.loc 1 537 0
+ 656 0410 9DF80530 		ldrb	r3, [sp, #5]	@ zero_extendqisi2
+ 657 0414 042B     		cmp	r3, #4
+ 658 0416 69D1     		bne	.L26
+ 538:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   {   
+ 539:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     /* If the previous operation is completed, proceed to erase the option bytes */
+ 540:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     FLASH->CR |= FLASH_CR_OPTER;
+ 659              		.loc 1 540 0
+ 660 0418 4FF40053 		mov	r3, #8192
+ 661 041c C4F20203 		movt	r3, 16386
+ 662 0420 4FF40052 		mov	r2, #8192
+ 663 0424 C4F20202 		movt	r2, 16386
+ 664 0428 1269     		ldr	r2, [r2, #16]
+ 665 042a 42F02002 		orr	r2, r2, #32
+ 666 042e 1A61     		str	r2, [r3, #16]
+ 541:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     FLASH->CR |= FLASH_CR_STRT;
+ 667              		.loc 1 541 0
+ 668 0430 4FF40053 		mov	r3, #8192
+ 669 0434 C4F20203 		movt	r3, 16386
+ 670 0438 4FF40052 		mov	r2, #8192
+ 671 043c C4F20202 		movt	r2, 16386
+ 672 0440 1269     		ldr	r2, [r2, #16]
+ 673 0442 42F04002 		orr	r2, r2, #64
+ 674 0446 1A61     		str	r2, [r3, #16]
+ 542:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 543:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     /* Wait for last operation to be completed */
+ 544:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     status = FLASH_WaitForLastOperation(FLASH_ER_PRG_TIMEOUT);
+ 675              		.loc 1 544 0
+ 676 0448 4FF43020 		mov	r0, #720896
+ 677 044c FFF7FEFF 		bl	FLASH_WaitForLastOperation
+ 678 0450 0346     		mov	r3, r0
+ 679 0452 8DF80530 		strb	r3, [sp, #5]
+ 545:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     
+ 546:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     if(status == FLASH_COMPLETE)
+ 680              		.loc 1 546 0
+ 681 0456 9DF80530 		ldrb	r3, [sp, #5]	@ zero_extendqisi2
+ 682 045a 042B     		cmp	r3, #4
+ 683 045c 36D1     		bne	.L27
+ 547:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     {
+ 548:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       /* If the erase operation is completed, disable the OPTER Bit */
+ 549:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       FLASH->CR &= ~FLASH_CR_OPTER;
+ 684              		.loc 1 549 0
+ 685 045e 4FF40053 		mov	r3, #8192
+ 686 0462 C4F20203 		movt	r3, 16386
+ 687 0466 4FF40052 		mov	r2, #8192
+ 688 046a C4F20202 		movt	r2, 16386
+ 689 046e 1269     		ldr	r2, [r2, #16]
+ 690 0470 22F02002 		bic	r2, r2, #32
+ 691 0474 1A61     		str	r2, [r3, #16]
+ 550:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****        
+ 551:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       /* Enable the Option Bytes Programming operation */
+ 552:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       FLASH->CR |= FLASH_CR_OPTPG;
+ 692              		.loc 1 552 0
+ 693 0476 4FF40053 		mov	r3, #8192
+ 694 047a C4F20203 		movt	r3, 16386
+ 695 047e 4FF40052 		mov	r2, #8192
+ 696 0482 C4F20202 		movt	r2, 16386
+ 697 0486 1269     		ldr	r2, [r2, #16]
+ 698 0488 42F01002 		orr	r2, r2, #16
+ 699 048c 1A61     		str	r2, [r3, #16]
+ 553:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 554:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       /* Restore the last read protection Option Byte value */
+ 555:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       OB->RDP = (uint16_t)rdptmp; 
+ 700              		.loc 1 555 0
+ 701 048e 4FF47843 		mov	r3, #63488
+ 702 0492 C1F6FF73 		movt	r3, 8191
+ 703 0496 BDF80620 		ldrh	r2, [sp, #6]	@ movhi
+ 704 049a 1A80     		strh	r2, [r3, #0]	@ movhi
+ 556:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 557:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       /* Wait for last operation to be completed */
+ 558:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       status = FLASH_WaitForLastOperation(FLASH_ER_PRG_TIMEOUT);
+ 705              		.loc 1 558 0
+ 706 049c 4FF43020 		mov	r0, #720896
+ 707 04a0 FFF7FEFF 		bl	FLASH_WaitForLastOperation
+ 708 04a4 0346     		mov	r3, r0
+ 709 04a6 8DF80530 		strb	r3, [sp, #5]
+ 559:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****  
+ 560:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       if(status != FLASH_TIMEOUT)
+ 710              		.loc 1 560 0
+ 711 04aa 9DF80530 		ldrb	r3, [sp, #5]	@ zero_extendqisi2
+ 712 04ae 052B     		cmp	r3, #5
+ 713 04b0 1CD0     		beq	.L26
+ 561:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       {
+ 562:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****         /* if the program operation is completed, disable the OPTPG Bit */
+ 563:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****         FLASH->CR &= ~FLASH_CR_OPTPG;
+ 714              		.loc 1 563 0
+ 715 04b2 4FF40053 		mov	r3, #8192
+ 716 04b6 C4F20203 		movt	r3, 16386
+ 717 04ba 4FF40052 		mov	r2, #8192
+ 718 04be C4F20202 		movt	r2, 16386
+ 719 04c2 1269     		ldr	r2, [r2, #16]
+ 720 04c4 22F01002 		bic	r2, r2, #16
+ 721 04c8 1A61     		str	r2, [r3, #16]
+ 722 04ca 0FE0     		b	.L26
+ 723              	.L27:
+ 564:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       }
+ 565:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     }
+ 566:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     else
+ 567:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     {
+ 568:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       if (status != FLASH_TIMEOUT)
+ 724              		.loc 1 568 0
+ 725 04cc 9DF80530 		ldrb	r3, [sp, #5]	@ zero_extendqisi2
+ 726 04d0 052B     		cmp	r3, #5
+ 727 04d2 0BD0     		beq	.L26
+ 569:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       {
+ 570:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****         /* Disable the OPTPG Bit */
+ 571:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****         FLASH->CR &= ~FLASH_CR_OPTPG;
+ 728              		.loc 1 571 0
+ 729 04d4 4FF40053 		mov	r3, #8192
+ 730 04d8 C4F20203 		movt	r3, 16386
+ 731 04dc 4FF40052 		mov	r2, #8192
+ 732 04e0 C4F20202 		movt	r2, 16386
+ 733 04e4 1269     		ldr	r2, [r2, #16]
+ 734 04e6 22F01002 		bic	r2, r2, #16
+ 735 04ea 1A61     		str	r2, [r3, #16]
+ 736              	.L26:
+ 572:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       }
+ 573:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     }  
+ 574:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   }
+ 575:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Return the erase status */
+ 576:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   return status;
+ 737              		.loc 1 576 0
+ 738 04ec 9DF80530 		ldrb	r3, [sp, #5]	@ zero_extendqisi2
+ 577:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** }
+ 739              		.loc 1 577 0
+ 740 04f0 1846     		mov	r0, r3
+ 741 04f2 03B0     		add	sp, sp, #12
+ 742 04f4 00BD     		pop	{pc}
+ 743              		.cfi_endproc
+ 744              	.LFE123:
+ 746 04f6 00BF     		.align	2
+ 747              		.global	FLASH_OB_EnableWRP
+ 748              		.thumb
+ 749              		.thumb_func
+ 751              	FLASH_OB_EnableWRP:
+ 752              	.LFB124:
+ 578:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 579:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** /**
+ 580:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @brief  Write protects the desired pages
+ 581:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @note   To correctly run this function, the FLASH_OB_Unlock() function
+ 582:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *         must be called before.
+ 583:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @note   Call the FLASH_OB_Lock() to disable the flash control register access and the option by
+ 584:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *         (recommended to protect the FLASH memory against possible unwanted operation)    
+ 585:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @param  OB_WRP: specifies the address of the pages to be write protected.
+ 586:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *   This parameter can be:
+ 587:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *     @arg  value between OB_WRP_Pages0to35 and OB_WRP_Pages60to63
+ 588:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *     @arg OB_WRP_AllPages
+ 589:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @retval FLASH Status: The returned value can be: 
+ 590:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *         FLASH_ERROR_PROGRAM, FLASH_ERROR_WRP, FLASH_COMPLETE or FLASH_TIMEOUT.
+ 591:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   */
+ 592:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** FLASH_Status FLASH_OB_EnableWRP(uint32_t OB_WRP)
+ 593:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** {
+ 753              		.loc 1 593 0
+ 754              		.cfi_startproc
+ 755              		@ args = 0, pretend = 0, frame = 16
+ 756              		@ frame_needed = 0, uses_anonymous_args = 0
+ 757 04f8 00B5     		push	{lr}
+ 758              	.LCFI13:
+ 759              		.cfi_def_cfa_offset 4
+ 760              		.cfi_offset 14, -4
+ 761 04fa 85B0     		sub	sp, sp, #20
+ 762              	.LCFI14:
+ 763              		.cfi_def_cfa_offset 24
+ 764 04fc 0190     		str	r0, [sp, #4]
+ 594:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   uint16_t WRP0_Data = 0xFFFF, WRP1_Data = 0xFFFF;
+ 765              		.loc 1 594 0
+ 766 04fe 4FF6FF73 		movw	r3, #65535
+ 767 0502 ADF80C30 		strh	r3, [sp, #12]	@ movhi
+ 768 0506 4FF6FF73 		movw	r3, #65535
+ 769 050a ADF80A30 		strh	r3, [sp, #10]	@ movhi
+ 595:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   
+ 596:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   FLASH_Status status = FLASH_COMPLETE;
+ 770              		.loc 1 596 0
+ 771 050e 4FF00403 		mov	r3, #4
+ 772 0512 8DF80F30 		strb	r3, [sp, #15]
+ 597:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   
+ 598:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Check the parameters */
+ 599:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   assert_param(IS_OB_WRP(OB_WRP));
+ 600:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     
+ 601:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   OB_WRP = (uint32_t)(~OB_WRP);
+ 773              		.loc 1 601 0
+ 774 0516 019B     		ldr	r3, [sp, #4]
+ 775 0518 6FEA0303 		mvn	r3, r3
+ 776 051c 0193     		str	r3, [sp, #4]
+ 602:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   WRP0_Data = (uint16_t)(OB_WRP & OB_WRP0_WRP0);
+ 777              		.loc 1 602 0
+ 778 051e 019B     		ldr	r3, [sp, #4]
+ 779 0520 9BB2     		uxth	r3, r3
+ 780 0522 DBB2     		uxtb	r3, r3
+ 781 0524 ADF80C30 		strh	r3, [sp, #12]	@ movhi
+ 603:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   WRP1_Data = (uint16_t)((OB_WRP & OB_WRP0_nWRP0) >> 8);
+ 782              		.loc 1 603 0
+ 783 0528 019B     		ldr	r3, [sp, #4]
+ 784 052a 03F47F43 		and	r3, r3, #65280
+ 785 052e 4FEA1323 		lsr	r3, r3, #8
+ 786 0532 ADF80A30 		strh	r3, [sp, #10]	@ movhi
+ 604:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   
+ 605:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Wait for last operation to be completed */
+ 606:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   status = FLASH_WaitForLastOperation(FLASH_ER_PRG_TIMEOUT);
+ 787              		.loc 1 606 0
+ 788 0536 4FF43020 		mov	r0, #720896
+ 789 053a FFF7FEFF 		bl	FLASH_WaitForLastOperation
+ 790 053e 0346     		mov	r3, r0
+ 791 0540 8DF80F30 		strb	r3, [sp, #15]
+ 607:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   
+ 608:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   if(status == FLASH_COMPLETE)
+ 792              		.loc 1 608 0
+ 793 0544 9DF80F30 		ldrb	r3, [sp, #15]	@ zero_extendqisi2
+ 794 0548 042B     		cmp	r3, #4
+ 795 054a 43D1     		bne	.L29
+ 609:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   {
+ 610:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     FLASH->CR |= FLASH_CR_OPTPG;
+ 796              		.loc 1 610 0
+ 797 054c 4FF40053 		mov	r3, #8192
+ 798 0550 C4F20203 		movt	r3, 16386
+ 799 0554 4FF40052 		mov	r2, #8192
+ 800 0558 C4F20202 		movt	r2, 16386
+ 801 055c 1269     		ldr	r2, [r2, #16]
+ 802 055e 42F01002 		orr	r2, r2, #16
+ 803 0562 1A61     		str	r2, [r3, #16]
+ 611:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 612:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     if(WRP0_Data != 0xFF)
+ 804              		.loc 1 612 0
+ 805 0564 BDF80C30 		ldrh	r3, [sp, #12]
+ 806 0568 FF2B     		cmp	r3, #255
+ 807 056a 0DD0     		beq	.L30
+ 613:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     {
+ 614:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       OB->WRP0 = WRP0_Data;
+ 808              		.loc 1 614 0
+ 809 056c 4FF47843 		mov	r3, #63488
+ 810 0570 C1F6FF73 		movt	r3, 8191
+ 811 0574 BDF80C20 		ldrh	r2, [sp, #12]	@ movhi
+ 812 0578 1A81     		strh	r2, [r3, #8]	@ movhi
+ 615:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       
+ 616:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       /* Wait for last operation to be completed */
+ 617:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       status = FLASH_WaitForLastOperation(FLASH_ER_PRG_TIMEOUT);
+ 813              		.loc 1 617 0
+ 814 057a 4FF43020 		mov	r0, #720896
+ 815 057e FFF7FEFF 		bl	FLASH_WaitForLastOperation
+ 816 0582 0346     		mov	r3, r0
+ 817 0584 8DF80F30 		strb	r3, [sp, #15]
+ 818              	.L30:
+ 618:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     }
+ 619:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     if((status == FLASH_COMPLETE) && (WRP1_Data != 0xFF))
+ 819              		.loc 1 619 0
+ 820 0588 9DF80F30 		ldrb	r3, [sp, #15]	@ zero_extendqisi2
+ 821 058c 042B     		cmp	r3, #4
+ 822 058e 11D1     		bne	.L31
+ 823              		.loc 1 619 0 is_stmt 0 discriminator 1
+ 824 0590 BDF80A30 		ldrh	r3, [sp, #10]
+ 825 0594 FF2B     		cmp	r3, #255
+ 826 0596 0DD0     		beq	.L31
+ 620:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     {
+ 621:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       OB->WRP1 = WRP1_Data;
+ 827              		.loc 1 621 0 is_stmt 1
+ 828 0598 4FF47843 		mov	r3, #63488
+ 829 059c C1F6FF73 		movt	r3, 8191
+ 830 05a0 BDF80A20 		ldrh	r2, [sp, #10]	@ movhi
+ 831 05a4 5A81     		strh	r2, [r3, #10]	@ movhi
+ 622:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       
+ 623:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       /* Wait for last operation to be completed */
+ 624:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       status = FLASH_WaitForLastOperation(FLASH_ER_PRG_TIMEOUT);
+ 832              		.loc 1 624 0
+ 833 05a6 4FF43020 		mov	r0, #720896
+ 834 05aa FFF7FEFF 		bl	FLASH_WaitForLastOperation
+ 835 05ae 0346     		mov	r3, r0
+ 836 05b0 8DF80F30 		strb	r3, [sp, #15]
+ 837              	.L31:
+ 625:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     }
+ 626:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****           
+ 627:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     if(status != FLASH_TIMEOUT)
+ 838              		.loc 1 627 0
+ 839 05b4 9DF80F30 		ldrb	r3, [sp, #15]	@ zero_extendqisi2
+ 840 05b8 052B     		cmp	r3, #5
+ 841 05ba 0BD0     		beq	.L29
+ 628:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     {
+ 629:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       /* if the program operation is completed, disable the OPTPG Bit */
+ 630:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       FLASH->CR &= ~FLASH_CR_OPTPG;
+ 842              		.loc 1 630 0
+ 843 05bc 4FF40053 		mov	r3, #8192
+ 844 05c0 C4F20203 		movt	r3, 16386
+ 845 05c4 4FF40052 		mov	r2, #8192
+ 846 05c8 C4F20202 		movt	r2, 16386
+ 847 05cc 1269     		ldr	r2, [r2, #16]
+ 848 05ce 22F01002 		bic	r2, r2, #16
+ 849 05d2 1A61     		str	r2, [r3, #16]
+ 850              	.L29:
+ 631:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     }
+ 632:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   } 
+ 633:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Return the write protection operation Status */
+ 634:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   return status;      
+ 851              		.loc 1 634 0
+ 852 05d4 9DF80F30 		ldrb	r3, [sp, #15]	@ zero_extendqisi2
+ 635:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** }
+ 853              		.loc 1 635 0
+ 854 05d8 1846     		mov	r0, r3
+ 855 05da 05B0     		add	sp, sp, #20
+ 856 05dc 00BD     		pop	{pc}
+ 857              		.cfi_endproc
+ 858              	.LFE124:
+ 860 05de 00BF     		.align	2
+ 861              		.global	FLASH_OB_RDPConfig
+ 862              		.thumb
+ 863              		.thumb_func
+ 865              	FLASH_OB_RDPConfig:
+ 866              	.LFB125:
+ 636:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 637:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** /**
+ 638:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @brief  Enables or disables the read out protection.
+ 639:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @note   To correctly run this function, the FLASH_OB_Unlock() function
+ 640:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *         must be called before.
+ 641:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @note   Call the FLASH_OB_Lock() to disable the flash control register access and the option by
+ 642:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *         (recommended to protect the FLASH memory against possible unwanted operation)   
+ 643:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @param  FLASH_ReadProtection_Level: specifies the read protection level. 
+ 644:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *   This parameter can be:
+ 645:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *     @arg OB_RDP_Level_0: No protection
+ 646:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *     @arg OB_RDP_Level_1: Read protection of the memory                     
+ 647:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *     @arg OB_RDP_Level_2: Chip protection
+ 648:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *     @retval FLASH Status: The returned value can be: 
+ 649:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * FLASH_ERROR_PROGRAM, FLASH_ERROR_WRP, FLASH_COMPLETE or FLASH_TIMEOUT.
+ 650:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   */
+ 651:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** FLASH_Status FLASH_OB_RDPConfig(uint8_t OB_RDP)
+ 652:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** {
+ 867              		.loc 1 652 0
+ 868              		.cfi_startproc
+ 869              		@ args = 0, pretend = 0, frame = 16
+ 870              		@ frame_needed = 0, uses_anonymous_args = 0
+ 871 05e0 00B5     		push	{lr}
+ 872              	.LCFI15:
+ 873              		.cfi_def_cfa_offset 4
+ 874              		.cfi_offset 14, -4
+ 875 05e2 85B0     		sub	sp, sp, #20
+ 876              	.LCFI16:
+ 877              		.cfi_def_cfa_offset 24
+ 878 05e4 0346     		mov	r3, r0
+ 879 05e6 8DF80730 		strb	r3, [sp, #7]
+ 653:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   FLASH_Status status = FLASH_COMPLETE;
+ 880              		.loc 1 653 0
+ 881 05ea 4FF00403 		mov	r3, #4
+ 882 05ee 8DF80F30 		strb	r3, [sp, #15]
+ 654:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   
+ 655:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Check the parameters */
+ 656:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   assert_param(IS_OB_RDP(OB_RDP));
+ 657:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   status = FLASH_WaitForLastOperation(FLASH_ER_PRG_TIMEOUT);
+ 883              		.loc 1 657 0
+ 884 05f2 4FF43020 		mov	r0, #720896
+ 885 05f6 FFF7FEFF 		bl	FLASH_WaitForLastOperation
+ 886 05fa 0346     		mov	r3, r0
+ 887 05fc 8DF80F30 		strb	r3, [sp, #15]
+ 658:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   
+ 659:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   if(status == FLASH_COMPLETE)
+ 888              		.loc 1 659 0
+ 889 0600 9DF80F30 		ldrb	r3, [sp, #15]	@ zero_extendqisi2
+ 890 0604 042B     		cmp	r3, #4
+ 891 0606 6AD1     		bne	.L33
+ 660:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   {
+ 661:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     FLASH->CR |= FLASH_CR_OPTER;
+ 892              		.loc 1 661 0
+ 893 0608 4FF40053 		mov	r3, #8192
+ 894 060c C4F20203 		movt	r3, 16386
+ 895 0610 4FF40052 		mov	r2, #8192
+ 896 0614 C4F20202 		movt	r2, 16386
+ 897 0618 1269     		ldr	r2, [r2, #16]
+ 898 061a 42F02002 		orr	r2, r2, #32
+ 899 061e 1A61     		str	r2, [r3, #16]
+ 662:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     FLASH->CR |= FLASH_CR_STRT;
+ 900              		.loc 1 662 0
+ 901 0620 4FF40053 		mov	r3, #8192
+ 902 0624 C4F20203 		movt	r3, 16386
+ 903 0628 4FF40052 		mov	r2, #8192
+ 904 062c C4F20202 		movt	r2, 16386
+ 905 0630 1269     		ldr	r2, [r2, #16]
+ 906 0632 42F04002 		orr	r2, r2, #64
+ 907 0636 1A61     		str	r2, [r3, #16]
+ 663:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     
+ 664:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     /* Wait for last operation to be completed */
+ 665:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     status = FLASH_WaitForLastOperation(FLASH_ER_PRG_TIMEOUT);
+ 908              		.loc 1 665 0
+ 909 0638 4FF43020 		mov	r0, #720896
+ 910 063c FFF7FEFF 		bl	FLASH_WaitForLastOperation
+ 911 0640 0346     		mov	r3, r0
+ 912 0642 8DF80F30 		strb	r3, [sp, #15]
+ 666:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     
+ 667:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     if(status == FLASH_COMPLETE)
+ 913              		.loc 1 667 0
+ 914 0646 9DF80F30 		ldrb	r3, [sp, #15]	@ zero_extendqisi2
+ 915 064a 042B     		cmp	r3, #4
+ 916 064c 37D1     		bne	.L34
+ 668:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     {
+ 669:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       /* If the erase operation is completed, disable the OPTER Bit */
+ 670:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       FLASH->CR &= ~FLASH_CR_OPTER;
+ 917              		.loc 1 670 0
+ 918 064e 4FF40053 		mov	r3, #8192
+ 919 0652 C4F20203 		movt	r3, 16386
+ 920 0656 4FF40052 		mov	r2, #8192
+ 921 065a C4F20202 		movt	r2, 16386
+ 922 065e 1269     		ldr	r2, [r2, #16]
+ 923 0660 22F02002 		bic	r2, r2, #32
+ 924 0664 1A61     		str	r2, [r3, #16]
+ 671:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       
+ 672:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       /* Enable the Option Bytes Programming operation */
+ 673:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       FLASH->CR |= FLASH_CR_OPTPG;
+ 925              		.loc 1 673 0
+ 926 0666 4FF40053 		mov	r3, #8192
+ 927 066a C4F20203 		movt	r3, 16386
+ 928 066e 4FF40052 		mov	r2, #8192
+ 929 0672 C4F20202 		movt	r2, 16386
+ 930 0676 1269     		ldr	r2, [r2, #16]
+ 931 0678 42F01002 		orr	r2, r2, #16
+ 932 067c 1A61     		str	r2, [r3, #16]
+ 674:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****        
+ 675:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       OB->RDP = OB_RDP;
+ 933              		.loc 1 675 0
+ 934 067e 4FF47843 		mov	r3, #63488
+ 935 0682 C1F6FF73 		movt	r3, 8191
+ 936 0686 9DF80720 		ldrb	r2, [sp, #7]	@ zero_extendqisi2
+ 937 068a 92B2     		uxth	r2, r2
+ 938 068c 1A80     		strh	r2, [r3, #0]	@ movhi
+ 676:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 677:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       /* Wait for last operation to be completed */
+ 678:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       status = FLASH_WaitForLastOperation(FLASH_ER_PRG_TIMEOUT); 
+ 939              		.loc 1 678 0
+ 940 068e 4FF43020 		mov	r0, #720896
+ 941 0692 FFF7FEFF 		bl	FLASH_WaitForLastOperation
+ 942 0696 0346     		mov	r3, r0
+ 943 0698 8DF80F30 		strb	r3, [sp, #15]
+ 679:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     
+ 680:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       if(status != FLASH_TIMEOUT)
+ 944              		.loc 1 680 0
+ 945 069c 9DF80F30 		ldrb	r3, [sp, #15]	@ zero_extendqisi2
+ 946 06a0 052B     		cmp	r3, #5
+ 947 06a2 1CD0     		beq	.L33
+ 681:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       {
+ 682:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****         /* if the program operation is completed, disable the OPTPG Bit */
+ 683:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****         FLASH->CR &= ~FLASH_CR_OPTPG;
+ 948              		.loc 1 683 0
+ 949 06a4 4FF40053 		mov	r3, #8192
+ 950 06a8 C4F20203 		movt	r3, 16386
+ 951 06ac 4FF40052 		mov	r2, #8192
+ 952 06b0 C4F20202 		movt	r2, 16386
+ 953 06b4 1269     		ldr	r2, [r2, #16]
+ 954 06b6 22F01002 		bic	r2, r2, #16
+ 955 06ba 1A61     		str	r2, [r3, #16]
+ 956 06bc 0FE0     		b	.L33
+ 957              	.L34:
+ 684:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       }
+ 685:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     }
+ 686:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     else 
+ 687:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     {
+ 688:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       if(status != FLASH_TIMEOUT)
+ 958              		.loc 1 688 0
+ 959 06be 9DF80F30 		ldrb	r3, [sp, #15]	@ zero_extendqisi2
+ 960 06c2 052B     		cmp	r3, #5
+ 961 06c4 0BD0     		beq	.L33
+ 689:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       {
+ 690:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****         /* Disable the OPTER Bit */
+ 691:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****         FLASH->CR &= ~FLASH_CR_OPTER;
+ 962              		.loc 1 691 0
+ 963 06c6 4FF40053 		mov	r3, #8192
+ 964 06ca C4F20203 		movt	r3, 16386
+ 965 06ce 4FF40052 		mov	r2, #8192
+ 966 06d2 C4F20202 		movt	r2, 16386
+ 967 06d6 1269     		ldr	r2, [r2, #16]
+ 968 06d8 22F02002 		bic	r2, r2, #32
+ 969 06dc 1A61     		str	r2, [r3, #16]
+ 970              	.L33:
+ 692:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       }
+ 693:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     }
+ 694:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   }
+ 695:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Return the protection operation Status */
+ 696:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   return status;             
+ 971              		.loc 1 696 0
+ 972 06de 9DF80F30 		ldrb	r3, [sp, #15]	@ zero_extendqisi2
+ 697:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** }
+ 973              		.loc 1 697 0
+ 974 06e2 1846     		mov	r0, r3
+ 975 06e4 05B0     		add	sp, sp, #20
+ 976 06e6 00BD     		pop	{pc}
+ 977              		.cfi_endproc
+ 978              	.LFE125:
+ 980              		.align	2
+ 981              		.global	FLASH_OB_UserConfig
+ 982              		.thumb
+ 983              		.thumb_func
+ 985              	FLASH_OB_UserConfig:
+ 986              	.LFB126:
+ 698:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 699:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** /**
+ 700:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @brief  Programs the FLASH User Option Byte: IWDG_SW / RST_STOP / RST_STDBY.
+ 701:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @param  OB_IWDG: Selects the IWDG mode
+ 702:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *   This parameter can be one of the following values:
+ 703:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *     @arg OB_IWDG_SW: Software IWDG selected
+ 704:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *     @arg OB_IWDG_HW: Hardware IWDG selected
+ 705:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @param  OB_STOP: Reset event when entering STOP mode.
+ 706:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *   This parameter can be one of the following values:
+ 707:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *     @arg OB_STOP_NoRST: No reset generated when entering in STOP
+ 708:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *     @arg OB_STOP_RST: Reset generated when entering in STOP
+ 709:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @param  OB_STDBY: Reset event when entering Standby mode.
+ 710:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *   This parameter can be one of the following values:
+ 711:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *     @arg OB_STDBY_NoRST: No reset generated when entering in STANDBY
+ 712:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *     @arg OB_STDBY_RST: Reset generated when entering in STANDBY
+ 713:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @retval FLASH Status: The returned value can be: FLASH_ERROR_PG, 
+ 714:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *         FLASH_ERROR_WRP, FLASH_COMPLETE or FLASH_TIMEOUT.
+ 715:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   */
+ 716:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** FLASH_Status FLASH_OB_UserConfig(uint8_t OB_IWDG, uint8_t OB_STOP, uint8_t OB_STDBY)
+ 717:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** {
+ 987              		.loc 1 717 0
+ 988              		.cfi_startproc
+ 989              		@ args = 0, pretend = 0, frame = 16
+ 990              		@ frame_needed = 0, uses_anonymous_args = 0
+ 991 06e8 00B5     		push	{lr}
+ 992              	.LCFI17:
+ 993              		.cfi_def_cfa_offset 4
+ 994              		.cfi_offset 14, -4
+ 995 06ea 85B0     		sub	sp, sp, #20
+ 996              	.LCFI18:
+ 997              		.cfi_def_cfa_offset 24
+ 998 06ec 1346     		mov	r3, r2
+ 999 06ee 0246     		mov	r2, r0
+ 1000 06f0 8DF80720 		strb	r2, [sp, #7]
+ 1001 06f4 0A46     		mov	r2, r1
+ 1002 06f6 8DF80620 		strb	r2, [sp, #6]
+ 1003 06fa 8DF80530 		strb	r3, [sp, #5]
+ 718:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   FLASH_Status status = FLASH_COMPLETE; 
+ 1004              		.loc 1 718 0
+ 1005 06fe 4FF00403 		mov	r3, #4
+ 1006 0702 8DF80F30 		strb	r3, [sp, #15]
+ 719:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 720:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Check the parameters */
+ 721:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   assert_param(IS_OB_IWDG_SOURCE(OB_IWDG));
+ 722:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   assert_param(IS_OB_STOP_SOURCE(OB_STOP));
+ 723:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   assert_param(IS_OB_STDBY_SOURCE(OB_STDBY));
+ 724:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 725:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Authorize the small information block programming */
+ 726:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   FLASH->OPTKEYR = FLASH_KEY1;
+ 1007              		.loc 1 726 0
+ 1008 0706 4FF40053 		mov	r3, #8192
+ 1009 070a C4F20203 		movt	r3, 16386
+ 1010 070e 40F22312 		movw	r2, #291
+ 1011 0712 C4F26752 		movt	r2, 17767
+ 1012 0716 9A60     		str	r2, [r3, #8]
+ 727:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   FLASH->OPTKEYR = FLASH_KEY2;
+ 1013              		.loc 1 727 0
+ 1014 0718 4FF40053 		mov	r3, #8192
+ 1015 071c C4F20203 		movt	r3, 16386
+ 1016 0720 48F6AB12 		movw	r2, #35243
+ 1017 0724 CCF6EF52 		movt	r2, 52719
+ 1018 0728 9A60     		str	r2, [r3, #8]
+ 728:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   
+ 729:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Wait for last operation to be completed */
+ 730:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   status = FLASH_WaitForLastOperation(FLASH_ER_PRG_TIMEOUT);
+ 1019              		.loc 1 730 0
+ 1020 072a 4FF43020 		mov	r0, #720896
+ 1021 072e FFF7FEFF 		bl	FLASH_WaitForLastOperation
+ 1022 0732 0346     		mov	r3, r0
+ 1023 0734 8DF80F30 		strb	r3, [sp, #15]
+ 731:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   
+ 732:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   if(status == FLASH_COMPLETE)
+ 1024              		.loc 1 732 0
+ 1025 0738 9DF80F30 		ldrb	r3, [sp, #15]	@ zero_extendqisi2
+ 1026 073c 042B     		cmp	r3, #4
+ 1027 073e 34D1     		bne	.L36
+ 733:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   {  
+ 734:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     /* Enable the Option Bytes Programming operation */
+ 735:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     FLASH->CR |= FLASH_CR_OPTPG; 
+ 1028              		.loc 1 735 0
+ 1029 0740 4FF40053 		mov	r3, #8192
+ 1030 0744 C4F20203 		movt	r3, 16386
+ 1031 0748 4FF40052 		mov	r2, #8192
+ 1032 074c C4F20202 		movt	r2, 16386
+ 1033 0750 1269     		ldr	r2, [r2, #16]
+ 1034 0752 42F01002 		orr	r2, r2, #16
+ 1035 0756 1A61     		str	r2, [r3, #16]
+ 736:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****            
+ 737:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     OB->USER = (uint8_t)((uint8_t)(OB_IWDG | OB_STOP) | (uint8_t)(OB_STDBY |0xF8));
+ 1036              		.loc 1 737 0
+ 1037 0758 4FF47843 		mov	r3, #63488
+ 1038 075c C1F6FF73 		movt	r3, 8191
+ 1039 0760 9DF80710 		ldrb	r1, [sp, #7]
+ 1040 0764 9DF80620 		ldrb	r2, [sp, #6]
+ 1041 0768 0A43     		orrs	r2, r2, r1
+ 1042 076a D1B2     		uxtb	r1, r2
+ 1043 076c 9DF80520 		ldrb	r2, [sp, #5]
+ 1044 0770 0A43     		orrs	r2, r2, r1
+ 1045 0772 D2B2     		uxtb	r2, r2
+ 1046 0774 62F00702 		orn	r2, r2, #7
+ 1047 0778 D2B2     		uxtb	r2, r2
+ 1048 077a 5A80     		strh	r2, [r3, #2]	@ movhi
+ 738:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   
+ 739:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     /* Wait for last operation to be completed */
+ 740:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     status = FLASH_WaitForLastOperation(FLASH_ER_PRG_TIMEOUT);
+ 1049              		.loc 1 740 0
+ 1050 077c 4FF43020 		mov	r0, #720896
+ 1051 0780 FFF7FEFF 		bl	FLASH_WaitForLastOperation
+ 1052 0784 0346     		mov	r3, r0
+ 1053 0786 8DF80F30 		strb	r3, [sp, #15]
+ 741:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 742:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     if(status != FLASH_TIMEOUT)
+ 1054              		.loc 1 742 0
+ 1055 078a 9DF80F30 		ldrb	r3, [sp, #15]	@ zero_extendqisi2
+ 1056 078e 052B     		cmp	r3, #5
+ 1057 0790 0BD0     		beq	.L36
+ 743:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     {
+ 744:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       /* if the program operation is completed, disable the OPTPG Bit */
+ 745:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       FLASH->CR &= ~FLASH_CR_OPTPG;
+ 1058              		.loc 1 745 0
+ 1059 0792 4FF40053 		mov	r3, #8192
+ 1060 0796 C4F20203 		movt	r3, 16386
+ 1061 079a 4FF40052 		mov	r2, #8192
+ 1062 079e C4F20202 		movt	r2, 16386
+ 1063 07a2 1269     		ldr	r2, [r2, #16]
+ 1064 07a4 22F01002 		bic	r2, r2, #16
+ 1065 07a8 1A61     		str	r2, [r3, #16]
+ 1066              	.L36:
+ 746:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     }
+ 747:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   }    
+ 748:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Return the Option Byte program Status */
+ 749:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   return status;
+ 1067              		.loc 1 749 0
+ 1068 07aa 9DF80F30 		ldrb	r3, [sp, #15]	@ zero_extendqisi2
+ 750:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** }
+ 1069              		.loc 1 750 0
+ 1070 07ae 1846     		mov	r0, r3
+ 1071 07b0 05B0     		add	sp, sp, #20
+ 1072 07b2 00BD     		pop	{pc}
+ 1073              		.cfi_endproc
+ 1074              	.LFE126:
+ 1076              		.align	2
+ 1077              		.global	FLASH_OB_BOOTConfig
+ 1078              		.thumb
+ 1079              		.thumb_func
+ 1081              	FLASH_OB_BOOTConfig:
+ 1082              	.LFB127:
+ 751:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 752:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** /**
+ 753:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @brief  Sets or resets the BOOT1. 
+ 754:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @param  OB_BOOT1: Set or Reset the BOOT1.
+ 755:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *   This parameter can be one of the following values:
+ 756:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *     @arg OB_BOOT1_RESET: BOOT1 Reset
+ 757:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *     @arg OB_BOOT1_SET: BOOT1 Set
+ 758:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @retval None
+ 759:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   */
+ 760:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** FLASH_Status FLASH_OB_BOOTConfig(uint8_t OB_BOOT1)
+ 761:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** {
+ 1083              		.loc 1 761 0
+ 1084              		.cfi_startproc
+ 1085              		@ args = 0, pretend = 0, frame = 16
+ 1086              		@ frame_needed = 0, uses_anonymous_args = 0
+ 1087 07b4 00B5     		push	{lr}
+ 1088              	.LCFI19:
+ 1089              		.cfi_def_cfa_offset 4
+ 1090              		.cfi_offset 14, -4
+ 1091 07b6 85B0     		sub	sp, sp, #20
+ 1092              	.LCFI20:
+ 1093              		.cfi_def_cfa_offset 24
+ 1094 07b8 0346     		mov	r3, r0
+ 1095 07ba 8DF80730 		strb	r3, [sp, #7]
+ 762:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   FLASH_Status status = FLASH_COMPLETE; 
+ 1096              		.loc 1 762 0
+ 1097 07be 4FF00403 		mov	r3, #4
+ 1098 07c2 8DF80F30 		strb	r3, [sp, #15]
+ 763:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 764:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Check the parameters */
+ 765:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   assert_param(IS_OB_BOOT1(OB_BOOT1));
+ 766:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 767:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Authorize the small information block programming */
+ 768:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   FLASH->OPTKEYR = FLASH_KEY1;
+ 1099              		.loc 1 768 0
+ 1100 07c6 4FF40053 		mov	r3, #8192
+ 1101 07ca C4F20203 		movt	r3, 16386
+ 1102 07ce 40F22312 		movw	r2, #291
+ 1103 07d2 C4F26752 		movt	r2, 17767
+ 1104 07d6 9A60     		str	r2, [r3, #8]
+ 769:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   FLASH->OPTKEYR = FLASH_KEY2;
+ 1105              		.loc 1 769 0
+ 1106 07d8 4FF40053 		mov	r3, #8192
+ 1107 07dc C4F20203 		movt	r3, 16386
+ 1108 07e0 48F6AB12 		movw	r2, #35243
+ 1109 07e4 CCF6EF52 		movt	r2, 52719
+ 1110 07e8 9A60     		str	r2, [r3, #8]
+ 770:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   
+ 771:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Wait for last operation to be completed */
+ 772:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   status = FLASH_WaitForLastOperation(FLASH_ER_PRG_TIMEOUT);
+ 1111              		.loc 1 772 0
+ 1112 07ea 4FF43020 		mov	r0, #720896
+ 1113 07ee FFF7FEFF 		bl	FLASH_WaitForLastOperation
+ 1114 07f2 0346     		mov	r3, r0
+ 1115 07f4 8DF80F30 		strb	r3, [sp, #15]
+ 773:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   
+ 774:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   if(status == FLASH_COMPLETE)
+ 1116              		.loc 1 774 0
+ 1117 07f8 9DF80F30 		ldrb	r3, [sp, #15]	@ zero_extendqisi2
+ 1118 07fc 042B     		cmp	r3, #4
+ 1119 07fe 2CD1     		bne	.L38
+ 775:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   {  
+ 776:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     /* Enable the Option Bytes Programming operation */
+ 777:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     FLASH->CR |= FLASH_CR_OPTPG; 
+ 1120              		.loc 1 777 0
+ 1121 0800 4FF40053 		mov	r3, #8192
+ 1122 0804 C4F20203 		movt	r3, 16386
+ 1123 0808 4FF40052 		mov	r2, #8192
+ 1124 080c C4F20202 		movt	r2, 16386
+ 1125 0810 1269     		ldr	r2, [r2, #16]
+ 1126 0812 42F01002 		orr	r2, r2, #16
+ 1127 0816 1A61     		str	r2, [r3, #16]
+ 778:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****            
+ 779:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 	OB->USER = OB_BOOT1|0xEF;
+ 1128              		.loc 1 779 0
+ 1129 0818 4FF47843 		mov	r3, #63488
+ 1130 081c C1F6FF73 		movt	r3, 8191
+ 1131 0820 9DF80720 		ldrb	r2, [sp, #7]
+ 1132 0824 62F01002 		orn	r2, r2, #16
+ 1133 0828 D2B2     		uxtb	r2, r2
+ 1134 082a 5A80     		strh	r2, [r3, #2]	@ movhi
+ 780:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   
+ 781:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     /* Wait for last operation to be completed */
+ 782:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     status = FLASH_WaitForLastOperation(FLASH_ER_PRG_TIMEOUT);
+ 1135              		.loc 1 782 0
+ 1136 082c 4FF43020 		mov	r0, #720896
+ 1137 0830 FFF7FEFF 		bl	FLASH_WaitForLastOperation
+ 1138 0834 0346     		mov	r3, r0
+ 1139 0836 8DF80F30 		strb	r3, [sp, #15]
+ 783:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 784:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     if(status != FLASH_TIMEOUT)
+ 1140              		.loc 1 784 0
+ 1141 083a 9DF80F30 		ldrb	r3, [sp, #15]	@ zero_extendqisi2
+ 1142 083e 052B     		cmp	r3, #5
+ 1143 0840 0BD0     		beq	.L38
+ 785:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     {
+ 786:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       /* if the program operation is completed, disable the OPTPG Bit */
+ 787:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       FLASH->CR &= ~FLASH_CR_OPTPG;
+ 1144              		.loc 1 787 0
+ 1145 0842 4FF40053 		mov	r3, #8192
+ 1146 0846 C4F20203 		movt	r3, 16386
+ 1147 084a 4FF40052 		mov	r2, #8192
+ 1148 084e C4F20202 		movt	r2, 16386
+ 1149 0852 1269     		ldr	r2, [r2, #16]
+ 1150 0854 22F01002 		bic	r2, r2, #16
+ 1151 0858 1A61     		str	r2, [r3, #16]
+ 1152              	.L38:
+ 788:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     }
+ 789:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   }    
+ 790:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Return the Option Byte program Status */
+ 791:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   return status;
+ 1153              		.loc 1 791 0
+ 1154 085a 9DF80F30 		ldrb	r3, [sp, #15]	@ zero_extendqisi2
+ 792:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** }
+ 1155              		.loc 1 792 0
+ 1156 085e 1846     		mov	r0, r3
+ 1157 0860 05B0     		add	sp, sp, #20
+ 1158 0862 00BD     		pop	{pc}
+ 1159              		.cfi_endproc
+ 1160              	.LFE127:
+ 1162              		.align	2
+ 1163              		.global	FLASH_OB_VDDAConfig
+ 1164              		.thumb
+ 1165              		.thumb_func
+ 1167              	FLASH_OB_VDDAConfig:
+ 1168              	.LFB128:
+ 793:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 794:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** /**
+ 795:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @brief  Sets or resets the analogue monitoring on VDDA Power source. 
+ 796:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @param  OB_VDDA_ANALOG: Selects the analog monitoring on VDDA Power source.
+ 797:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *   This parameter can be one of the following values:
+ 798:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *     @arg OB_VDDA_ANALOG_ON: Analog monitoring on VDDA Power source ON
+ 799:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *     @arg OB_VDDA_ANALOG_OFF: Analog monitoring on VDDA Power source OFF
+ 800:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @retval None
+ 801:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   */
+ 802:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** FLASH_Status FLASH_OB_VDDAConfig(uint8_t OB_VDDA_ANALOG)
+ 803:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** {
+ 1169              		.loc 1 803 0
+ 1170              		.cfi_startproc
+ 1171              		@ args = 0, pretend = 0, frame = 16
+ 1172              		@ frame_needed = 0, uses_anonymous_args = 0
+ 1173 0864 00B5     		push	{lr}
+ 1174              	.LCFI21:
+ 1175              		.cfi_def_cfa_offset 4
+ 1176              		.cfi_offset 14, -4
+ 1177 0866 85B0     		sub	sp, sp, #20
+ 1178              	.LCFI22:
+ 1179              		.cfi_def_cfa_offset 24
+ 1180 0868 0346     		mov	r3, r0
+ 1181 086a 8DF80730 		strb	r3, [sp, #7]
+ 804:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   FLASH_Status status = FLASH_COMPLETE; 
+ 1182              		.loc 1 804 0
+ 1183 086e 4FF00403 		mov	r3, #4
+ 1184 0872 8DF80F30 		strb	r3, [sp, #15]
+ 805:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 806:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Check the parameters */
+ 807:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   assert_param(IS_OB_VDDA_ANALOG(OB_VDDA_ANALOG));
+ 808:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 809:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Authorize the small information block programming */
+ 810:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   FLASH->OPTKEYR = FLASH_KEY1;
+ 1185              		.loc 1 810 0
+ 1186 0876 4FF40053 		mov	r3, #8192
+ 1187 087a C4F20203 		movt	r3, 16386
+ 1188 087e 40F22312 		movw	r2, #291
+ 1189 0882 C4F26752 		movt	r2, 17767
+ 1190 0886 9A60     		str	r2, [r3, #8]
+ 811:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   FLASH->OPTKEYR = FLASH_KEY2;
+ 1191              		.loc 1 811 0
+ 1192 0888 4FF40053 		mov	r3, #8192
+ 1193 088c C4F20203 		movt	r3, 16386
+ 1194 0890 48F6AB12 		movw	r2, #35243
+ 1195 0894 CCF6EF52 		movt	r2, 52719
+ 1196 0898 9A60     		str	r2, [r3, #8]
+ 812:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   
+ 813:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Wait for last operation to be completed */
+ 814:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   status = FLASH_WaitForLastOperation(FLASH_ER_PRG_TIMEOUT);
+ 1197              		.loc 1 814 0
+ 1198 089a 4FF43020 		mov	r0, #720896
+ 1199 089e FFF7FEFF 		bl	FLASH_WaitForLastOperation
+ 1200 08a2 0346     		mov	r3, r0
+ 1201 08a4 8DF80F30 		strb	r3, [sp, #15]
+ 815:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   
+ 816:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   if(status == FLASH_COMPLETE)
+ 1202              		.loc 1 816 0
+ 1203 08a8 9DF80F30 		ldrb	r3, [sp, #15]	@ zero_extendqisi2
+ 1204 08ac 042B     		cmp	r3, #4
+ 1205 08ae 2CD1     		bne	.L40
+ 817:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   {  
+ 818:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     /* Enable the Option Bytes Programming operation */
+ 819:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     FLASH->CR |= FLASH_CR_OPTPG; 
+ 1206              		.loc 1 819 0
+ 1207 08b0 4FF40053 		mov	r3, #8192
+ 1208 08b4 C4F20203 		movt	r3, 16386
+ 1209 08b8 4FF40052 		mov	r2, #8192
+ 1210 08bc C4F20202 		movt	r2, 16386
+ 1211 08c0 1269     		ldr	r2, [r2, #16]
+ 1212 08c2 42F01002 		orr	r2, r2, #16
+ 1213 08c6 1A61     		str	r2, [r3, #16]
+ 820:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****            
+ 821:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 	OB->USER = OB_VDDA_ANALOG |0xDF;
+ 1214              		.loc 1 821 0
+ 1215 08c8 4FF47843 		mov	r3, #63488
+ 1216 08cc C1F6FF73 		movt	r3, 8191
+ 1217 08d0 9DF80720 		ldrb	r2, [sp, #7]
+ 1218 08d4 62F02002 		orn	r2, r2, #32
+ 1219 08d8 D2B2     		uxtb	r2, r2
+ 1220 08da 5A80     		strh	r2, [r3, #2]	@ movhi
+ 822:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   
+ 823:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     /* Wait for last operation to be completed */
+ 824:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     status = FLASH_WaitForLastOperation(FLASH_ER_PRG_TIMEOUT);
+ 1221              		.loc 1 824 0
+ 1222 08dc 4FF43020 		mov	r0, #720896
+ 1223 08e0 FFF7FEFF 		bl	FLASH_WaitForLastOperation
+ 1224 08e4 0346     		mov	r3, r0
+ 1225 08e6 8DF80F30 		strb	r3, [sp, #15]
+ 825:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 826:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     if(status != FLASH_TIMEOUT)
+ 1226              		.loc 1 826 0
+ 1227 08ea 9DF80F30 		ldrb	r3, [sp, #15]	@ zero_extendqisi2
+ 1228 08ee 052B     		cmp	r3, #5
+ 1229 08f0 0BD0     		beq	.L40
+ 827:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     {
+ 828:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       /* if the program operation is completed, disable the OPTPG Bit */
+ 829:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       FLASH->CR &= ~FLASH_CR_OPTPG;
+ 1230              		.loc 1 829 0
+ 1231 08f2 4FF40053 		mov	r3, #8192
+ 1232 08f6 C4F20203 		movt	r3, 16386
+ 1233 08fa 4FF40052 		mov	r2, #8192
+ 1234 08fe C4F20202 		movt	r2, 16386
+ 1235 0902 1269     		ldr	r2, [r2, #16]
+ 1236 0904 22F01002 		bic	r2, r2, #16
+ 1237 0908 1A61     		str	r2, [r3, #16]
+ 1238              	.L40:
+ 830:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     }
+ 831:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   }    
+ 832:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Return the Option Byte program Status */
+ 833:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   return status;
+ 1239              		.loc 1 833 0
+ 1240 090a 9DF80F30 		ldrb	r3, [sp, #15]	@ zero_extendqisi2
+ 834:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** }
+ 1241              		.loc 1 834 0
+ 1242 090e 1846     		mov	r0, r3
+ 1243 0910 05B0     		add	sp, sp, #20
+ 1244 0912 00BD     		pop	{pc}
+ 1245              		.cfi_endproc
+ 1246              	.LFE128:
+ 1248              		.align	2
+ 1249              		.global	FLASH_OB_SRAMParityConfig
+ 1250              		.thumb
+ 1251              		.thumb_func
+ 1253              	FLASH_OB_SRAMParityConfig:
+ 1254              	.LFB129:
+ 835:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 836:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** /**
+ 837:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @brief  Sets or resets the SRAM partiy.
+ 838:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @param  OB_SRAM_Parity: Set or Reset the SRAM partiy enable bit.
+ 839:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *         This parameter can be one of the following values:
+ 840:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *             @arg OB_SRAM_PARITY_SET: Set SRAM partiy.
+ 841:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *             @arg OB_SRAM_PARITY_RESET: Reset SRAM partiy.
+ 842:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @retval None
+ 843:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   */
+ 844:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** FLASH_Status FLASH_OB_SRAMParityConfig(uint8_t OB_SRAM_Parity)
+ 845:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** {
+ 1255              		.loc 1 845 0
+ 1256              		.cfi_startproc
+ 1257              		@ args = 0, pretend = 0, frame = 16
+ 1258              		@ frame_needed = 0, uses_anonymous_args = 0
+ 1259 0914 00B5     		push	{lr}
+ 1260              	.LCFI23:
+ 1261              		.cfi_def_cfa_offset 4
+ 1262              		.cfi_offset 14, -4
+ 1263 0916 85B0     		sub	sp, sp, #20
+ 1264              	.LCFI24:
+ 1265              		.cfi_def_cfa_offset 24
+ 1266 0918 0346     		mov	r3, r0
+ 1267 091a 8DF80730 		strb	r3, [sp, #7]
+ 846:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   FLASH_Status status = FLASH_COMPLETE; 
+ 1268              		.loc 1 846 0
+ 1269 091e 4FF00403 		mov	r3, #4
+ 1270 0922 8DF80F30 		strb	r3, [sp, #15]
+ 847:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 848:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Check the parameters */
+ 849:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   assert_param(IS_OB_SRAM_PARITY(OB_SRAM_Parity));
+ 850:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 851:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Wait for last operation to be completed */
+ 852:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   status = FLASH_WaitForLastOperation(FLASH_ER_PRG_TIMEOUT);
+ 1271              		.loc 1 852 0
+ 1272 0926 4FF43020 		mov	r0, #720896
+ 1273 092a FFF7FEFF 		bl	FLASH_WaitForLastOperation
+ 1274 092e 0346     		mov	r3, r0
+ 1275 0930 8DF80F30 		strb	r3, [sp, #15]
+ 853:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   
+ 854:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   if(status == FLASH_COMPLETE)
+ 1276              		.loc 1 854 0
+ 1277 0934 9DF80F30 		ldrb	r3, [sp, #15]	@ zero_extendqisi2
+ 1278 0938 042B     		cmp	r3, #4
+ 1279 093a 2CD1     		bne	.L42
+ 855:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   {  
+ 856:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     /* Enable the Option Bytes Programming operation */
+ 857:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     FLASH->CR |= FLASH_CR_OPTPG; 
+ 1280              		.loc 1 857 0
+ 1281 093c 4FF40053 		mov	r3, #8192
+ 1282 0940 C4F20203 		movt	r3, 16386
+ 1283 0944 4FF40052 		mov	r2, #8192
+ 1284 0948 C4F20202 		movt	r2, 16386
+ 1285 094c 1269     		ldr	r2, [r2, #16]
+ 1286 094e 42F01002 		orr	r2, r2, #16
+ 1287 0952 1A61     		str	r2, [r3, #16]
+ 858:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 859:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     OB->USER = OB_SRAM_Parity | 0xBF;
+ 1288              		.loc 1 859 0
+ 1289 0954 4FF47843 		mov	r3, #63488
+ 1290 0958 C1F6FF73 		movt	r3, 8191
+ 1291 095c 9DF80720 		ldrb	r2, [sp, #7]
+ 1292 0960 62F04002 		orn	r2, r2, #64
+ 1293 0964 D2B2     		uxtb	r2, r2
+ 1294 0966 5A80     		strh	r2, [r3, #2]	@ movhi
+ 860:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   
+ 861:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     /* Wait for last operation to be completed */
+ 862:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     status = FLASH_WaitForLastOperation(FLASH_ER_PRG_TIMEOUT);
+ 1295              		.loc 1 862 0
+ 1296 0968 4FF43020 		mov	r0, #720896
+ 1297 096c FFF7FEFF 		bl	FLASH_WaitForLastOperation
+ 1298 0970 0346     		mov	r3, r0
+ 1299 0972 8DF80F30 		strb	r3, [sp, #15]
+ 863:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 864:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     if(status != FLASH_TIMEOUT)
+ 1300              		.loc 1 864 0
+ 1301 0976 9DF80F30 		ldrb	r3, [sp, #15]	@ zero_extendqisi2
+ 1302 097a 052B     		cmp	r3, #5
+ 1303 097c 0BD0     		beq	.L42
+ 865:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     {
+ 866:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       /* if the program operation is completed, disable the OPTPG Bit */
+ 867:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       FLASH->CR &= ~FLASH_CR_OPTPG;
+ 1304              		.loc 1 867 0
+ 1305 097e 4FF40053 		mov	r3, #8192
+ 1306 0982 C4F20203 		movt	r3, 16386
+ 1307 0986 4FF40052 		mov	r2, #8192
+ 1308 098a C4F20202 		movt	r2, 16386
+ 1309 098e 1269     		ldr	r2, [r2, #16]
+ 1310 0990 22F01002 		bic	r2, r2, #16
+ 1311 0994 1A61     		str	r2, [r3, #16]
+ 1312              	.L42:
+ 868:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     }
+ 869:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   }
+ 870:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Return the Option Byte program Status */
+ 871:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   return status;
+ 1313              		.loc 1 871 0
+ 1314 0996 9DF80F30 		ldrb	r3, [sp, #15]	@ zero_extendqisi2
+ 872:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** }
+ 1315              		.loc 1 872 0
+ 1316 099a 1846     		mov	r0, r3
+ 1317 099c 05B0     		add	sp, sp, #20
+ 1318 099e 00BD     		pop	{pc}
+ 1319              		.cfi_endproc
+ 1320              	.LFE129:
+ 1322              		.align	2
+ 1323              		.global	FLASH_OB_WriteUser
+ 1324              		.thumb
+ 1325              		.thumb_func
+ 1327              	FLASH_OB_WriteUser:
+ 1328              	.LFB130:
+ 873:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 874:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** /**
+ 875:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @brief  Programs the FLASH User Option Byte: IWDG_SW / RST_STOP / RST_STDBY/ BOOT1 and OB_VDDA_
+ 876:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @note   To correctly run this function, the FLASH_OB_Unlock() function
+ 877:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *         must be called before.
+ 878:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @note   Call the FLASH_OB_Lock() to disable the flash control register access and the option by
+ 879:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *         (recommended to protect the FLASH memory against possible unwanted operation)   
+ 880:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @param  OB_USER: Selects all user option bytes
+ 881:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *   This parameter is a combination of the following values:
+ 882:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *     @arg OB_IWDG_SW / OB_IWDG_HW: Software / Hardware WDG selected
+ 883:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *     @arg OB_STOP_NoRST / OB_STOP_RST: No reset / Reset generated when entering in STOP
+ 884:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *     @arg OB_STDBY_NoRST / OB_STDBY_RST: No reset / Reset generated when entering in STANDBY
+ 885:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *     @arg OB_BOOT1_RESET / OB_BOOT1_SET: BOOT1 Reset / Set
+ 886:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *     @arg OB_VDDA_ANALOG_ON / OB_VDDA_ANALOG_OFF: Analog monitoring on VDDA Power source ON / OF
+ 887:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @retval FLASH Status: The returned value can be: 
+ 888:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * FLASH_ERROR_PROGRAM, FLASH_ERROR_WRP, FLASH_COMPLETE or FLASH_TIMEOUT.
+ 889:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   */
+ 890:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** FLASH_Status FLASH_OB_WriteUser(uint8_t OB_USER)
+ 891:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** {
+ 1329              		.loc 1 891 0
+ 1330              		.cfi_startproc
+ 1331              		@ args = 0, pretend = 0, frame = 16
+ 1332              		@ frame_needed = 0, uses_anonymous_args = 0
+ 1333 09a0 00B5     		push	{lr}
+ 1334              	.LCFI25:
+ 1335              		.cfi_def_cfa_offset 4
+ 1336              		.cfi_offset 14, -4
+ 1337 09a2 85B0     		sub	sp, sp, #20
+ 1338              	.LCFI26:
+ 1339              		.cfi_def_cfa_offset 24
+ 1340 09a4 0346     		mov	r3, r0
+ 1341 09a6 8DF80730 		strb	r3, [sp, #7]
+ 892:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   FLASH_Status status = FLASH_COMPLETE; 
+ 1342              		.loc 1 892 0
+ 1343 09aa 4FF00403 		mov	r3, #4
+ 1344 09ae 8DF80F30 		strb	r3, [sp, #15]
+ 893:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 894:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Authorize the small information block programming */
+ 895:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   FLASH->OPTKEYR = FLASH_KEY1;
+ 1345              		.loc 1 895 0
+ 1346 09b2 4FF40053 		mov	r3, #8192
+ 1347 09b6 C4F20203 		movt	r3, 16386
+ 1348 09ba 40F22312 		movw	r2, #291
+ 1349 09be C4F26752 		movt	r2, 17767
+ 1350 09c2 9A60     		str	r2, [r3, #8]
+ 896:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   FLASH->OPTKEYR = FLASH_KEY2;
+ 1351              		.loc 1 896 0
+ 1352 09c4 4FF40053 		mov	r3, #8192
+ 1353 09c8 C4F20203 		movt	r3, 16386
+ 1354 09cc 48F6AB12 		movw	r2, #35243
+ 1355 09d0 CCF6EF52 		movt	r2, 52719
+ 1356 09d4 9A60     		str	r2, [r3, #8]
+ 897:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   
+ 898:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Wait for last operation to be completed */
+ 899:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   status = FLASH_WaitForLastOperation(FLASH_ER_PRG_TIMEOUT);
+ 1357              		.loc 1 899 0
+ 1358 09d6 4FF43020 		mov	r0, #720896
+ 1359 09da FFF7FEFF 		bl	FLASH_WaitForLastOperation
+ 1360 09de 0346     		mov	r3, r0
+ 1361 09e0 8DF80F30 		strb	r3, [sp, #15]
+ 900:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   
+ 901:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   if(status == FLASH_COMPLETE)
+ 1362              		.loc 1 901 0
+ 1363 09e4 9DF80F30 		ldrb	r3, [sp, #15]	@ zero_extendqisi2
+ 1364 09e8 042B     		cmp	r3, #4
+ 1365 09ea 2CD1     		bne	.L44
+ 902:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   {  
+ 903:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     /* Enable the Option Bytes Programming operation */
+ 904:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     FLASH->CR |= FLASH_CR_OPTPG; 
+ 1366              		.loc 1 904 0
+ 1367 09ec 4FF40053 		mov	r3, #8192
+ 1368 09f0 C4F20203 		movt	r3, 16386
+ 1369 09f4 4FF40052 		mov	r2, #8192
+ 1370 09f8 C4F20202 		movt	r2, 16386
+ 1371 09fc 1269     		ldr	r2, [r2, #16]
+ 1372 09fe 42F01002 		orr	r2, r2, #16
+ 1373 0a02 1A61     		str	r2, [r3, #16]
+ 905:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****            
+ 906:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 	  OB->USER = OB_USER | 0x88;
+ 1374              		.loc 1 906 0
+ 1375 0a04 4FF47843 		mov	r3, #63488
+ 1376 0a08 C1F6FF73 		movt	r3, 8191
+ 1377 0a0c 9DF80720 		ldrb	r2, [sp, #7]
+ 1378 0a10 62F07702 		orn	r2, r2, #119
+ 1379 0a14 D2B2     		uxtb	r2, r2
+ 1380 0a16 5A80     		strh	r2, [r3, #2]	@ movhi
+ 907:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   
+ 908:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     /* Wait for last operation to be completed */
+ 909:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     status = FLASH_WaitForLastOperation(FLASH_ER_PRG_TIMEOUT);
+ 1381              		.loc 1 909 0
+ 1382 0a18 4FF43020 		mov	r0, #720896
+ 1383 0a1c FFF7FEFF 		bl	FLASH_WaitForLastOperation
+ 1384 0a20 0346     		mov	r3, r0
+ 1385 0a22 8DF80F30 		strb	r3, [sp, #15]
+ 910:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 911:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     if(status != FLASH_TIMEOUT)
+ 1386              		.loc 1 911 0
+ 1387 0a26 9DF80F30 		ldrb	r3, [sp, #15]	@ zero_extendqisi2
+ 1388 0a2a 052B     		cmp	r3, #5
+ 1389 0a2c 0BD0     		beq	.L44
+ 912:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     {
+ 913:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       /* if the program operation is completed, disable the OPTPG Bit */
+ 914:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       FLASH->CR &= ~FLASH_CR_OPTPG;
+ 1390              		.loc 1 914 0
+ 1391 0a2e 4FF40053 		mov	r3, #8192
+ 1392 0a32 C4F20203 		movt	r3, 16386
+ 1393 0a36 4FF40052 		mov	r2, #8192
+ 1394 0a3a C4F20202 		movt	r2, 16386
+ 1395 0a3e 1269     		ldr	r2, [r2, #16]
+ 1396 0a40 22F01002 		bic	r2, r2, #16
+ 1397 0a44 1A61     		str	r2, [r3, #16]
+ 1398              	.L44:
+ 915:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     }
+ 916:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   }    
+ 917:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Return the Option Byte program Status */
+ 918:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   return status;
+ 1399              		.loc 1 918 0
+ 1400 0a46 9DF80F30 		ldrb	r3, [sp, #15]	@ zero_extendqisi2
+ 919:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 920:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** }
+ 1401              		.loc 1 920 0
+ 1402 0a4a 1846     		mov	r0, r3
+ 1403 0a4c 05B0     		add	sp, sp, #20
+ 1404 0a4e 00BD     		pop	{pc}
+ 1405              		.cfi_endproc
+ 1406              	.LFE130:
+ 1408              		.align	2
+ 1409              		.global	FLASH_ProgramOptionByteData
+ 1410              		.thumb
+ 1411              		.thumb_func
+ 1413              	FLASH_ProgramOptionByteData:
+ 1414              	.LFB131:
+ 921:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 922:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** /**
+ 923:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @brief  Programs a half word at a specified Option Byte Data address.
+ 924:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @note    To correctly run this function, the FLASH_OB_Unlock() function
+ 925:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *           must be called before.
+ 926:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *          Call the FLASH_OB_Lock() to disable the flash control register access and the option b
+ 927:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *          (recommended to protect the FLASH memory against possible unwanted operation)
+ 928:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @param  Address: specifies the address to be programmed.
+ 929:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *   This parameter can be 0x1FFFF804 or 0x1FFFF806. 
+ 930:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @param  Data: specifies the data to be programmed.
+ 931:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @retval FLASH Status: The returned value can be: FLASH_ERROR_PG,
+ 932:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *         FLASH_ERROR_WRP, FLASH_COMPLETE or FLASH_TIMEOUT.
+ 933:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   */
+ 934:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** FLASH_Status FLASH_ProgramOptionByteData(uint32_t Address, uint8_t Data)
+ 935:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** {
+ 1415              		.loc 1 935 0
+ 1416              		.cfi_startproc
+ 1417              		@ args = 0, pretend = 0, frame = 16
+ 1418              		@ frame_needed = 0, uses_anonymous_args = 0
+ 1419 0a50 00B5     		push	{lr}
+ 1420              	.LCFI27:
+ 1421              		.cfi_def_cfa_offset 4
+ 1422              		.cfi_offset 14, -4
+ 1423 0a52 85B0     		sub	sp, sp, #20
+ 1424              	.LCFI28:
+ 1425              		.cfi_def_cfa_offset 24
+ 1426 0a54 0190     		str	r0, [sp, #4]
+ 1427 0a56 0B46     		mov	r3, r1
+ 1428 0a58 8DF80330 		strb	r3, [sp, #3]
+ 936:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   FLASH_Status status = FLASH_COMPLETE;
+ 1429              		.loc 1 936 0
+ 1430 0a5c 4FF00403 		mov	r3, #4
+ 1431 0a60 8DF80F30 		strb	r3, [sp, #15]
+ 937:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Check the parameters */
+ 938:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   assert_param(IS_OB_DATA_ADDRESS(Address));
+ 939:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   status = FLASH_WaitForLastOperation(FLASH_ER_PRG_TIMEOUT);
+ 1432              		.loc 1 939 0
+ 1433 0a64 4FF43020 		mov	r0, #720896
+ 1434 0a68 FFF7FEFF 		bl	FLASH_WaitForLastOperation
+ 1435 0a6c 0346     		mov	r3, r0
+ 1436 0a6e 8DF80F30 		strb	r3, [sp, #15]
+ 940:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 941:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   if(status == FLASH_COMPLETE)
+ 1437              		.loc 1 941 0
+ 1438 0a72 9DF80F30 		ldrb	r3, [sp, #15]	@ zero_extendqisi2
+ 1439 0a76 042B     		cmp	r3, #4
+ 1440 0a78 27D1     		bne	.L46
+ 942:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   {
+ 943:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     /* Enables the Option Bytes Programming operation */
+ 944:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     FLASH->CR |= FLASH_CR_OPTPG; 
+ 1441              		.loc 1 944 0
+ 1442 0a7a 4FF40053 		mov	r3, #8192
+ 1443 0a7e C4F20203 		movt	r3, 16386
+ 1444 0a82 4FF40052 		mov	r2, #8192
+ 1445 0a86 C4F20202 		movt	r2, 16386
+ 1446 0a8a 1269     		ldr	r2, [r2, #16]
+ 1447 0a8c 42F01002 		orr	r2, r2, #16
+ 1448 0a90 1A61     		str	r2, [r3, #16]
+ 945:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     *(__IO uint16_t*)Address = Data;
+ 1449              		.loc 1 945 0
+ 1450 0a92 019B     		ldr	r3, [sp, #4]
+ 1451 0a94 9DF80320 		ldrb	r2, [sp, #3]	@ zero_extendqisi2
+ 1452 0a98 92B2     		uxth	r2, r2
+ 1453 0a9a 1A80     		strh	r2, [r3, #0]	@ movhi
+ 946:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     
+ 947:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     /* Wait for last operation to be completed */
+ 948:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     status = FLASH_WaitForLastOperation(FLASH_ER_PRG_TIMEOUT);
+ 1454              		.loc 1 948 0
+ 1455 0a9c 4FF43020 		mov	r0, #720896
+ 1456 0aa0 FFF7FEFF 		bl	FLASH_WaitForLastOperation
+ 1457 0aa4 0346     		mov	r3, r0
+ 1458 0aa6 8DF80F30 		strb	r3, [sp, #15]
+ 949:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     
+ 950:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     if(status != FLASH_TIMEOUT)
+ 1459              		.loc 1 950 0
+ 1460 0aaa 9DF80F30 		ldrb	r3, [sp, #15]	@ zero_extendqisi2
+ 1461 0aae 052B     		cmp	r3, #5
+ 1462 0ab0 0BD0     		beq	.L46
+ 951:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     {
+ 952:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       /* If the program operation is completed, disable the OPTPG Bit */
+ 953:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       FLASH->CR &= ~FLASH_CR_OPTPG;
+ 1463              		.loc 1 953 0
+ 1464 0ab2 4FF40053 		mov	r3, #8192
+ 1465 0ab6 C4F20203 		movt	r3, 16386
+ 1466 0aba 4FF40052 		mov	r2, #8192
+ 1467 0abe C4F20202 		movt	r2, 16386
+ 1468 0ac2 1269     		ldr	r2, [r2, #16]
+ 1469 0ac4 22F01002 		bic	r2, r2, #16
+ 1470 0ac8 1A61     		str	r2, [r3, #16]
+ 1471              	.L46:
+ 954:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     }
+ 955:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   }
+ 956:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Return the Option Byte Data Program Status */
+ 957:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   return status;
+ 1472              		.loc 1 957 0
+ 1473 0aca 9DF80F30 		ldrb	r3, [sp, #15]	@ zero_extendqisi2
+ 958:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** }
+ 1474              		.loc 1 958 0
+ 1475 0ace 1846     		mov	r0, r3
+ 1476 0ad0 05B0     		add	sp, sp, #20
+ 1477 0ad2 00BD     		pop	{pc}
+ 1478              		.cfi_endproc
+ 1479              	.LFE131:
+ 1481              		.align	2
+ 1482              		.global	FLASH_OB_GetUser
+ 1483              		.thumb
+ 1484              		.thumb_func
+ 1486              	FLASH_OB_GetUser:
+ 1487              	.LFB132:
+ 959:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 960:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** /**
+ 961:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @brief  Returns the FLASH User Option Bytes values.
+ 962:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @param  None
+ 963:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @retval The FLASH User Option Bytes .
+ 964:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   */
+ 965:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** uint8_t FLASH_OB_GetUser(void)
+ 966:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** {
+ 1488              		.loc 1 966 0
+ 1489              		.cfi_startproc
+ 1490              		@ args = 0, pretend = 0, frame = 0
+ 1491              		@ frame_needed = 0, uses_anonymous_args = 0
+ 1492              		@ link register save eliminated.
+ 967:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Return the User Option Byte */
+ 968:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   return (uint8_t)(FLASH->OBR >> 8);
+ 1493              		.loc 1 968 0
+ 1494 0ad4 4FF40053 		mov	r3, #8192
+ 1495 0ad8 C4F20203 		movt	r3, 16386
+ 1496 0adc DB69     		ldr	r3, [r3, #28]
+ 1497 0ade 4FEA1323 		lsr	r3, r3, #8
+ 1498 0ae2 DBB2     		uxtb	r3, r3
+ 969:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** }
+ 1499              		.loc 1 969 0
+ 1500 0ae4 1846     		mov	r0, r3
+ 1501 0ae6 7047     		bx	lr
+ 1502              		.cfi_endproc
+ 1503              	.LFE132:
+ 1505              		.align	2
+ 1506              		.global	FLASH_OB_GetWRP
+ 1507              		.thumb
+ 1508              		.thumb_func
+ 1510              	FLASH_OB_GetWRP:
+ 1511              	.LFB133:
+ 970:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 971:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** /**
+ 972:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @brief  Returns the FLASH Write Protection Option Bytes value.
+ 973:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @param  None
+ 974:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @retval The FLASH Write Protection Option Bytes value
+ 975:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   */
+ 976:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** uint32_t FLASH_OB_GetWRP(void)
+ 977:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** {
+ 1512              		.loc 1 977 0
+ 1513              		.cfi_startproc
+ 1514              		@ args = 0, pretend = 0, frame = 0
+ 1515              		@ frame_needed = 0, uses_anonymous_args = 0
+ 1516              		@ link register save eliminated.
+ 978:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Return the FLASH write protection Register value */
+ 979:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   return (uint32_t)(FLASH->WRPR);
+ 1517              		.loc 1 979 0
+ 1518 0ae8 4FF40053 		mov	r3, #8192
+ 1519 0aec C4F20203 		movt	r3, 16386
+ 1520 0af0 1B6A     		ldr	r3, [r3, #32]
+ 980:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** }
+ 1521              		.loc 1 980 0
+ 1522 0af2 1846     		mov	r0, r3
+ 1523 0af4 7047     		bx	lr
+ 1524              		.cfi_endproc
+ 1525              	.LFE133:
+ 1527 0af6 00BF     		.align	2
+ 1528              		.global	FLASH_OB_GetRDP
+ 1529              		.thumb
+ 1530              		.thumb_func
+ 1532              	FLASH_OB_GetRDP:
+ 1533              	.LFB134:
+ 981:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+ 982:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** /**
+ 983:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @brief  Checks whether the FLASH Read out Protection Status is set or not.
+ 984:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @param  None
+ 985:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @retval FLASH ReadOut Protection Status(SET or RESET)
+ 986:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   */
+ 987:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** FlagStatus FLASH_OB_GetRDP(void)
+ 988:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** {
+ 1534              		.loc 1 988 0
+ 1535              		.cfi_startproc
+ 1536              		@ args = 0, pretend = 0, frame = 8
+ 1537              		@ frame_needed = 0, uses_anonymous_args = 0
+ 1538              		@ link register save eliminated.
+ 1539 0af8 82B0     		sub	sp, sp, #8
+ 1540              	.LCFI29:
+ 1541              		.cfi_def_cfa_offset 8
+ 989:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   FlagStatus readstatus = RESET;
+ 1542              		.loc 1 989 0
+ 1543 0afa 4FF00003 		mov	r3, #0
+ 1544 0afe 8DF80730 		strb	r3, [sp, #7]
+ 990:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   
+ 991:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   if ((uint8_t)(FLASH->OBR & (FLASH_OBR_RDPRT1 | FLASH_OBR_RDPRT2)) != RESET)
+ 1545              		.loc 1 991 0
+ 1546 0b02 4FF40053 		mov	r3, #8192
+ 1547 0b06 C4F20203 		movt	r3, 16386
+ 1548 0b0a DB69     		ldr	r3, [r3, #28]
+ 1549 0b0c DBB2     		uxtb	r3, r3
+ 1550 0b0e 03F00603 		and	r3, r3, #6
+ 1551 0b12 002B     		cmp	r3, #0
+ 1552 0b14 04D0     		beq	.L50
+ 992:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   {
+ 993:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     readstatus = SET;
+ 1553              		.loc 1 993 0
+ 1554 0b16 4FF00103 		mov	r3, #1
+ 1555 0b1a 8DF80730 		strb	r3, [sp, #7]
+ 1556 0b1e 03E0     		b	.L51
+ 1557              	.L50:
+ 994:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   }
+ 995:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   else
+ 996:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   {
+ 997:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     readstatus = RESET;
+ 1558              		.loc 1 997 0
+ 1559 0b20 4FF00003 		mov	r3, #0
+ 1560 0b24 8DF80730 		strb	r3, [sp, #7]
+ 1561              	.L51:
+ 998:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   }
+ 999:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   return readstatus;
+ 1562              		.loc 1 999 0
+ 1563 0b28 9DF80730 		ldrb	r3, [sp, #7]	@ zero_extendqisi2
+1000:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** }
+ 1564              		.loc 1 1000 0
+ 1565 0b2c 1846     		mov	r0, r3
+ 1566 0b2e 02B0     		add	sp, sp, #8
+ 1567 0b30 7047     		bx	lr
+ 1568              		.cfi_endproc
+ 1569              	.LFE134:
+ 1571 0b32 00BF     		.align	2
+ 1572              		.global	FLASH_ITConfig
+ 1573              		.thumb
+ 1574              		.thumb_func
+ 1576              	FLASH_ITConfig:
+ 1577              	.LFB135:
+1001:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+1002:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** /**
+1003:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @}
+1004:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   */
+1005:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+1006:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** /** @defgroup FLASH_Group4 Interrupts and flags management functions
+1007:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****  *  @brief   Interrupts and flags management functions
+1008:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****  *
+1009:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** @verbatim   
+1010:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****  ===============================================================================
+1011:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****              ##### Interrupts and flags management functions #####
+1012:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****  ===============================================================================  
+1013:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+1014:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** @endverbatim
+1015:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @{
+1016:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   */
+1017:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+1018:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** /**
+1019:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @brief  Enables or disables the specified FLASH interrupts.
+1020:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @param  FLASH_IT: specifies the FLASH interrupt sources to be enabled or 
+1021:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *         disabled.
+1022:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *   This parameter can be any combination of the following values:     
+1023:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *     @arg FLASH_IT_EOP: FLASH end of programming Interrupt
+1024:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *     @arg FLASH_IT_ERR: FLASH Error Interrupt 
+1025:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @retval None 
+1026:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   */
+1027:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** void FLASH_ITConfig(uint32_t FLASH_IT, FunctionalState NewState)
+1028:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** {
+ 1578              		.loc 1 1028 0
+ 1579              		.cfi_startproc
+ 1580              		@ args = 0, pretend = 0, frame = 8
+ 1581              		@ frame_needed = 0, uses_anonymous_args = 0
+ 1582              		@ link register save eliminated.
+ 1583 0b34 82B0     		sub	sp, sp, #8
+ 1584              	.LCFI30:
+ 1585              		.cfi_def_cfa_offset 8
+ 1586 0b36 0190     		str	r0, [sp, #4]
+ 1587 0b38 0B46     		mov	r3, r1
+ 1588 0b3a 8DF80330 		strb	r3, [sp, #3]
+1029:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Check the parameters */
+1030:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   assert_param(IS_FLASH_IT(FLASH_IT)); 
+1031:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   assert_param(IS_FUNCTIONAL_STATE(NewState));
+1032:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   
+1033:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   if(NewState != DISABLE)
+ 1589              		.loc 1 1033 0
+ 1590 0b3e 9DF80330 		ldrb	r3, [sp, #3]	@ zero_extendqisi2
+ 1591 0b42 002B     		cmp	r3, #0
+ 1592 0b44 0CD0     		beq	.L53
+1034:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   {
+1035:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     /* Enable the interrupt sources */
+1036:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     FLASH->CR |= FLASH_IT;
+ 1593              		.loc 1 1036 0
+ 1594 0b46 4FF40053 		mov	r3, #8192
+ 1595 0b4a C4F20203 		movt	r3, 16386
+ 1596 0b4e 4FF40052 		mov	r2, #8192
+ 1597 0b52 C4F20202 		movt	r2, 16386
+ 1598 0b56 1169     		ldr	r1, [r2, #16]
+ 1599 0b58 019A     		ldr	r2, [sp, #4]
+ 1600 0b5a 0A43     		orrs	r2, r2, r1
+ 1601 0b5c 1A61     		str	r2, [r3, #16]
+ 1602 0b5e 0DE0     		b	.L52
+ 1603              	.L53:
+1037:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   }
+1038:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   else
+1039:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   {
+1040:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     /* Disable the interrupt sources */
+1041:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     FLASH->CR &= ~(uint32_t)FLASH_IT;
+ 1604              		.loc 1 1041 0
+ 1605 0b60 4FF40053 		mov	r3, #8192
+ 1606 0b64 C4F20203 		movt	r3, 16386
+ 1607 0b68 4FF40052 		mov	r2, #8192
+ 1608 0b6c C4F20202 		movt	r2, 16386
+ 1609 0b70 1169     		ldr	r1, [r2, #16]
+ 1610 0b72 019A     		ldr	r2, [sp, #4]
+ 1611 0b74 6FEA0202 		mvn	r2, r2
+ 1612 0b78 0A40     		ands	r2, r2, r1
+ 1613 0b7a 1A61     		str	r2, [r3, #16]
+ 1614              	.L52:
+1042:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   }
+1043:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** }
+ 1615              		.loc 1 1043 0
+ 1616 0b7c 02B0     		add	sp, sp, #8
+ 1617 0b7e 7047     		bx	lr
+ 1618              		.cfi_endproc
+ 1619              	.LFE135:
+ 1621              		.align	2
+ 1622              		.global	FLASH_GetFlagStatus
+ 1623              		.thumb
+ 1624              		.thumb_func
+ 1626              	FLASH_GetFlagStatus:
+ 1627              	.LFB136:
+1044:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+1045:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** /**
+1046:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @brief  Checks whether the specified FLASH flag is set or not.
+1047:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @param  FLASH_FLAG: specifies the FLASH flag to check.
+1048:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *   This parameter can be one of the following values:
+1049:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *     @arg FLASH_FLAG_BSY: FLASH write/erase operations in progress flag 
+1050:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *     @arg FLASH_FLAG_PGERR: FLASH Programming error flag flag
+1051:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *     @arg FLASH_FLAG_WRPERR: FLASH Write protected error flag
+1052:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *     @arg FLASH_FLAG_EOP: FLASH End of Programming flag        
+1053:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @retval The new state of FLASH_FLAG (SET or RESET).
+1054:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   */
+1055:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** FlagStatus FLASH_GetFlagStatus(uint32_t FLASH_FLAG)
+1056:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** {
+ 1628              		.loc 1 1056 0
+ 1629              		.cfi_startproc
+ 1630              		@ args = 0, pretend = 0, frame = 16
+ 1631              		@ frame_needed = 0, uses_anonymous_args = 0
+ 1632              		@ link register save eliminated.
+ 1633 0b80 84B0     		sub	sp, sp, #16
+ 1634              	.LCFI31:
+ 1635              		.cfi_def_cfa_offset 16
+ 1636 0b82 0190     		str	r0, [sp, #4]
+1057:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   FlagStatus bitstatus = RESET;
+ 1637              		.loc 1 1057 0
+ 1638 0b84 4FF00003 		mov	r3, #0
+ 1639 0b88 8DF80F30 		strb	r3, [sp, #15]
+1058:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+1059:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Check the parameters */
+1060:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   assert_param(IS_FLASH_GET_FLAG(FLASH_FLAG));
+1061:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+1062:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   if((FLASH->SR & FLASH_FLAG) != (uint32_t)RESET)
+ 1640              		.loc 1 1062 0
+ 1641 0b8c 4FF40053 		mov	r3, #8192
+ 1642 0b90 C4F20203 		movt	r3, 16386
+ 1643 0b94 DA68     		ldr	r2, [r3, #12]
+ 1644 0b96 019B     		ldr	r3, [sp, #4]
+ 1645 0b98 1340     		ands	r3, r3, r2
+ 1646 0b9a 002B     		cmp	r3, #0
+ 1647 0b9c 04D0     		beq	.L56
+1063:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   {
+1064:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     bitstatus = SET;
+ 1648              		.loc 1 1064 0
+ 1649 0b9e 4FF00103 		mov	r3, #1
+ 1650 0ba2 8DF80F30 		strb	r3, [sp, #15]
+ 1651 0ba6 03E0     		b	.L57
+ 1652              	.L56:
+1065:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   }
+1066:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   else
+1067:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   {
+1068:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     bitstatus = RESET;
+ 1653              		.loc 1 1068 0
+ 1654 0ba8 4FF00003 		mov	r3, #0
+ 1655 0bac 8DF80F30 		strb	r3, [sp, #15]
+ 1656              	.L57:
+1069:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   }
+1070:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Return the new state of FLASH_FLAG (SET or RESET) */
+1071:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   return bitstatus; 
+ 1657              		.loc 1 1071 0
+ 1658 0bb0 9DF80F30 		ldrb	r3, [sp, #15]	@ zero_extendqisi2
+1072:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** }
+ 1659              		.loc 1 1072 0
+ 1660 0bb4 1846     		mov	r0, r3
+ 1661 0bb6 04B0     		add	sp, sp, #16
+ 1662 0bb8 7047     		bx	lr
+ 1663              		.cfi_endproc
+ 1664              	.LFE136:
+ 1666 0bba 00BF     		.align	2
+ 1667              		.global	FLASH_ClearFlag
+ 1668              		.thumb
+ 1669              		.thumb_func
+ 1671              	FLASH_ClearFlag:
+ 1672              	.LFB137:
+1073:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+1074:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** /**
+1075:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @brief  Clears the FLASH's pending flags.
+1076:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @param  FLASH_FLAG: specifies the FLASH flags to clear.
+1077:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *   This parameter can be any combination of the following values:
+1078:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *     @arg FLASH_FLAG_PGERR: FLASH Programming error flag flag
+1079:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *     @arg FLASH_FLAG_WRPERR: FLASH Write protected error flag
+1080:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *     @arg FLASH_FLAG_EOP: FLASH End of Programming flag                
+1081:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @retval None
+1082:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   */
+1083:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** void FLASH_ClearFlag(uint32_t FLASH_FLAG)
+1084:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** {
+ 1673              		.loc 1 1084 0
+ 1674              		.cfi_startproc
+ 1675              		@ args = 0, pretend = 0, frame = 8
+ 1676              		@ frame_needed = 0, uses_anonymous_args = 0
+ 1677              		@ link register save eliminated.
+ 1678 0bbc 82B0     		sub	sp, sp, #8
+ 1679              	.LCFI32:
+ 1680              		.cfi_def_cfa_offset 8
+ 1681 0bbe 0190     		str	r0, [sp, #4]
+1085:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Check the parameters */
+1086:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   assert_param(IS_FLASH_CLEAR_FLAG(FLASH_FLAG));
+1087:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   
+1088:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Clear the flags */
+1089:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   FLASH->SR = FLASH_FLAG;
+ 1682              		.loc 1 1089 0
+ 1683 0bc0 4FF40053 		mov	r3, #8192
+ 1684 0bc4 C4F20203 		movt	r3, 16386
+ 1685 0bc8 019A     		ldr	r2, [sp, #4]
+ 1686 0bca DA60     		str	r2, [r3, #12]
+1090:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** }
+ 1687              		.loc 1 1090 0
+ 1688 0bcc 02B0     		add	sp, sp, #8
+ 1689 0bce 7047     		bx	lr
+ 1690              		.cfi_endproc
+ 1691              	.LFE137:
+ 1693              		.align	2
+ 1694              		.global	FLASH_GetStatus
+ 1695              		.thumb
+ 1696              		.thumb_func
+ 1698              	FLASH_GetStatus:
+ 1699              	.LFB138:
+1091:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+1092:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** /**
+1093:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @brief  Returns the FLASH Status.
+1094:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @param  None
+1095:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @retval FLASH Status: The returned value can be: 
+1096:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *         FLASH_BUSY, FLASH_ERROR_PROGRAM, FLASH_ERROR_WRP or FLASH_COMPLETE.
+1097:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   */
+1098:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** FLASH_Status FLASH_GetStatus(void)
+1099:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** {
+ 1700              		.loc 1 1099 0
+ 1701              		.cfi_startproc
+ 1702              		@ args = 0, pretend = 0, frame = 8
+ 1703              		@ frame_needed = 0, uses_anonymous_args = 0
+ 1704              		@ link register save eliminated.
+ 1705 0bd0 82B0     		sub	sp, sp, #8
+ 1706              	.LCFI33:
+ 1707              		.cfi_def_cfa_offset 8
+1100:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   FLASH_Status FLASHstatus = FLASH_COMPLETE;
+ 1708              		.loc 1 1100 0
+ 1709 0bd2 4FF00403 		mov	r3, #4
+ 1710 0bd6 8DF80730 		strb	r3, [sp, #7]
+1101:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   
+1102:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   if((FLASH->SR & FLASH_FLAG_BSY) == FLASH_FLAG_BSY) 
+ 1711              		.loc 1 1102 0
+ 1712 0bda 4FF40053 		mov	r3, #8192
+ 1713 0bde C4F20203 		movt	r3, 16386
+ 1714 0be2 DB68     		ldr	r3, [r3, #12]
+ 1715 0be4 03F00103 		and	r3, r3, #1
+ 1716 0be8 DBB2     		uxtb	r3, r3
+ 1717 0bea 002B     		cmp	r3, #0
+ 1718 0bec 04D0     		beq	.L60
+1103:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   {
+1104:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     FLASHstatus = FLASH_BUSY;
+ 1719              		.loc 1 1104 0
+ 1720 0bee 4FF00103 		mov	r3, #1
+ 1721 0bf2 8DF80730 		strb	r3, [sp, #7]
+ 1722 0bf6 1FE0     		b	.L61
+ 1723              	.L60:
+1105:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   }
+1106:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   else 
+1107:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   {  
+1108:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     if((FLASH->SR & (uint32_t)FLASH_FLAG_WRPERR)!= (uint32_t)0x00)
+ 1724              		.loc 1 1108 0
+ 1725 0bf8 4FF40053 		mov	r3, #8192
+ 1726 0bfc C4F20203 		movt	r3, 16386
+ 1727 0c00 DB68     		ldr	r3, [r3, #12]
+ 1728 0c02 03F01003 		and	r3, r3, #16
+ 1729 0c06 002B     		cmp	r3, #0
+ 1730 0c08 04D0     		beq	.L62
+1109:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     { 
+1110:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       FLASHstatus = FLASH_ERROR_WRP;
+ 1731              		.loc 1 1110 0
+ 1732 0c0a 4FF00203 		mov	r3, #2
+ 1733 0c0e 8DF80730 		strb	r3, [sp, #7]
+ 1734 0c12 11E0     		b	.L61
+ 1735              	.L62:
+1111:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     }
+1112:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     else 
+1113:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     {
+1114:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       if((FLASH->SR & (uint32_t)(FLASH_SR_PGERR)) != (uint32_t)0x00)
+ 1736              		.loc 1 1114 0
+ 1737 0c14 4FF40053 		mov	r3, #8192
+ 1738 0c18 C4F20203 		movt	r3, 16386
+ 1739 0c1c DB68     		ldr	r3, [r3, #12]
+ 1740 0c1e 03F00403 		and	r3, r3, #4
+ 1741 0c22 002B     		cmp	r3, #0
+ 1742 0c24 04D0     		beq	.L63
+1115:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       {
+1116:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****         FLASHstatus = FLASH_ERROR_PROGRAM; 
+ 1743              		.loc 1 1116 0
+ 1744 0c26 4FF00303 		mov	r3, #3
+ 1745 0c2a 8DF80730 		strb	r3, [sp, #7]
+ 1746 0c2e 03E0     		b	.L61
+ 1747              	.L63:
+1117:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       }
+1118:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       else
+1119:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       {
+1120:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****         FLASHstatus = FLASH_COMPLETE;
+ 1748              		.loc 1 1120 0
+ 1749 0c30 4FF00403 		mov	r3, #4
+ 1750 0c34 8DF80730 		strb	r3, [sp, #7]
+ 1751              	.L61:
+1121:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****       }
+1122:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     }
+1123:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   }
+1124:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Return the FLASH Status */
+1125:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   return FLASHstatus;
+ 1752              		.loc 1 1125 0
+ 1753 0c38 9DF80730 		ldrb	r3, [sp, #7]	@ zero_extendqisi2
+1126:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** }
+ 1754              		.loc 1 1126 0
+ 1755 0c3c 1846     		mov	r0, r3
+ 1756 0c3e 02B0     		add	sp, sp, #8
+ 1757 0c40 7047     		bx	lr
+ 1758              		.cfi_endproc
+ 1759              	.LFE138:
+ 1761 0c42 00BF     		.align	2
+ 1762              		.global	FLASH_WaitForLastOperation
+ 1763              		.thumb
+ 1764              		.thumb_func
+ 1766              	FLASH_WaitForLastOperation:
+ 1767              	.LFB139:
+1127:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** 
+1128:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** /**
+1129:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @brief  Waits for a FLASH operation to complete or a TIMEOUT to occur.
+1130:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @param  Timeout: FLASH programming Timeout
+1131:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   * @retval FLASH Status: The returned value can be: FLASH_BUSY, 
+1132:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   *         FLASH_ERROR_PROGRAM, FLASH_ERROR_WRP, FLASH_COMPLETE or FLASH_TIMEOUT.
+1133:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   */
+1134:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** FLASH_Status FLASH_WaitForLastOperation(uint32_t Timeout)
+1135:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** { 
+ 1768              		.loc 1 1135 0
+ 1769              		.cfi_startproc
+ 1770              		@ args = 0, pretend = 0, frame = 16
+ 1771              		@ frame_needed = 0, uses_anonymous_args = 0
+ 1772 0c44 00B5     		push	{lr}
+ 1773              	.LCFI34:
+ 1774              		.cfi_def_cfa_offset 4
+ 1775              		.cfi_offset 14, -4
+ 1776 0c46 85B0     		sub	sp, sp, #20
+ 1777              	.LCFI35:
+ 1778              		.cfi_def_cfa_offset 24
+ 1779 0c48 0190     		str	r0, [sp, #4]
+1136:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   FLASH_Status status = FLASH_COMPLETE;
+ 1780              		.loc 1 1136 0
+ 1781 0c4a 4FF00403 		mov	r3, #4
+ 1782 0c4e 8DF80F30 		strb	r3, [sp, #15]
+1137:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****    
+1138:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Check for the FLASH Status */
+1139:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   status = FLASH_GetStatus();
+ 1783              		.loc 1 1139 0
+ 1784 0c52 FFF7FEFF 		bl	FLASH_GetStatus
+ 1785 0c56 0346     		mov	r3, r0
+ 1786 0c58 8DF80F30 		strb	r3, [sp, #15]
+1140:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   
+1141:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Wait for a FLASH operation to complete or a TIMEOUT to occur */
+1142:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   while((status == FLASH_BUSY) && (Timeout != 0x00))
+ 1787              		.loc 1 1142 0
+ 1788 0c5c 08E0     		b	.L65
+ 1789              	.L67:
+1143:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   {
+1144:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     status = FLASH_GetStatus();
+ 1790              		.loc 1 1144 0
+ 1791 0c5e FFF7FEFF 		bl	FLASH_GetStatus
+ 1792 0c62 0346     		mov	r3, r0
+ 1793 0c64 8DF80F30 		strb	r3, [sp, #15]
+1145:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     Timeout--;
+ 1794              		.loc 1 1145 0
+ 1795 0c68 019B     		ldr	r3, [sp, #4]
+ 1796 0c6a 03F1FF33 		add	r3, r3, #-1
+ 1797 0c6e 0193     		str	r3, [sp, #4]
+ 1798              	.L65:
+1142:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   while((status == FLASH_BUSY) && (Timeout != 0x00))
+ 1799              		.loc 1 1142 0 discriminator 1
+ 1800 0c70 9DF80F30 		ldrb	r3, [sp, #15]	@ zero_extendqisi2
+ 1801 0c74 012B     		cmp	r3, #1
+ 1802 0c76 02D1     		bne	.L66
+1142:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   while((status == FLASH_BUSY) && (Timeout != 0x00))
+ 1803              		.loc 1 1142 0 is_stmt 0 discriminator 2
+ 1804 0c78 019B     		ldr	r3, [sp, #4]
+ 1805 0c7a 002B     		cmp	r3, #0
+ 1806 0c7c EFD1     		bne	.L67
+ 1807              	.L66:
+1146:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   }
+1147:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   
+1148:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   if(Timeout == 0x00 )
+ 1808              		.loc 1 1148 0 is_stmt 1
+ 1809 0c7e 019B     		ldr	r3, [sp, #4]
+ 1810 0c80 002B     		cmp	r3, #0
+ 1811 0c82 03D1     		bne	.L68
+1149:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   {
+1150:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****     status = FLASH_TIMEOUT;
+ 1812              		.loc 1 1150 0
+ 1813 0c84 4FF00503 		mov	r3, #5
+ 1814 0c88 8DF80F30 		strb	r3, [sp, #15]
+ 1815              	.L68:
+1151:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   }
+1152:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   /* Return the operation status */
+1153:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c ****   return status;
+ 1816              		.loc 1 1153 0
+ 1817 0c8c 9DF80F30 		ldrb	r3, [sp, #15]	@ zero_extendqisi2
+1154:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_flash.c **** }
+ 1818              		.loc 1 1154 0
+ 1819 0c90 1846     		mov	r0, r3
+ 1820 0c92 05B0     		add	sp, sp, #20
+ 1821 0c94 00BD     		pop	{pc}
+ 1822              		.cfi_endproc
+ 1823              	.LFE139:
+ 1825              	.Letext0:
+ 1826              		.file 2 "c:\\program files\\codesourcery\\sourcery_codebench_lite_for_arm_eabi\\bin\\../lib/gcc/ar
+ 1827              		.file 3 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\Libraries\\Device\\
+ 1828              		.file 4 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\Libraries\\STM32F30
+ 1829              		.file 5 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\Libraries\\CMSIS\\I
+DEFINED SYMBOLS
+                            *ABS*:00000000 stm32f30x_flash.c
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cceWKjss.s:19     .text:00000000 $t
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cceWKjss.s:24     .text:00000000 FLASH_SetLatency
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cceWKjss.s:69     .text:00000038 FLASH_HalfCycleAccessCmd
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cceWKjss.s:115    .text:00000080 FLASH_PrefetchBufferCmd
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cceWKjss.s:161    .text:000000c8 FLASH_Unlock
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cceWKjss.s:198    .text:00000100 FLASH_Lock
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cceWKjss.s:223    .text:0000011c FLASH_ErasePage
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cceWKjss.s:1766   .text:00000c44 FLASH_WaitForLastOperation
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cceWKjss.s:298    .text:000001ac FLASH_EraseAllPages
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cceWKjss.s:367    .text:00000230 FLASH_ProgramWord
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cceWKjss.s:467    .text:000002f0 FLASH_ProgramHalfWord
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cceWKjss.s:535    .text:0000036c FLASH_OB_Unlock
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cceWKjss.s:572    .text:000003a4 FLASH_OB_Lock
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cceWKjss.s:597    .text:000003c0 FLASH_OB_Launch
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cceWKjss.s:622    .text:000003dc FLASH_OB_Erase
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cceWKjss.s:1532   .text:00000af8 FLASH_OB_GetRDP
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cceWKjss.s:751    .text:000004f8 FLASH_OB_EnableWRP
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cceWKjss.s:865    .text:000005e0 FLASH_OB_RDPConfig
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cceWKjss.s:985    .text:000006e8 FLASH_OB_UserConfig
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cceWKjss.s:1081   .text:000007b4 FLASH_OB_BOOTConfig
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cceWKjss.s:1167   .text:00000864 FLASH_OB_VDDAConfig
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cceWKjss.s:1253   .text:00000914 FLASH_OB_SRAMParityConfig
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cceWKjss.s:1327   .text:000009a0 FLASH_OB_WriteUser
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cceWKjss.s:1413   .text:00000a50 FLASH_ProgramOptionByteData
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cceWKjss.s:1486   .text:00000ad4 FLASH_OB_GetUser
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cceWKjss.s:1510   .text:00000ae8 FLASH_OB_GetWRP
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cceWKjss.s:1576   .text:00000b34 FLASH_ITConfig
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cceWKjss.s:1626   .text:00000b80 FLASH_GetFlagStatus
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cceWKjss.s:1671   .text:00000bbc FLASH_ClearFlag
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cceWKjss.s:1698   .text:00000bd0 FLASH_GetStatus
+                     .debug_frame:00000010 $d
+
+NO UNDEFINED SYMBOLS

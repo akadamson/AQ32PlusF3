@@ -1,0 +1,1675 @@
+   1              		.syntax unified
+   2              		.cpu cortex-m4
+   3              		.eabi_attribute 27, 3
+   4              		.fpu fpv4-sp-d16
+   5              		.eabi_attribute 20, 1
+   6              		.eabi_attribute 21, 1
+   7              		.eabi_attribute 23, 3
+   8              		.eabi_attribute 24, 1
+   9              		.eabi_attribute 25, 1
+  10              		.eabi_attribute 26, 1
+  11              		.eabi_attribute 30, 6
+  12              		.eabi_attribute 34, 1
+  13              		.eabi_attribute 18, 4
+  14              		.thumb
+  15              		.file	"drv_i2c.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.comm	mtk19ProcessDataState,1,1
+  20              		.comm	nmeaProcessDataState,1,1
+  21              		.comm	ubloxProcessDataState,1,1
+  22              		.comm	i2cTimeout,4,4
+  23              		.bss
+  24              		.align	1
+  25              	i2c1ErrorCount:
+  26 0000 0000     		.space	2
+  27              		.align	1
+  28              	i2c2ErrorCount:
+  29 0002 0000     		.space	2
+  30              		.text
+  31              		.align	2
+  32              		.global	i2cTimeoutUserCallback
+  33              		.thumb
+  34              		.thumb_func
+  36              	i2cTimeoutUserCallback:
+  37              	.LFB111:
+  38              		.file 1 "../src/drv/drv_i2c.c"
+   1:../src/drv/drv_i2c.c **** /*
+   2:../src/drv/drv_i2c.c ****   December 2012
+   3:../src/drv/drv_i2c.c **** 
+   4:../src/drv/drv_i2c.c ****   aq32Plus_F3 Rev -
+   5:../src/drv/drv_i2c.c **** 
+   6:../src/drv/drv_i2c.c ****   Copyright (c) 2012 John Ihlein.  All rights reserved.
+   7:../src/drv/drv_i2c.c **** 
+   8:../src/drv/drv_i2c.c ****   Open Source STM32 Based Multicopter Controller Software
+   9:../src/drv/drv_i2c.c **** 
+  10:../src/drv/drv_i2c.c ****   Includes code and/or ideas from:
+  11:../src/drv/drv_i2c.c **** 
+  12:../src/drv/drv_i2c.c ****   1)AeroQuad
+  13:../src/drv/drv_i2c.c ****   2)BaseFlight
+  14:../src/drv/drv_i2c.c ****   3)CH Robotics
+  15:../src/drv/drv_i2c.c ****   4)MultiWii
+  16:../src/drv/drv_i2c.c ****   5)S.O.H. Madgwick
+  17:../src/drv/drv_i2c.c ****   6)UAVX
+  18:../src/drv/drv_i2c.c ****   7)STM DiscoveryF3 demonstration software
+  19:../src/drv/drv_i2c.c **** 
+  20:../src/drv/drv_i2c.c ****   Designed to run on the DiscoveryF3 board
+  21:../src/drv/drv_i2c.c **** 
+  22:../src/drv/drv_i2c.c ****   This program is free software: you can redistribute it and/or modify
+  23:../src/drv/drv_i2c.c ****   it under the terms of the GNU General Public License as published by
+  24:../src/drv/drv_i2c.c ****   the Free Software Foundation, either version 3 of the License, or
+  25:../src/drv/drv_i2c.c ****   (at your option) any later version.
+  26:../src/drv/drv_i2c.c **** 
+  27:../src/drv/drv_i2c.c ****   This program is distributed in the hope that it will be useful,
+  28:../src/drv/drv_i2c.c ****   but WITHOUT ANY WARRANTY; without even the implied warranty of
+  29:../src/drv/drv_i2c.c ****   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  30:../src/drv/drv_i2c.c ****   GNU General Public License for more details.
+  31:../src/drv/drv_i2c.c **** 
+  32:../src/drv/drv_i2c.c ****   You should have received a copy of the GNU General Public License
+  33:../src/drv/drv_i2c.c ****   along with this program. If not, see <http://www.gnu.org/licenses/>.
+  34:../src/drv/drv_i2c.c **** */
+  35:../src/drv/drv_i2c.c **** 
+  36:../src/drv/drv_i2c.c **** ///////////////////////////////////////////////////////////////////////////////
+  37:../src/drv/drv_i2c.c **** 
+  38:../src/drv/drv_i2c.c **** #include "board.h"
+  39:../src/drv/drv_i2c.c **** 
+  40:../src/drv/drv_i2c.c **** ///////////////////////////////////////////////////////////////////////////////
+  41:../src/drv/drv_i2c.c **** // I2C Defines and Variables
+  42:../src/drv/drv_i2c.c **** ///////////////////////////////////////////////////////////////////////////////
+  43:../src/drv/drv_i2c.c **** 
+  44:../src/drv/drv_i2c.c **** #define I2C1_SCL_GPIO        GPIOB
+  45:../src/drv/drv_i2c.c **** #define I2C1_SCL_PIN         GPIO_Pin_6
+  46:../src/drv/drv_i2c.c **** #define I2C1_SCL_PIN_SOURCE  GPIO_PinSource6
+  47:../src/drv/drv_i2c.c **** #define I2C1_SCL_CLK_SOURCE  RCC_AHBPeriph_GPIOB
+  48:../src/drv/drv_i2c.c **** #define I2C1_SDA_GPIO        GPIOB
+  49:../src/drv/drv_i2c.c **** #define I2C1_SDA_PIN         GPIO_Pin_7
+  50:../src/drv/drv_i2c.c **** #define I2C1_SDA_PIN_SOURCE  GPIO_PinSource7
+  51:../src/drv/drv_i2c.c **** #define I2C1_SDA_CLK_SOURCE  RCC_AHBPeriph_GPIOB
+  52:../src/drv/drv_i2c.c **** 
+  53:../src/drv/drv_i2c.c **** #define I2C2_SCL_GPIO        GPIOF
+  54:../src/drv/drv_i2c.c **** #define I2C2_SCL_PIN         GPIO_Pin_6
+  55:../src/drv/drv_i2c.c **** #define I2C2_SCL_PIN_SOURCE  GPIO_PinSource6
+  56:../src/drv/drv_i2c.c **** #define I2C2_SCL_CLK_SOURCE  RCC_AHBPeriph_GPIOF
+  57:../src/drv/drv_i2c.c **** #define I2C2_SDA_GPIO        GPIOA
+  58:../src/drv/drv_i2c.c **** #define I2C2_SDA_PIN         GPIO_Pin_10
+  59:../src/drv/drv_i2c.c **** #define I2C2_SDA_PIN_SOURCE  GPIO_PinSource10
+  60:../src/drv/drv_i2c.c **** #define I2C2_SDA_CLK_SOURCE  RCC_AHBPeriph_GPIOA
+  61:../src/drv/drv_i2c.c **** 
+  62:../src/drv/drv_i2c.c **** uint32_t  i2cTimeout;
+  63:../src/drv/drv_i2c.c **** 
+  64:../src/drv/drv_i2c.c **** static volatile uint16_t i2c1ErrorCount = 0;
+  65:../src/drv/drv_i2c.c **** static volatile uint16_t i2c2ErrorCount = 0;
+  66:../src/drv/drv_i2c.c **** 
+  67:../src/drv/drv_i2c.c **** ///////////////////////////////////////////////////////////////////////////////
+  68:../src/drv/drv_i2c.c **** // I2C TimeoutUserCallback
+  69:../src/drv/drv_i2c.c **** ///////////////////////////////////////////////////////////////////////////////
+  70:../src/drv/drv_i2c.c **** 
+  71:../src/drv/drv_i2c.c **** uint32_t i2cTimeoutUserCallback(I2C_TypeDef *I2Cx)
+  72:../src/drv/drv_i2c.c **** {
+  39              		.loc 1 72 0
+  40              		.cfi_startproc
+  41              		@ args = 0, pretend = 0, frame = 8
+  42              		@ frame_needed = 0, uses_anonymous_args = 0
+  43 0000 00B5     		push	{lr}
+  44              	.LCFI0:
+  45              		.cfi_def_cfa_offset 4
+  46              		.cfi_offset 14, -4
+  47 0002 83B0     		sub	sp, sp, #12
+  48              	.LCFI1:
+  49              		.cfi_def_cfa_offset 16
+  50 0004 0190     		str	r0, [sp, #4]
+  73:../src/drv/drv_i2c.c **** 	GPIO_SetBits(RED_N_LED_GPIO, RED_N_LED_PIN);
+  51              		.loc 1 73 0
+  52 0006 4FF48050 		mov	r0, #4096
+  53 000a C4F60000 		movt	r0, 18432
+  54 000e 4FF40071 		mov	r1, #512
+  55 0012 FFF7FEFF 		bl	GPIO_SetBits
+  74:../src/drv/drv_i2c.c **** 
+  75:../src/drv/drv_i2c.c **** 	if (I2Cx == I2C1)
+  56              		.loc 1 75 0
+  57 0016 019A     		ldr	r2, [sp, #4]
+  58 0018 4FF4A843 		mov	r3, #21504
+  59 001c C4F20003 		movt	r3, 16384
+  60 0020 9A42     		cmp	r2, r3
+  61 0022 14D1     		bne	.L2
+  76:../src/drv/drv_i2c.c **** 	{
+  77:../src/drv/drv_i2c.c **** 		i2c1ErrorCount++;
+  62              		.loc 1 77 0
+  63 0024 40F20003 		movw	r3, #:lower16:i2c1ErrorCount
+  64 0028 C0F20003 		movt	r3, #:upper16:i2c1ErrorCount
+  65 002c 1B88     		ldrh	r3, [r3, #0]	@ movhi
+  66 002e 9BB2     		uxth	r3, r3
+  67 0030 03F10103 		add	r3, r3, #1
+  68 0034 9AB2     		uxth	r2, r3
+  69 0036 40F20003 		movw	r3, #:lower16:i2c1ErrorCount
+  70 003a C0F20003 		movt	r3, #:upper16:i2c1ErrorCount
+  71 003e 1A80     		strh	r2, [r3, #0]	@ movhi
+  78:../src/drv/drv_i2c.c **** 		return i2c1ErrorCount;
+  72              		.loc 1 78 0
+  73 0040 40F20003 		movw	r3, #:lower16:i2c1ErrorCount
+  74 0044 C0F20003 		movt	r3, #:upper16:i2c1ErrorCount
+  75 0048 1B88     		ldrh	r3, [r3, #0]	@ movhi
+  76 004a 9BB2     		uxth	r3, r3
+  77 004c 13E0     		b	.L3
+  78              	.L2:
+  79:../src/drv/drv_i2c.c **** 	}
+  80:../src/drv/drv_i2c.c **** 	else
+  81:../src/drv/drv_i2c.c **** 	{
+  82:../src/drv/drv_i2c.c **** 		i2c2ErrorCount++;
+  79              		.loc 1 82 0
+  80 004e 40F20003 		movw	r3, #:lower16:i2c2ErrorCount
+  81 0052 C0F20003 		movt	r3, #:upper16:i2c2ErrorCount
+  82 0056 1B88     		ldrh	r3, [r3, #0]	@ movhi
+  83 0058 9BB2     		uxth	r3, r3
+  84 005a 03F10103 		add	r3, r3, #1
+  85 005e 9AB2     		uxth	r2, r3
+  86 0060 40F20003 		movw	r3, #:lower16:i2c2ErrorCount
+  87 0064 C0F20003 		movt	r3, #:upper16:i2c2ErrorCount
+  88 0068 1A80     		strh	r2, [r3, #0]	@ movhi
+  83:../src/drv/drv_i2c.c **** 		return i2c2ErrorCount;
+  89              		.loc 1 83 0
+  90 006a 40F20003 		movw	r3, #:lower16:i2c2ErrorCount
+  91 006e C0F20003 		movt	r3, #:upper16:i2c2ErrorCount
+  92 0072 1B88     		ldrh	r3, [r3, #0]	@ movhi
+  93 0074 9BB2     		uxth	r3, r3
+  94              	.L3:
+  84:../src/drv/drv_i2c.c **** 	}
+  85:../src/drv/drv_i2c.c **** }
+  95              		.loc 1 85 0
+  96 0076 1846     		mov	r0, r3
+  97 0078 03B0     		add	sp, sp, #12
+  98 007a 00BD     		pop	{pc}
+  99              		.cfi_endproc
+ 100              	.LFE111:
+ 102              		.align	2
+ 103              		.global	i2cWrite
+ 104              		.thumb
+ 105              		.thumb_func
+ 107              	i2cWrite:
+ 108              	.LFB112:
+  86:../src/drv/drv_i2c.c **** 
+  87:../src/drv/drv_i2c.c **** ///////////////////////////////////////////////////////////////////////////////
+  88:../src/drv/drv_i2c.c **** // I2C Write
+  89:../src/drv/drv_i2c.c **** ///////////////////////////////////////////////////////////////////////////////
+  90:../src/drv/drv_i2c.c **** 
+  91:../src/drv/drv_i2c.c **** uint16_t i2cWrite(I2C_TypeDef *I2Cx, uint8_t addr_, uint8_t reg, uint8_t data)
+  92:../src/drv/drv_i2c.c **** {
+ 109              		.loc 1 92 0
+ 110              		.cfi_startproc
+ 111              		@ args = 0, pretend = 0, frame = 8
+ 112              		@ frame_needed = 0, uses_anonymous_args = 0
+ 113 007c 00B5     		push	{lr}
+ 114              	.LCFI2:
+ 115              		.cfi_def_cfa_offset 4
+ 116              		.cfi_offset 14, -4
+ 117 007e 85B0     		sub	sp, sp, #20
+ 118              	.LCFI3:
+ 119              		.cfi_def_cfa_offset 24
+ 120 0080 0390     		str	r0, [sp, #12]
+ 121 0082 8DF80B10 		strb	r1, [sp, #11]
+ 122 0086 8DF80A20 		strb	r2, [sp, #10]
+ 123 008a 8DF80930 		strb	r3, [sp, #9]
+  93:../src/drv/drv_i2c.c **** 	/* Test on BUSY Flag */
+  94:../src/drv/drv_i2c.c ****     i2cTimeout = I2C_LONG_TIMEOUT;
+ 124              		.loc 1 94 0
+ 125 008e 40F20003 		movw	r3, #:lower16:i2cTimeout
+ 126 0092 C0F20003 		movt	r3, #:upper16:i2cTimeout
+ 127 0096 4FF42042 		mov	r2, #40960
+ 128 009a 1A60     		str	r2, [r3, #0]
+  95:../src/drv/drv_i2c.c ****     while(I2C_GetFlagStatus(I2Cx, I2C_ISR_BUSY) != RESET)
+ 129              		.loc 1 95 0
+ 130 009c 18E0     		b	.L5
+ 131              	.L7:
+  96:../src/drv/drv_i2c.c ****     {
+  97:../src/drv/drv_i2c.c ****         if((i2cTimeout--) == 0) return i2cTimeoutUserCallback(I2Cx);
+ 132              		.loc 1 97 0
+ 133 009e 40F20003 		movw	r3, #:lower16:i2cTimeout
+ 134 00a2 C0F20003 		movt	r3, #:upper16:i2cTimeout
+ 135 00a6 1B68     		ldr	r3, [r3, #0]
+ 136 00a8 002B     		cmp	r3, #0
+ 137 00aa 14BF     		ite	ne
+ 138 00ac 0022     		movne	r2, #0
+ 139 00ae 0122     		moveq	r2, #1
+ 140 00b0 D2B2     		uxtb	r2, r2
+ 141 00b2 03F1FF31 		add	r1, r3, #-1
+ 142 00b6 40F20003 		movw	r3, #:lower16:i2cTimeout
+ 143 00ba C0F20003 		movt	r3, #:upper16:i2cTimeout
+ 144 00be 1960     		str	r1, [r3, #0]
+ 145 00c0 002A     		cmp	r2, #0
+ 146 00c2 05D0     		beq	.L5
+ 147              		.loc 1 97 0 is_stmt 0 discriminator 1
+ 148 00c4 0398     		ldr	r0, [sp, #12]
+ 149 00c6 FFF7FEFF 		bl	i2cTimeoutUserCallback
+ 150 00ca 0346     		mov	r3, r0
+ 151 00cc 9BB2     		uxth	r3, r3
+ 152 00ce DAE0     		b	.L6
+ 153              	.L5:
+  95:../src/drv/drv_i2c.c ****     while(I2C_GetFlagStatus(I2Cx, I2C_ISR_BUSY) != RESET)
+ 154              		.loc 1 95 0 is_stmt 1 discriminator 1
+ 155 00d0 0398     		ldr	r0, [sp, #12]
+ 156 00d2 4FF40041 		mov	r1, #32768
+ 157 00d6 FFF7FEFF 		bl	I2C_GetFlagStatus
+ 158 00da 0346     		mov	r3, r0
+ 159 00dc 002B     		cmp	r3, #0
+ 160 00de DED1     		bne	.L7
+  98:../src/drv/drv_i2c.c ****     }
+  99:../src/drv/drv_i2c.c **** 
+ 100:../src/drv/drv_i2c.c ****     /* Configure slave address, nbytes, reload, end mode and start or stop generation */
+ 101:../src/drv/drv_i2c.c ****     I2C_TransferHandling(I2Cx, addr_, 1, I2C_Reload_Mode, I2C_Generate_Start_Write);
+ 161              		.loc 1 101 0
+ 162 00e0 9DF80B30 		ldrb	r3, [sp, #11]	@ zero_extendqisi2
+ 163 00e4 9BB2     		uxth	r3, r3
+ 164 00e6 4FF40052 		mov	r2, #8192
+ 165 00ea 0092     		str	r2, [sp, #0]
+ 166 00ec 0398     		ldr	r0, [sp, #12]
+ 167 00ee 1946     		mov	r1, r3
+ 168 00f0 4FF00102 		mov	r2, #1
+ 169 00f4 4FF08073 		mov	r3, #16777216
+ 170 00f8 FFF7FEFF 		bl	I2C_TransferHandling
+ 102:../src/drv/drv_i2c.c **** 
+ 103:../src/drv/drv_i2c.c ****     /* Wait until TXIS flag is set */
+ 104:../src/drv/drv_i2c.c ****     i2cTimeout = I2C_LONG_TIMEOUT;
+ 171              		.loc 1 104 0
+ 172 00fc 40F20003 		movw	r3, #:lower16:i2cTimeout
+ 173 0100 C0F20003 		movt	r3, #:upper16:i2cTimeout
+ 174 0104 4FF42042 		mov	r2, #40960
+ 175 0108 1A60     		str	r2, [r3, #0]
+ 105:../src/drv/drv_i2c.c ****     while(I2C_GetFlagStatus(I2Cx, I2C_ISR_TXIS) == RESET)
+ 176              		.loc 1 105 0
+ 177 010a 18E0     		b	.L8
+ 178              	.L9:
+ 106:../src/drv/drv_i2c.c ****     {
+ 107:../src/drv/drv_i2c.c ****         if((i2cTimeout--) == 0) return i2cTimeoutUserCallback(I2Cx);
+ 179              		.loc 1 107 0
+ 180 010c 40F20003 		movw	r3, #:lower16:i2cTimeout
+ 181 0110 C0F20003 		movt	r3, #:upper16:i2cTimeout
+ 182 0114 1B68     		ldr	r3, [r3, #0]
+ 183 0116 002B     		cmp	r3, #0
+ 184 0118 14BF     		ite	ne
+ 185 011a 0022     		movne	r2, #0
+ 186 011c 0122     		moveq	r2, #1
+ 187 011e D2B2     		uxtb	r2, r2
+ 188 0120 03F1FF31 		add	r1, r3, #-1
+ 189 0124 40F20003 		movw	r3, #:lower16:i2cTimeout
+ 190 0128 C0F20003 		movt	r3, #:upper16:i2cTimeout
+ 191 012c 1960     		str	r1, [r3, #0]
+ 192 012e 002A     		cmp	r2, #0
+ 193 0130 05D0     		beq	.L8
+ 194              		.loc 1 107 0 is_stmt 0 discriminator 1
+ 195 0132 0398     		ldr	r0, [sp, #12]
+ 196 0134 FFF7FEFF 		bl	i2cTimeoutUserCallback
+ 197 0138 0346     		mov	r3, r0
+ 198 013a 9BB2     		uxth	r3, r3
+ 199 013c A3E0     		b	.L6
+ 200              	.L8:
+ 105:../src/drv/drv_i2c.c ****     while(I2C_GetFlagStatus(I2Cx, I2C_ISR_TXIS) == RESET)
+ 201              		.loc 1 105 0 is_stmt 1 discriminator 1
+ 202 013e 0398     		ldr	r0, [sp, #12]
+ 203 0140 4FF00201 		mov	r1, #2
+ 204 0144 FFF7FEFF 		bl	I2C_GetFlagStatus
+ 205 0148 0346     		mov	r3, r0
+ 206 014a 002B     		cmp	r3, #0
+ 207 014c DED0     		beq	.L9
+ 108:../src/drv/drv_i2c.c ****     }
+ 109:../src/drv/drv_i2c.c **** 
+ 110:../src/drv/drv_i2c.c ****     /* Send Register address */
+ 111:../src/drv/drv_i2c.c ****     I2C_SendData(I2Cx, (uint8_t) reg);
+ 208              		.loc 1 111 0
+ 209 014e 9DF80A30 		ldrb	r3, [sp, #10]	@ zero_extendqisi2
+ 210 0152 0398     		ldr	r0, [sp, #12]
+ 211 0154 1946     		mov	r1, r3
+ 212 0156 FFF7FEFF 		bl	I2C_SendData
+ 112:../src/drv/drv_i2c.c **** 
+ 113:../src/drv/drv_i2c.c ****     /* Wait until TCR flag is set */
+ 114:../src/drv/drv_i2c.c ****     i2cTimeout = I2C_LONG_TIMEOUT;
+ 213              		.loc 1 114 0
+ 214 015a 40F20003 		movw	r3, #:lower16:i2cTimeout
+ 215 015e C0F20003 		movt	r3, #:upper16:i2cTimeout
+ 216 0162 4FF42042 		mov	r2, #40960
+ 217 0166 1A60     		str	r2, [r3, #0]
+ 115:../src/drv/drv_i2c.c ****     while(I2C_GetFlagStatus(I2Cx, I2C_ISR_TCR) == RESET)
+ 218              		.loc 1 115 0
+ 219 0168 18E0     		b	.L10
+ 220              	.L11:
+ 116:../src/drv/drv_i2c.c ****     {
+ 117:../src/drv/drv_i2c.c ****         if((i2cTimeout--) == 0) return i2cTimeoutUserCallback(I2Cx);
+ 221              		.loc 1 117 0
+ 222 016a 40F20003 		movw	r3, #:lower16:i2cTimeout
+ 223 016e C0F20003 		movt	r3, #:upper16:i2cTimeout
+ 224 0172 1B68     		ldr	r3, [r3, #0]
+ 225 0174 002B     		cmp	r3, #0
+ 226 0176 14BF     		ite	ne
+ 227 0178 0022     		movne	r2, #0
+ 228 017a 0122     		moveq	r2, #1
+ 229 017c D2B2     		uxtb	r2, r2
+ 230 017e 03F1FF31 		add	r1, r3, #-1
+ 231 0182 40F20003 		movw	r3, #:lower16:i2cTimeout
+ 232 0186 C0F20003 		movt	r3, #:upper16:i2cTimeout
+ 233 018a 1960     		str	r1, [r3, #0]
+ 234 018c 002A     		cmp	r2, #0
+ 235 018e 05D0     		beq	.L10
+ 236              		.loc 1 117 0 is_stmt 0 discriminator 1
+ 237 0190 0398     		ldr	r0, [sp, #12]
+ 238 0192 FFF7FEFF 		bl	i2cTimeoutUserCallback
+ 239 0196 0346     		mov	r3, r0
+ 240 0198 9BB2     		uxth	r3, r3
+ 241 019a 74E0     		b	.L6
+ 242              	.L10:
+ 115:../src/drv/drv_i2c.c ****     while(I2C_GetFlagStatus(I2Cx, I2C_ISR_TCR) == RESET)
+ 243              		.loc 1 115 0 is_stmt 1 discriminator 1
+ 244 019c 0398     		ldr	r0, [sp, #12]
+ 245 019e 4FF08001 		mov	r1, #128
+ 246 01a2 FFF7FEFF 		bl	I2C_GetFlagStatus
+ 247 01a6 0346     		mov	r3, r0
+ 248 01a8 002B     		cmp	r3, #0
+ 249 01aa DED0     		beq	.L11
+ 118:../src/drv/drv_i2c.c ****     }
+ 119:../src/drv/drv_i2c.c **** 
+ 120:../src/drv/drv_i2c.c ****     /* Configure slave address, nbytes, reload, end mode and start or stop generation */
+ 121:../src/drv/drv_i2c.c ****     I2C_TransferHandling(I2Cx, addr_, 1, I2C_AutoEnd_Mode, I2C_No_StartStop);
+ 250              		.loc 1 121 0
+ 251 01ac 9DF80B30 		ldrb	r3, [sp, #11]	@ zero_extendqisi2
+ 252 01b0 9BB2     		uxth	r3, r3
+ 253 01b2 4FF00002 		mov	r2, #0
+ 254 01b6 0092     		str	r2, [sp, #0]
+ 255 01b8 0398     		ldr	r0, [sp, #12]
+ 256 01ba 1946     		mov	r1, r3
+ 257 01bc 4FF00102 		mov	r2, #1
+ 258 01c0 4FF00073 		mov	r3, #33554432
+ 259 01c4 FFF7FEFF 		bl	I2C_TransferHandling
+ 122:../src/drv/drv_i2c.c **** 
+ 123:../src/drv/drv_i2c.c ****     /* Wait until TXIS flag is set */
+ 124:../src/drv/drv_i2c.c ****     i2cTimeout = I2C_LONG_TIMEOUT;
+ 260              		.loc 1 124 0
+ 261 01c8 40F20003 		movw	r3, #:lower16:i2cTimeout
+ 262 01cc C0F20003 		movt	r3, #:upper16:i2cTimeout
+ 263 01d0 4FF42042 		mov	r2, #40960
+ 264 01d4 1A60     		str	r2, [r3, #0]
+ 125:../src/drv/drv_i2c.c ****     while(I2C_GetFlagStatus(I2Cx, I2C_ISR_TXIS) == RESET)
+ 265              		.loc 1 125 0
+ 266 01d6 18E0     		b	.L12
+ 267              	.L13:
+ 126:../src/drv/drv_i2c.c ****     {
+ 127:../src/drv/drv_i2c.c ****         if((i2cTimeout--) == 0) return i2cTimeoutUserCallback(I2Cx);
+ 268              		.loc 1 127 0
+ 269 01d8 40F20003 		movw	r3, #:lower16:i2cTimeout
+ 270 01dc C0F20003 		movt	r3, #:upper16:i2cTimeout
+ 271 01e0 1B68     		ldr	r3, [r3, #0]
+ 272 01e2 002B     		cmp	r3, #0
+ 273 01e4 14BF     		ite	ne
+ 274 01e6 0022     		movne	r2, #0
+ 275 01e8 0122     		moveq	r2, #1
+ 276 01ea D2B2     		uxtb	r2, r2
+ 277 01ec 03F1FF31 		add	r1, r3, #-1
+ 278 01f0 40F20003 		movw	r3, #:lower16:i2cTimeout
+ 279 01f4 C0F20003 		movt	r3, #:upper16:i2cTimeout
+ 280 01f8 1960     		str	r1, [r3, #0]
+ 281 01fa 002A     		cmp	r2, #0
+ 282 01fc 05D0     		beq	.L12
+ 283              		.loc 1 127 0 is_stmt 0 discriminator 1
+ 284 01fe 0398     		ldr	r0, [sp, #12]
+ 285 0200 FFF7FEFF 		bl	i2cTimeoutUserCallback
+ 286 0204 0346     		mov	r3, r0
+ 287 0206 9BB2     		uxth	r3, r3
+ 288 0208 3DE0     		b	.L6
+ 289              	.L12:
+ 125:../src/drv/drv_i2c.c ****     while(I2C_GetFlagStatus(I2Cx, I2C_ISR_TXIS) == RESET)
+ 290              		.loc 1 125 0 is_stmt 1 discriminator 1
+ 291 020a 0398     		ldr	r0, [sp, #12]
+ 292 020c 4FF00201 		mov	r1, #2
+ 293 0210 FFF7FEFF 		bl	I2C_GetFlagStatus
+ 294 0214 0346     		mov	r3, r0
+ 295 0216 002B     		cmp	r3, #0
+ 296 0218 DED0     		beq	.L13
+ 128:../src/drv/drv_i2c.c ****     }
+ 129:../src/drv/drv_i2c.c **** 
+ 130:../src/drv/drv_i2c.c ****     /* Write data to TXDR */
+ 131:../src/drv/drv_i2c.c ****     I2C_SendData(I2Cx, data);
+ 297              		.loc 1 131 0
+ 298 021a 9DF80930 		ldrb	r3, [sp, #9]	@ zero_extendqisi2
+ 299 021e 0398     		ldr	r0, [sp, #12]
+ 300 0220 1946     		mov	r1, r3
+ 301 0222 FFF7FEFF 		bl	I2C_SendData
+ 132:../src/drv/drv_i2c.c **** 
+ 133:../src/drv/drv_i2c.c ****     /* Wait until STOPF flag is set */
+ 134:../src/drv/drv_i2c.c ****     i2cTimeout = I2C_LONG_TIMEOUT;
+ 302              		.loc 1 134 0
+ 303 0226 40F20003 		movw	r3, #:lower16:i2cTimeout
+ 304 022a C0F20003 		movt	r3, #:upper16:i2cTimeout
+ 305 022e 4FF42042 		mov	r2, #40960
+ 306 0232 1A60     		str	r2, [r3, #0]
+ 135:../src/drv/drv_i2c.c ****     while(I2C_GetFlagStatus(I2Cx, I2C_ISR_STOPF) == RESET)
+ 307              		.loc 1 135 0
+ 308 0234 18E0     		b	.L14
+ 309              	.L15:
+ 136:../src/drv/drv_i2c.c ****     {
+ 137:../src/drv/drv_i2c.c ****         if((i2cTimeout--) == 0) return i2cTimeoutUserCallback(I2Cx);
+ 310              		.loc 1 137 0
+ 311 0236 40F20003 		movw	r3, #:lower16:i2cTimeout
+ 312 023a C0F20003 		movt	r3, #:upper16:i2cTimeout
+ 313 023e 1B68     		ldr	r3, [r3, #0]
+ 314 0240 002B     		cmp	r3, #0
+ 315 0242 14BF     		ite	ne
+ 316 0244 0022     		movne	r2, #0
+ 317 0246 0122     		moveq	r2, #1
+ 318 0248 D2B2     		uxtb	r2, r2
+ 319 024a 03F1FF31 		add	r1, r3, #-1
+ 320 024e 40F20003 		movw	r3, #:lower16:i2cTimeout
+ 321 0252 C0F20003 		movt	r3, #:upper16:i2cTimeout
+ 322 0256 1960     		str	r1, [r3, #0]
+ 323 0258 002A     		cmp	r2, #0
+ 324 025a 05D0     		beq	.L14
+ 325              		.loc 1 137 0 is_stmt 0 discriminator 1
+ 326 025c 0398     		ldr	r0, [sp, #12]
+ 327 025e FFF7FEFF 		bl	i2cTimeoutUserCallback
+ 328 0262 0346     		mov	r3, r0
+ 329 0264 9BB2     		uxth	r3, r3
+ 330 0266 0EE0     		b	.L6
+ 331              	.L14:
+ 135:../src/drv/drv_i2c.c ****     while(I2C_GetFlagStatus(I2Cx, I2C_ISR_STOPF) == RESET)
+ 332              		.loc 1 135 0 is_stmt 1 discriminator 1
+ 333 0268 0398     		ldr	r0, [sp, #12]
+ 334 026a 4FF02001 		mov	r1, #32
+ 335 026e FFF7FEFF 		bl	I2C_GetFlagStatus
+ 336 0272 0346     		mov	r3, r0
+ 337 0274 002B     		cmp	r3, #0
+ 338 0276 DED0     		beq	.L15
+ 138:../src/drv/drv_i2c.c ****     }
+ 139:../src/drv/drv_i2c.c **** 
+ 140:../src/drv/drv_i2c.c ****     /* Clear STOPF flag */
+ 141:../src/drv/drv_i2c.c ****     I2C_ClearFlag(I2Cx, I2C_ICR_STOPCF);
+ 339              		.loc 1 141 0
+ 340 0278 0398     		ldr	r0, [sp, #12]
+ 341 027a 4FF02001 		mov	r1, #32
+ 342 027e FFF7FEFF 		bl	I2C_ClearFlag
+ 142:../src/drv/drv_i2c.c **** 
+ 143:../src/drv/drv_i2c.c ****     return I2C_OK;
+ 343              		.loc 1 143 0
+ 344 0282 4FF00003 		mov	r3, #0
+ 345              	.L6:
+ 144:../src/drv/drv_i2c.c **** }
+ 346              		.loc 1 144 0
+ 347 0286 1846     		mov	r0, r3
+ 348 0288 05B0     		add	sp, sp, #20
+ 349 028a 00BD     		pop	{pc}
+ 350              		.cfi_endproc
+ 351              	.LFE112:
+ 353              		.align	2
+ 354              		.global	i2cRead
+ 355              		.thumb
+ 356              		.thumb_func
+ 358              	i2cRead:
+ 359              	.LFB113:
+ 145:../src/drv/drv_i2c.c **** 
+ 146:../src/drv/drv_i2c.c **** ///////////////////////////////////////////////////////////////////////////////
+ 147:../src/drv/drv_i2c.c **** // I2C Read
+ 148:../src/drv/drv_i2c.c **** ///////////////////////////////////////////////////////////////////////////////
+ 149:../src/drv/drv_i2c.c **** 
+ 150:../src/drv/drv_i2c.c **** uint16_t i2cRead(I2C_TypeDef *I2Cx, uint8_t addr_, uint8_t reg, uint16_t len, uint8_t* buf)
+ 151:../src/drv/drv_i2c.c **** {
+ 360              		.loc 1 151 0
+ 361              		.cfi_startproc
+ 362              		@ args = 4, pretend = 0, frame = 8
+ 363              		@ frame_needed = 0, uses_anonymous_args = 0
+ 364 028c 00B5     		push	{lr}
+ 365              	.LCFI4:
+ 366              		.cfi_def_cfa_offset 4
+ 367              		.cfi_offset 14, -4
+ 368 028e 85B0     		sub	sp, sp, #20
+ 369              	.LCFI5:
+ 370              		.cfi_def_cfa_offset 24
+ 371 0290 0390     		str	r0, [sp, #12]
+ 372 0292 8DF80B10 		strb	r1, [sp, #11]
+ 373 0296 8DF80A20 		strb	r2, [sp, #10]
+ 374 029a ADF80830 		strh	r3, [sp, #8]	@ movhi
+ 152:../src/drv/drv_i2c.c **** 	/* Test on BUSY Flag */
+ 153:../src/drv/drv_i2c.c ****     i2cTimeout = I2C_LONG_TIMEOUT;
+ 375              		.loc 1 153 0
+ 376 029e 40F20003 		movw	r3, #:lower16:i2cTimeout
+ 377 02a2 C0F20003 		movt	r3, #:upper16:i2cTimeout
+ 378 02a6 4FF42042 		mov	r2, #40960
+ 379 02aa 1A60     		str	r2, [r3, #0]
+ 154:../src/drv/drv_i2c.c ****     while(I2C_GetFlagStatus(I2Cx, I2C_ISR_BUSY) != RESET)
+ 380              		.loc 1 154 0
+ 381 02ac 18E0     		b	.L17
+ 382              	.L19:
+ 155:../src/drv/drv_i2c.c ****     {
+ 156:../src/drv/drv_i2c.c ****         if((i2cTimeout--) == 0) return i2cTimeoutUserCallback(I2Cx);
+ 383              		.loc 1 156 0
+ 384 02ae 40F20003 		movw	r3, #:lower16:i2cTimeout
+ 385 02b2 C0F20003 		movt	r3, #:upper16:i2cTimeout
+ 386 02b6 1B68     		ldr	r3, [r3, #0]
+ 387 02b8 002B     		cmp	r3, #0
+ 388 02ba 14BF     		ite	ne
+ 389 02bc 0022     		movne	r2, #0
+ 390 02be 0122     		moveq	r2, #1
+ 391 02c0 D2B2     		uxtb	r2, r2
+ 392 02c2 03F1FF31 		add	r1, r3, #-1
+ 393 02c6 40F20003 		movw	r3, #:lower16:i2cTimeout
+ 394 02ca C0F20003 		movt	r3, #:upper16:i2cTimeout
+ 395 02ce 1960     		str	r1, [r3, #0]
+ 396 02d0 002A     		cmp	r2, #0
+ 397 02d2 05D0     		beq	.L17
+ 398              		.loc 1 156 0 is_stmt 0 discriminator 1
+ 399 02d4 0398     		ldr	r0, [sp, #12]
+ 400 02d6 FFF7FEFF 		bl	i2cTimeoutUserCallback
+ 401 02da 0346     		mov	r3, r0
+ 402 02dc 9BB2     		uxth	r3, r3
+ 403 02de F6E0     		b	.L18
+ 404              	.L17:
+ 154:../src/drv/drv_i2c.c ****     while(I2C_GetFlagStatus(I2Cx, I2C_ISR_BUSY) != RESET)
+ 405              		.loc 1 154 0 is_stmt 1 discriminator 1
+ 406 02e0 0398     		ldr	r0, [sp, #12]
+ 407 02e2 4FF40041 		mov	r1, #32768
+ 408 02e6 FFF7FEFF 		bl	I2C_GetFlagStatus
+ 409 02ea 0346     		mov	r3, r0
+ 410 02ec 002B     		cmp	r3, #0
+ 411 02ee DED1     		bne	.L19
+ 157:../src/drv/drv_i2c.c ****     }
+ 158:../src/drv/drv_i2c.c **** 
+ 159:../src/drv/drv_i2c.c ****     /* Configure slave address, nbytes, reload, end mode and start or stop generation */
+ 160:../src/drv/drv_i2c.c ****     I2C_TransferHandling(I2Cx, addr_, 1, I2C_SoftEnd_Mode, I2C_Generate_Start_Write);
+ 412              		.loc 1 160 0
+ 413 02f0 9DF80B30 		ldrb	r3, [sp, #11]	@ zero_extendqisi2
+ 414 02f4 9BB2     		uxth	r3, r3
+ 415 02f6 4FF40052 		mov	r2, #8192
+ 416 02fa 0092     		str	r2, [sp, #0]
+ 417 02fc 0398     		ldr	r0, [sp, #12]
+ 418 02fe 1946     		mov	r1, r3
+ 419 0300 4FF00102 		mov	r2, #1
+ 420 0304 4FF00003 		mov	r3, #0
+ 421 0308 FFF7FEFF 		bl	I2C_TransferHandling
+ 161:../src/drv/drv_i2c.c **** 
+ 162:../src/drv/drv_i2c.c ****     /* Wait until TXIS flag is set */
+ 163:../src/drv/drv_i2c.c ****     i2cTimeout = I2C_LONG_TIMEOUT;
+ 422              		.loc 1 163 0
+ 423 030c 40F20003 		movw	r3, #:lower16:i2cTimeout
+ 424 0310 C0F20003 		movt	r3, #:upper16:i2cTimeout
+ 425 0314 4FF42042 		mov	r2, #40960
+ 426 0318 1A60     		str	r2, [r3, #0]
+ 164:../src/drv/drv_i2c.c ****     while(I2C_GetFlagStatus(I2Cx, I2C_ISR_TXIS) == RESET)
+ 427              		.loc 1 164 0
+ 428 031a 18E0     		b	.L20
+ 429              	.L21:
+ 165:../src/drv/drv_i2c.c ****     {
+ 166:../src/drv/drv_i2c.c ****         if((i2cTimeout--) == 0) return i2cTimeoutUserCallback(I2Cx);
+ 430              		.loc 1 166 0
+ 431 031c 40F20003 		movw	r3, #:lower16:i2cTimeout
+ 432 0320 C0F20003 		movt	r3, #:upper16:i2cTimeout
+ 433 0324 1B68     		ldr	r3, [r3, #0]
+ 434 0326 002B     		cmp	r3, #0
+ 435 0328 14BF     		ite	ne
+ 436 032a 0022     		movne	r2, #0
+ 437 032c 0122     		moveq	r2, #1
+ 438 032e D2B2     		uxtb	r2, r2
+ 439 0330 03F1FF31 		add	r1, r3, #-1
+ 440 0334 40F20003 		movw	r3, #:lower16:i2cTimeout
+ 441 0338 C0F20003 		movt	r3, #:upper16:i2cTimeout
+ 442 033c 1960     		str	r1, [r3, #0]
+ 443 033e 002A     		cmp	r2, #0
+ 444 0340 05D0     		beq	.L20
+ 445              		.loc 1 166 0 is_stmt 0 discriminator 1
+ 446 0342 0398     		ldr	r0, [sp, #12]
+ 447 0344 FFF7FEFF 		bl	i2cTimeoutUserCallback
+ 448 0348 0346     		mov	r3, r0
+ 449 034a 9BB2     		uxth	r3, r3
+ 450 034c BFE0     		b	.L18
+ 451              	.L20:
+ 164:../src/drv/drv_i2c.c ****     while(I2C_GetFlagStatus(I2Cx, I2C_ISR_TXIS) == RESET)
+ 452              		.loc 1 164 0 is_stmt 1 discriminator 1
+ 453 034e 0398     		ldr	r0, [sp, #12]
+ 454 0350 4FF00201 		mov	r1, #2
+ 455 0354 FFF7FEFF 		bl	I2C_GetFlagStatus
+ 456 0358 0346     		mov	r3, r0
+ 457 035a 002B     		cmp	r3, #0
+ 458 035c DED0     		beq	.L21
+ 167:../src/drv/drv_i2c.c ****     }
+ 168:../src/drv/drv_i2c.c **** 
+ 169:../src/drv/drv_i2c.c ****     if(len > 1)
+ 459              		.loc 1 169 0
+ 460 035e BDF80830 		ldrh	r3, [sp, #8]
+ 461 0362 012B     		cmp	r3, #1
+ 462 0364 05D9     		bls	.L22
+ 170:../src/drv/drv_i2c.c ****         reg |= 0x80;
+ 463              		.loc 1 170 0
+ 464 0366 9DF80A30 		ldrb	r3, [sp, #10]
+ 465 036a 63F07F03 		orn	r3, r3, #127
+ 466 036e 8DF80A30 		strb	r3, [sp, #10]
+ 467              	.L22:
+ 171:../src/drv/drv_i2c.c **** 
+ 172:../src/drv/drv_i2c.c ****     /* Send Register address */
+ 173:../src/drv/drv_i2c.c ****     I2C_SendData(I2Cx, (uint8_t)reg);
+ 468              		.loc 1 173 0
+ 469 0372 9DF80A30 		ldrb	r3, [sp, #10]	@ zero_extendqisi2
+ 470 0376 0398     		ldr	r0, [sp, #12]
+ 471 0378 1946     		mov	r1, r3
+ 472 037a FFF7FEFF 		bl	I2C_SendData
+ 174:../src/drv/drv_i2c.c **** 
+ 175:../src/drv/drv_i2c.c ****     /* Wait until TC flag is set */
+ 176:../src/drv/drv_i2c.c ****     i2cTimeout = I2C_LONG_TIMEOUT;
+ 473              		.loc 1 176 0
+ 474 037e 40F20003 		movw	r3, #:lower16:i2cTimeout
+ 475 0382 C0F20003 		movt	r3, #:upper16:i2cTimeout
+ 476 0386 4FF42042 		mov	r2, #40960
+ 477 038a 1A60     		str	r2, [r3, #0]
+ 177:../src/drv/drv_i2c.c ****     while(I2C_GetFlagStatus(I2Cx, I2C_ISR_TC) == RESET)
+ 478              		.loc 1 177 0
+ 479 038c 18E0     		b	.L23
+ 480              	.L24:
+ 178:../src/drv/drv_i2c.c ****     {
+ 179:../src/drv/drv_i2c.c ****         if((i2cTimeout--) == 0) return i2cTimeoutUserCallback(I2Cx);
+ 481              		.loc 1 179 0
+ 482 038e 40F20003 		movw	r3, #:lower16:i2cTimeout
+ 483 0392 C0F20003 		movt	r3, #:upper16:i2cTimeout
+ 484 0396 1B68     		ldr	r3, [r3, #0]
+ 485 0398 002B     		cmp	r3, #0
+ 486 039a 14BF     		ite	ne
+ 487 039c 0022     		movne	r2, #0
+ 488 039e 0122     		moveq	r2, #1
+ 489 03a0 D2B2     		uxtb	r2, r2
+ 490 03a2 03F1FF31 		add	r1, r3, #-1
+ 491 03a6 40F20003 		movw	r3, #:lower16:i2cTimeout
+ 492 03aa C0F20003 		movt	r3, #:upper16:i2cTimeout
+ 493 03ae 1960     		str	r1, [r3, #0]
+ 494 03b0 002A     		cmp	r2, #0
+ 495 03b2 05D0     		beq	.L23
+ 496              		.loc 1 179 0 is_stmt 0 discriminator 1
+ 497 03b4 0398     		ldr	r0, [sp, #12]
+ 498 03b6 FFF7FEFF 		bl	i2cTimeoutUserCallback
+ 499 03ba 0346     		mov	r3, r0
+ 500 03bc 9BB2     		uxth	r3, r3
+ 501 03be 86E0     		b	.L18
+ 502              	.L23:
+ 177:../src/drv/drv_i2c.c ****     while(I2C_GetFlagStatus(I2Cx, I2C_ISR_TC) == RESET)
+ 503              		.loc 1 177 0 is_stmt 1 discriminator 1
+ 504 03c0 0398     		ldr	r0, [sp, #12]
+ 505 03c2 4FF04001 		mov	r1, #64
+ 506 03c6 FFF7FEFF 		bl	I2C_GetFlagStatus
+ 507 03ca 0346     		mov	r3, r0
+ 508 03cc 002B     		cmp	r3, #0
+ 509 03ce DED0     		beq	.L24
+ 180:../src/drv/drv_i2c.c ****     }
+ 181:../src/drv/drv_i2c.c **** 
+ 182:../src/drv/drv_i2c.c ****     /* Configure slave address, nbytes, reload, end mode and start or stop generation */
+ 183:../src/drv/drv_i2c.c ****     I2C_TransferHandling(I2Cx, addr_, len, I2C_AutoEnd_Mode, I2C_Generate_Start_Read);
+ 510              		.loc 1 183 0
+ 511 03d0 9DF80B30 		ldrb	r3, [sp, #11]	@ zero_extendqisi2
+ 512 03d4 9AB2     		uxth	r2, r3
+ 513 03d6 BDF80830 		ldrh	r3, [sp, #8]	@ movhi
+ 514 03da DBB2     		uxtb	r3, r3
+ 515 03dc 4FF41051 		mov	r1, #9216
+ 516 03e0 0091     		str	r1, [sp, #0]
+ 517 03e2 0398     		ldr	r0, [sp, #12]
+ 518 03e4 1146     		mov	r1, r2
+ 519 03e6 1A46     		mov	r2, r3
+ 520 03e8 4FF00073 		mov	r3, #33554432
+ 521 03ec FFF7FEFF 		bl	I2C_TransferHandling
+ 184:../src/drv/drv_i2c.c **** 
+ 185:../src/drv/drv_i2c.c ****     /* Wait until all data are received */
+ 186:../src/drv/drv_i2c.c ****     while (len)
+ 522              		.loc 1 186 0
+ 523 03f0 39E0     		b	.L25
+ 524              	.L28:
+ 187:../src/drv/drv_i2c.c ****     {
+ 188:../src/drv/drv_i2c.c ****         /* Wait until RXNE flag is set */
+ 189:../src/drv/drv_i2c.c ****         i2cTimeout = I2C_LONG_TIMEOUT;
+ 525              		.loc 1 189 0
+ 526 03f2 40F20003 		movw	r3, #:lower16:i2cTimeout
+ 527 03f6 C0F20003 		movt	r3, #:upper16:i2cTimeout
+ 528 03fa 4FF42042 		mov	r2, #40960
+ 529 03fe 1A60     		str	r2, [r3, #0]
+ 190:../src/drv/drv_i2c.c ****         while(I2C_GetFlagStatus(I2Cx, I2C_ISR_RXNE) == RESET)
+ 530              		.loc 1 190 0
+ 531 0400 18E0     		b	.L26
+ 532              	.L27:
+ 191:../src/drv/drv_i2c.c ****         {
+ 192:../src/drv/drv_i2c.c ****             if((i2cTimeout--) == 0) return i2cTimeoutUserCallback(I2Cx);
+ 533              		.loc 1 192 0
+ 534 0402 40F20003 		movw	r3, #:lower16:i2cTimeout
+ 535 0406 C0F20003 		movt	r3, #:upper16:i2cTimeout
+ 536 040a 1B68     		ldr	r3, [r3, #0]
+ 537 040c 002B     		cmp	r3, #0
+ 538 040e 14BF     		ite	ne
+ 539 0410 0022     		movne	r2, #0
+ 540 0412 0122     		moveq	r2, #1
+ 541 0414 D2B2     		uxtb	r2, r2
+ 542 0416 03F1FF31 		add	r1, r3, #-1
+ 543 041a 40F20003 		movw	r3, #:lower16:i2cTimeout
+ 544 041e C0F20003 		movt	r3, #:upper16:i2cTimeout
+ 545 0422 1960     		str	r1, [r3, #0]
+ 546 0424 002A     		cmp	r2, #0
+ 547 0426 05D0     		beq	.L26
+ 548              		.loc 1 192 0 is_stmt 0 discriminator 1
+ 549 0428 0398     		ldr	r0, [sp, #12]
+ 550 042a FFF7FEFF 		bl	i2cTimeoutUserCallback
+ 551 042e 0346     		mov	r3, r0
+ 552 0430 9BB2     		uxth	r3, r3
+ 553 0432 4CE0     		b	.L18
+ 554              	.L26:
+ 190:../src/drv/drv_i2c.c ****         while(I2C_GetFlagStatus(I2Cx, I2C_ISR_RXNE) == RESET)
+ 555              		.loc 1 190 0 is_stmt 1 discriminator 1
+ 556 0434 0398     		ldr	r0, [sp, #12]
+ 557 0436 4FF00401 		mov	r1, #4
+ 558 043a FFF7FEFF 		bl	I2C_GetFlagStatus
+ 559 043e 0346     		mov	r3, r0
+ 560 0440 002B     		cmp	r3, #0
+ 561 0442 DED0     		beq	.L27
+ 193:../src/drv/drv_i2c.c ****         }
+ 194:../src/drv/drv_i2c.c **** 
+ 195:../src/drv/drv_i2c.c ****         /* Read data from RXDR */
+ 196:../src/drv/drv_i2c.c ****         *buf = I2C_ReceiveData(I2Cx);
+ 562              		.loc 1 196 0
+ 563 0444 0398     		ldr	r0, [sp, #12]
+ 564 0446 FFF7FEFF 		bl	I2C_ReceiveData
+ 565 044a 0346     		mov	r3, r0
+ 566 044c 1A46     		mov	r2, r3
+ 567 044e 069B     		ldr	r3, [sp, #24]
+ 568 0450 1A70     		strb	r2, [r3, #0]
+ 197:../src/drv/drv_i2c.c ****         /* Point to the next location where the byte read will be saved */
+ 198:../src/drv/drv_i2c.c ****         buf++;
+ 569              		.loc 1 198 0
+ 570 0452 069B     		ldr	r3, [sp, #24]
+ 571 0454 03F10103 		add	r3, r3, #1
+ 572 0458 0693     		str	r3, [sp, #24]
+ 199:../src/drv/drv_i2c.c **** 
+ 200:../src/drv/drv_i2c.c ****         /* Decrement the read bytes counter */
+ 201:../src/drv/drv_i2c.c ****         len--;
+ 573              		.loc 1 201 0
+ 574 045a BDF80830 		ldrh	r3, [sp, #8]	@ movhi
+ 575 045e 03F1FF33 		add	r3, r3, #-1
+ 576 0462 ADF80830 		strh	r3, [sp, #8]	@ movhi
+ 577              	.L25:
+ 186:../src/drv/drv_i2c.c ****     while (len)
+ 578              		.loc 1 186 0 discriminator 1
+ 579 0466 BDF80830 		ldrh	r3, [sp, #8]
+ 580 046a 002B     		cmp	r3, #0
+ 581 046c C1D1     		bne	.L28
+ 202:../src/drv/drv_i2c.c ****     }
+ 203:../src/drv/drv_i2c.c **** 
+ 204:../src/drv/drv_i2c.c ****     /* Wait until STOPF flag is set */
+ 205:../src/drv/drv_i2c.c ****     i2cTimeout = I2C_LONG_TIMEOUT;
+ 582              		.loc 1 205 0
+ 583 046e 40F20003 		movw	r3, #:lower16:i2cTimeout
+ 584 0472 C0F20003 		movt	r3, #:upper16:i2cTimeout
+ 585 0476 4FF42042 		mov	r2, #40960
+ 586 047a 1A60     		str	r2, [r3, #0]
+ 206:../src/drv/drv_i2c.c ****     while(I2C_GetFlagStatus(I2Cx, I2C_ISR_STOPF) == RESET)
+ 587              		.loc 1 206 0
+ 588 047c 18E0     		b	.L29
+ 589              	.L30:
+ 207:../src/drv/drv_i2c.c ****     {
+ 208:../src/drv/drv_i2c.c ****         if((i2cTimeout--) == 0) return i2cTimeoutUserCallback(I2Cx);
+ 590              		.loc 1 208 0
+ 591 047e 40F20003 		movw	r3, #:lower16:i2cTimeout
+ 592 0482 C0F20003 		movt	r3, #:upper16:i2cTimeout
+ 593 0486 1B68     		ldr	r3, [r3, #0]
+ 594 0488 002B     		cmp	r3, #0
+ 595 048a 14BF     		ite	ne
+ 596 048c 0022     		movne	r2, #0
+ 597 048e 0122     		moveq	r2, #1
+ 598 0490 D2B2     		uxtb	r2, r2
+ 599 0492 03F1FF31 		add	r1, r3, #-1
+ 600 0496 40F20003 		movw	r3, #:lower16:i2cTimeout
+ 601 049a C0F20003 		movt	r3, #:upper16:i2cTimeout
+ 602 049e 1960     		str	r1, [r3, #0]
+ 603 04a0 002A     		cmp	r2, #0
+ 604 04a2 05D0     		beq	.L29
+ 605              		.loc 1 208 0 is_stmt 0 discriminator 1
+ 606 04a4 0398     		ldr	r0, [sp, #12]
+ 607 04a6 FFF7FEFF 		bl	i2cTimeoutUserCallback
+ 608 04aa 0346     		mov	r3, r0
+ 609 04ac 9BB2     		uxth	r3, r3
+ 610 04ae 0EE0     		b	.L18
+ 611              	.L29:
+ 206:../src/drv/drv_i2c.c ****     while(I2C_GetFlagStatus(I2Cx, I2C_ISR_STOPF) == RESET)
+ 612              		.loc 1 206 0 is_stmt 1 discriminator 1
+ 613 04b0 0398     		ldr	r0, [sp, #12]
+ 614 04b2 4FF02001 		mov	r1, #32
+ 615 04b6 FFF7FEFF 		bl	I2C_GetFlagStatus
+ 616 04ba 0346     		mov	r3, r0
+ 617 04bc 002B     		cmp	r3, #0
+ 618 04be DED0     		beq	.L30
+ 209:../src/drv/drv_i2c.c ****     }
+ 210:../src/drv/drv_i2c.c **** 
+ 211:../src/drv/drv_i2c.c ****     /* Clear STOPF flag */
+ 212:../src/drv/drv_i2c.c ****     I2C_ClearFlag(I2Cx, I2C_ICR_STOPCF);
+ 619              		.loc 1 212 0
+ 620 04c0 0398     		ldr	r0, [sp, #12]
+ 621 04c2 4FF02001 		mov	r1, #32
+ 622 04c6 FFF7FEFF 		bl	I2C_ClearFlag
+ 213:../src/drv/drv_i2c.c **** 
+ 214:../src/drv/drv_i2c.c ****     /* If all operations OK */
+ 215:../src/drv/drv_i2c.c ****     return I2C_OK;
+ 623              		.loc 1 215 0
+ 624 04ca 4FF00003 		mov	r3, #0
+ 625              	.L18:
+ 216:../src/drv/drv_i2c.c **** }
+ 626              		.loc 1 216 0
+ 627 04ce 1846     		mov	r0, r3
+ 628 04d0 05B0     		add	sp, sp, #20
+ 629 04d2 00BD     		pop	{pc}
+ 630              		.cfi_endproc
+ 631              	.LFE113:
+ 633              		.align	2
+ 634              		.thumb
+ 635              		.thumb_func
+ 637              	i2cUnstick:
+ 638              	.LFB114:
+ 217:../src/drv/drv_i2c.c **** 
+ 218:../src/drv/drv_i2c.c **** ///////////////////////////////////////////////////////////////////////////////
+ 219:../src/drv/drv_i2c.c **** // I2C Unstick
+ 220:../src/drv/drv_i2c.c **** ///////////////////////////////////////////////////////////////////////////////
+ 221:../src/drv/drv_i2c.c **** 
+ 222:../src/drv/drv_i2c.c **** static void i2cUnstick(I2C_TypeDef *I2Cx)
+ 223:../src/drv/drv_i2c.c **** {
+ 639              		.loc 1 223 0
+ 640              		.cfi_startproc
+ 641              		@ args = 0, pretend = 0, frame = 24
+ 642              		@ frame_needed = 0, uses_anonymous_args = 0
+ 643 04d4 00B5     		push	{lr}
+ 644              	.LCFI6:
+ 645              		.cfi_def_cfa_offset 4
+ 646              		.cfi_offset 14, -4
+ 647 04d6 87B0     		sub	sp, sp, #28
+ 648              	.LCFI7:
+ 649              		.cfi_def_cfa_offset 32
+ 650 04d8 0190     		str	r0, [sp, #4]
+ 224:../src/drv/drv_i2c.c ****     GPIO_InitTypeDef GPIO_InitStructure;
+ 225:../src/drv/drv_i2c.c **** 
+ 226:../src/drv/drv_i2c.c ****     uint8_t i;
+ 227:../src/drv/drv_i2c.c **** 
+ 228:../src/drv/drv_i2c.c ****     ///////////////////////////////////
+ 229:../src/drv/drv_i2c.c **** 
+ 230:../src/drv/drv_i2c.c ****     if (I2Cx == I2C1)
+ 651              		.loc 1 230 0
+ 652 04da 019A     		ldr	r2, [sp, #4]
+ 653 04dc 4FF4A843 		mov	r3, #21504
+ 654 04e0 C4F20003 		movt	r3, 16384
+ 655 04e4 9A42     		cmp	r2, r3
+ 656 04e6 40F09E80 		bne	.L32
+ 231:../src/drv/drv_i2c.c ****     {
+ 232:../src/drv/drv_i2c.c **** 	    GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_OUT;
+ 657              		.loc 1 232 0
+ 658 04ea 4FF00103 		mov	r3, #1
+ 659 04ee 8DF81030 		strb	r3, [sp, #16]
+ 233:../src/drv/drv_i2c.c ****         GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+ 660              		.loc 1 233 0
+ 661 04f2 4FF00303 		mov	r3, #3
+ 662 04f6 8DF81130 		strb	r3, [sp, #17]
+ 234:../src/drv/drv_i2c.c ****         GPIO_InitStructure.GPIO_OType = GPIO_OType_OD;
+ 663              		.loc 1 234 0
+ 664 04fa 4FF00103 		mov	r3, #1
+ 665 04fe 8DF81230 		strb	r3, [sp, #18]
+ 235:../src/drv/drv_i2c.c ****         GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_NOPULL;
+ 666              		.loc 1 235 0
+ 667 0502 4FF00003 		mov	r3, #0
+ 668 0506 8DF81330 		strb	r3, [sp, #19]
+ 236:../src/drv/drv_i2c.c **** 
+ 237:../src/drv/drv_i2c.c ****         GPIO_InitStructure.GPIO_Pin   = I2C1_SCL_PIN;
+ 669              		.loc 1 237 0
+ 670 050a 4FF04003 		mov	r3, #64
+ 671 050e 0393     		str	r3, [sp, #12]
+ 238:../src/drv/drv_i2c.c ****         GPIO_Init(I2C1_SCL_GPIO, &GPIO_InitStructure);
+ 672              		.loc 1 238 0
+ 673 0510 4FF48060 		mov	r0, #1024
+ 674 0514 C4F60000 		movt	r0, 18432
+ 675 0518 03AB     		add	r3, sp, #12
+ 676 051a 1946     		mov	r1, r3
+ 677 051c FFF7FEFF 		bl	GPIO_Init
+ 239:../src/drv/drv_i2c.c **** 
+ 240:../src/drv/drv_i2c.c ****         GPIO_InitStructure.GPIO_Pin   = I2C1_SDA_PIN;
+ 678              		.loc 1 240 0
+ 679 0520 4FF08003 		mov	r3, #128
+ 680 0524 0393     		str	r3, [sp, #12]
+ 241:../src/drv/drv_i2c.c ****         GPIO_Init(I2C1_SDA_GPIO, &GPIO_InitStructure);
+ 681              		.loc 1 241 0
+ 682 0526 4FF48060 		mov	r0, #1024
+ 683 052a C4F60000 		movt	r0, 18432
+ 684 052e 03AB     		add	r3, sp, #12
+ 685 0530 1946     		mov	r1, r3
+ 686 0532 FFF7FEFF 		bl	GPIO_Init
+ 242:../src/drv/drv_i2c.c **** 
+ 243:../src/drv/drv_i2c.c ****         GPIO_SetBits(I2C1_SCL_GPIO, I2C1_SCL_PIN);
+ 687              		.loc 1 243 0
+ 688 0536 4FF48060 		mov	r0, #1024
+ 689 053a C4F60000 		movt	r0, 18432
+ 690 053e 4FF04001 		mov	r1, #64
+ 691 0542 FFF7FEFF 		bl	GPIO_SetBits
+ 244:../src/drv/drv_i2c.c ****         GPIO_SetBits(I2C1_SDA_GPIO, I2C1_SDA_PIN);
+ 692              		.loc 1 244 0
+ 693 0546 4FF48060 		mov	r0, #1024
+ 694 054a C4F60000 		movt	r0, 18432
+ 695 054e 4FF08001 		mov	r1, #128
+ 696 0552 FFF7FEFF 		bl	GPIO_SetBits
+ 245:../src/drv/drv_i2c.c **** 
+ 246:../src/drv/drv_i2c.c ****         for (i = 0; i < 8; i++)
+ 697              		.loc 1 246 0
+ 698 0556 4FF00003 		mov	r3, #0
+ 699 055a 8DF81730 		strb	r3, [sp, #23]
+ 700 055e 2EE0     		b	.L33
+ 701              	.L35:
+ 247:../src/drv/drv_i2c.c ****         {
+ 248:../src/drv/drv_i2c.c ****             while (!GPIO_ReadInputDataBit(I2C1_SCL_GPIO, I2C1_SCL_PIN))  // Wait for any clock stre
+ 249:../src/drv/drv_i2c.c ****                 delayMicroseconds(3);                                    // 2.5 would be 400 kHz, 3
+ 702              		.loc 1 249 0
+ 703 0560 4FF00300 		mov	r0, #3
+ 704 0564 FFF7FEFF 		bl	delayMicroseconds
+ 705 0568 00E0     		b	.L34
+ 706              	.L42:
+ 248:../src/drv/drv_i2c.c ****             while (!GPIO_ReadInputDataBit(I2C1_SCL_GPIO, I2C1_SCL_PIN))  // Wait for any clock stre
+ 707              		.loc 1 248 0
+ 708 056a 00BF     		nop
+ 709              	.L34:
+ 248:../src/drv/drv_i2c.c ****             while (!GPIO_ReadInputDataBit(I2C1_SCL_GPIO, I2C1_SCL_PIN))  // Wait for any clock stre
+ 710              		.loc 1 248 0 is_stmt 0 discriminator 1
+ 711 056c 4FF48060 		mov	r0, #1024
+ 712 0570 C4F60000 		movt	r0, 18432
+ 713 0574 4FF04001 		mov	r1, #64
+ 714 0578 FFF7FEFF 		bl	GPIO_ReadInputDataBit
+ 715 057c 0346     		mov	r3, r0
+ 716 057e 002B     		cmp	r3, #0
+ 717 0580 EED0     		beq	.L35
+ 250:../src/drv/drv_i2c.c **** 
+ 251:../src/drv/drv_i2c.c ****             // Pull low
+ 252:../src/drv/drv_i2c.c ****             GPIO_ResetBits(I2C1_SCL_GPIO, I2C1_SCL_PIN);                 // Set bus low
+ 718              		.loc 1 252 0 is_stmt 1
+ 719 0582 4FF48060 		mov	r0, #1024
+ 720 0586 C4F60000 		movt	r0, 18432
+ 721 058a 4FF04001 		mov	r1, #64
+ 722 058e FFF7FEFF 		bl	GPIO_ResetBits
+ 253:../src/drv/drv_i2c.c ****             delayMicroseconds(3);                                        // 2.5 would be 400 kHz, 3
+ 723              		.loc 1 253 0
+ 724 0592 4FF00300 		mov	r0, #3
+ 725 0596 FFF7FEFF 		bl	delayMicroseconds
+ 254:../src/drv/drv_i2c.c ****             // Release high again
+ 255:../src/drv/drv_i2c.c ****             GPIO_SetBits(I2C1_SCL_GPIO, I2C1_SCL_PIN);                   // Set bus high
+ 726              		.loc 1 255 0
+ 727 059a 4FF48060 		mov	r0, #1024
+ 728 059e C4F60000 		movt	r0, 18432
+ 729 05a2 4FF04001 		mov	r1, #64
+ 730 05a6 FFF7FEFF 		bl	GPIO_SetBits
+ 256:../src/drv/drv_i2c.c ****             delayMicroseconds(3);                                        // 2.5 would be 400 kHz, 3
+ 731              		.loc 1 256 0
+ 732 05aa 4FF00300 		mov	r0, #3
+ 733 05ae FFF7FEFF 		bl	delayMicroseconds
+ 246:../src/drv/drv_i2c.c ****         for (i = 0; i < 8; i++)
+ 734              		.loc 1 246 0
+ 735 05b2 9DF81730 		ldrb	r3, [sp, #23]
+ 736 05b6 03F10103 		add	r3, r3, #1
+ 737 05ba 8DF81730 		strb	r3, [sp, #23]
+ 738              	.L33:
+ 246:../src/drv/drv_i2c.c ****         for (i = 0; i < 8; i++)
+ 739              		.loc 1 246 0 is_stmt 0 discriminator 1
+ 740 05be 9DF81730 		ldrb	r3, [sp, #23]	@ zero_extendqisi2
+ 741 05c2 072B     		cmp	r3, #7
+ 742 05c4 D1D9     		bls	.L42
+ 257:../src/drv/drv_i2c.c ****         }
+ 258:../src/drv/drv_i2c.c **** 
+ 259:../src/drv/drv_i2c.c ****         // Generate a start then stop condition
+ 260:../src/drv/drv_i2c.c **** 
+ 261:../src/drv/drv_i2c.c ****         GPIO_ResetBits(I2C1_SDA_GPIO, I2C1_SDA_PIN);                     // Set bus data low
+ 743              		.loc 1 261 0 is_stmt 1
+ 744 05c6 4FF48060 		mov	r0, #1024
+ 745 05ca C4F60000 		movt	r0, 18432
+ 746 05ce 4FF08001 		mov	r1, #128
+ 747 05d2 FFF7FEFF 		bl	GPIO_ResetBits
+ 262:../src/drv/drv_i2c.c ****         delayMicroseconds(3);                                            // 2.5 would be 400 kHz, 3
+ 748              		.loc 1 262 0
+ 749 05d6 4FF00300 		mov	r0, #3
+ 750 05da FFF7FEFF 		bl	delayMicroseconds
+ 263:../src/drv/drv_i2c.c ****         GPIO_ResetBits(I2C1_SCL_GPIO, I2C1_SCL_PIN);                     // Set bus scl low
+ 751              		.loc 1 263 0
+ 752 05de 4FF48060 		mov	r0, #1024
+ 753 05e2 C4F60000 		movt	r0, 18432
+ 754 05e6 4FF04001 		mov	r1, #64
+ 755 05ea FFF7FEFF 		bl	GPIO_ResetBits
+ 264:../src/drv/drv_i2c.c ****         delayMicroseconds(3);                                            // 2.5 would be 400 kHz, 3
+ 756              		.loc 1 264 0
+ 757 05ee 4FF00300 		mov	r0, #3
+ 758 05f2 FFF7FEFF 		bl	delayMicroseconds
+ 265:../src/drv/drv_i2c.c ****         GPIO_SetBits(I2C1_SCL_GPIO, I2C1_SCL_PIN);                       // Set bus scl high
+ 759              		.loc 1 265 0
+ 760 05f6 4FF48060 		mov	r0, #1024
+ 761 05fa C4F60000 		movt	r0, 18432
+ 762 05fe 4FF04001 		mov	r1, #64
+ 763 0602 FFF7FEFF 		bl	GPIO_SetBits
+ 266:../src/drv/drv_i2c.c ****         delayMicroseconds(3);                                            // 2.5 would be 400 kHz, 3
+ 764              		.loc 1 266 0
+ 765 0606 4FF00300 		mov	r0, #3
+ 766 060a FFF7FEFF 		bl	delayMicroseconds
+ 267:../src/drv/drv_i2c.c ****         GPIO_SetBits(I2C1_SDA_GPIO, I2C1_SDA_PIN);                       // Set bus sda high
+ 767              		.loc 1 267 0
+ 768 060e 4FF48060 		mov	r0, #1024
+ 769 0612 C4F60000 		movt	r0, 18432
+ 770 0616 4FF08001 		mov	r1, #128
+ 771 061a FFF7FEFF 		bl	GPIO_SetBits
+ 268:../src/drv/drv_i2c.c ****         delayMicroseconds(3);                                            // 2.5 would be 400 kHz, 3
+ 772              		.loc 1 268 0
+ 773 061e 4FF00300 		mov	r0, #3
+ 774 0622 FFF7FEFF 		bl	delayMicroseconds
+ 775              	.L32:
+ 269:../src/drv/drv_i2c.c **** 	}
+ 270:../src/drv/drv_i2c.c **** 
+ 271:../src/drv/drv_i2c.c **** 	///////////////////////////////////
+ 272:../src/drv/drv_i2c.c **** 
+ 273:../src/drv/drv_i2c.c **** 	if (I2Cx == I2C2)
+ 776              		.loc 1 273 0
+ 777 0626 019A     		ldr	r2, [sp, #4]
+ 778 0628 4FF4B043 		mov	r3, #22528
+ 779 062c C4F20003 		movt	r3, 16384
+ 780 0630 9A42     		cmp	r2, r3
+ 781 0632 40F09680 		bne	.L31
+ 274:../src/drv/drv_i2c.c **** 	{
+ 275:../src/drv/drv_i2c.c ****         GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_OUT;
+ 782              		.loc 1 275 0
+ 783 0636 4FF00103 		mov	r3, #1
+ 784 063a 8DF81030 		strb	r3, [sp, #16]
+ 276:../src/drv/drv_i2c.c ****         GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+ 785              		.loc 1 276 0
+ 786 063e 4FF00303 		mov	r3, #3
+ 787 0642 8DF81130 		strb	r3, [sp, #17]
+ 277:../src/drv/drv_i2c.c ****         GPIO_InitStructure.GPIO_OType = GPIO_OType_OD;
+ 788              		.loc 1 277 0
+ 789 0646 4FF00103 		mov	r3, #1
+ 790 064a 8DF81230 		strb	r3, [sp, #18]
+ 278:../src/drv/drv_i2c.c ****         GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_NOPULL;
+ 791              		.loc 1 278 0
+ 792 064e 4FF00003 		mov	r3, #0
+ 793 0652 8DF81330 		strb	r3, [sp, #19]
+ 279:../src/drv/drv_i2c.c **** 
+ 280:../src/drv/drv_i2c.c ****         GPIO_InitStructure.GPIO_Pin   = I2C2_SCL_PIN;
+ 794              		.loc 1 280 0
+ 795 0656 4FF04003 		mov	r3, #64
+ 796 065a 0393     		str	r3, [sp, #12]
+ 281:../src/drv/drv_i2c.c ****         GPIO_Init(I2C2_SCL_GPIO, &GPIO_InitStructure);
+ 797              		.loc 1 281 0
+ 798 065c 4FF4A050 		mov	r0, #5120
+ 799 0660 C4F60000 		movt	r0, 18432
+ 800 0664 03AB     		add	r3, sp, #12
+ 801 0666 1946     		mov	r1, r3
+ 802 0668 FFF7FEFF 		bl	GPIO_Init
+ 282:../src/drv/drv_i2c.c **** 
+ 283:../src/drv/drv_i2c.c ****         GPIO_InitStructure.GPIO_Pin   = I2C2_SDA_PIN;
+ 803              		.loc 1 283 0
+ 804 066c 4FF48063 		mov	r3, #1024
+ 805 0670 0393     		str	r3, [sp, #12]
+ 284:../src/drv/drv_i2c.c ****         GPIO_Init(I2C2_SDA_GPIO, &GPIO_InitStructure);
+ 806              		.loc 1 284 0
+ 807 0672 4FF09040 		mov	r0, #1207959552
+ 808 0676 03AB     		add	r3, sp, #12
+ 809 0678 1946     		mov	r1, r3
+ 810 067a FFF7FEFF 		bl	GPIO_Init
+ 285:../src/drv/drv_i2c.c **** 
+ 286:../src/drv/drv_i2c.c ****         GPIO_SetBits(I2C2_SCL_GPIO, I2C2_SCL_PIN);
+ 811              		.loc 1 286 0
+ 812 067e 4FF4A050 		mov	r0, #5120
+ 813 0682 C4F60000 		movt	r0, 18432
+ 814 0686 4FF04001 		mov	r1, #64
+ 815 068a FFF7FEFF 		bl	GPIO_SetBits
+ 287:../src/drv/drv_i2c.c ****         GPIO_SetBits(I2C2_SDA_GPIO, I2C2_SDA_PIN);
+ 816              		.loc 1 287 0
+ 817 068e 4FF09040 		mov	r0, #1207959552
+ 818 0692 4FF48061 		mov	r1, #1024
+ 819 0696 FFF7FEFF 		bl	GPIO_SetBits
+ 288:../src/drv/drv_i2c.c **** 
+ 289:../src/drv/drv_i2c.c ****         for (i = 0; i < 8; i++)
+ 820              		.loc 1 289 0
+ 821 069a 4FF00003 		mov	r3, #0
+ 822 069e 8DF81730 		strb	r3, [sp, #23]
+ 823 06a2 2EE0     		b	.L38
+ 824              	.L40:
+ 290:../src/drv/drv_i2c.c ****         {
+ 291:../src/drv/drv_i2c.c ****             while (!GPIO_ReadInputDataBit(I2C2_SCL_GPIO, I2C2_SCL_PIN))  // Wait for any clock stre
+ 292:../src/drv/drv_i2c.c ****                 delayMicroseconds(3);                                    // 2.5 would be 400 kHz, 3
+ 825              		.loc 1 292 0
+ 826 06a4 4FF00300 		mov	r0, #3
+ 827 06a8 FFF7FEFF 		bl	delayMicroseconds
+ 828 06ac 00E0     		b	.L39
+ 829              	.L43:
+ 291:../src/drv/drv_i2c.c ****             while (!GPIO_ReadInputDataBit(I2C2_SCL_GPIO, I2C2_SCL_PIN))  // Wait for any clock stre
+ 830              		.loc 1 291 0
+ 831 06ae 00BF     		nop
+ 832              	.L39:
+ 291:../src/drv/drv_i2c.c ****             while (!GPIO_ReadInputDataBit(I2C2_SCL_GPIO, I2C2_SCL_PIN))  // Wait for any clock stre
+ 833              		.loc 1 291 0 is_stmt 0 discriminator 1
+ 834 06b0 4FF4A050 		mov	r0, #5120
+ 835 06b4 C4F60000 		movt	r0, 18432
+ 836 06b8 4FF04001 		mov	r1, #64
+ 837 06bc FFF7FEFF 		bl	GPIO_ReadInputDataBit
+ 838 06c0 0346     		mov	r3, r0
+ 839 06c2 002B     		cmp	r3, #0
+ 840 06c4 EED0     		beq	.L40
+ 293:../src/drv/drv_i2c.c **** 
+ 294:../src/drv/drv_i2c.c ****             // Pull low
+ 295:../src/drv/drv_i2c.c ****             GPIO_ResetBits(I2C2_SCL_GPIO, I2C2_SCL_PIN);                 // Set bus low
+ 841              		.loc 1 295 0 is_stmt 1
+ 842 06c6 4FF4A050 		mov	r0, #5120
+ 843 06ca C4F60000 		movt	r0, 18432
+ 844 06ce 4FF04001 		mov	r1, #64
+ 845 06d2 FFF7FEFF 		bl	GPIO_ResetBits
+ 296:../src/drv/drv_i2c.c ****             delayMicroseconds(3);                                        // 2.5 would be 400 kHz, 3
+ 846              		.loc 1 296 0
+ 847 06d6 4FF00300 		mov	r0, #3
+ 848 06da FFF7FEFF 		bl	delayMicroseconds
+ 297:../src/drv/drv_i2c.c ****             // Release high again
+ 298:../src/drv/drv_i2c.c ****             GPIO_SetBits(I2C2_SCL_GPIO, I2C2_SCL_PIN);                   // Set bus high
+ 849              		.loc 1 298 0
+ 850 06de 4FF4A050 		mov	r0, #5120
+ 851 06e2 C4F60000 		movt	r0, 18432
+ 852 06e6 4FF04001 		mov	r1, #64
+ 853 06ea FFF7FEFF 		bl	GPIO_SetBits
+ 299:../src/drv/drv_i2c.c ****             delayMicroseconds(3);                                        // 2.5 would be 400 kHz, 3
+ 854              		.loc 1 299 0
+ 855 06ee 4FF00300 		mov	r0, #3
+ 856 06f2 FFF7FEFF 		bl	delayMicroseconds
+ 289:../src/drv/drv_i2c.c ****         for (i = 0; i < 8; i++)
+ 857              		.loc 1 289 0
+ 858 06f6 9DF81730 		ldrb	r3, [sp, #23]
+ 859 06fa 03F10103 		add	r3, r3, #1
+ 860 06fe 8DF81730 		strb	r3, [sp, #23]
+ 861              	.L38:
+ 289:../src/drv/drv_i2c.c ****         for (i = 0; i < 8; i++)
+ 862              		.loc 1 289 0 is_stmt 0 discriminator 1
+ 863 0702 9DF81730 		ldrb	r3, [sp, #23]	@ zero_extendqisi2
+ 864 0706 072B     		cmp	r3, #7
+ 865 0708 D1D9     		bls	.L43
+ 300:../src/drv/drv_i2c.c ****         }
+ 301:../src/drv/drv_i2c.c **** 
+ 302:../src/drv/drv_i2c.c ****         // Generate a start then stop condition
+ 303:../src/drv/drv_i2c.c **** 
+ 304:../src/drv/drv_i2c.c ****         GPIO_ResetBits(I2C2_SDA_GPIO, I2C2_SDA_PIN);                     // Set bus data low
+ 866              		.loc 1 304 0 is_stmt 1
+ 867 070a 4FF09040 		mov	r0, #1207959552
+ 868 070e 4FF48061 		mov	r1, #1024
+ 869 0712 FFF7FEFF 		bl	GPIO_ResetBits
+ 305:../src/drv/drv_i2c.c ****         delayMicroseconds(3);                                            // 2.5 would be 400 kHz, 3
+ 870              		.loc 1 305 0
+ 871 0716 4FF00300 		mov	r0, #3
+ 872 071a FFF7FEFF 		bl	delayMicroseconds
+ 306:../src/drv/drv_i2c.c ****         GPIO_ResetBits(I2C2_SCL_GPIO, I2C2_SCL_PIN);                     // Set bus scl low
+ 873              		.loc 1 306 0
+ 874 071e 4FF4A050 		mov	r0, #5120
+ 875 0722 C4F60000 		movt	r0, 18432
+ 876 0726 4FF04001 		mov	r1, #64
+ 877 072a FFF7FEFF 		bl	GPIO_ResetBits
+ 307:../src/drv/drv_i2c.c ****         delayMicroseconds(3);                                            // 2.5 would be 400 kHz, 3
+ 878              		.loc 1 307 0
+ 879 072e 4FF00300 		mov	r0, #3
+ 880 0732 FFF7FEFF 		bl	delayMicroseconds
+ 308:../src/drv/drv_i2c.c ****         GPIO_SetBits(I2C2_SCL_GPIO, I2C2_SCL_PIN);                       // Set bus scl high
+ 881              		.loc 1 308 0
+ 882 0736 4FF4A050 		mov	r0, #5120
+ 883 073a C4F60000 		movt	r0, 18432
+ 884 073e 4FF04001 		mov	r1, #64
+ 885 0742 FFF7FEFF 		bl	GPIO_SetBits
+ 309:../src/drv/drv_i2c.c ****         delayMicroseconds(3);                                            // 2.5 would be 400 kHz, 3
+ 886              		.loc 1 309 0
+ 887 0746 4FF00300 		mov	r0, #3
+ 888 074a FFF7FEFF 		bl	delayMicroseconds
+ 310:../src/drv/drv_i2c.c ****         GPIO_SetBits(I2C2_SDA_GPIO, I2C2_SDA_PIN);                       // Set bus sda high
+ 889              		.loc 1 310 0
+ 890 074e 4FF09040 		mov	r0, #1207959552
+ 891 0752 4FF48061 		mov	r1, #1024
+ 892 0756 FFF7FEFF 		bl	GPIO_SetBits
+ 311:../src/drv/drv_i2c.c ****         delayMicroseconds(3);                                            // 2.5 would be 400 kHz, 3
+ 893              		.loc 1 311 0
+ 894 075a 4FF00300 		mov	r0, #3
+ 895 075e FFF7FEFF 		bl	delayMicroseconds
+ 896              	.L31:
+ 312:../src/drv/drv_i2c.c ****     }
+ 313:../src/drv/drv_i2c.c **** 
+ 314:../src/drv/drv_i2c.c ****     ///////////////////////////////////
+ 315:../src/drv/drv_i2c.c **** }
+ 897              		.loc 1 315 0
+ 898 0762 07B0     		add	sp, sp, #28
+ 899 0764 00BD     		pop	{pc}
+ 900              		.cfi_endproc
+ 901              	.LFE114:
+ 903 0766 00BF     		.align	2
+ 904              		.global	i2cInit
+ 905              		.thumb
+ 906              		.thumb_func
+ 908              	i2cInit:
+ 909              	.LFB115:
+ 316:../src/drv/drv_i2c.c **** 
+ 317:../src/drv/drv_i2c.c **** ///////////////////////////////////////////////////////////////////////////////
+ 318:../src/drv/drv_i2c.c **** // I2C Initialize
+ 319:../src/drv/drv_i2c.c **** ///////////////////////////////////////////////////////////////////////////////
+ 320:../src/drv/drv_i2c.c **** 
+ 321:../src/drv/drv_i2c.c **** void i2cInit(I2C_TypeDef *I2Cx)
+ 322:../src/drv/drv_i2c.c **** {
+ 910              		.loc 1 322 0
+ 911              		.cfi_startproc
+ 912              		@ args = 0, pretend = 0, frame = 48
+ 913              		@ frame_needed = 0, uses_anonymous_args = 0
+ 914 0768 00B5     		push	{lr}
+ 915              	.LCFI8:
+ 916              		.cfi_def_cfa_offset 4
+ 917              		.cfi_offset 14, -4
+ 918 076a 8DB0     		sub	sp, sp, #52
+ 919              	.LCFI9:
+ 920              		.cfi_def_cfa_offset 56
+ 921 076c 0190     		str	r0, [sp, #4]
+ 323:../src/drv/drv_i2c.c ****     GPIO_InitTypeDef GPIO_InitStructure;
+ 324:../src/drv/drv_i2c.c ****     I2C_InitTypeDef  I2C_InitStructure;
+ 325:../src/drv/drv_i2c.c **** 
+ 326:../src/drv/drv_i2c.c ****     ///////////////////////////////////
+ 327:../src/drv/drv_i2c.c **** 
+ 328:../src/drv/drv_i2c.c ****     if (I2Cx == I2C1)
+ 922              		.loc 1 328 0
+ 923 076e 019A     		ldr	r2, [sp, #4]
+ 924 0770 4FF4A843 		mov	r3, #21504
+ 925 0774 C4F20003 		movt	r3, 16384
+ 926 0778 9A42     		cmp	r2, r3
+ 927 077a 40F08680 		bne	.L45
+ 329:../src/drv/drv_i2c.c ****     {
+ 330:../src/drv/drv_i2c.c ****     	RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOB,  ENABLE);
+ 928              		.loc 1 330 0
+ 929 077e 4FF48020 		mov	r0, #262144
+ 930 0782 4FF00101 		mov	r1, #1
+ 931 0786 FFF7FEFF 		bl	RCC_AHBPeriphClockCmd
+ 331:../src/drv/drv_i2c.c ****     	RCC_APB1PeriphClockCmd(RCC_APB1Periph_I2C1, ENABLE);
+ 932              		.loc 1 331 0
+ 933 078a 4FF40010 		mov	r0, #2097152
+ 934 078e 4FF00101 		mov	r1, #1
+ 935 0792 FFF7FEFF 		bl	RCC_APB1PeriphClockCmd
+ 332:../src/drv/drv_i2c.c ****     	RCC_AHBPeriphClockCmd(I2C1_SCL_CLK_SOURCE | I2C1_SDA_CLK_SOURCE, ENABLE);
+ 936              		.loc 1 332 0
+ 937 0796 4FF48020 		mov	r0, #262144
+ 938 079a 4FF00101 		mov	r1, #1
+ 939 079e FFF7FEFF 		bl	RCC_AHBPeriphClockCmd
+ 333:../src/drv/drv_i2c.c ****     	RCC_I2CCLKConfig(RCC_I2C1CLK_SYSCLK);
+ 940              		.loc 1 333 0
+ 941 07a2 4FF01000 		mov	r0, #16
+ 942 07a6 FFF7FEFF 		bl	RCC_I2CCLKConfig
+ 334:../src/drv/drv_i2c.c **** 
+ 335:../src/drv/drv_i2c.c ****     	i2cUnstick(I2Cx);                                         // Clock out stuff to make sure slav
+ 943              		.loc 1 335 0
+ 944 07aa 0198     		ldr	r0, [sp, #4]
+ 945 07ac FFF792FE 		bl	i2cUnstick
+ 336:../src/drv/drv_i2c.c **** 
+ 337:../src/drv/drv_i2c.c ****     	GPIO_PinAFConfig(I2C1_SCL_GPIO, I2C1_SCL_PIN_SOURCE, GPIO_AF_4);
+ 946              		.loc 1 337 0
+ 947 07b0 4FF48060 		mov	r0, #1024
+ 948 07b4 C4F60000 		movt	r0, 18432
+ 949 07b8 4FF00601 		mov	r1, #6
+ 950 07bc 4FF00402 		mov	r2, #4
+ 951 07c0 FFF7FEFF 		bl	GPIO_PinAFConfig
+ 338:../src/drv/drv_i2c.c ****     	GPIO_PinAFConfig(I2C1_SDA_GPIO, I2C1_SDA_PIN_SOURCE, GPIO_AF_4);
+ 952              		.loc 1 338 0
+ 953 07c4 4FF48060 		mov	r0, #1024
+ 954 07c8 C4F60000 		movt	r0, 18432
+ 955 07cc 4FF00701 		mov	r1, #7
+ 956 07d0 4FF00402 		mov	r2, #4
+ 957 07d4 FFF7FEFF 		bl	GPIO_PinAFConfig
+ 339:../src/drv/drv_i2c.c **** 
+ 340:../src/drv/drv_i2c.c ****     	GPIO_StructInit(&GPIO_InitStructure);
+ 958              		.loc 1 340 0
+ 959 07d8 0AAB     		add	r3, sp, #40
+ 960 07da 1846     		mov	r0, r3
+ 961 07dc FFF7FEFF 		bl	GPIO_StructInit
+ 341:../src/drv/drv_i2c.c ****         I2C_StructInit(&I2C_InitStructure);
+ 962              		.loc 1 341 0
+ 963 07e0 03AB     		add	r3, sp, #12
+ 964 07e2 1846     		mov	r0, r3
+ 965 07e4 FFF7FEFF 		bl	I2C_StructInit
+ 342:../src/drv/drv_i2c.c **** 
+ 343:../src/drv/drv_i2c.c ****         // Init pins
+ 344:../src/drv/drv_i2c.c **** 
+ 345:../src/drv/drv_i2c.c ****         GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_AF;
+ 966              		.loc 1 345 0
+ 967 07e8 4FF00203 		mov	r3, #2
+ 968 07ec 8DF82C30 		strb	r3, [sp, #44]
+ 346:../src/drv/drv_i2c.c ****         GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+ 969              		.loc 1 346 0
+ 970 07f0 4FF00303 		mov	r3, #3
+ 971 07f4 8DF82D30 		strb	r3, [sp, #45]
+ 347:../src/drv/drv_i2c.c ****         GPIO_InitStructure.GPIO_OType = GPIO_OType_OD;
+ 972              		.loc 1 347 0
+ 973 07f8 4FF00103 		mov	r3, #1
+ 974 07fc 8DF82E30 		strb	r3, [sp, #46]
+ 348:../src/drv/drv_i2c.c ****         GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_NOPULL;
+ 975              		.loc 1 348 0
+ 976 0800 4FF00003 		mov	r3, #0
+ 977 0804 8DF82F30 		strb	r3, [sp, #47]
+ 349:../src/drv/drv_i2c.c **** 
+ 350:../src/drv/drv_i2c.c ****         GPIO_InitStructure.GPIO_Pin   = I2C1_SCL_PIN;
+ 978              		.loc 1 350 0
+ 979 0808 4FF04003 		mov	r3, #64
+ 980 080c 0A93     		str	r3, [sp, #40]
+ 351:../src/drv/drv_i2c.c ****         GPIO_Init(I2C1_SCL_GPIO, &GPIO_InitStructure);
+ 981              		.loc 1 351 0
+ 982 080e 4FF48060 		mov	r0, #1024
+ 983 0812 C4F60000 		movt	r0, 18432
+ 984 0816 0AAB     		add	r3, sp, #40
+ 985 0818 1946     		mov	r1, r3
+ 986 081a FFF7FEFF 		bl	GPIO_Init
+ 352:../src/drv/drv_i2c.c **** 
+ 353:../src/drv/drv_i2c.c ****         GPIO_InitStructure.GPIO_Pin   = I2C1_SDA_PIN;
+ 987              		.loc 1 353 0
+ 988 081e 4FF08003 		mov	r3, #128
+ 989 0822 0A93     		str	r3, [sp, #40]
+ 354:../src/drv/drv_i2c.c ****         GPIO_Init(I2C1_SDA_GPIO, &GPIO_InitStructure);
+ 990              		.loc 1 354 0
+ 991 0824 4FF48060 		mov	r0, #1024
+ 992 0828 C4F60000 		movt	r0, 18432
+ 993 082c 0AAB     		add	r3, sp, #40
+ 994 082e 1946     		mov	r1, r3
+ 995 0830 FFF7FEFF 		bl	GPIO_Init
+ 355:../src/drv/drv_i2c.c **** 
+ 356:../src/drv/drv_i2c.c ****         I2C_StructInit(&I2C_InitStructure);
+ 996              		.loc 1 356 0
+ 997 0834 03AB     		add	r3, sp, #12
+ 998 0836 1846     		mov	r0, r3
+ 999 0838 FFF7FEFF 		bl	I2C_StructInit
+ 357:../src/drv/drv_i2c.c **** 
+ 358:../src/drv/drv_i2c.c ****         I2C_InitStructure.I2C_Mode                = I2C_Mode_I2C;
+ 1000              		.loc 1 358 0
+ 1001 083c 4FF00003 		mov	r3, #0
+ 1002 0840 0693     		str	r3, [sp, #24]
+ 359:../src/drv/drv_i2c.c ****         I2C_InitStructure.I2C_AnalogFilter        = I2C_AnalogFilter_Enable;
+ 1003              		.loc 1 359 0
+ 1004 0842 4FF00003 		mov	r3, #0
+ 1005 0846 0493     		str	r3, [sp, #16]
+ 360:../src/drv/drv_i2c.c ****         I2C_InitStructure.I2C_DigitalFilter       = 0x00;
+ 1006              		.loc 1 360 0
+ 1007 0848 4FF00003 		mov	r3, #0
+ 1008 084c 0593     		str	r3, [sp, #20]
+ 361:../src/drv/drv_i2c.c ****         I2C_InitStructure.I2C_OwnAddress1         = 0x00;
+ 1009              		.loc 1 361 0
+ 1010 084e 4FF00003 		mov	r3, #0
+ 1011 0852 0793     		str	r3, [sp, #28]
+ 362:../src/drv/drv_i2c.c ****         I2C_InitStructure.I2C_Ack                 = I2C_Ack_Enable;
+ 1012              		.loc 1 362 0
+ 1013 0854 4FF00003 		mov	r3, #0
+ 1014 0858 0893     		str	r3, [sp, #32]
+ 363:../src/drv/drv_i2c.c ****         I2C_InitStructure.I2C_AcknowledgedAddress = I2C_AcknowledgedAddress_7bit;
+ 1015              		.loc 1 363 0
+ 1016 085a 4FF00003 		mov	r3, #0
+ 1017 085e 0993     		str	r3, [sp, #36]
+ 364:../src/drv/drv_i2c.c ****       //I2C_InitStructure.I2C_Timing              = 0x00902025;
+ 365:../src/drv/drv_i2c.c ****         I2C_InitStructure.I2C_Timing              = 0x8000050B;
+ 1018              		.loc 1 365 0
+ 1019 0860 40F20B53 		movw	r3, #1291
+ 1020 0864 C8F20003 		movt	r3, 32768
+ 1021 0868 0393     		str	r3, [sp, #12]
+ 366:../src/drv/drv_i2c.c **** 
+ 367:../src/drv/drv_i2c.c ****         I2C_Init(I2C1, &I2C_InitStructure);
+ 1022              		.loc 1 367 0
+ 1023 086a 4FF4A840 		mov	r0, #21504
+ 1024 086e C4F20000 		movt	r0, 16384
+ 1025 0872 03AB     		add	r3, sp, #12
+ 1026 0874 1946     		mov	r1, r3
+ 1027 0876 FFF7FEFF 		bl	I2C_Init
+ 368:../src/drv/drv_i2c.c **** 
+ 369:../src/drv/drv_i2c.c ****         I2C_Cmd(I2C1, ENABLE);
+ 1028              		.loc 1 369 0
+ 1029 087a 4FF4A840 		mov	r0, #21504
+ 1030 087e C4F20000 		movt	r0, 16384
+ 1031 0882 4FF00101 		mov	r1, #1
+ 1032 0886 FFF7FEFF 		bl	I2C_Cmd
+ 1033              	.L45:
+ 370:../src/drv/drv_i2c.c ****     }
+ 371:../src/drv/drv_i2c.c **** 
+ 372:../src/drv/drv_i2c.c ****     ///////////////////////////////////
+ 373:../src/drv/drv_i2c.c **** 
+ 374:../src/drv/drv_i2c.c ****     if (I2Cx == I2C2)
+ 1034              		.loc 1 374 0
+ 1035 088a 019A     		ldr	r2, [sp, #4]
+ 1036 088c 4FF4B043 		mov	r3, #22528
+ 1037 0890 C4F20003 		movt	r3, 16384
+ 1038 0894 9A42     		cmp	r2, r3
+ 1039 0896 40F08480 		bne	.L44
+ 375:../src/drv/drv_i2c.c ****     {
+ 376:../src/drv/drv_i2c.c ****     	RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOB,  ENABLE);
+ 1040              		.loc 1 376 0
+ 1041 089a 4FF48020 		mov	r0, #262144
+ 1042 089e 4FF00101 		mov	r1, #1
+ 1043 08a2 FFF7FEFF 		bl	RCC_AHBPeriphClockCmd
+ 377:../src/drv/drv_i2c.c ****     	RCC_APB1PeriphClockCmd(RCC_APB1Periph_I2C2, ENABLE);
+ 1044              		.loc 1 377 0
+ 1045 08a6 4FF48000 		mov	r0, #4194304
+ 1046 08aa 4FF00101 		mov	r1, #1
+ 1047 08ae FFF7FEFF 		bl	RCC_APB1PeriphClockCmd
+ 378:../src/drv/drv_i2c.c ****     	RCC_AHBPeriphClockCmd(I2C2_SCL_CLK_SOURCE |I2C2_SDA_CLK_SOURCE, ENABLE);
+ 1048              		.loc 1 378 0
+ 1049 08b2 4FF48400 		mov	r0, #4325376
+ 1050 08b6 4FF00101 		mov	r1, #1
+ 1051 08ba FFF7FEFF 		bl	RCC_AHBPeriphClockCmd
+ 379:../src/drv/drv_i2c.c ****     	RCC_I2CCLKConfig(RCC_I2C2CLK_SYSCLK);
+ 1052              		.loc 1 379 0
+ 1053 08be 4FF02000 		mov	r0, #32
+ 1054 08c2 C1F20000 		movt	r0, 4096
+ 1055 08c6 FFF7FEFF 		bl	RCC_I2CCLKConfig
+ 380:../src/drv/drv_i2c.c **** 
+ 381:../src/drv/drv_i2c.c ****     	i2cUnstick(I2Cx);                                         // Clock out stuff to make sure slav
+ 1056              		.loc 1 381 0
+ 1057 08ca 0198     		ldr	r0, [sp, #4]
+ 1058 08cc FFF702FE 		bl	i2cUnstick
+ 382:../src/drv/drv_i2c.c **** 
+ 383:../src/drv/drv_i2c.c ****     	GPIO_PinAFConfig(I2C2_SCL_GPIO, I2C2_SCL_PIN_SOURCE, GPIO_AF_4);
+ 1059              		.loc 1 383 0
+ 1060 08d0 4FF4A050 		mov	r0, #5120
+ 1061 08d4 C4F60000 		movt	r0, 18432
+ 1062 08d8 4FF00601 		mov	r1, #6
+ 1063 08dc 4FF00402 		mov	r2, #4
+ 1064 08e0 FFF7FEFF 		bl	GPIO_PinAFConfig
+ 384:../src/drv/drv_i2c.c ****     	GPIO_PinAFConfig(I2C2_SDA_GPIO, I2C2_SDA_PIN_SOURCE, GPIO_AF_4);
+ 1065              		.loc 1 384 0
+ 1066 08e4 4FF09040 		mov	r0, #1207959552
+ 1067 08e8 4FF00A01 		mov	r1, #10
+ 1068 08ec 4FF00402 		mov	r2, #4
+ 1069 08f0 FFF7FEFF 		bl	GPIO_PinAFConfig
+ 385:../src/drv/drv_i2c.c **** 
+ 386:../src/drv/drv_i2c.c ****     	GPIO_StructInit(&GPIO_InitStructure);
+ 1070              		.loc 1 386 0
+ 1071 08f4 0AAB     		add	r3, sp, #40
+ 1072 08f6 1846     		mov	r0, r3
+ 1073 08f8 FFF7FEFF 		bl	GPIO_StructInit
+ 387:../src/drv/drv_i2c.c ****         I2C_StructInit(&I2C_InitStructure);
+ 1074              		.loc 1 387 0
+ 1075 08fc 03AB     		add	r3, sp, #12
+ 1076 08fe 1846     		mov	r0, r3
+ 1077 0900 FFF7FEFF 		bl	I2C_StructInit
+ 388:../src/drv/drv_i2c.c **** 
+ 389:../src/drv/drv_i2c.c ****         // Init pins
+ 390:../src/drv/drv_i2c.c ****         GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_AF;
+ 1078              		.loc 1 390 0
+ 1079 0904 4FF00203 		mov	r3, #2
+ 1080 0908 8DF82C30 		strb	r3, [sp, #44]
+ 391:../src/drv/drv_i2c.c ****         GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+ 1081              		.loc 1 391 0
+ 1082 090c 4FF00303 		mov	r3, #3
+ 1083 0910 8DF82D30 		strb	r3, [sp, #45]
+ 392:../src/drv/drv_i2c.c ****         GPIO_InitStructure.GPIO_OType = GPIO_OType_OD;
+ 1084              		.loc 1 392 0
+ 1085 0914 4FF00103 		mov	r3, #1
+ 1086 0918 8DF82E30 		strb	r3, [sp, #46]
+ 393:../src/drv/drv_i2c.c ****         GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_NOPULL;
+ 1087              		.loc 1 393 0
+ 1088 091c 4FF00003 		mov	r3, #0
+ 1089 0920 8DF82F30 		strb	r3, [sp, #47]
+ 394:../src/drv/drv_i2c.c **** 
+ 395:../src/drv/drv_i2c.c ****         GPIO_InitStructure.GPIO_Pin   = I2C2_SCL_PIN;
+ 1090              		.loc 1 395 0
+ 1091 0924 4FF04003 		mov	r3, #64
+ 1092 0928 0A93     		str	r3, [sp, #40]
+ 396:../src/drv/drv_i2c.c ****         GPIO_Init(I2C2_SCL_GPIO, &GPIO_InitStructure);
+ 1093              		.loc 1 396 0
+ 1094 092a 4FF4A050 		mov	r0, #5120
+ 1095 092e C4F60000 		movt	r0, 18432
+ 1096 0932 0AAB     		add	r3, sp, #40
+ 1097 0934 1946     		mov	r1, r3
+ 1098 0936 FFF7FEFF 		bl	GPIO_Init
+ 397:../src/drv/drv_i2c.c **** 
+ 398:../src/drv/drv_i2c.c ****         GPIO_InitStructure.GPIO_Pin   = I2C2_SDA_PIN;
+ 1099              		.loc 1 398 0
+ 1100 093a 4FF48063 		mov	r3, #1024
+ 1101 093e 0A93     		str	r3, [sp, #40]
+ 399:../src/drv/drv_i2c.c ****         GPIO_Init(I2C2_SDA_GPIO, &GPIO_InitStructure);
+ 1102              		.loc 1 399 0
+ 1103 0940 4FF09040 		mov	r0, #1207959552
+ 1104 0944 0AAB     		add	r3, sp, #40
+ 1105 0946 1946     		mov	r1, r3
+ 1106 0948 FFF7FEFF 		bl	GPIO_Init
+ 400:../src/drv/drv_i2c.c **** 
+ 401:../src/drv/drv_i2c.c ****         I2C_StructInit(&I2C_InitStructure);
+ 1107              		.loc 1 401 0
+ 1108 094c 03AB     		add	r3, sp, #12
+ 1109 094e 1846     		mov	r0, r3
+ 1110 0950 FFF7FEFF 		bl	I2C_StructInit
+ 402:../src/drv/drv_i2c.c **** 
+ 403:../src/drv/drv_i2c.c ****         I2C_InitStructure.I2C_Mode                = I2C_Mode_I2C;
+ 1111              		.loc 1 403 0
+ 1112 0954 4FF00003 		mov	r3, #0
+ 1113 0958 0693     		str	r3, [sp, #24]
+ 404:../src/drv/drv_i2c.c ****         I2C_InitStructure.I2C_AnalogFilter        = I2C_AnalogFilter_Enable;
+ 1114              		.loc 1 404 0
+ 1115 095a 4FF00003 		mov	r3, #0
+ 1116 095e 0493     		str	r3, [sp, #16]
+ 405:../src/drv/drv_i2c.c ****         I2C_InitStructure.I2C_DigitalFilter       = 0x00;
+ 1117              		.loc 1 405 0
+ 1118 0960 4FF00003 		mov	r3, #0
+ 1119 0964 0593     		str	r3, [sp, #20]
+ 406:../src/drv/drv_i2c.c ****         I2C_InitStructure.I2C_OwnAddress1         = 0x00;
+ 1120              		.loc 1 406 0
+ 1121 0966 4FF00003 		mov	r3, #0
+ 1122 096a 0793     		str	r3, [sp, #28]
+ 407:../src/drv/drv_i2c.c ****         I2C_InitStructure.I2C_Ack                 = I2C_Ack_Enable;
+ 1123              		.loc 1 407 0
+ 1124 096c 4FF00003 		mov	r3, #0
+ 1125 0970 0893     		str	r3, [sp, #32]
+ 408:../src/drv/drv_i2c.c ****         I2C_InitStructure.I2C_AcknowledgedAddress = I2C_AcknowledgedAddress_7bit;
+ 1126              		.loc 1 408 0
+ 1127 0972 4FF00003 		mov	r3, #0
+ 1128 0976 0993     		str	r3, [sp, #36]
+ 409:../src/drv/drv_i2c.c ****       //I2C_InitStructure.I2C_Timing              = 0x00902025;
+ 410:../src/drv/drv_i2c.c ****         I2C_InitStructure.I2C_Timing              = 0x8000050B;
+ 1129              		.loc 1 410 0
+ 1130 0978 40F20B53 		movw	r3, #1291
+ 1131 097c C8F20003 		movt	r3, 32768
+ 1132 0980 0393     		str	r3, [sp, #12]
+ 411:../src/drv/drv_i2c.c **** 
+ 412:../src/drv/drv_i2c.c ****         I2C_Init(I2C2, &I2C_InitStructure);
+ 1133              		.loc 1 412 0
+ 1134 0982 4FF4B040 		mov	r0, #22528
+ 1135 0986 C4F20000 		movt	r0, 16384
+ 1136 098a 03AB     		add	r3, sp, #12
+ 1137 098c 1946     		mov	r1, r3
+ 1138 098e FFF7FEFF 		bl	I2C_Init
+ 413:../src/drv/drv_i2c.c **** 
+ 414:../src/drv/drv_i2c.c ****         I2C_Cmd(I2C2, ENABLE);
+ 1139              		.loc 1 414 0
+ 1140 0992 4FF4B040 		mov	r0, #22528
+ 1141 0996 C4F20000 		movt	r0, 16384
+ 1142 099a 4FF00101 		mov	r1, #1
+ 1143 099e FFF7FEFF 		bl	I2C_Cmd
+ 1144              	.L44:
+ 415:../src/drv/drv_i2c.c ****     }
+ 416:../src/drv/drv_i2c.c **** 
+ 417:../src/drv/drv_i2c.c ****     ///////////////////////////////////
+ 418:../src/drv/drv_i2c.c **** }
+ 1145              		.loc 1 418 0
+ 1146 09a2 0DB0     		add	sp, sp, #52
+ 1147 09a4 00BD     		pop	{pc}
+ 1148              		.cfi_endproc
+ 1149              	.LFE115:
+ 1151 09a6 00BF     		.align	2
+ 1152              		.global	i2cGetErrorCounter
+ 1153              		.thumb
+ 1154              		.thumb_func
+ 1156              	i2cGetErrorCounter:
+ 1157              	.LFB116:
+ 419:../src/drv/drv_i2c.c **** 
+ 420:../src/drv/drv_i2c.c **** ///////////////////////////////////////////////////////////////////////////////
+ 421:../src/drv/drv_i2c.c **** // Get I2C Error Count
+ 422:../src/drv/drv_i2c.c **** ///////////////////////////////////////////////////////////////////////////////
+ 423:../src/drv/drv_i2c.c **** 
+ 424:../src/drv/drv_i2c.c **** uint16_t i2cGetErrorCounter(I2C_TypeDef *I2Cx)
+ 425:../src/drv/drv_i2c.c **** {
+ 1158              		.loc 1 425 0
+ 1159              		.cfi_startproc
+ 1160              		@ args = 0, pretend = 0, frame = 8
+ 1161              		@ frame_needed = 0, uses_anonymous_args = 0
+ 1162              		@ link register save eliminated.
+ 1163 09a8 82B0     		sub	sp, sp, #8
+ 1164              	.LCFI10:
+ 1165              		.cfi_def_cfa_offset 8
+ 1166 09aa 0190     		str	r0, [sp, #4]
+ 426:../src/drv/drv_i2c.c ****     if (I2Cx == I2C1)
+ 1167              		.loc 1 426 0
+ 1168 09ac 019A     		ldr	r2, [sp, #4]
+ 1169 09ae 4FF4A843 		mov	r3, #21504
+ 1170 09b2 C4F20003 		movt	r3, 16384
+ 1171 09b6 9A42     		cmp	r2, r3
+ 1172 09b8 06D1     		bne	.L48
+ 427:../src/drv/drv_i2c.c ****     	return i2c1ErrorCount;
+ 1173              		.loc 1 427 0
+ 1174 09ba 40F20003 		movw	r3, #:lower16:i2c1ErrorCount
+ 1175 09be C0F20003 		movt	r3, #:upper16:i2c1ErrorCount
+ 1176 09c2 1B88     		ldrh	r3, [r3, #0]	@ movhi
+ 1177 09c4 9BB2     		uxth	r3, r3
+ 1178 09c6 05E0     		b	.L49
+ 1179              	.L48:
+ 428:../src/drv/drv_i2c.c ****     else
+ 429:../src/drv/drv_i2c.c ****     	return i2c2ErrorCount;
+ 1180              		.loc 1 429 0
+ 1181 09c8 40F20003 		movw	r3, #:lower16:i2c2ErrorCount
+ 1182 09cc C0F20003 		movt	r3, #:upper16:i2c2ErrorCount
+ 1183 09d0 1B88     		ldrh	r3, [r3, #0]	@ movhi
+ 1184 09d2 9BB2     		uxth	r3, r3
+ 1185              	.L49:
+ 430:../src/drv/drv_i2c.c **** }
+ 1186              		.loc 1 430 0
+ 1187 09d4 1846     		mov	r0, r3
+ 1188 09d6 02B0     		add	sp, sp, #8
+ 1189 09d8 7047     		bx	lr
+ 1190              		.cfi_endproc
+ 1191              	.LFE116:
+ 1193              	.Letext0:
+ 1194              		.file 2 "c:\\program files\\codesourcery\\sourcery_codebench_lite_for_arm_eabi\\bin\\../lib/gcc/ar
+ 1195              		.file 3 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\Libraries\\Device\\
+ 1196              		.file 4 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\Libraries\\STM32F30
+ 1197              		.file 5 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\Libraries\\STM32F30
+ 1198              		.file 6 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\src\\gps/gpsMediaTe
+ 1199              		.file 7 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\src\\gps/gpsNMEA.h"
+ 1200              		.file 8 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\src\\gps/gpsUblox.h
+ 1201              		.file 9 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\Libraries\\CMSIS\\I
+DEFINED SYMBOLS
+                            *ABS*:00000000 drv_i2c.c
+                            *COM*:00000001 mtk19ProcessDataState
+                            *COM*:00000001 nmeaProcessDataState
+                            *COM*:00000001 ubloxProcessDataState
+                            *COM*:00000004 i2cTimeout
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cc3gBRii.s:24     .bss:00000000 $d
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cc3gBRii.s:25     .bss:00000000 i2c1ErrorCount
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cc3gBRii.s:28     .bss:00000002 i2c2ErrorCount
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cc3gBRii.s:31     .text:00000000 $t
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cc3gBRii.s:36     .text:00000000 i2cTimeoutUserCallback
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cc3gBRii.s:107    .text:0000007c i2cWrite
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cc3gBRii.s:358    .text:0000028c i2cRead
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cc3gBRii.s:637    .text:000004d4 i2cUnstick
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cc3gBRii.s:908    .text:00000768 i2cInit
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cc3gBRii.s:1156   .text:000009a8 i2cGetErrorCounter
+                     .debug_frame:00000010 $d
+
+UNDEFINED SYMBOLS
+GPIO_SetBits
+I2C_GetFlagStatus
+I2C_TransferHandling
+I2C_SendData
+I2C_ClearFlag
+I2C_ReceiveData
+GPIO_Init
+delayMicroseconds
+GPIO_ReadInputDataBit
+GPIO_ResetBits
+RCC_AHBPeriphClockCmd
+RCC_APB1PeriphClockCmd
+RCC_I2CCLKConfig
+GPIO_PinAFConfig
+GPIO_StructInit
+I2C_StructInit
+I2C_Init
+I2C_Cmd

@@ -1,0 +1,769 @@
+   1              		.syntax unified
+   2              		.cpu cortex-m4
+   3              		.eabi_attribute 27, 3
+   4              		.fpu fpv4-sp-d16
+   5              		.eabi_attribute 20, 1
+   6              		.eabi_attribute 21, 1
+   7              		.eabi_attribute 23, 3
+   8              		.eabi_attribute 24, 1
+   9              		.eabi_attribute 25, 1
+  10              		.eabi_attribute 26, 1
+  11              		.eabi_attribute 30, 6
+  12              		.eabi_attribute 34, 1
+  13              		.eabi_attribute 18, 4
+  14              		.thumb
+  15              		.file	"lsm303dlhc.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.comm	mtk19ProcessDataState,1,1
+  20              		.comm	nmeaProcessDataState,1,1
+  21              		.comm	ubloxProcessDataState,1,1
+  22              		.global	accelCalibrating
+  23              		.bss
+  26              	accelCalibrating:
+  27 0000 00       		.space	1
+  28              		.global	accelOneG
+  29              		.data
+  30              		.align	2
+  33              	accelOneG:
+  34 0000 6DE71C41 		.word	1092413293
+  35              		.global	accelSum100Hz
+  36              		.bss
+  37 0001 000000   		.align	2
+  40              	accelSum100Hz:
+  41 0004 00000000 		.space	12
+  41      00000000 
+  41      00000000 
+  42              		.global	accelSum500Hz
+  43              		.align	2
+  46              	accelSum500Hz:
+  47 0010 00000000 		.space	12
+  47      00000000 
+  47      00000000 
+  48              		.comm	accelSummedSamples100Hz,12,4
+  49              		.comm	accelSummedSamples500Hz,12,4
+  50              		.comm	rawAccel,6,4
+  51              		.comm	magScaleFactor,12,4
+  52              		.global	magDataUpdate
+  55              	magDataUpdate:
+  56 001c 00       		.space	1
+  57              		.global	newMagData
+  60              	newMagData:
+  61 001d 00       		.space	1
+  62              		.comm	rawMag,6,4
+  63 001e 0000     		.text
+  64              		.align	2
+  65              		.global	readAccel
+  66              		.thumb
+  67              		.thumb_func
+  69              	readAccel:
+  70              	.LFB111:
+  71              		.file 1 "../src/sensors/lsm303dlhc.c"
+   1:../src/sensors/lsm303dlhc.c **** /*
+   2:../src/sensors/lsm303dlhc.c ****   December 2012
+   3:../src/sensors/lsm303dlhc.c **** 
+   4:../src/sensors/lsm303dlhc.c ****   aq32Plus_F3 Rev -
+   5:../src/sensors/lsm303dlhc.c **** 
+   6:../src/sensors/lsm303dlhc.c ****   Copyright (c) 2012 John Ihlein.  All rights reserved.
+   7:../src/sensors/lsm303dlhc.c **** 
+   8:../src/sensors/lsm303dlhc.c ****   Open Source STM32 Based Multicopter Controller Software
+   9:../src/sensors/lsm303dlhc.c **** 
+  10:../src/sensors/lsm303dlhc.c ****   Includes code and/or ideas from:
+  11:../src/sensors/lsm303dlhc.c **** 
+  12:../src/sensors/lsm303dlhc.c ****   1)AeroQuad
+  13:../src/sensors/lsm303dlhc.c ****   2)BaseFlight
+  14:../src/sensors/lsm303dlhc.c ****   3)CH Robotics
+  15:../src/sensors/lsm303dlhc.c ****   4)MultiWii
+  16:../src/sensors/lsm303dlhc.c ****   5)S.O.H. Madgwick
+  17:../src/sensors/lsm303dlhc.c ****   6)UAVX
+  18:../src/sensors/lsm303dlhc.c ****   7)STM DiscoveryF3 demonstration software
+  19:../src/sensors/lsm303dlhc.c **** 
+  20:../src/sensors/lsm303dlhc.c ****   Designed to run on the DiscoveryF3 board
+  21:../src/sensors/lsm303dlhc.c **** 
+  22:../src/sensors/lsm303dlhc.c ****   This program is free software: you can redistribute it and/or modify
+  23:../src/sensors/lsm303dlhc.c ****   it under the terms of the GNU General Public License as published by
+  24:../src/sensors/lsm303dlhc.c ****   the Free Software Foundation, either version 3 of the License, or
+  25:../src/sensors/lsm303dlhc.c ****   (at your option) any later version.
+  26:../src/sensors/lsm303dlhc.c **** 
+  27:../src/sensors/lsm303dlhc.c ****   This program is distributed in the hope that it will be useful,
+  28:../src/sensors/lsm303dlhc.c ****   but WITHOUT ANY WARRANTY; without even the implied warranty of
+  29:../src/sensors/lsm303dlhc.c ****   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  30:../src/sensors/lsm303dlhc.c ****   GNU General Public License for more details.
+  31:../src/sensors/lsm303dlhc.c **** 
+  32:../src/sensors/lsm303dlhc.c ****   You should have received a copy of the GNU General Public License
+  33:../src/sensors/lsm303dlhc.c ****   along with this program. If not, see <http://www.gnu.org/licenses/>.
+  34:../src/sensors/lsm303dlhc.c **** */
+  35:../src/sensors/lsm303dlhc.c **** 
+  36:../src/sensors/lsm303dlhc.c **** ///////////////////////////////////////////////////////////////////////////////
+  37:../src/sensors/lsm303dlhc.c **** 
+  38:../src/sensors/lsm303dlhc.c **** #include "board.h"
+  39:../src/sensors/lsm303dlhc.c **** 
+  40:../src/sensors/lsm303dlhc.c **** ///////////////////////////////////////////////////////////////////////////////
+  41:../src/sensors/lsm303dlhc.c **** // LSM303DLHC Defines and Variables
+  42:../src/sensors/lsm303dlhc.c **** ///////////////////////////////////////////////////////////////////////////////
+  43:../src/sensors/lsm303dlhc.c **** 
+  44:../src/sensors/lsm303dlhc.c **** // Address
+  45:../src/sensors/lsm303dlhc.c **** 
+  46:../src/sensors/lsm303dlhc.c **** #define LSM303DLHC_ACCEL_ADDRESS 0x32
+  47:../src/sensors/lsm303dlhc.c **** #define LSM303DLHC_MAG_ADDRESS   0x3C
+  48:../src/sensors/lsm303dlhc.c **** 
+  49:../src/sensors/lsm303dlhc.c **** // Registers
+  50:../src/sensors/lsm303dlhc.c **** 
+  51:../src/sensors/lsm303dlhc.c **** #define CTRL_REG1_A      0x20
+  52:../src/sensors/lsm303dlhc.c **** #define CTRL_REG4_A      0x23
+  53:../src/sensors/lsm303dlhc.c **** #define CTRL_REG5_A      0x24
+  54:../src/sensors/lsm303dlhc.c **** #define OUT_X_L_A        0x28
+  55:../src/sensors/lsm303dlhc.c **** #define CRA_REG_M        0x00
+  56:../src/sensors/lsm303dlhc.c **** #define CRB_REG_M        0x01
+  57:../src/sensors/lsm303dlhc.c **** #define MR_REG_M         0x02
+  58:../src/sensors/lsm303dlhc.c **** #define OUT_X_H_M        0x03
+  59:../src/sensors/lsm303dlhc.c **** 
+  60:../src/sensors/lsm303dlhc.c **** ///////////////////////////////////////
+  61:../src/sensors/lsm303dlhc.c **** 
+  62:../src/sensors/lsm303dlhc.c **** #define ODR_1344_HZ             0x90
+  63:../src/sensors/lsm303dlhc.c **** #define AXES_ENABLE             0x07
+  64:../src/sensors/lsm303dlhc.c **** 
+  65:../src/sensors/lsm303dlhc.c **** #define FULLSCALE_2G            0x00
+  66:../src/sensors/lsm303dlhc.c **** #define FULLSCALE_4G            0x10
+  67:../src/sensors/lsm303dlhc.c **** #define FULLSCALE_8G            0x20
+  68:../src/sensors/lsm303dlhc.c **** #define FULLSCALE_16G           0x30
+  69:../src/sensors/lsm303dlhc.c **** 
+  70:../src/sensors/lsm303dlhc.c **** #define BOOT                    0x80
+  71:../src/sensors/lsm303dlhc.c **** 
+  72:../src/sensors/lsm303dlhc.c **** ///////////////////////////////////////
+  73:../src/sensors/lsm303dlhc.c **** 
+  74:../src/sensors/lsm303dlhc.c **** #define ODR_75_HZ               0x18
+  75:../src/sensors/lsm303dlhc.c **** #define ODR_15_HZ               0x10
+  76:../src/sensors/lsm303dlhc.c **** 
+  77:../src/sensors/lsm303dlhc.c **** #define FS_1P3_GA               0x20
+  78:../src/sensors/lsm303dlhc.c **** #define FS_1P9_GA               0x40
+  79:../src/sensors/lsm303dlhc.c **** #define FS_2P5_GA               0x60
+  80:../src/sensors/lsm303dlhc.c **** #define FS_4P0_GA               0x80
+  81:../src/sensors/lsm303dlhc.c **** #define FS_4P7_GA               0xA0
+  82:../src/sensors/lsm303dlhc.c **** #define FS_5P6_GA               0xC0
+  83:../src/sensors/lsm303dlhc.c **** #define FS_8P1_GA               0xE0
+  84:../src/sensors/lsm303dlhc.c **** 
+  85:../src/sensors/lsm303dlhc.c **** #define CONTINUOUS_CONVERSION   0x00
+  86:../src/sensors/lsm303dlhc.c **** 
+  87:../src/sensors/lsm303dlhc.c **** ///////////////////////////////////////
+  88:../src/sensors/lsm303dlhc.c **** 
+  89:../src/sensors/lsm303dlhc.c **** uint8_t accelCalibrating = false;
+  90:../src/sensors/lsm303dlhc.c **** 
+  91:../src/sensors/lsm303dlhc.c **** float   accelOneG = 9.8065;
+  92:../src/sensors/lsm303dlhc.c **** 
+  93:../src/sensors/lsm303dlhc.c **** int32_t accelSum100Hz[3] = { 0, 0, 0 };
+  94:../src/sensors/lsm303dlhc.c **** 
+  95:../src/sensors/lsm303dlhc.c **** int32_t accelSum500Hz[3] = { 0, 0, 0 };
+  96:../src/sensors/lsm303dlhc.c **** 
+  97:../src/sensors/lsm303dlhc.c **** int32_t accelSummedSamples100Hz[3];
+  98:../src/sensors/lsm303dlhc.c **** 
+  99:../src/sensors/lsm303dlhc.c **** int32_t accelSummedSamples500Hz[3];
+ 100:../src/sensors/lsm303dlhc.c **** 
+ 101:../src/sensors/lsm303dlhc.c **** int16andUint8_t rawAccel[3];
+ 102:../src/sensors/lsm303dlhc.c **** 
+ 103:../src/sensors/lsm303dlhc.c **** ///////////////////////////////////////
+ 104:../src/sensors/lsm303dlhc.c **** 
+ 105:../src/sensors/lsm303dlhc.c **** float magScaleFactor[3];
+ 106:../src/sensors/lsm303dlhc.c **** 
+ 107:../src/sensors/lsm303dlhc.c **** uint8_t magDataUpdate = false;
+ 108:../src/sensors/lsm303dlhc.c **** 
+ 109:../src/sensors/lsm303dlhc.c **** uint8_t newMagData = false;
+ 110:../src/sensors/lsm303dlhc.c **** 
+ 111:../src/sensors/lsm303dlhc.c **** int16andUint8_t rawMag[3];
+ 112:../src/sensors/lsm303dlhc.c **** 
+ 113:../src/sensors/lsm303dlhc.c **** ///////////////////////////////////////////////////////////////////////////////
+ 114:../src/sensors/lsm303dlhc.c **** // Read Accel
+ 115:../src/sensors/lsm303dlhc.c **** ///////////////////////////////////////////////////////////////////////////////
+ 116:../src/sensors/lsm303dlhc.c **** 
+ 117:../src/sensors/lsm303dlhc.c **** void readAccel(void)
+ 118:../src/sensors/lsm303dlhc.c **** {
+  72              		.loc 1 118 0
+  73              		.cfi_startproc
+  74              		@ args = 0, pretend = 0, frame = 8
+  75              		@ frame_needed = 0, uses_anonymous_args = 0
+  76 0000 00B5     		push	{lr}
+  77              	.LCFI0:
+  78              		.cfi_def_cfa_offset 4
+  79              		.cfi_offset 14, -4
+  80 0002 85B0     		sub	sp, sp, #20
+  81              	.LCFI1:
+  82              		.cfi_def_cfa_offset 24
+ 119:../src/sensors/lsm303dlhc.c ****     uint8_t buffer[6];
+ 120:../src/sensors/lsm303dlhc.c **** 
+ 121:../src/sensors/lsm303dlhc.c ****     i2cRead(I2C1, LSM303DLHC_ACCEL_ADDRESS, OUT_X_L_A, 6, buffer);
+  83              		.loc 1 121 0
+  84 0004 02AB     		add	r3, sp, #8
+  85 0006 0093     		str	r3, [sp, #0]
+  86 0008 4FF4A840 		mov	r0, #21504
+  87 000c C4F20000 		movt	r0, 16384
+  88 0010 4FF03201 		mov	r1, #50
+  89 0014 4FF02802 		mov	r2, #40
+  90 0018 4FF00603 		mov	r3, #6
+  91 001c FFF7FEFF 		bl	i2cRead
+ 122:../src/sensors/lsm303dlhc.c **** 
+ 123:../src/sensors/lsm303dlhc.c ****     rawAccel[XAXIS].bytes[0] = buffer[0];
+  92              		.loc 1 123 0
+  93 0020 9DF80820 		ldrb	r2, [sp, #8]	@ zero_extendqisi2
+  94 0024 40F20003 		movw	r3, #:lower16:rawAccel
+  95 0028 C0F20003 		movt	r3, #:upper16:rawAccel
+  96 002c 1A70     		strb	r2, [r3, #0]
+ 124:../src/sensors/lsm303dlhc.c ****     rawAccel[XAXIS].bytes[1] = buffer[1];
+  97              		.loc 1 124 0
+  98 002e 9DF80920 		ldrb	r2, [sp, #9]	@ zero_extendqisi2
+  99 0032 40F20003 		movw	r3, #:lower16:rawAccel
+ 100 0036 C0F20003 		movt	r3, #:upper16:rawAccel
+ 101 003a 5A70     		strb	r2, [r3, #1]
+ 125:../src/sensors/lsm303dlhc.c ****     rawAccel[YAXIS].bytes[0] = buffer[2];
+ 102              		.loc 1 125 0
+ 103 003c 9DF80A20 		ldrb	r2, [sp, #10]	@ zero_extendqisi2
+ 104 0040 40F20003 		movw	r3, #:lower16:rawAccel
+ 105 0044 C0F20003 		movt	r3, #:upper16:rawAccel
+ 106 0048 9A70     		strb	r2, [r3, #2]
+ 126:../src/sensors/lsm303dlhc.c ****     rawAccel[YAXIS].bytes[1] = buffer[3];
+ 107              		.loc 1 126 0
+ 108 004a 9DF80B20 		ldrb	r2, [sp, #11]	@ zero_extendqisi2
+ 109 004e 40F20003 		movw	r3, #:lower16:rawAccel
+ 110 0052 C0F20003 		movt	r3, #:upper16:rawAccel
+ 111 0056 DA70     		strb	r2, [r3, #3]
+ 127:../src/sensors/lsm303dlhc.c ****     rawAccel[ZAXIS].bytes[0] = buffer[4];
+ 112              		.loc 1 127 0
+ 113 0058 9DF80C20 		ldrb	r2, [sp, #12]	@ zero_extendqisi2
+ 114 005c 40F20003 		movw	r3, #:lower16:rawAccel
+ 115 0060 C0F20003 		movt	r3, #:upper16:rawAccel
+ 116 0064 1A71     		strb	r2, [r3, #4]
+ 128:../src/sensors/lsm303dlhc.c ****     rawAccel[ZAXIS].bytes[1] = buffer[5];
+ 117              		.loc 1 128 0
+ 118 0066 9DF80D20 		ldrb	r2, [sp, #13]	@ zero_extendqisi2
+ 119 006a 40F20003 		movw	r3, #:lower16:rawAccel
+ 120 006e C0F20003 		movt	r3, #:upper16:rawAccel
+ 121 0072 5A71     		strb	r2, [r3, #5]
+ 129:../src/sensors/lsm303dlhc.c **** }
+ 122              		.loc 1 129 0
+ 123 0074 05B0     		add	sp, sp, #20
+ 124 0076 00BD     		pop	{pc}
+ 125              		.cfi_endproc
+ 126              	.LFE111:
+ 128              		.align	2
+ 129              		.global	initAccel
+ 130              		.thumb
+ 131              		.thumb_func
+ 133              	initAccel:
+ 134              	.LFB112:
+ 130:../src/sensors/lsm303dlhc.c **** 
+ 131:../src/sensors/lsm303dlhc.c **** ///////////////////////////////////////////////////////////////////////////////
+ 132:../src/sensors/lsm303dlhc.c **** // Accel Initialization
+ 133:../src/sensors/lsm303dlhc.c **** ///////////////////////////////////////////////////////////////////////////////
+ 134:../src/sensors/lsm303dlhc.c **** 
+ 135:../src/sensors/lsm303dlhc.c **** void initAccel(void)
+ 136:../src/sensors/lsm303dlhc.c **** {
+ 135              		.loc 1 136 0
+ 136              		.cfi_startproc
+ 137              		@ args = 0, pretend = 0, frame = 0
+ 138              		@ frame_needed = 0, uses_anonymous_args = 0
+ 139 0078 08B5     		push	{r3, lr}
+ 140              	.LCFI2:
+ 141              		.cfi_def_cfa_offset 8
+ 142              		.cfi_offset 14, -4
+ 143              		.cfi_offset 3, -8
+ 137:../src/sensors/lsm303dlhc.c **** 	i2cWrite(I2C1, LSM303DLHC_ACCEL_ADDRESS, CTRL_REG5_A, BOOT);
+ 144              		.loc 1 137 0
+ 145 007a 4FF4A840 		mov	r0, #21504
+ 146 007e C4F20000 		movt	r0, 16384
+ 147 0082 4FF03201 		mov	r1, #50
+ 148 0086 4FF02402 		mov	r2, #36
+ 149 008a 4FF08003 		mov	r3, #128
+ 150 008e FFF7FEFF 		bl	i2cWrite
+ 138:../src/sensors/lsm303dlhc.c **** 
+ 139:../src/sensors/lsm303dlhc.c **** 	delay(100);
+ 151              		.loc 1 139 0
+ 152 0092 4FF06400 		mov	r0, #100
+ 153 0096 FFF7FEFF 		bl	delay
+ 140:../src/sensors/lsm303dlhc.c **** 
+ 141:../src/sensors/lsm303dlhc.c **** 	i2cWrite(I2C1, LSM303DLHC_ACCEL_ADDRESS, CTRL_REG1_A, ODR_1344_HZ | AXES_ENABLE);
+ 154              		.loc 1 141 0
+ 155 009a 4FF4A840 		mov	r0, #21504
+ 156 009e C4F20000 		movt	r0, 16384
+ 157 00a2 4FF03201 		mov	r1, #50
+ 158 00a6 4FF02002 		mov	r2, #32
+ 159 00aa 4FF09703 		mov	r3, #151
+ 160 00ae FFF7FEFF 		bl	i2cWrite
+ 142:../src/sensors/lsm303dlhc.c **** 
+ 143:../src/sensors/lsm303dlhc.c ****     delay(10);
+ 161              		.loc 1 143 0
+ 162 00b2 4FF00A00 		mov	r0, #10
+ 163 00b6 FFF7FEFF 		bl	delay
+ 144:../src/sensors/lsm303dlhc.c **** 
+ 145:../src/sensors/lsm303dlhc.c ****     i2cWrite(I2C1, LSM303DLHC_ACCEL_ADDRESS, CTRL_REG4_A, FULLSCALE_4G);
+ 164              		.loc 1 145 0
+ 165 00ba 4FF4A840 		mov	r0, #21504
+ 166 00be C4F20000 		movt	r0, 16384
+ 167 00c2 4FF03201 		mov	r1, #50
+ 168 00c6 4FF02302 		mov	r2, #35
+ 169 00ca 4FF01003 		mov	r3, #16
+ 170 00ce FFF7FEFF 		bl	i2cWrite
+ 146:../src/sensors/lsm303dlhc.c **** 
+ 147:../src/sensors/lsm303dlhc.c ****     delay(100);
+ 171              		.loc 1 147 0
+ 172 00d2 4FF06400 		mov	r0, #100
+ 173 00d6 FFF7FEFF 		bl	delay
+ 148:../src/sensors/lsm303dlhc.c **** 
+ 149:../src/sensors/lsm303dlhc.c ****     computeAccelRTData();
+ 174              		.loc 1 149 0
+ 175 00da FFF7FEFF 		bl	computeAccelRTData
+ 150:../src/sensors/lsm303dlhc.c **** }
+ 176              		.loc 1 150 0
+ 177 00de 08BD     		pop	{r3, pc}
+ 178              		.cfi_endproc
+ 179              	.LFE112:
+ 181              		.global	__aeabi_f2d
+ 182              		.global	__aeabi_d2f
+ 183              		.align	2
+ 184              		.global	computeAccelRTData
+ 185              		.thumb
+ 186              		.thumb_func
+ 188              	computeAccelRTData:
+ 189              	.LFB113:
+ 151:../src/sensors/lsm303dlhc.c **** 
+ 152:../src/sensors/lsm303dlhc.c **** ///////////////////////////////////////////////////////////////////////////////
+ 153:../src/sensors/lsm303dlhc.c **** // Compute Accel Runtime Data
+ 154:../src/sensors/lsm303dlhc.c **** ///////////////////////////////////////////////////////////////////////////////
+ 155:../src/sensors/lsm303dlhc.c **** 
+ 156:../src/sensors/lsm303dlhc.c **** void computeAccelRTData(void)
+ 157:../src/sensors/lsm303dlhc.c **** {
+ 190              		.loc 1 157 0
+ 191              		.cfi_startproc
+ 192              		@ args = 0, pretend = 0, frame = 16
+ 193              		@ frame_needed = 0, uses_anonymous_args = 0
+ 194 00e0 00B5     		push	{lr}
+ 195              	.LCFI3:
+ 196              		.cfi_def_cfa_offset 4
+ 197              		.cfi_offset 14, -4
+ 198 00e2 85B0     		sub	sp, sp, #20
+ 199              	.LCFI4:
+ 200              		.cfi_def_cfa_offset 24
+ 158:../src/sensors/lsm303dlhc.c ****     uint8_t  axis;
+ 159:../src/sensors/lsm303dlhc.c ****     uint16_t samples;
+ 160:../src/sensors/lsm303dlhc.c **** 
+ 161:../src/sensors/lsm303dlhc.c ****     float accelSum[3]  = { 0.0f, 0.0f, 0.0f };
+ 201              		.loc 1 161 0
+ 202 00e4 6E4B     		ldr	r3, .L8+4	@ float
+ 203 00e6 0093     		str	r3, [sp, #0]	@ float
+ 204 00e8 6D4B     		ldr	r3, .L8+4	@ float
+ 205 00ea 0193     		str	r3, [sp, #4]	@ float
+ 206 00ec 6C4B     		ldr	r3, .L8+4	@ float
+ 207 00ee 0293     		str	r3, [sp, #8]	@ float
+ 162:../src/sensors/lsm303dlhc.c **** 
+ 163:../src/sensors/lsm303dlhc.c ****     accelCalibrating = true;
+ 208              		.loc 1 163 0
+ 209 00f0 40F20003 		movw	r3, #:lower16:accelCalibrating
+ 210 00f4 C0F20003 		movt	r3, #:upper16:accelCalibrating
+ 211 00f8 4FF00102 		mov	r2, #1
+ 212 00fc 1A70     		strb	r2, [r3, #0]
+ 164:../src/sensors/lsm303dlhc.c **** 
+ 165:../src/sensors/lsm303dlhc.c ****     for (samples = 0; samples < 2000; samples++)
+ 213              		.loc 1 165 0
+ 214 00fe 4FF00003 		mov	r3, #0
+ 215 0102 ADF80C30 		strh	r3, [sp, #12]	@ movhi
+ 216 0106 6BE0     		b	.L4
+ 217              	.L5:
+ 166:../src/sensors/lsm303dlhc.c ****     {
+ 167:../src/sensors/lsm303dlhc.c ****         readAccel();
+ 218              		.loc 1 167 0 discriminator 2
+ 219 0108 FFF7FEFF 		bl	readAccel
+ 168:../src/sensors/lsm303dlhc.c **** 
+ 169:../src/sensors/lsm303dlhc.c ****         accelSum[XAXIS]  += ((float)rawAccel[XAXIS].value - eepromConfig.accelBias[XAXIS]) * eeprom
+ 220              		.loc 1 169 0 discriminator 2
+ 221 010c 9DED007A 		flds	s14, [sp, #0]
+ 222 0110 40F20003 		movw	r3, #:lower16:rawAccel
+ 223 0114 C0F20003 		movt	r3, #:upper16:rawAccel
+ 224 0118 1B88     		ldrh	r3, [r3, #0]
+ 225 011a 1BB2     		sxth	r3, r3
+ 226 011c 07EE903A 		fmsr	s15, r3	@ int
+ 227 0120 F8EEE76A 		fsitos	s13, s15
+ 228 0124 40F20003 		movw	r3, #:lower16:eepromConfig
+ 229 0128 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 230 012c D3ED017A 		flds	s15, [r3, #4]
+ 231 0130 76EEE76A 		fsubs	s13, s13, s15
+ 232 0134 40F20003 		movw	r3, #:lower16:eepromConfig
+ 233 0138 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 234 013c D3ED047A 		flds	s15, [r3, #16]
+ 235 0140 66EEA77A 		fmuls	s15, s13, s15
+ 236 0144 77EE277A 		fadds	s15, s14, s15
+ 237 0148 CDED007A 		fsts	s15, [sp, #0]
+ 170:../src/sensors/lsm303dlhc.c ****         accelSum[YAXIS]  += ((float)rawAccel[YAXIS].value - eepromConfig.accelBias[YAXIS]) * eeprom
+ 238              		.loc 1 170 0 discriminator 2
+ 239 014c 9DED017A 		flds	s14, [sp, #4]
+ 240 0150 40F20003 		movw	r3, #:lower16:rawAccel
+ 241 0154 C0F20003 		movt	r3, #:upper16:rawAccel
+ 242 0158 5B88     		ldrh	r3, [r3, #2]
+ 243 015a 1BB2     		sxth	r3, r3
+ 244 015c 07EE903A 		fmsr	s15, r3	@ int
+ 245 0160 F8EEE76A 		fsitos	s13, s15
+ 246 0164 40F20003 		movw	r3, #:lower16:eepromConfig
+ 247 0168 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 248 016c D3ED027A 		flds	s15, [r3, #8]
+ 249 0170 76EEE76A 		fsubs	s13, s13, s15
+ 250 0174 40F20003 		movw	r3, #:lower16:eepromConfig
+ 251 0178 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 252 017c D3ED057A 		flds	s15, [r3, #20]
+ 253 0180 66EEA77A 		fmuls	s15, s13, s15
+ 254 0184 77EE277A 		fadds	s15, s14, s15
+ 255 0188 CDED017A 		fsts	s15, [sp, #4]
+ 171:../src/sensors/lsm303dlhc.c ****         accelSum[ZAXIS]  += ((float)rawAccel[ZAXIS].value - eepromConfig.accelBias[ZAXIS]) * eeprom
+ 256              		.loc 1 171 0 discriminator 2
+ 257 018c 9DED027A 		flds	s14, [sp, #8]
+ 258 0190 40F20003 		movw	r3, #:lower16:rawAccel
+ 259 0194 C0F20003 		movt	r3, #:upper16:rawAccel
+ 260 0198 9B88     		ldrh	r3, [r3, #4]
+ 261 019a 1BB2     		sxth	r3, r3
+ 262 019c 07EE903A 		fmsr	s15, r3	@ int
+ 263 01a0 F8EEE76A 		fsitos	s13, s15
+ 264 01a4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 265 01a8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 266 01ac D3ED037A 		flds	s15, [r3, #12]
+ 267 01b0 76EEE76A 		fsubs	s13, s13, s15
+ 268 01b4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 269 01b8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 270 01bc D3ED067A 		flds	s15, [r3, #24]
+ 271 01c0 66EEA77A 		fmuls	s15, s13, s15
+ 272 01c4 77EE277A 		fadds	s15, s14, s15
+ 273 01c8 CDED027A 		fsts	s15, [sp, #8]
+ 172:../src/sensors/lsm303dlhc.c **** 
+ 173:../src/sensors/lsm303dlhc.c ****         delayMicroseconds(1000);
+ 274              		.loc 1 173 0 discriminator 2
+ 275 01cc 4FF47A70 		mov	r0, #1000
+ 276 01d0 FFF7FEFF 		bl	delayMicroseconds
+ 165:../src/sensors/lsm303dlhc.c ****     for (samples = 0; samples < 2000; samples++)
+ 277              		.loc 1 165 0 discriminator 2
+ 278 01d4 BDF80C30 		ldrh	r3, [sp, #12]	@ movhi
+ 279 01d8 03F10103 		add	r3, r3, #1
+ 280 01dc ADF80C30 		strh	r3, [sp, #12]	@ movhi
+ 281              	.L4:
+ 165:../src/sensors/lsm303dlhc.c ****     for (samples = 0; samples < 2000; samples++)
+ 282              		.loc 1 165 0 is_stmt 0 discriminator 1
+ 283 01e0 BDF80C20 		ldrh	r2, [sp, #12]
+ 284 01e4 40F2CF73 		movw	r3, #1999
+ 285 01e8 9A42     		cmp	r2, r3
+ 286 01ea 8DD9     		bls	.L5
+ 174:../src/sensors/lsm303dlhc.c ****     }
+ 175:../src/sensors/lsm303dlhc.c **** 
+ 176:../src/sensors/lsm303dlhc.c ****     for (axis = 0; axis < 3; axis++)
+ 287              		.loc 1 176 0 is_stmt 1
+ 288 01ec 4FF00003 		mov	r3, #0
+ 289 01f0 8DF80F30 		strb	r3, [sp, #15]
+ 290 01f4 19E0     		b	.L6
+ 291              	.L7:
+ 177:../src/sensors/lsm303dlhc.c ****     {
+ 178:../src/sensors/lsm303dlhc.c ****         accelSum[axis] = accelSum[axis]  / 2000.0f;
+ 292              		.loc 1 178 0 discriminator 2
+ 293 01f6 9DF80F20 		ldrb	r2, [sp, #15]	@ zero_extendqisi2
+ 294 01fa 9DF80F30 		ldrb	r3, [sp, #15]	@ zero_extendqisi2
+ 295 01fe 4FEA8303 		lsl	r3, r3, #2
+ 296 0202 04A9     		add	r1, sp, #16
+ 297 0204 CB18     		adds	r3, r1, r3
+ 298 0206 13ED047A 		flds	s14, [r3, #-16]
+ 299 020a DFED247A 		flds	s15, .L8
+ 300 020e C7EE277A 		fdivs	s15, s14, s15
+ 301 0212 4FEA8203 		lsl	r3, r2, #2
+ 302 0216 04AA     		add	r2, sp, #16
+ 303 0218 D318     		adds	r3, r2, r3
+ 304 021a 43ED047A 		fsts	s15, [r3, #-16]
+ 176:../src/sensors/lsm303dlhc.c ****     for (axis = 0; axis < 3; axis++)
+ 305              		.loc 1 176 0 discriminator 2
+ 306 021e 9DF80F30 		ldrb	r3, [sp, #15]
+ 307 0222 03F10103 		add	r3, r3, #1
+ 308 0226 8DF80F30 		strb	r3, [sp, #15]
+ 309              	.L6:
+ 176:../src/sensors/lsm303dlhc.c ****     for (axis = 0; axis < 3; axis++)
+ 310              		.loc 1 176 0 is_stmt 0 discriminator 1
+ 311 022a 9DF80F30 		ldrb	r3, [sp, #15]	@ zero_extendqisi2
+ 312 022e 022B     		cmp	r3, #2
+ 313 0230 E1D9     		bls	.L7
+ 179:../src/sensors/lsm303dlhc.c ****     }
+ 180:../src/sensors/lsm303dlhc.c **** 
+ 181:../src/sensors/lsm303dlhc.c ****     accelOneG = sqrt(accelSum[XAXIS] * accelSum[XAXIS] +
+ 314              		.loc 1 181 0 is_stmt 1
+ 315 0232 9DED007A 		flds	s14, [sp, #0]
+ 316 0236 DDED007A 		flds	s15, [sp, #0]
+ 317 023a 27EE277A 		fmuls	s14, s14, s15
+ 182:../src/sensors/lsm303dlhc.c ****     		         accelSum[YAXIS] * accelSum[YAXIS] +
+ 318              		.loc 1 182 0
+ 319 023e DDED016A 		flds	s13, [sp, #4]
+ 320 0242 DDED017A 		flds	s15, [sp, #4]
+ 321 0246 66EEA77A 		fmuls	s15, s13, s15
+ 181:../src/sensors/lsm303dlhc.c ****     accelOneG = sqrt(accelSum[XAXIS] * accelSum[XAXIS] +
+ 322              		.loc 1 181 0
+ 323 024a 37EE277A 		fadds	s14, s14, s15
+ 183:../src/sensors/lsm303dlhc.c ****     		         accelSum[ZAXIS] * accelSum[ZAXIS]);
+ 324              		.loc 1 183 0
+ 325 024e DDED026A 		flds	s13, [sp, #8]
+ 326 0252 DDED027A 		flds	s15, [sp, #8]
+ 327 0256 66EEA77A 		fmuls	s15, s13, s15
+ 182:../src/sensors/lsm303dlhc.c ****     		         accelSum[YAXIS] * accelSum[YAXIS] +
+ 328              		.loc 1 182 0
+ 329 025a 77EE277A 		fadds	s15, s14, s15
+ 181:../src/sensors/lsm303dlhc.c ****     accelOneG = sqrt(accelSum[XAXIS] * accelSum[XAXIS] +
+ 330              		.loc 1 181 0
+ 331 025e 17EE900A 		fmrs	r0, s15
+ 332 0262 FFF7FEFF 		bl	__aeabi_f2d
+ 333 0266 0246     		mov	r2, r0
+ 334 0268 0B46     		mov	r3, r1
+ 335 026a 1046     		mov	r0, r2
+ 336 026c 1946     		mov	r1, r3
+ 337 026e FFF7FEFF 		bl	sqrt
+ 338 0272 0246     		mov	r2, r0
+ 339 0274 0B46     		mov	r3, r1
+ 340 0276 1046     		mov	r0, r2
+ 341 0278 1946     		mov	r1, r3
+ 342 027a FFF7FEFF 		bl	__aeabi_d2f
+ 343 027e 0246     		mov	r2, r0	@ float
+ 344 0280 40F20003 		movw	r3, #:lower16:accelOneG
+ 345 0284 C0F20003 		movt	r3, #:upper16:accelOneG
+ 346 0288 1A60     		str	r2, [r3, #0]	@ float
+ 184:../src/sensors/lsm303dlhc.c **** 
+ 185:../src/sensors/lsm303dlhc.c ****     accelCalibrating = false;
+ 347              		.loc 1 185 0
+ 348 028a 40F20003 		movw	r3, #:lower16:accelCalibrating
+ 349 028e C0F20003 		movt	r3, #:upper16:accelCalibrating
+ 350 0292 4FF00002 		mov	r2, #0
+ 351 0296 1A70     		strb	r2, [r3, #0]
+ 186:../src/sensors/lsm303dlhc.c **** }
+ 352              		.loc 1 186 0
+ 353 0298 05B0     		add	sp, sp, #20
+ 354 029a 00BD     		pop	{pc}
+ 355              	.L9:
+ 356              		.align	2
+ 357              	.L8:
+ 358 029c 0000FA44 		.word	1157234688
+ 359 02a0 00000000 		.word	0
+ 360              		.cfi_endproc
+ 361              	.LFE113:
+ 363              		.align	2
+ 364              		.global	readMag
+ 365              		.thumb
+ 366              		.thumb_func
+ 368              	readMag:
+ 369              	.LFB114:
+ 187:../src/sensors/lsm303dlhc.c **** 
+ 188:../src/sensors/lsm303dlhc.c **** ///////////////////////////////////////////////////////////////////////////////
+ 189:../src/sensors/lsm303dlhc.c **** // Read Mag
+ 190:../src/sensors/lsm303dlhc.c **** ///////////////////////////////////////////////////////////////////////////////
+ 191:../src/sensors/lsm303dlhc.c **** 
+ 192:../src/sensors/lsm303dlhc.c **** uint8_t readMag(void)
+ 193:../src/sensors/lsm303dlhc.c **** {
+ 370              		.loc 1 193 0
+ 371              		.cfi_startproc
+ 372              		@ args = 0, pretend = 0, frame = 8
+ 373              		@ frame_needed = 0, uses_anonymous_args = 0
+ 374 02a4 00B5     		push	{lr}
+ 375              	.LCFI5:
+ 376              		.cfi_def_cfa_offset 4
+ 377              		.cfi_offset 14, -4
+ 378 02a6 85B0     		sub	sp, sp, #20
+ 379              	.LCFI6:
+ 380              		.cfi_def_cfa_offset 24
+ 194:../src/sensors/lsm303dlhc.c ****     uint8_t I2C_Buffer_Rx[6];
+ 195:../src/sensors/lsm303dlhc.c **** 
+ 196:../src/sensors/lsm303dlhc.c ****     i2cRead(I2C1, LSM303DLHC_MAG_ADDRESS, OUT_X_H_M, 6, I2C_Buffer_Rx);
+ 381              		.loc 1 196 0
+ 382 02a8 02AB     		add	r3, sp, #8
+ 383 02aa 0093     		str	r3, [sp, #0]
+ 384 02ac 4FF4A840 		mov	r0, #21504
+ 385 02b0 C4F20000 		movt	r0, 16384
+ 386 02b4 4FF03C01 		mov	r1, #60
+ 387 02b8 4FF00302 		mov	r2, #3
+ 388 02bc 4FF00603 		mov	r3, #6
+ 389 02c0 FFF7FEFF 		bl	i2cRead
+ 197:../src/sensors/lsm303dlhc.c **** 
+ 198:../src/sensors/lsm303dlhc.c ****     rawMag[XAXIS].bytes[1] = I2C_Buffer_Rx[0];
+ 390              		.loc 1 198 0
+ 391 02c4 9DF80820 		ldrb	r2, [sp, #8]	@ zero_extendqisi2
+ 392 02c8 40F20003 		movw	r3, #:lower16:rawMag
+ 393 02cc C0F20003 		movt	r3, #:upper16:rawMag
+ 394 02d0 5A70     		strb	r2, [r3, #1]
+ 199:../src/sensors/lsm303dlhc.c ****     rawMag[XAXIS].bytes[0] = I2C_Buffer_Rx[1];
+ 395              		.loc 1 199 0
+ 396 02d2 9DF80920 		ldrb	r2, [sp, #9]	@ zero_extendqisi2
+ 397 02d6 40F20003 		movw	r3, #:lower16:rawMag
+ 398 02da C0F20003 		movt	r3, #:upper16:rawMag
+ 399 02de 1A70     		strb	r2, [r3, #0]
+ 200:../src/sensors/lsm303dlhc.c ****     rawMag[ZAXIS].bytes[1] = I2C_Buffer_Rx[2];
+ 400              		.loc 1 200 0
+ 401 02e0 9DF80A20 		ldrb	r2, [sp, #10]	@ zero_extendqisi2
+ 402 02e4 40F20003 		movw	r3, #:lower16:rawMag
+ 403 02e8 C0F20003 		movt	r3, #:upper16:rawMag
+ 404 02ec 5A71     		strb	r2, [r3, #5]
+ 201:../src/sensors/lsm303dlhc.c ****     rawMag[ZAXIS].bytes[0] = I2C_Buffer_Rx[3];
+ 405              		.loc 1 201 0
+ 406 02ee 9DF80B20 		ldrb	r2, [sp, #11]	@ zero_extendqisi2
+ 407 02f2 40F20003 		movw	r3, #:lower16:rawMag
+ 408 02f6 C0F20003 		movt	r3, #:upper16:rawMag
+ 409 02fa 1A71     		strb	r2, [r3, #4]
+ 202:../src/sensors/lsm303dlhc.c ****     rawMag[YAXIS].bytes[1] = I2C_Buffer_Rx[4];
+ 410              		.loc 1 202 0
+ 411 02fc 9DF80C20 		ldrb	r2, [sp, #12]	@ zero_extendqisi2
+ 412 0300 40F20003 		movw	r3, #:lower16:rawMag
+ 413 0304 C0F20003 		movt	r3, #:upper16:rawMag
+ 414 0308 DA70     		strb	r2, [r3, #3]
+ 203:../src/sensors/lsm303dlhc.c ****     rawMag[YAXIS].bytes[0] = I2C_Buffer_Rx[5];
+ 415              		.loc 1 203 0
+ 416 030a 9DF80D20 		ldrb	r2, [sp, #13]	@ zero_extendqisi2
+ 417 030e 40F20003 		movw	r3, #:lower16:rawMag
+ 418 0312 C0F20003 		movt	r3, #:upper16:rawMag
+ 419 0316 9A70     		strb	r2, [r3, #2]
+ 204:../src/sensors/lsm303dlhc.c **** 
+ 205:../src/sensors/lsm303dlhc.c ****     return true;
+ 420              		.loc 1 205 0
+ 421 0318 4FF00103 		mov	r3, #1
+ 206:../src/sensors/lsm303dlhc.c **** }
+ 422              		.loc 1 206 0
+ 423 031c 1846     		mov	r0, r3
+ 424 031e 05B0     		add	sp, sp, #20
+ 425 0320 00BD     		pop	{pc}
+ 426              		.cfi_endproc
+ 427              	.LFE114:
+ 429 0322 00BF     		.align	2
+ 430              		.global	initMag
+ 431              		.thumb
+ 432              		.thumb_func
+ 434              	initMag:
+ 435              	.LFB115:
+ 207:../src/sensors/lsm303dlhc.c **** 
+ 208:../src/sensors/lsm303dlhc.c **** ///////////////////////////////////////////////////////////////////////////////
+ 209:../src/sensors/lsm303dlhc.c **** // Mag Initialization
+ 210:../src/sensors/lsm303dlhc.c **** ///////////////////////////////////////////////////////////////////////////////
+ 211:../src/sensors/lsm303dlhc.c **** 
+ 212:../src/sensors/lsm303dlhc.c **** void initMag(void)
+ 213:../src/sensors/lsm303dlhc.c **** {
+ 436              		.loc 1 213 0
+ 437              		.cfi_startproc
+ 438              		@ args = 0, pretend = 0, frame = 0
+ 439              		@ frame_needed = 0, uses_anonymous_args = 0
+ 440 0324 08B5     		push	{r3, lr}
+ 441              	.LCFI7:
+ 442              		.cfi_def_cfa_offset 8
+ 443              		.cfi_offset 14, -4
+ 444              		.cfi_offset 3, -8
+ 214:../src/sensors/lsm303dlhc.c ****     magScaleFactor[XAXIS] = 1.0f;
+ 445              		.loc 1 214 0
+ 446 0326 40F20003 		movw	r3, #:lower16:magScaleFactor
+ 447 032a C0F20003 		movt	r3, #:upper16:magScaleFactor
+ 448 032e 224A     		ldr	r2, .L12	@ float
+ 449 0330 1A60     		str	r2, [r3, #0]	@ float
+ 215:../src/sensors/lsm303dlhc.c ****     magScaleFactor[YAXIS] = 1.0f;
+ 450              		.loc 1 215 0
+ 451 0332 40F20003 		movw	r3, #:lower16:magScaleFactor
+ 452 0336 C0F20003 		movt	r3, #:upper16:magScaleFactor
+ 453 033a 1F4A     		ldr	r2, .L12	@ float
+ 454 033c 5A60     		str	r2, [r3, #4]	@ float
+ 216:../src/sensors/lsm303dlhc.c ****     magScaleFactor[ZAXIS] = 1.0f;
+ 455              		.loc 1 216 0
+ 456 033e 40F20003 		movw	r3, #:lower16:magScaleFactor
+ 457 0342 C0F20003 		movt	r3, #:upper16:magScaleFactor
+ 458 0346 1C4A     		ldr	r2, .L12	@ float
+ 459 0348 9A60     		str	r2, [r3, #8]	@ float
+ 217:../src/sensors/lsm303dlhc.c **** 
+ 218:../src/sensors/lsm303dlhc.c ****     i2cWrite(I2C1, LSM303DLHC_MAG_ADDRESS, CRA_REG_M, ODR_15_HZ);
+ 460              		.loc 1 218 0
+ 461 034a 4FF4A840 		mov	r0, #21504
+ 462 034e C4F20000 		movt	r0, 16384
+ 463 0352 4FF03C01 		mov	r1, #60
+ 464 0356 4FF00002 		mov	r2, #0
+ 465 035a 4FF01003 		mov	r3, #16
+ 466 035e FFF7FEFF 		bl	i2cWrite
+ 219:../src/sensors/lsm303dlhc.c ****     delay(20);
+ 467              		.loc 1 219 0
+ 468 0362 4FF01400 		mov	r0, #20
+ 469 0366 FFF7FEFF 		bl	delay
+ 220:../src/sensors/lsm303dlhc.c **** 
+ 221:../src/sensors/lsm303dlhc.c ****     i2cWrite(I2C1, LSM303DLHC_MAG_ADDRESS, CRB_REG_M, FS_2P5_GA);
+ 470              		.loc 1 221 0
+ 471 036a 4FF4A840 		mov	r0, #21504
+ 472 036e C4F20000 		movt	r0, 16384
+ 473 0372 4FF03C01 		mov	r1, #60
+ 474 0376 4FF00102 		mov	r2, #1
+ 475 037a 4FF06003 		mov	r3, #96
+ 476 037e FFF7FEFF 		bl	i2cWrite
+ 222:../src/sensors/lsm303dlhc.c ****     delay(20);
+ 477              		.loc 1 222 0
+ 478 0382 4FF01400 		mov	r0, #20
+ 479 0386 FFF7FEFF 		bl	delay
+ 223:../src/sensors/lsm303dlhc.c **** 
+ 224:../src/sensors/lsm303dlhc.c ****     i2cWrite(I2C1, LSM303DLHC_MAG_ADDRESS, MR_REG_M, CONTINUOUS_CONVERSION);
+ 480              		.loc 1 224 0
+ 481 038a 4FF4A840 		mov	r0, #21504
+ 482 038e C4F20000 		movt	r0, 16384
+ 483 0392 4FF03C01 		mov	r1, #60
+ 484 0396 4FF00202 		mov	r2, #2
+ 485 039a 4FF00003 		mov	r3, #0
+ 486 039e FFF7FEFF 		bl	i2cWrite
+ 225:../src/sensors/lsm303dlhc.c ****     delay(20);
+ 487              		.loc 1 225 0
+ 488 03a2 4FF01400 		mov	r0, #20
+ 489 03a6 FFF7FEFF 		bl	delay
+ 226:../src/sensors/lsm303dlhc.c **** 
+ 227:../src/sensors/lsm303dlhc.c ****     readMag();
+ 490              		.loc 1 227 0
+ 491 03aa FFF7FEFF 		bl	readMag
+ 228:../src/sensors/lsm303dlhc.c **** 
+ 229:../src/sensors/lsm303dlhc.c ****     delay(20);
+ 492              		.loc 1 229 0
+ 493 03ae 4FF01400 		mov	r0, #20
+ 494 03b2 FFF7FEFF 		bl	delay
+ 230:../src/sensors/lsm303dlhc.c **** }
+ 495              		.loc 1 230 0
+ 496 03b6 08BD     		pop	{r3, pc}
+ 497              	.L13:
+ 498              		.align	2
+ 499              	.L12:
+ 500 03b8 0000803F 		.word	1065353216
+ 501              		.cfi_endproc
+ 502              	.LFE115:
+ 504              	.Letext0:
+ 505              		.file 2 "c:\\program files\\codesourcery\\sourcery_codebench_lite_for_arm_eabi\\bin\\../lib/gcc/ar
+ 506              		.file 3 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\Libraries\\Device\\
+ 507              		.file 4 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\src/pid.h"
+ 508              		.file 5 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\src/aq32Plus_F3.h"
+ 509              		.file 6 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\src\\gps/gpsMediaTe
+ 510              		.file 7 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\src\\gps/gpsNMEA.h"
+ 511              		.file 8 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\src\\gps/gpsUblox.h
+ 512              		.file 9 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\Libraries\\CMSIS\\I
+DEFINED SYMBOLS
+                            *ABS*:00000000 lsm303dlhc.c
+                            *COM*:00000001 mtk19ProcessDataState
+                            *COM*:00000001 nmeaProcessDataState
+                            *COM*:00000001 ubloxProcessDataState
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccwuuvZx.s:26     .bss:00000000 accelCalibrating
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccwuuvZx.s:27     .bss:00000000 $d
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccwuuvZx.s:33     .data:00000000 accelOneG
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccwuuvZx.s:30     .data:00000000 $d
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccwuuvZx.s:40     .bss:00000004 accelSum100Hz
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccwuuvZx.s:46     .bss:00000010 accelSum500Hz
+                            *COM*:0000000c accelSummedSamples100Hz
+                            *COM*:0000000c accelSummedSamples500Hz
+                            *COM*:00000006 rawAccel
+                            *COM*:0000000c magScaleFactor
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccwuuvZx.s:55     .bss:0000001c magDataUpdate
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccwuuvZx.s:60     .bss:0000001d newMagData
+                            *COM*:00000006 rawMag
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccwuuvZx.s:64     .text:00000000 $t
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccwuuvZx.s:69     .text:00000000 readAccel
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccwuuvZx.s:133    .text:00000078 initAccel
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccwuuvZx.s:188    .text:000000e0 computeAccelRTData
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccwuuvZx.s:358    .text:0000029c $d
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccwuuvZx.s:363    .text:000002a4 $t
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccwuuvZx.s:368    .text:000002a4 readMag
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccwuuvZx.s:434    .text:00000324 initMag
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccwuuvZx.s:500    .text:000003b8 $d
+                     .debug_frame:00000010 $d
+
+UNDEFINED SYMBOLS
+i2cRead
+i2cWrite
+delay
+__aeabi_f2d
+__aeabi_d2f
+eepromConfig
+delayMicroseconds
+sqrt

@@ -1,0 +1,784 @@
+   1              		.syntax unified
+   2              		.cpu cortex-m4
+   3              		.eabi_attribute 27, 3
+   4              		.fpu fpv4-sp-d16
+   5              		.eabi_attribute 20, 1
+   6              		.eabi_attribute 21, 1
+   7              		.eabi_attribute 23, 3
+   8              		.eabi_attribute 24, 1
+   9              		.eabi_attribute 25, 1
+  10              		.eabi_attribute 26, 1
+  11              		.eabi_attribute 30, 6
+  12              		.eabi_attribute 34, 1
+  13              		.eabi_attribute 18, 4
+  14              		.thumb
+  15              		.file	"gpsMediaTek19.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.comm	mtk19ProcessDataState,1,1
+  20              		.comm	nmeaProcessDataState,1,1
+  21              		.comm	ubloxProcessDataState,1,1
+  22              		.comm	mtk19Message,32,4
+  23              		.comm	mtk19CkA,1,1
+  24              		.comm	mtk19CkB,1,1
+  25              		.comm	mtk19DataLength,1,1
+  26              		.comm	mtk19ExpectedDataLength,1,1
+  27              		.comm	mtkRevision,1,1
+  28              		.align	2
+  29              		.global	decodeMediaTek3329BinaryMsg
+  30              		.thumb
+  31              		.thumb_func
+  33              	decodeMediaTek3329BinaryMsg:
+  34              	.LFB111:
+  35              		.file 1 "../src/gps/gpsMediaTek19.c"
+   1:../src/gps/gpsMediaTek19.c **** /*
+   2:../src/gps/gpsMediaTek19.c ****   February 2013
+   3:../src/gps/gpsMediaTek19.c **** 
+   4:../src/gps/gpsMediaTek19.c ****   aq32Plus Rev -
+   5:../src/gps/gpsMediaTek19.c **** 
+   6:../src/gps/gpsMediaTek19.c ****   Copyright (c) 2012 John Ihlein.  All rights reserved.
+   7:../src/gps/gpsMediaTek19.c **** 
+   8:../src/gps/gpsMediaTek19.c ****   Open Source STM32 Based Multicopter Controller Software
+   9:../src/gps/gpsMediaTek19.c **** 
+  10:../src/gps/gpsMediaTek19.c ****   Includes code and/or ideas from:
+  11:../src/gps/gpsMediaTek19.c **** 
+  12:../src/gps/gpsMediaTek19.c ****   1)AeroQuad
+  13:../src/gps/gpsMediaTek19.c ****   2)BaseFlight
+  14:../src/gps/gpsMediaTek19.c ****   3)CH Robotics
+  15:../src/gps/gpsMediaTek19.c ****   4)MultiWii
+  16:../src/gps/gpsMediaTek19.c ****   5)S.O.H. Madgwick
+  17:../src/gps/gpsMediaTek19.c ****   6)UAVX
+  18:../src/gps/gpsMediaTek19.c **** 
+  19:../src/gps/gpsMediaTek19.c ****   Designed to run on the AQ32 Flight Control Board
+  20:../src/gps/gpsMediaTek19.c **** 
+  21:../src/gps/gpsMediaTek19.c ****   This program is free software: you can redistribute it and/or modify
+  22:../src/gps/gpsMediaTek19.c ****   it under the terms of the GNU General Public License as published by
+  23:../src/gps/gpsMediaTek19.c ****   the Free Software Foundation, either version 3 of the License, or
+  24:../src/gps/gpsMediaTek19.c ****   (at your option) any later version.
+  25:../src/gps/gpsMediaTek19.c **** 
+  26:../src/gps/gpsMediaTek19.c ****   This program is distributed in the hope that it will be useful,
+  27:../src/gps/gpsMediaTek19.c ****   but WITHOUT ANY WARRANTY; without even the implied warranty of
+  28:../src/gps/gpsMediaTek19.c ****   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  29:../src/gps/gpsMediaTek19.c ****   GNU General Public License for more details.
+  30:../src/gps/gpsMediaTek19.c **** 
+  31:../src/gps/gpsMediaTek19.c ****   You should have received a copy of the GNU General Public License
+  32:../src/gps/gpsMediaTek19.c ****   along with this program. If not, see <http://www.gnu.org/licenses/>.
+  33:../src/gps/gpsMediaTek19.c **** */
+  34:../src/gps/gpsMediaTek19.c **** 
+  35:../src/gps/gpsMediaTek19.c **** ///////////////////////////////////////////////////////////////////////////////
+  36:../src/gps/gpsMediaTek19.c **** 
+  37:../src/gps/gpsMediaTek19.c **** #include "board.h"
+  38:../src/gps/gpsMediaTek19.c **** 
+  39:../src/gps/gpsMediaTek19.c **** ///////////////////////////////////////////////////////////////////////////////
+  40:../src/gps/gpsMediaTek19.c **** // GPS Defines
+  41:../src/gps/gpsMediaTek19.c **** ///////////////////////////////////////////////////////////////////////////////
+  42:../src/gps/gpsMediaTek19.c **** 
+  43:../src/gps/gpsMediaTek19.c **** #define MTK_GPS_REVISION_V16  16
+  44:../src/gps/gpsMediaTek19.c **** #define MTK_GPS_REVISION_V19  19
+  45:../src/gps/gpsMediaTek19.c **** 
+  46:../src/gps/gpsMediaTek19.c **** #define SYNC1_V16 0xD0
+  47:../src/gps/gpsMediaTek19.c **** #define SYNC1_V19 0xD1
+  48:../src/gps/gpsMediaTek19.c **** #define SYNC2     0xDD
+  49:../src/gps/gpsMediaTek19.c **** 
+  50:../src/gps/gpsMediaTek19.c **** ///////////////////////////////////////////////////////////////////////////////
+  51:../src/gps/gpsMediaTek19.c **** // GPS Variables
+  52:../src/gps/gpsMediaTek19.c **** ///////////////////////////////////////////////////////////////////////////////
+  53:../src/gps/gpsMediaTek19.c **** 
+  54:../src/gps/gpsMediaTek19.c **** typedef struct __attribute__((packed))mtk19Msg_t
+  55:../src/gps/gpsMediaTek19.c **** {
+  56:../src/gps/gpsMediaTek19.c ****     int32_t	  latitude;
+  57:../src/gps/gpsMediaTek19.c ****     int32_t	  longitude;
+  58:../src/gps/gpsMediaTek19.c ****     int32_t	  altitude;
+  59:../src/gps/gpsMediaTek19.c ****     int32_t	  groundSpeed;
+  60:../src/gps/gpsMediaTek19.c ****     int32_t	  groundTrack;
+  61:../src/gps/gpsMediaTek19.c ****     uint8_t   satellites;
+  62:../src/gps/gpsMediaTek19.c ****     uint8_t   fixType;
+  63:../src/gps/gpsMediaTek19.c ****     uint32_t  date;
+  64:../src/gps/gpsMediaTek19.c ****     uint32_t  time;
+  65:../src/gps/gpsMediaTek19.c ****     uint16_t  hdop;
+  66:../src/gps/gpsMediaTek19.c **** } mtk19Msg_t;
+  67:../src/gps/gpsMediaTek19.c **** 
+  68:../src/gps/gpsMediaTek19.c **** union { mtk19Msg_t data;
+  69:../src/gps/gpsMediaTek19.c ****         uint8_t    bytes[32];
+  70:../src/gps/gpsMediaTek19.c ****       } mtk19Message;
+  71:../src/gps/gpsMediaTek19.c **** 
+  72:../src/gps/gpsMediaTek19.c **** uint8_t mtk19CkA;
+  73:../src/gps/gpsMediaTek19.c **** uint8_t mtk19CkB;
+  74:../src/gps/gpsMediaTek19.c **** uint8_t mtk19DataLength;
+  75:../src/gps/gpsMediaTek19.c **** uint8_t mtk19ExpectedDataLength;
+  76:../src/gps/gpsMediaTek19.c **** uint8_t mtkRevision;
+  77:../src/gps/gpsMediaTek19.c **** 
+  78:../src/gps/gpsMediaTek19.c **** ///////////////////////////////////////////////////////////////////////////////
+  79:../src/gps/gpsMediaTek19.c **** // Decode MediaTek 3329 Binary Message (DIY Drones Binary Protocol)
+  80:../src/gps/gpsMediaTek19.c **** ///////////////////////////////////////////////////////////////////////////////
+  81:../src/gps/gpsMediaTek19.c **** 
+  82:../src/gps/gpsMediaTek19.c **** uint8_t decodeMediaTek3329BinaryMsg(void)
+  83:../src/gps/gpsMediaTek19.c **** {
+  36              		.loc 1 83 0
+  37              		.cfi_startproc
+  38              		@ args = 0, pretend = 0, frame = 8
+  39              		@ frame_needed = 0, uses_anonymous_args = 0
+  40 0000 00B5     		push	{lr}
+  41              	.LCFI0:
+  42              		.cfi_def_cfa_offset 4
+  43              		.cfi_offset 14, -4
+  44 0002 83B0     		sub	sp, sp, #12
+  45              	.LCFI1:
+  46              		.cfi_def_cfa_offset 16
+  84:../src/gps/gpsMediaTek19.c ****     uint8_t 	data;
+  85:../src/gps/gpsMediaTek19.c ****     uint8_t 	parsed = false;
+  47              		.loc 1 85 0
+  48 0004 4FF00003 		mov	r3, #0
+  49 0008 8DF80730 		strb	r3, [sp, #7]
+  86:../src/gps/gpsMediaTek19.c ****     uint16_t    i;
+  87:../src/gps/gpsMediaTek19.c ****     uint16_t    numberOfChars;
+  88:../src/gps/gpsMediaTek19.c **** 
+  89:../src/gps/gpsMediaTek19.c ****     numberOfChars = gpsNumCharsAvailable();
+  50              		.loc 1 89 0
+  51 000c FFF7FEFF 		bl	gpsNumCharsAvailable
+  52 0010 0346     		mov	r3, r0
+  53 0012 ADF80230 		strh	r3, [sp, #2]	@ movhi
+  90:../src/gps/gpsMediaTek19.c **** 
+  91:../src/gps/gpsMediaTek19.c ****     if (numberOfChars == 0) return false;
+  54              		.loc 1 91 0
+  55 0016 BDF80230 		ldrh	r3, [sp, #2]
+  56 001a 002B     		cmp	r3, #0
+  57 001c 02D1     		bne	.L2
+  58              		.loc 1 91 0 is_stmt 0 discriminator 1
+  59 001e 4FF00003 		mov	r3, #0
+  60 0022 69E2     		b	.L3
+  61              	.L2:
+  92:../src/gps/gpsMediaTek19.c **** 
+  93:../src/gps/gpsMediaTek19.c ****     for (i = 0; i < numberOfChars; i++)
+  62              		.loc 1 93 0 is_stmt 1
+  63 0024 4FF00003 		mov	r3, #0
+  64 0028 ADF80430 		strh	r3, [sp, #4]	@ movhi
+  65 002c 5BE2     		b	.L4
+  66              	.L27:
+  94:../src/gps/gpsMediaTek19.c ****     {
+  95:../src/gps/gpsMediaTek19.c **** 		data = gpsRead();
+  67              		.loc 1 95 0
+  68 002e FFF7FEFF 		bl	gpsRead
+  69 0032 0346     		mov	r3, r0
+  70 0034 8DF80130 		strb	r3, [sp, #1]
+  96:../src/gps/gpsMediaTek19.c **** 
+  97:../src/gps/gpsMediaTek19.c ****         switch(mtk19ProcessDataState)
+  71              		.loc 1 97 0
+  72 0038 40F20003 		movw	r3, #:lower16:mtk19ProcessDataState
+  73 003c C0F20003 		movt	r3, #:upper16:mtk19ProcessDataState
+  74 0040 1B78     		ldrb	r3, [r3, #0]	@ zero_extendqisi2
+  75 0042 052B     		cmp	r3, #5
+  76 0044 00F24982 		bhi	.L5
+  77 0048 01A2     		adr	r2, .L12
+  78 004a 52F823F0 		ldr	pc, [r2, r3, lsl #2]
+  79 004e 00BF     		.align	2
+  80              	.L12:
+  81 0050 69000000 		.word	.L6+1
+  82 0054 B7000000 		.word	.L7+1
+  83 0058 ED000000 		.word	.L8+1
+  84 005c 59010000 		.word	.L9+1
+  85 0060 F9010000 		.word	.L10+1
+  86 0064 2B020000 		.word	.L11+1
+  87              	.L6:
+  98:../src/gps/gpsMediaTek19.c ****         {
+  99:../src/gps/gpsMediaTek19.c ****             ///////////////////////////
+ 100:../src/gps/gpsMediaTek19.c **** 
+ 101:../src/gps/gpsMediaTek19.c ****             case MTK19_WAIT_SYNC1:
+ 102:../src/gps/gpsMediaTek19.c ****                 if (data == SYNC1_V16)
+  88              		.loc 1 102 0
+  89 0068 9DF80130 		ldrb	r3, [sp, #1]	@ zero_extendqisi2
+  90 006c D02B     		cmp	r3, #208
+  91 006e 0ED1     		bne	.L13
+ 103:../src/gps/gpsMediaTek19.c ****                 {
+ 104:../src/gps/gpsMediaTek19.c ****                 	mtkRevision = MTK_GPS_REVISION_V16;
+  92              		.loc 1 104 0
+  93 0070 40F20003 		movw	r3, #:lower16:mtkRevision
+  94 0074 C0F20003 		movt	r3, #:upper16:mtkRevision
+  95 0078 4FF01002 		mov	r2, #16
+  96 007c 1A70     		strb	r2, [r3, #0]
+ 105:../src/gps/gpsMediaTek19.c ****                 	mtk19ProcessDataState = MTK19_WAIT_SYNC2;
+  97              		.loc 1 105 0
+  98 007e 40F20003 		movw	r3, #:lower16:mtk19ProcessDataState
+  99 0082 C0F20003 		movt	r3, #:upper16:mtk19ProcessDataState
+ 100 0086 4FF00102 		mov	r2, #1
+ 101 008a 1A70     		strb	r2, [r3, #0]
+ 106:../src/gps/gpsMediaTek19.c ****                 }
+ 107:../src/gps/gpsMediaTek19.c ****                 else if (data == SYNC1_V19)
+ 108:../src/gps/gpsMediaTek19.c ****                 {
+ 109:../src/gps/gpsMediaTek19.c **** 					mtkRevision = MTK_GPS_REVISION_V19;
+ 110:../src/gps/gpsMediaTek19.c **** 					mtk19ProcessDataState = MTK19_WAIT_SYNC2;
+ 111:../src/gps/gpsMediaTek19.c **** 				}
+ 112:../src/gps/gpsMediaTek19.c **** 
+ 113:../src/gps/gpsMediaTek19.c ****                 break;
+ 102              		.loc 1 113 0
+ 103 008c 22E2     		b	.L28
+ 104              	.L13:
+ 107:../src/gps/gpsMediaTek19.c ****                 else if (data == SYNC1_V19)
+ 105              		.loc 1 107 0
+ 106 008e 9DF80130 		ldrb	r3, [sp, #1]	@ zero_extendqisi2
+ 107 0092 D12B     		cmp	r3, #209
+ 108 0094 40F01E82 		bne	.L28
+ 109:../src/gps/gpsMediaTek19.c **** 					mtkRevision = MTK_GPS_REVISION_V19;
+ 109              		.loc 1 109 0
+ 110 0098 40F20003 		movw	r3, #:lower16:mtkRevision
+ 111 009c C0F20003 		movt	r3, #:upper16:mtkRevision
+ 112 00a0 4FF01302 		mov	r2, #19
+ 113 00a4 1A70     		strb	r2, [r3, #0]
+ 110:../src/gps/gpsMediaTek19.c **** 					mtk19ProcessDataState = MTK19_WAIT_SYNC2;
+ 114              		.loc 1 110 0
+ 115 00a6 40F20003 		movw	r3, #:lower16:mtk19ProcessDataState
+ 116 00aa C0F20003 		movt	r3, #:upper16:mtk19ProcessDataState
+ 117 00ae 4FF00102 		mov	r2, #1
+ 118 00b2 1A70     		strb	r2, [r3, #0]
+ 119              		.loc 1 113 0
+ 120 00b4 0EE2     		b	.L28
+ 121              	.L7:
+ 114:../src/gps/gpsMediaTek19.c **** 
+ 115:../src/gps/gpsMediaTek19.c ****             ///////////////////////////
+ 116:../src/gps/gpsMediaTek19.c **** 
+ 117:../src/gps/gpsMediaTek19.c ****             case MTK19_WAIT_SYNC2:
+ 118:../src/gps/gpsMediaTek19.c ****                 if (data == SYNC2)
+ 122              		.loc 1 118 0
+ 123 00b6 9DF80130 		ldrb	r3, [sp, #1]	@ zero_extendqisi2
+ 124 00ba DD2B     		cmp	r3, #221
+ 125 00bc 07D1     		bne	.L15
+ 119:../src/gps/gpsMediaTek19.c ****                     mtk19ProcessDataState = MTK19_GET_LEN;
+ 126              		.loc 1 119 0
+ 127 00be 40F20003 		movw	r3, #:lower16:mtk19ProcessDataState
+ 128 00c2 C0F20003 		movt	r3, #:upper16:mtk19ProcessDataState
+ 129 00c6 4FF00202 		mov	r2, #2
+ 130 00ca 1A70     		strb	r2, [r3, #0]
+ 131 00cc 06E0     		b	.L16
+ 132              	.L15:
+ 120:../src/gps/gpsMediaTek19.c ****                 else
+ 121:../src/gps/gpsMediaTek19.c ****                     mtk19ProcessDataState = MTK19_WAIT_SYNC1;
+ 133              		.loc 1 121 0
+ 134 00ce 40F20003 		movw	r3, #:lower16:mtk19ProcessDataState
+ 135 00d2 C0F20003 		movt	r3, #:upper16:mtk19ProcessDataState
+ 136 00d6 4FF00002 		mov	r2, #0
+ 137 00da 1A70     		strb	r2, [r3, #0]
+ 138              	.L16:
+ 122:../src/gps/gpsMediaTek19.c **** 
+ 123:../src/gps/gpsMediaTek19.c ****                 mtk19ExpectedDataLength = 0;
+ 139              		.loc 1 123 0
+ 140 00dc 40F20003 		movw	r3, #:lower16:mtk19ExpectedDataLength
+ 141 00e0 C0F20003 		movt	r3, #:upper16:mtk19ExpectedDataLength
+ 142 00e4 4FF00002 		mov	r2, #0
+ 143 00e8 1A70     		strb	r2, [r3, #0]
+ 124:../src/gps/gpsMediaTek19.c **** 
+ 125:../src/gps/gpsMediaTek19.c ****                 break;
+ 144              		.loc 1 125 0
+ 145 00ea F6E1     		b	.L5
+ 146              	.L8:
+ 126:../src/gps/gpsMediaTek19.c **** 
+ 127:../src/gps/gpsMediaTek19.c ****             ///////////////////////////
+ 128:../src/gps/gpsMediaTek19.c **** 
+ 129:../src/gps/gpsMediaTek19.c ****             case MTK19_GET_LEN:
+ 130:../src/gps/gpsMediaTek19.c ****                 mtk19ExpectedDataLength = data;
+ 147              		.loc 1 130 0
+ 148 00ec 40F20003 		movw	r3, #:lower16:mtk19ExpectedDataLength
+ 149 00f0 C0F20003 		movt	r3, #:upper16:mtk19ExpectedDataLength
+ 150 00f4 9DF80120 		ldrb	r2, [sp, #1]
+ 151 00f8 1A70     		strb	r2, [r3, #0]
+ 131:../src/gps/gpsMediaTek19.c **** 
+ 132:../src/gps/gpsMediaTek19.c ****                 if (mtk19ExpectedDataLength == sizeof(mtk19Message))
+ 152              		.loc 1 132 0
+ 153 00fa 40F20003 		movw	r3, #:lower16:mtk19ExpectedDataLength
+ 154 00fe C0F20003 		movt	r3, #:upper16:mtk19ExpectedDataLength
+ 155 0102 1B78     		ldrb	r3, [r3, #0]	@ zero_extendqisi2
+ 156 0104 202B     		cmp	r3, #32
+ 157 0106 1FD1     		bne	.L17
+ 133:../src/gps/gpsMediaTek19.c ****                 {
+ 134:../src/gps/gpsMediaTek19.c ****                     mtk19ProcessDataState = MTK19_GET_DATA;
+ 158              		.loc 1 134 0
+ 159 0108 40F20003 		movw	r3, #:lower16:mtk19ProcessDataState
+ 160 010c C0F20003 		movt	r3, #:upper16:mtk19ProcessDataState
+ 161 0110 4FF00302 		mov	r2, #3
+ 162 0114 1A70     		strb	r2, [r3, #0]
+ 135:../src/gps/gpsMediaTek19.c ****                     mtk19CkA = data;
+ 163              		.loc 1 135 0
+ 164 0116 40F20003 		movw	r3, #:lower16:mtk19CkA
+ 165 011a C0F20003 		movt	r3, #:upper16:mtk19CkA
+ 166 011e 9DF80120 		ldrb	r2, [sp, #1]
+ 167 0122 1A70     		strb	r2, [r3, #0]
+ 136:../src/gps/gpsMediaTek19.c ****                     mtk19CkB = mtk19CkA;
+ 168              		.loc 1 136 0
+ 169 0124 40F20003 		movw	r3, #:lower16:mtk19CkA
+ 170 0128 C0F20003 		movt	r3, #:upper16:mtk19CkA
+ 171 012c 1A78     		ldrb	r2, [r3, #0]	@ zero_extendqisi2
+ 172 012e 40F20003 		movw	r3, #:lower16:mtk19CkB
+ 173 0132 C0F20003 		movt	r3, #:upper16:mtk19CkB
+ 174 0136 1A70     		strb	r2, [r3, #0]
+ 137:../src/gps/gpsMediaTek19.c ****                     mtk19DataLength = 0;
+ 175              		.loc 1 137 0
+ 176 0138 40F20003 		movw	r3, #:lower16:mtk19DataLength
+ 177 013c C0F20003 		movt	r3, #:upper16:mtk19DataLength
+ 178 0140 4FF00002 		mov	r2, #0
+ 179 0144 1A70     		strb	r2, [r3, #0]
+ 138:../src/gps/gpsMediaTek19.c ****                 }
+ 139:../src/gps/gpsMediaTek19.c ****                 else
+ 140:../src/gps/gpsMediaTek19.c ****                     mtk19ProcessDataState = MTK19_WAIT_SYNC1;
+ 141:../src/gps/gpsMediaTek19.c **** 
+ 142:../src/gps/gpsMediaTek19.c ****                 break;
+ 180              		.loc 1 142 0
+ 181 0146 C8E1     		b	.L5
+ 182              	.L17:
+ 140:../src/gps/gpsMediaTek19.c ****                     mtk19ProcessDataState = MTK19_WAIT_SYNC1;
+ 183              		.loc 1 140 0
+ 184 0148 40F20003 		movw	r3, #:lower16:mtk19ProcessDataState
+ 185 014c C0F20003 		movt	r3, #:upper16:mtk19ProcessDataState
+ 186 0150 4FF00002 		mov	r2, #0
+ 187 0154 1A70     		strb	r2, [r3, #0]
+ 188              		.loc 1 142 0
+ 189 0156 C0E1     		b	.L5
+ 190              	.L9:
+ 143:../src/gps/gpsMediaTek19.c **** 
+ 144:../src/gps/gpsMediaTek19.c ****             ///////////////////////////
+ 145:../src/gps/gpsMediaTek19.c **** 
+ 146:../src/gps/gpsMediaTek19.c ****             case MTK19_GET_DATA:
+ 147:../src/gps/gpsMediaTek19.c ****                 mtk19CkA += data;
+ 191              		.loc 1 147 0
+ 192 0158 40F20003 		movw	r3, #:lower16:mtk19CkA
+ 193 015c C0F20003 		movt	r3, #:upper16:mtk19CkA
+ 194 0160 1A78     		ldrb	r2, [r3, #0]	@ zero_extendqisi2
+ 195 0162 9DF80130 		ldrb	r3, [sp, #1]
+ 196 0166 D318     		adds	r3, r2, r3
+ 197 0168 DAB2     		uxtb	r2, r3
+ 198 016a 40F20003 		movw	r3, #:lower16:mtk19CkA
+ 199 016e C0F20003 		movt	r3, #:upper16:mtk19CkA
+ 200 0172 1A70     		strb	r2, [r3, #0]
+ 148:../src/gps/gpsMediaTek19.c ****                 mtk19CkB += mtk19CkA;
+ 201              		.loc 1 148 0
+ 202 0174 40F20003 		movw	r3, #:lower16:mtk19CkB
+ 203 0178 C0F20003 		movt	r3, #:upper16:mtk19CkB
+ 204 017c 1A78     		ldrb	r2, [r3, #0]	@ zero_extendqisi2
+ 205 017e 40F20003 		movw	r3, #:lower16:mtk19CkA
+ 206 0182 C0F20003 		movt	r3, #:upper16:mtk19CkA
+ 207 0186 1B78     		ldrb	r3, [r3, #0]	@ zero_extendqisi2
+ 208 0188 D318     		adds	r3, r2, r3
+ 209 018a DAB2     		uxtb	r2, r3
+ 210 018c 40F20003 		movw	r3, #:lower16:mtk19CkB
+ 211 0190 C0F20003 		movt	r3, #:upper16:mtk19CkB
+ 212 0194 1A70     		strb	r2, [r3, #0]
+ 149:../src/gps/gpsMediaTek19.c **** 
+ 150:../src/gps/gpsMediaTek19.c ****                 if (mtk19DataLength < sizeof(mtk19Message))
+ 213              		.loc 1 150 0
+ 214 0196 40F20003 		movw	r3, #:lower16:mtk19DataLength
+ 215 019a C0F20003 		movt	r3, #:upper16:mtk19DataLength
+ 216 019e 1B78     		ldrb	r3, [r3, #0]	@ zero_extendqisi2
+ 217 01a0 1F2B     		cmp	r3, #31
+ 218 01a2 14D8     		bhi	.L19
+ 151:../src/gps/gpsMediaTek19.c ****                     mtk19Message.bytes[mtk19DataLength++] = data;
+ 219              		.loc 1 151 0
+ 220 01a4 40F20003 		movw	r3, #:lower16:mtk19DataLength
+ 221 01a8 C0F20003 		movt	r3, #:upper16:mtk19DataLength
+ 222 01ac 1A78     		ldrb	r2, [r3, #0]	@ zero_extendqisi2
+ 223 01ae 1146     		mov	r1, r2
+ 224 01b0 40F20003 		movw	r3, #:lower16:mtk19Message
+ 225 01b4 C0F20003 		movt	r3, #:upper16:mtk19Message
+ 226 01b8 9DF80100 		ldrb	r0, [sp, #1]
+ 227 01bc 5854     		strb	r0, [r3, r1]
+ 228 01be 02F10103 		add	r3, r2, #1
+ 229 01c2 DAB2     		uxtb	r2, r3
+ 230 01c4 40F20003 		movw	r3, #:lower16:mtk19DataLength
+ 231 01c8 C0F20003 		movt	r3, #:upper16:mtk19DataLength
+ 232 01cc 1A70     		strb	r2, [r3, #0]
+ 233              	.L19:
+ 152:../src/gps/gpsMediaTek19.c **** 
+ 153:../src/gps/gpsMediaTek19.c ****                 if (mtk19DataLength >= mtk19ExpectedDataLength)
+ 234              		.loc 1 153 0
+ 235 01ce 40F20003 		movw	r3, #:lower16:mtk19DataLength
+ 236 01d2 C0F20003 		movt	r3, #:upper16:mtk19DataLength
+ 237 01d6 1A78     		ldrb	r2, [r3, #0]	@ zero_extendqisi2
+ 238 01d8 40F20003 		movw	r3, #:lower16:mtk19ExpectedDataLength
+ 239 01dc C0F20003 		movt	r3, #:upper16:mtk19ExpectedDataLength
+ 240 01e0 1B78     		ldrb	r3, [r3, #0]	@ zero_extendqisi2
+ 241 01e2 9A42     		cmp	r2, r3
+ 242 01e4 C0F07881 		bcc	.L29
+ 154:../src/gps/gpsMediaTek19.c ****                     mtk19ProcessDataState = MTK19_GET_CKA;
+ 243              		.loc 1 154 0
+ 244 01e8 40F20003 		movw	r3, #:lower16:mtk19ProcessDataState
+ 245 01ec C0F20003 		movt	r3, #:upper16:mtk19ProcessDataState
+ 246 01f0 4FF00402 		mov	r2, #4
+ 247 01f4 1A70     		strb	r2, [r3, #0]
+ 155:../src/gps/gpsMediaTek19.c **** 
+ 156:../src/gps/gpsMediaTek19.c ****                 break;
+ 248              		.loc 1 156 0
+ 249 01f6 6FE1     		b	.L29
+ 250              	.L10:
+ 157:../src/gps/gpsMediaTek19.c **** 
+ 158:../src/gps/gpsMediaTek19.c ****             ///////////////////////////
+ 159:../src/gps/gpsMediaTek19.c **** 
+ 160:../src/gps/gpsMediaTek19.c ****             case MTK19_GET_CKA:
+ 161:../src/gps/gpsMediaTek19.c ****                 if (mtk19CkA == data)
+ 251              		.loc 1 161 0
+ 252 01f8 40F20003 		movw	r3, #:lower16:mtk19CkA
+ 253 01fc C0F20003 		movt	r3, #:upper16:mtk19CkA
+ 254 0200 1B78     		ldrb	r3, [r3, #0]	@ zero_extendqisi2
+ 255 0202 9DF80120 		ldrb	r2, [sp, #1]	@ zero_extendqisi2
+ 256 0206 9A42     		cmp	r2, r3
+ 257 0208 07D1     		bne	.L21
+ 162:../src/gps/gpsMediaTek19.c ****                     mtk19ProcessDataState = MTK19_GET_CKB;
+ 258              		.loc 1 162 0
+ 259 020a 40F20003 		movw	r3, #:lower16:mtk19ProcessDataState
+ 260 020e C0F20003 		movt	r3, #:upper16:mtk19ProcessDataState
+ 261 0212 4FF00502 		mov	r2, #5
+ 262 0216 1A70     		strb	r2, [r3, #0]
+ 163:../src/gps/gpsMediaTek19.c ****                 else
+ 164:../src/gps/gpsMediaTek19.c ****                     mtk19ProcessDataState = MTK19_WAIT_SYNC1;
+ 165:../src/gps/gpsMediaTek19.c **** 
+ 166:../src/gps/gpsMediaTek19.c **** 			    break;
+ 263              		.loc 1 166 0
+ 264 0218 5FE1     		b	.L5
+ 265              	.L21:
+ 164:../src/gps/gpsMediaTek19.c ****                     mtk19ProcessDataState = MTK19_WAIT_SYNC1;
+ 266              		.loc 1 164 0
+ 267 021a 40F20003 		movw	r3, #:lower16:mtk19ProcessDataState
+ 268 021e C0F20003 		movt	r3, #:upper16:mtk19ProcessDataState
+ 269 0222 4FF00002 		mov	r2, #0
+ 270 0226 1A70     		strb	r2, [r3, #0]
+ 271              		.loc 1 166 0
+ 272 0228 57E1     		b	.L5
+ 273              	.L11:
+ 167:../src/gps/gpsMediaTek19.c **** 
+ 168:../src/gps/gpsMediaTek19.c ****             ///////////////////////////
+ 169:../src/gps/gpsMediaTek19.c **** 
+ 170:../src/gps/gpsMediaTek19.c ****             case MTK19_GET_CKB:
+ 171:../src/gps/gpsMediaTek19.c ****                 if (mtk19CkB == data)
+ 274              		.loc 1 171 0
+ 275 022a 40F20003 		movw	r3, #:lower16:mtk19CkB
+ 276 022e C0F20003 		movt	r3, #:upper16:mtk19CkB
+ 277 0232 1B78     		ldrb	r3, [r3, #0]	@ zero_extendqisi2
+ 278 0234 9DF80120 		ldrb	r2, [sp, #1]	@ zero_extendqisi2
+ 279 0238 9A42     		cmp	r2, r3
+ 280 023a 40F00281 		bne	.L23
+ 172:../src/gps/gpsMediaTek19.c ****                 {
+ 173:../src/gps/gpsMediaTek19.c **** 				    if (mtkRevision == MTK_GPS_REVISION_V16)
+ 281              		.loc 1 173 0
+ 282 023e 40F20003 		movw	r3, #:lower16:mtkRevision
+ 283 0242 C0F20003 		movt	r3, #:upper16:mtkRevision
+ 284 0246 1B78     		ldrb	r3, [r3, #0]	@ zero_extendqisi2
+ 285 0248 102B     		cmp	r3, #16
+ 286 024a 36D1     		bne	.L24
+ 174:../src/gps/gpsMediaTek19.c ****                     {
+ 175:../src/gps/gpsMediaTek19.c **** 				    	sensors.gpsLatitude  = (float)mtk19Message.data.latitude  * 0.000001f  * D2R; // Radians
+ 287              		.loc 1 175 0
+ 288 024c 40F20003 		movw	r3, #:lower16:mtk19Message
+ 289 0250 C0F20003 		movt	r3, #:upper16:mtk19Message
+ 290 0254 1B68     		ldr	r3, [r3, #0]
+ 291 0256 07EE903A 		fmsr	s15, r3	@ int
+ 292 025a B8EEE77A 		fsitos	s14, s15
+ 293 025e DFEDA87A 		flds	s15, .L30
+ 294 0262 67EE277A 		fmuls	s15, s14, s15
+ 295 0266 9FEDA77A 		flds	s14, .L30+4
+ 296 026a 67EE877A 		fmuls	s15, s15, s14
+ 297 026e 9FEDA67A 		flds	s14, .L30+8
+ 298 0272 C7EE877A 		fdivs	s15, s15, s14
+ 299 0276 40F20003 		movw	r3, #:lower16:sensors
+ 300 027a C0F20003 		movt	r3, #:upper16:sensors
+ 301 027e C3ED107A 		fsts	s15, [r3, #64]
+ 176:../src/gps/gpsMediaTek19.c ****                         sensors.gpsLongitude = (float)mtk19Message.data.longitude * 0.000001f  * D2
+ 302              		.loc 1 176 0
+ 303 0282 40F20003 		movw	r3, #:lower16:mtk19Message
+ 304 0286 C0F20003 		movt	r3, #:upper16:mtk19Message
+ 305 028a 5B68     		ldr	r3, [r3, #4]
+ 306 028c 07EE903A 		fmsr	s15, r3	@ int
+ 307 0290 B8EEE77A 		fsitos	s14, s15
+ 308 0294 DFED9A7A 		flds	s15, .L30
+ 309 0298 67EE277A 		fmuls	s15, s14, s15
+ 310 029c 9FED997A 		flds	s14, .L30+4
+ 311 02a0 67EE877A 		fmuls	s15, s15, s14
+ 312 02a4 9FED987A 		flds	s14, .L30+8
+ 313 02a8 C7EE877A 		fdivs	s15, s15, s14
+ 314 02ac 40F20003 		movw	r3, #:lower16:sensors
+ 315 02b0 C0F20003 		movt	r3, #:upper16:sensors
+ 316 02b4 C3ED117A 		fsts	s15, [r3, #68]
+ 317 02b8 35E0     		b	.L25
+ 318              	.L24:
+ 177:../src/gps/gpsMediaTek19.c **** 			        }
+ 178:../src/gps/gpsMediaTek19.c **** 				    else
+ 179:../src/gps/gpsMediaTek19.c **** 				    {
+ 180:../src/gps/gpsMediaTek19.c **** 				    	sensors.gpsLatitude  = (float)mtk19Message.data.latitude  * 0.0000001f * D2R; // Radians
+ 319              		.loc 1 180 0
+ 320 02ba 40F20003 		movw	r3, #:lower16:mtk19Message
+ 321 02be C0F20003 		movt	r3, #:upper16:mtk19Message
+ 322 02c2 1B68     		ldr	r3, [r3, #0]
+ 323 02c4 07EE903A 		fmsr	s15, r3	@ int
+ 324 02c8 B8EEE77A 		fsitos	s14, s15
+ 325 02cc DFED8F7A 		flds	s15, .L30+12
+ 326 02d0 67EE277A 		fmuls	s15, s14, s15
+ 327 02d4 9FED8B7A 		flds	s14, .L30+4
+ 328 02d8 67EE877A 		fmuls	s15, s15, s14
+ 329 02dc 9FED8A7A 		flds	s14, .L30+8
+ 330 02e0 C7EE877A 		fdivs	s15, s15, s14
+ 331 02e4 40F20003 		movw	r3, #:lower16:sensors
+ 332 02e8 C0F20003 		movt	r3, #:upper16:sensors
+ 333 02ec C3ED107A 		fsts	s15, [r3, #64]
+ 181:../src/gps/gpsMediaTek19.c ****                         sensors.gpsLongitude = (float)mtk19Message.data.longitude * 0.0000001f * D2
+ 334              		.loc 1 181 0
+ 335 02f0 40F20003 		movw	r3, #:lower16:mtk19Message
+ 336 02f4 C0F20003 		movt	r3, #:upper16:mtk19Message
+ 337 02f8 5B68     		ldr	r3, [r3, #4]
+ 338 02fa 07EE903A 		fmsr	s15, r3	@ int
+ 339 02fe B8EEE77A 		fsitos	s14, s15
+ 340 0302 DFED827A 		flds	s15, .L30+12
+ 341 0306 67EE277A 		fmuls	s15, s14, s15
+ 342 030a 9FED7E7A 		flds	s14, .L30+4
+ 343 030e 67EE877A 		fmuls	s15, s15, s14
+ 344 0312 9FED7D7A 		flds	s14, .L30+8
+ 345 0316 C7EE877A 		fdivs	s15, s15, s14
+ 346 031a 40F20003 		movw	r3, #:lower16:sensors
+ 347 031e C0F20003 		movt	r3, #:upper16:sensors
+ 348 0322 C3ED117A 		fsts	s15, [r3, #68]
+ 349              	.L25:
+ 182:../src/gps/gpsMediaTek19.c **** 				    }
+ 183:../src/gps/gpsMediaTek19.c **** 
+ 184:../src/gps/gpsMediaTek19.c ****                     sensors.gpsAltitude		 = (float)mtk19Message.data.altitude    * 0.01f;          
+ 350              		.loc 1 184 0
+ 351 0326 40F20003 		movw	r3, #:lower16:mtk19Message
+ 352 032a C0F20003 		movt	r3, #:upper16:mtk19Message
+ 353 032e 9B68     		ldr	r3, [r3, #8]
+ 354 0330 07EE903A 		fmsr	s15, r3	@ int
+ 355 0334 B8EEE77A 		fsitos	s14, s15
+ 356 0338 DFED757A 		flds	s15, .L30+16
+ 357 033c 67EE277A 		fmuls	s15, s14, s15
+ 358 0340 40F20003 		movw	r3, #:lower16:sensors
+ 359 0344 C0F20003 		movt	r3, #:upper16:sensors
+ 360 0348 C3ED127A 		fsts	s15, [r3, #72]
+ 185:../src/gps/gpsMediaTek19.c ****                     sensors.gpsGroundSpeed	 = (float)mtk19Message.data.groundSpeed * 0.01f;        
+ 361              		.loc 1 185 0
+ 362 034c 40F20003 		movw	r3, #:lower16:mtk19Message
+ 363 0350 C0F20003 		movt	r3, #:upper16:mtk19Message
+ 364 0354 DB68     		ldr	r3, [r3, #12]
+ 365 0356 07EE903A 		fmsr	s15, r3	@ int
+ 366 035a B8EEE77A 		fsitos	s14, s15
+ 367 035e DFED6C7A 		flds	s15, .L30+16
+ 368 0362 67EE277A 		fmuls	s15, s14, s15
+ 369 0366 40F20003 		movw	r3, #:lower16:sensors
+ 370 036a C0F20003 		movt	r3, #:upper16:sensors
+ 371 036e C3ED137A 		fsts	s15, [r3, #76]
+ 186:../src/gps/gpsMediaTek19.c ****                     sensors.gpsGroundTrack	 = (float)mtk19Message.data.groundTrack * 0.01f * D2R;  
+ 372              		.loc 1 186 0
+ 373 0372 40F20003 		movw	r3, #:lower16:mtk19Message
+ 374 0376 C0F20003 		movt	r3, #:upper16:mtk19Message
+ 375 037a 1B69     		ldr	r3, [r3, #16]
+ 376 037c 07EE903A 		fmsr	s15, r3	@ int
+ 377 0380 B8EEE77A 		fsitos	s14, s15
+ 378 0384 DFED627A 		flds	s15, .L30+16
+ 379 0388 67EE277A 		fmuls	s15, s14, s15
+ 380 038c 9FED5D7A 		flds	s14, .L30+4
+ 381 0390 67EE877A 		fmuls	s15, s15, s14
+ 382 0394 9FED5C7A 		flds	s14, .L30+8
+ 383 0398 C7EE877A 		fdivs	s15, s15, s14
+ 384 039c 40F20003 		movw	r3, #:lower16:sensors
+ 385 03a0 C0F20003 		movt	r3, #:upper16:sensors
+ 386 03a4 C3ED147A 		fsts	s15, [r3, #80]
+ 187:../src/gps/gpsMediaTek19.c **** 
+ 188:../src/gps/gpsMediaTek19.c ****                     sensors.gpsNumSats		 = mtk19Message.data.satellites;
+ 387              		.loc 1 188 0
+ 388 03a8 40F20003 		movw	r3, #:lower16:mtk19Message
+ 389 03ac C0F20003 		movt	r3, #:upper16:mtk19Message
+ 390 03b0 1A7D     		ldrb	r2, [r3, #20]	@ zero_extendqisi2
+ 391 03b2 40F20003 		movw	r3, #:lower16:sensors
+ 392 03b6 C0F20003 		movt	r3, #:upper16:sensors
+ 393 03ba 83F85420 		strb	r2, [r3, #84]
+ 189:../src/gps/gpsMediaTek19.c ****                     sensors.gpsFix			 = mtk19Message.data.fixType;
+ 394              		.loc 1 189 0
+ 395 03be 40F20003 		movw	r3, #:lower16:mtk19Message
+ 396 03c2 C0F20003 		movt	r3, #:upper16:mtk19Message
+ 397 03c6 5A7D     		ldrb	r2, [r3, #21]	@ zero_extendqisi2
+ 398 03c8 40F20003 		movw	r3, #:lower16:sensors
+ 399 03cc C0F20003 		movt	r3, #:upper16:sensors
+ 400 03d0 83F85520 		strb	r2, [r3, #85]
+ 190:../src/gps/gpsMediaTek19.c ****                     sensors.gpsDate			 = mtk19Message.data.date;
+ 401              		.loc 1 190 0
+ 402 03d4 40F20003 		movw	r3, #:lower16:mtk19Message
+ 403 03d8 C0F20003 		movt	r3, #:upper16:mtk19Message
+ 404 03dc D3F81620 		ldr	r2, [r3, #22]	@ unaligned
+ 405 03e0 40F20003 		movw	r3, #:lower16:sensors
+ 406 03e4 C0F20003 		movt	r3, #:upper16:sensors
+ 407 03e8 9A65     		str	r2, [r3, #88]
+ 191:../src/gps/gpsMediaTek19.c ****                     sensors.gpsTime          = (float)mtk19Message.data.time * 0.001f;
+ 408              		.loc 1 191 0
+ 409 03ea 40F20003 		movw	r3, #:lower16:mtk19Message
+ 410 03ee C0F20003 		movt	r3, #:upper16:mtk19Message
+ 411 03f2 D3F81A30 		ldr	r3, [r3, #26]	@ unaligned
+ 412 03f6 07EE903A 		fmsr	s15, r3	@ int
+ 413 03fa B8EE677A 		fuitos	s14, s15
+ 414 03fe DFED457A 		flds	s15, .L30+20
+ 415 0402 67EE277A 		fmuls	s15, s14, s15
+ 416 0406 40F20003 		movw	r3, #:lower16:sensors
+ 417 040a C0F20003 		movt	r3, #:upper16:sensors
+ 418 040e C3ED177A 		fsts	s15, [r3, #92]
+ 192:../src/gps/gpsMediaTek19.c ****                     sensors.gpsHdop			 = (float)mtk19Message.data.hdop * 0.01f;
+ 419              		.loc 1 192 0
+ 420 0412 40F20003 		movw	r3, #:lower16:mtk19Message
+ 421 0416 C0F20003 		movt	r3, #:upper16:mtk19Message
+ 422 041a DB8B     		ldrh	r3, [r3, #30]
+ 423 041c 07EE903A 		fmsr	s15, r3	@ int
+ 424 0420 B8EE677A 		fuitos	s14, s15
+ 425 0424 DFED3A7A 		flds	s15, .L30+16
+ 426 0428 67EE277A 		fmuls	s15, s14, s15
+ 427 042c 40F20003 		movw	r3, #:lower16:sensors
+ 428 0430 C0F20003 		movt	r3, #:upper16:sensors
+ 429 0434 C3ED187A 		fsts	s15, [r3, #96]
+ 193:../src/gps/gpsMediaTek19.c **** 
+ 194:../src/gps/gpsMediaTek19.c ****                     parsed = true;
+ 430              		.loc 1 194 0
+ 431 0438 4FF00103 		mov	r3, #1
+ 432 043c 8DF80730 		strb	r3, [sp, #7]
+ 433 0440 40E0     		b	.L26
+ 434              	.L23:
+ 195:../src/gps/gpsMediaTek19.c **** 			    }
+ 196:../src/gps/gpsMediaTek19.c **** 			    else
+ 197:../src/gps/gpsMediaTek19.c **** 			    {
+ 198:../src/gps/gpsMediaTek19.c **** 					sensors.gpsLatitude    = GPS_INVALID_ANGLE;
+ 435              		.loc 1 198 0
+ 436 0442 40F20003 		movw	r3, #:lower16:sensors
+ 437 0446 C0F20003 		movt	r3, #:upper16:sensors
+ 438 044a 334A     		ldr	r2, .L30+24	@ float
+ 439 044c 1A64     		str	r2, [r3, #64]	@ float
+ 199:../src/gps/gpsMediaTek19.c **** 					sensors.gpsLongitude   = GPS_INVALID_ANGLE;
+ 440              		.loc 1 199 0
+ 441 044e 40F20003 		movw	r3, #:lower16:sensors
+ 442 0452 C0F20003 		movt	r3, #:upper16:sensors
+ 443 0456 304A     		ldr	r2, .L30+24	@ float
+ 444 0458 5A64     		str	r2, [r3, #68]	@ float
+ 200:../src/gps/gpsMediaTek19.c **** 					sensors.gpsAltitude	   = GPS_INVALID_ALTITUDE;
+ 445              		.loc 1 200 0
+ 446 045a 40F20003 		movw	r3, #:lower16:sensors
+ 447 045e C0F20003 		movt	r3, #:upper16:sensors
+ 448 0462 2E4A     		ldr	r2, .L30+28	@ float
+ 449 0464 9A64     		str	r2, [r3, #72]	@ float
+ 201:../src/gps/gpsMediaTek19.c **** 					sensors.gpsGroundSpeed = GPS_INVALID_SPEED;
+ 450              		.loc 1 201 0
+ 451 0466 40F20003 		movw	r3, #:lower16:sensors
+ 452 046a C0F20003 		movt	r3, #:upper16:sensors
+ 453 046e 2B4A     		ldr	r2, .L30+28	@ float
+ 454 0470 DA64     		str	r2, [r3, #76]	@ float
+ 202:../src/gps/gpsMediaTek19.c **** 					sensors.gpsGroundTrack = GPS_INVALID_ANGLE;
+ 455              		.loc 1 202 0
+ 456 0472 40F20003 		movw	r3, #:lower16:sensors
+ 457 0476 C0F20003 		movt	r3, #:upper16:sensors
+ 458 047a 274A     		ldr	r2, .L30+24	@ float
+ 459 047c 1A65     		str	r2, [r3, #80]	@ float
+ 203:../src/gps/gpsMediaTek19.c **** 					sensors.gpsNumSats     = GPS_INVALID_SATS;
+ 460              		.loc 1 203 0
+ 461 047e 40F20003 		movw	r3, #:lower16:sensors
+ 462 0482 C0F20003 		movt	r3, #:upper16:sensors
+ 463 0486 4FF00002 		mov	r2, #0
+ 464 048a 83F85420 		strb	r2, [r3, #84]
+ 204:../src/gps/gpsMediaTek19.c **** 					sensors.gpsFix         = GPS_INVALID_FIX;
+ 465              		.loc 1 204 0
+ 466 048e 40F20003 		movw	r3, #:lower16:sensors
+ 467 0492 C0F20003 		movt	r3, #:upper16:sensors
+ 468 0496 4FF00002 		mov	r2, #0
+ 469 049a 83F85520 		strb	r2, [r3, #85]
+ 205:../src/gps/gpsMediaTek19.c **** 					sensors.gpsDate        = GPS_INVALID_DATE;
+ 470              		.loc 1 205 0
+ 471 049e 40F20003 		movw	r3, #:lower16:sensors
+ 472 04a2 C0F20003 		movt	r3, #:upper16:sensors
+ 473 04a6 42F20F72 		movw	r2, #9999
+ 474 04aa 9A65     		str	r2, [r3, #88]
+ 206:../src/gps/gpsMediaTek19.c **** 					sensors.gpsTime        = GPS_INVALID_TIME;
+ 475              		.loc 1 206 0
+ 476 04ac 40F20003 		movw	r3, #:lower16:sensors
+ 477 04b0 C0F20003 		movt	r3, #:upper16:sensors
+ 478 04b4 1A4A     		ldr	r2, .L30+32	@ float
+ 479 04b6 DA65     		str	r2, [r3, #92]	@ float
+ 207:../src/gps/gpsMediaTek19.c **** 					sensors.gpsHdop        = GPS_INVALID_HDOP;
+ 480              		.loc 1 207 0
+ 481 04b8 40F20003 		movw	r3, #:lower16:sensors
+ 482 04bc C0F20003 		movt	r3, #:upper16:sensors
+ 483 04c0 164A     		ldr	r2, .L30+28	@ float
+ 484 04c2 1A66     		str	r2, [r3, #96]	@ float
+ 485              	.L26:
+ 208:../src/gps/gpsMediaTek19.c **** 				}
+ 209:../src/gps/gpsMediaTek19.c **** 
+ 210:../src/gps/gpsMediaTek19.c ****                 mtk19ProcessDataState = MTK19_WAIT_SYNC1;
+ 486              		.loc 1 210 0
+ 487 04c4 40F20003 		movw	r3, #:lower16:mtk19ProcessDataState
+ 488 04c8 C0F20003 		movt	r3, #:upper16:mtk19ProcessDataState
+ 489 04cc 4FF00002 		mov	r2, #0
+ 490 04d0 1A70     		strb	r2, [r3, #0]
+ 211:../src/gps/gpsMediaTek19.c **** 
+ 212:../src/gps/gpsMediaTek19.c ****                 break;
+ 491              		.loc 1 212 0
+ 492 04d2 02E0     		b	.L5
+ 493              	.L28:
+ 113:../src/gps/gpsMediaTek19.c ****                 break;
+ 494              		.loc 1 113 0
+ 495 04d4 00BF     		nop
+ 496 04d6 00E0     		b	.L5
+ 497              	.L29:
+ 156:../src/gps/gpsMediaTek19.c ****                 break;
+ 498              		.loc 1 156 0
+ 499 04d8 00BF     		nop
+ 500              	.L5:
+  93:../src/gps/gpsMediaTek19.c ****     for (i = 0; i < numberOfChars; i++)
+ 501              		.loc 1 93 0
+ 502 04da BDF80430 		ldrh	r3, [sp, #4]	@ movhi
+ 503 04de 03F10103 		add	r3, r3, #1
+ 504 04e2 ADF80430 		strh	r3, [sp, #4]	@ movhi
+ 505              	.L4:
+  93:../src/gps/gpsMediaTek19.c ****     for (i = 0; i < numberOfChars; i++)
+ 506              		.loc 1 93 0 is_stmt 0 discriminator 1
+ 507 04e6 BDF80420 		ldrh	r2, [sp, #4]
+ 508 04ea BDF80230 		ldrh	r3, [sp, #2]
+ 509 04ee 9A42     		cmp	r2, r3
+ 510 04f0 FFF49DAD 		bcc	.L27
+ 213:../src/gps/gpsMediaTek19.c ****         }
+ 214:../src/gps/gpsMediaTek19.c ****     }
+ 215:../src/gps/gpsMediaTek19.c ****     return parsed;
+ 511              		.loc 1 215 0 is_stmt 1
+ 512 04f4 9DF80730 		ldrb	r3, [sp, #7]	@ zero_extendqisi2
+ 513              	.L3:
+ 216:../src/gps/gpsMediaTek19.c **** }
+ 514              		.loc 1 216 0
+ 515 04f8 1846     		mov	r0, r3
+ 516 04fa 03B0     		add	sp, sp, #12
+ 517 04fc 00BD     		pop	{pc}
+ 518              	.L31:
+ 519 04fe 00BF     		.align	2
+ 520              	.L30:
+ 521 0500 BD378635 		.word	897988541
+ 522 0504 DB0F4940 		.word	1078530011
+ 523 0508 00003443 		.word	1127481344
+ 524 050c 95BFD633 		.word	869711765
+ 525 0510 0AD7233C 		.word	1008981770
+ 526 0514 6F12833A 		.word	981668463
+ 527 0518 F6832E43 		.word	1127121910
+ 528 051c 003C1C46 		.word	1176255488
+ 529 0520 00000000 		.word	0
+ 530              		.cfi_endproc
+ 531              	.LFE111:
+ 533              	.Letext0:
+ 534              		.file 2 "c:\\program files\\codesourcery\\sourcery_codebench_lite_for_arm_eabi\\bin\\../lib/gcc/ar
+ 535              		.file 3 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\src/aq32Plus_F3.h"
+ 536              		.file 4 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\src\\gps/gpsMediaTe
+ 537              		.file 5 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\src\\gps/gpsNMEA.h"
+ 538              		.file 6 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\src\\gps/gpsUblox.h
+ 539              		.file 7 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\Libraries\\CMSIS\\I
+DEFINED SYMBOLS
+                            *ABS*:00000000 gpsMediaTek19.c
+                            *COM*:00000001 mtk19ProcessDataState
+                            *COM*:00000001 nmeaProcessDataState
+                            *COM*:00000001 ubloxProcessDataState
+                            *COM*:00000020 mtk19Message
+                            *COM*:00000001 mtk19CkA
+                            *COM*:00000001 mtk19CkB
+                            *COM*:00000001 mtk19DataLength
+                            *COM*:00000001 mtk19ExpectedDataLength
+                            *COM*:00000001 mtkRevision
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cc2FkuWs.s:28     .text:00000000 $t
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cc2FkuWs.s:33     .text:00000000 decodeMediaTek3329BinaryMsg
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cc2FkuWs.s:81     .text:00000050 $d
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cc2FkuWs.s:89     .text:00000068 $t
+D:\DOCUME~1\e722209\LOCALS~1\Temp\cc2FkuWs.s:521    .text:00000500 $d
+                     .debug_frame:00000010 $d
+
+UNDEFINED SYMBOLS
+gpsNumCharsAvailable
+gpsRead
+sensors

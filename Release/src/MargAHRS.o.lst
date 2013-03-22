@@ -1,0 +1,2060 @@
+   1              		.syntax unified
+   2              		.cpu cortex-m4
+   3              		.eabi_attribute 27, 3
+   4              		.fpu fpv4-sp-d16
+   5              		.eabi_attribute 20, 1
+   6              		.eabi_attribute 21, 1
+   7              		.eabi_attribute 23, 3
+   8              		.eabi_attribute 24, 1
+   9              		.eabi_attribute 25, 1
+  10              		.eabi_attribute 26, 1
+  11              		.eabi_attribute 30, 6
+  12              		.eabi_attribute 34, 1
+  13              		.eabi_attribute 18, 4
+  14              		.thumb
+  15              		.file	"MargAHRS.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.comm	mtk19ProcessDataState,1,1
+  20              		.comm	nmeaProcessDataState,1,1
+  21              		.comm	ubloxProcessDataState,1,1
+  22              		.global	exAcc
+  23              		.bss
+  24              		.align	2
+  27              	exAcc:
+  28 0000 00000000 		.space	4
+  29              		.global	eyAcc
+  30              		.align	2
+  33              	eyAcc:
+  34 0004 00000000 		.space	4
+  35              		.global	ezAcc
+  36              		.align	2
+  39              	ezAcc:
+  40 0008 00000000 		.space	4
+  41              		.global	exAccInt
+  42              		.align	2
+  45              	exAccInt:
+  46 000c 00000000 		.space	4
+  47              		.global	eyAccInt
+  48              		.align	2
+  51              	eyAccInt:
+  52 0010 00000000 		.space	4
+  53              		.global	ezAccInt
+  54              		.align	2
+  57              	ezAccInt:
+  58 0014 00000000 		.space	4
+  59              		.global	exMag
+  60              		.align	2
+  63              	exMag:
+  64 0018 00000000 		.space	4
+  65              		.global	eyMag
+  66              		.align	2
+  69              	eyMag:
+  70 001c 00000000 		.space	4
+  71              		.global	ezMag
+  72              		.align	2
+  75              	ezMag:
+  76 0020 00000000 		.space	4
+  77              		.global	exMagInt
+  78              		.align	2
+  81              	exMagInt:
+  82 0024 00000000 		.space	4
+  83              		.global	eyMagInt
+  84              		.align	2
+  87              	eyMagInt:
+  88 0028 00000000 		.space	4
+  89              		.global	ezMagInt
+  90              		.align	2
+  93              	ezMagInt:
+  94 002c 00000000 		.space	4
+  95              		.comm	kpAcc,4,4
+  96              		.comm	kiAcc,4,4
+  97              		.global	q0
+  98              		.data
+  99              		.align	2
+ 102              	q0:
+ 103 0000 0000803F 		.word	1065353216
+ 104              		.global	q1
+ 105              		.bss
+ 106              		.align	2
+ 109              	q1:
+ 110 0030 00000000 		.space	4
+ 111              		.global	q2
+ 112              		.align	2
+ 115              	q2:
+ 116 0034 00000000 		.space	4
+ 117              		.global	q3
+ 118              		.align	2
+ 121              	q3:
+ 122 0038 00000000 		.space	4
+ 123              		.comm	q0q0,4,4
+ 124              		.comm	q0q1,4,4
+ 125              		.comm	q0q2,4,4
+ 126              		.comm	q0q3,4,4
+ 127              		.comm	q1q1,4,4
+ 128              		.comm	q1q2,4,4
+ 129              		.comm	q1q3,4,4
+ 130              		.comm	q2q2,4,4
+ 131              		.comm	q2q3,4,4
+ 132              		.comm	q3q3,4,4
+ 133              		.comm	halfT,4,4
+ 134              		.global	MargAHRSinitialized
+ 137              	MargAHRSinitialized:
+ 138 003c 00       		.space	1
+ 139              		.global	accConfidenceDecay
+ 140 003d 000000   		.align	2
+ 143              	accConfidenceDecay:
+ 144 0040 00000000 		.space	4
+ 145              		.global	accConfidence
+ 146              		.data
+ 147              		.align	2
+ 150              	accConfidence:
+ 151 0004 0000803F 		.word	1065353216
+ 152              		.global	__aeabi_f2d
+ 153              		.global	__aeabi_dmul
+ 154              		.global	__aeabi_dsub
+ 155              		.global	__aeabi_d2f
+ 156              		.text
+ 157              		.align	2
+ 158              		.global	calculateAccConfidence
+ 159              		.thumb
+ 160              		.thumb_func
+ 162              	calculateAccConfidence:
+ 163              	.LFB111:
+ 164              		.file 1 "../src/MargAHRS.c"
+   1:../src/MargAHRS.c **** ///================================================================================================
+   2:../src/MargAHRS.c **** // AHRS.c
+   3:../src/MargAHRS.c **** // S.O.H. Madgwick
+   4:../src/MargAHRS.c **** // 25th August 2010
+   5:../src/MargAHRS.c **** //
+   6:../src/MargAHRS.c **** //  1 June 2012 Modified by J. Ihlein
+   7:../src/MargAHRS.c **** // 27 Aug  2012 Extensively modified to include G.K. Egan's accel confidence calculations and
+   8:../src/MargAHRS.c **** //                                                          calculation efficiency updates
+   9:../src/MargAHRS.c **** //=================================================================================================
+  10:../src/MargAHRS.c **** // Description:
+  11:../src/MargAHRS.c **** //
+  12:../src/MargAHRS.c **** // Quaternion implementation of the 'DCM filter' [Mayhony et al].  Incorporates the magnetic distor
+  13:../src/MargAHRS.c **** // compensation algorithms from my filter [Madgwick] which eliminates the need for a reference
+  14:../src/MargAHRS.c **** // direction of flux (bx bz) to be predefined and limits the effect of magnetic distortions to yaw
+  15:../src/MargAHRS.c **** // axis only.
+  16:../src/MargAHRS.c **** //
+  17:../src/MargAHRS.c **** // User must define 'halfT' as the (sample period / 2), and the filter gains 'Kp' and 'Ki'.
+  18:../src/MargAHRS.c **** //
+  19:../src/MargAHRS.c **** // Global variables 'q0', 'q1', 'q2', 'q3' are the quaternion elements representing the estimated
+  20:../src/MargAHRS.c **** // orientation.  See my report for an overview of the use of quaternions in this application.
+  21:../src/MargAHRS.c **** //
+  22:../src/MargAHRS.c **** // User must call 'AHRSupdate()' every sample period and parse calibrated gyroscope ('gx', 'gy', 'g
+  23:../src/MargAHRS.c **** // accelerometer ('ax', 'ay', 'ay') and magnetometer ('mx', 'my', 'mz') data.  Gyroscope units are
+  24:../src/MargAHRS.c **** // radians/second, accelerometer and magnetometer units are irrelevant as the vector is normalised.
+  25:../src/MargAHRS.c **** //
+  26:../src/MargAHRS.c **** //=================================================================================================
+  27:../src/MargAHRS.c **** 
+  28:../src/MargAHRS.c **** //-------------------------------------------------------------------------------------------------
+  29:../src/MargAHRS.c **** // Header files
+  30:../src/MargAHRS.c **** 
+  31:../src/MargAHRS.c **** #include "board.h"
+  32:../src/MargAHRS.c **** 
+  33:../src/MargAHRS.c **** //-------------------------------------------------------------------------------------------------
+  34:../src/MargAHRS.c **** // Variable definitions
+  35:../src/MargAHRS.c **** 
+  36:../src/MargAHRS.c **** float exAcc    = 0.0f,    eyAcc = 0.0f,    ezAcc = 0.0f; // accel error
+  37:../src/MargAHRS.c **** float exAccInt = 0.0f, eyAccInt = 0.0f, ezAccInt = 0.0f; // accel integral error
+  38:../src/MargAHRS.c **** 
+  39:../src/MargAHRS.c **** float exMag    = 0.0f, eyMag    = 0.0f, ezMag    = 0.0f; // mag error
+  40:../src/MargAHRS.c **** float exMagInt = 0.0f, eyMagInt = 0.0f, ezMagInt = 0.0f; // mag integral error
+  41:../src/MargAHRS.c **** 
+  42:../src/MargAHRS.c **** float kpAcc, kiAcc;
+  43:../src/MargAHRS.c **** 
+  44:../src/MargAHRS.c **** float q0 = 1.0f, q1 = 0.0f, q2 = 0.0f, q3 = 0.0f;
+  45:../src/MargAHRS.c **** 
+  46:../src/MargAHRS.c **** // auxiliary variables to reduce number of repeated operations
+  47:../src/MargAHRS.c **** float q0q0, q0q1, q0q2, q0q3;
+  48:../src/MargAHRS.c **** float q1q1, q1q2, q1q3;
+  49:../src/MargAHRS.c **** float q2q2, q2q3;
+  50:../src/MargAHRS.c **** float q3q3;
+  51:../src/MargAHRS.c **** 
+  52:../src/MargAHRS.c **** float halfT;
+  53:../src/MargAHRS.c **** 
+  54:../src/MargAHRS.c **** uint8_t MargAHRSinitialized = false;
+  55:../src/MargAHRS.c **** 
+  56:../src/MargAHRS.c **** //-------------------------------------------------------------------------------------------------
+  57:../src/MargAHRS.c **** 
+  58:../src/MargAHRS.c **** float accConfidenceDecay = 0.0f;
+  59:../src/MargAHRS.c **** float accConfidence      = 1.0f;
+  60:../src/MargAHRS.c **** 
+  61:../src/MargAHRS.c **** #define HardFilter(O,N)  (O*0.9f+N*0.1f)
+  62:../src/MargAHRS.c **** 
+  63:../src/MargAHRS.c **** void calculateAccConfidence(float accMag)
+  64:../src/MargAHRS.c **** {
+ 165              		.loc 1 64 0
+ 166              		.cfi_startproc
+ 167              		@ args = 0, pretend = 0, frame = 8
+ 168              		@ frame_needed = 0, uses_anonymous_args = 0
+ 169 0000 30B5     		push	{r4, r5, lr}
+ 170              	.LCFI0:
+ 171              		.cfi_def_cfa_offset 12
+ 172              		.cfi_offset 14, -4
+ 173              		.cfi_offset 5, -8
+ 174              		.cfi_offset 4, -12
+ 175 0002 83B0     		sub	sp, sp, #12
+ 176              	.LCFI1:
+ 177              		.cfi_def_cfa_offset 24
+ 178 0004 0190     		str	r0, [sp, #4]	@ float
+  65:../src/MargAHRS.c **** 	// G.K. Egan (C) computes confidence in accelerometers when
+  66:../src/MargAHRS.c **** 	// aircraft is being accelerated over and above that due to gravity
+  67:../src/MargAHRS.c **** 
+  68:../src/MargAHRS.c **** 	static float accMagP = 1.0f;
+  69:../src/MargAHRS.c **** 
+  70:../src/MargAHRS.c **** 	accMag /= accelOneG;  // HJI Added to convert MPS^2 to G's (0.101973 = 1 / 9.8065)
+ 179              		.loc 1 70 0
+ 180 0006 40F20003 		movw	r3, #:lower16:accelOneG
+ 181 000a C0F20003 		movt	r3, #:upper16:accelOneG
+ 182 000e D3ED007A 		flds	s15, [r3, #0]
+ 183 0012 9DED017A 		flds	s14, [sp, #4]
+ 184 0016 C7EE277A 		fdivs	s15, s14, s15
+ 185 001a CDED017A 		fsts	s15, [sp, #4]
+  71:../src/MargAHRS.c **** 
+  72:../src/MargAHRS.c **** 	accMag  = HardFilter(accMagP, accMag );
+ 186              		.loc 1 72 0
+ 187 001e 40F20003 		movw	r3, #:lower16:accMagP.8871
+ 188 0022 C0F20003 		movt	r3, #:upper16:accMagP.8871
+ 189 0026 93ED007A 		flds	s14, [r3, #0]
+ 190 002a DFED2B7A 		flds	s15, .L2+8
+ 191 002e 27EE277A 		fmuls	s14, s14, s15
+ 192 0032 DDED016A 		flds	s13, [sp, #4]
+ 193 0036 DFED297A 		flds	s15, .L2+12
+ 194 003a 66EEA77A 		fmuls	s15, s13, s15
+ 195 003e 77EE277A 		fadds	s15, s14, s15
+ 196 0042 CDED017A 		fsts	s15, [sp, #4]
+  73:../src/MargAHRS.c **** 	accMagP = accMag;
+ 197              		.loc 1 73 0
+ 198 0046 40F20003 		movw	r3, #:lower16:accMagP.8871
+ 199 004a C0F20003 		movt	r3, #:upper16:accMagP.8871
+ 200 004e 019A     		ldr	r2, [sp, #4]	@ float
+ 201 0050 1A60     		str	r2, [r3, #0]	@ float
+  74:../src/MargAHRS.c **** 
+  75:../src/MargAHRS.c **** 	accConfidence
+  76:../src/MargAHRS.c **** 			= constrain(1.0f - (accConfidenceDecay * sqrt(fabs(accMag - 1.0f))), 0.0f, 1.0f);
+ 202              		.loc 1 76 0
+ 203 0052 40F20003 		movw	r3, #:lower16:accConfidenceDecay
+ 204 0056 C0F20003 		movt	r3, #:upper16:accConfidenceDecay
+ 205 005a 1B68     		ldr	r3, [r3, #0]	@ float
+ 206 005c 1846     		mov	r0, r3	@ float
+ 207 005e FFF7FEFF 		bl	__aeabi_f2d
+ 208 0062 0446     		mov	r4, r0
+ 209 0064 0D46     		mov	r5, r1
+ 210 0066 9DED017A 		flds	s14, [sp, #4]
+ 211 006a F7EE007A 		fconsts	s15, #112
+ 212 006e 77EE677A 		fsubs	s15, s14, s15
+ 213 0072 F0EEE77A 		fabss	s15, s15
+ 214 0076 17EE900A 		fmrs	r0, s15
+ 215 007a FFF7FEFF 		bl	__aeabi_f2d
+ 216 007e 0246     		mov	r2, r0
+ 217 0080 0B46     		mov	r3, r1
+ 218 0082 1046     		mov	r0, r2
+ 219 0084 1946     		mov	r1, r3
+ 220 0086 FFF7FEFF 		bl	sqrt
+ 221 008a 0246     		mov	r2, r0
+ 222 008c 0B46     		mov	r3, r1
+ 223 008e 2046     		mov	r0, r4
+ 224 0090 2946     		mov	r1, r5
+ 225 0092 FFF7FEFF 		bl	__aeabi_dmul
+ 226 0096 0246     		mov	r2, r0
+ 227 0098 0B46     		mov	r3, r1
+ 228 009a 0DA1     		adr	r1, .L2
+ 229 009c D1E90001 		ldrd	r0, [r1]
+ 230 00a0 FFF7FEFF 		bl	__aeabi_dsub
+ 231 00a4 0246     		mov	r2, r0
+ 232 00a6 0B46     		mov	r3, r1
+ 233 00a8 1046     		mov	r0, r2
+ 234 00aa 1946     		mov	r1, r3
+ 235 00ac FFF7FEFF 		bl	__aeabi_d2f
+ 236 00b0 0346     		mov	r3, r0	@ float
+ 237 00b2 1846     		mov	r0, r3	@ float
+ 238 00b4 0A49     		ldr	r1, .L2+16	@ float
+ 239 00b6 0B4A     		ldr	r2, .L2+20	@ float
+ 240 00b8 FFF7FEFF 		bl	constrain
+ 241 00bc 0246     		mov	r2, r0	@ float
+ 242 00be 40F20003 		movw	r3, #:lower16:accConfidence
+ 243 00c2 C0F20003 		movt	r3, #:upper16:accConfidence
+ 244 00c6 1A60     		str	r2, [r3, #0]	@ float
+  77:../src/MargAHRS.c **** 
+  78:../src/MargAHRS.c **** }
+ 245              		.loc 1 78 0
+ 246 00c8 03B0     		add	sp, sp, #12
+ 247 00ca 30BD     		pop	{r4, r5, pc}
+ 248              	.L3:
+ 249 00cc AFF30080 		.align	3
+ 250              	.L2:
+ 251 00d0 00000000 		.word	0
+ 252 00d4 0000F03F 		.word	1072693248
+ 253 00d8 6666663F 		.word	1063675494
+ 254 00dc CDCCCC3D 		.word	1036831949
+ 255 00e0 00000000 		.word	0
+ 256 00e4 0000803F 		.word	1065353216
+ 257              		.cfi_endproc
+ 258              	.LFE111:
+ 260              		.align	2
+ 261              		.global	MargAHRSinit
+ 262              		.thumb
+ 263              		.thumb_func
+ 265              	MargAHRSinit:
+ 266              	.LFB112:
+  79:../src/MargAHRS.c **** 
+  80:../src/MargAHRS.c **** //-------------------------------------------------------------------------------------------------
+  81:../src/MargAHRS.c **** 
+  82:../src/MargAHRS.c **** //=================================================================================================
+  83:../src/MargAHRS.c **** // Initialization
+  84:../src/MargAHRS.c **** //=================================================================================================
+  85:../src/MargAHRS.c **** 
+  86:../src/MargAHRS.c **** void MargAHRSinit(float ax, float ay, float az, float mx, float my, float mz)
+  87:../src/MargAHRS.c **** {
+ 267              		.loc 1 87 0
+ 268              		.cfi_startproc
+ 269              		@ args = 8, pretend = 0, frame = 64
+ 270              		@ frame_needed = 0, uses_anonymous_args = 0
+ 271 00e8 30B5     		push	{r4, r5, lr}
+ 272              	.LCFI2:
+ 273              		.cfi_def_cfa_offset 12
+ 274              		.cfi_offset 14, -4
+ 275              		.cfi_offset 5, -8
+ 276              		.cfi_offset 4, -12
+ 277 00ea 91B0     		sub	sp, sp, #68
+ 278              	.LCFI3:
+ 279              		.cfi_def_cfa_offset 80
+ 280 00ec 0390     		str	r0, [sp, #12]	@ float
+ 281 00ee 0291     		str	r1, [sp, #8]	@ float
+ 282 00f0 0192     		str	r2, [sp, #4]	@ float
+ 283 00f2 0093     		str	r3, [sp, #0]	@ float
+  88:../src/MargAHRS.c ****     float initialRoll, initialPitch;
+  89:../src/MargAHRS.c ****     float cosRoll, sinRoll, cosPitch, sinPitch;
+  90:../src/MargAHRS.c ****     float magX, magY;
+  91:../src/MargAHRS.c ****     float initialHdg, cosHeading, sinHeading;
+  92:../src/MargAHRS.c **** 
+  93:../src/MargAHRS.c ****     initialRoll  = atan2(-ay, -az);
+ 284              		.loc 1 93 0
+ 285 00f4 DDED027A 		flds	s15, [sp, #8]
+ 286 00f8 F1EE677A 		fnegs	s15, s15
+ 287 00fc 17EE903A 		fmrs	r3, s15
+ 288 0100 1846     		mov	r0, r3	@ float
+ 289 0102 FFF7FEFF 		bl	__aeabi_f2d
+ 290 0106 0446     		mov	r4, r0
+ 291 0108 0D46     		mov	r5, r1
+ 292 010a DDED017A 		flds	s15, [sp, #4]
+ 293 010e F1EE677A 		fnegs	s15, s15
+ 294 0112 17EE903A 		fmrs	r3, s15
+ 295 0116 1846     		mov	r0, r3	@ float
+ 296 0118 FFF7FEFF 		bl	__aeabi_f2d
+ 297 011c 0246     		mov	r2, r0
+ 298 011e 0B46     		mov	r3, r1
+ 299 0120 2046     		mov	r0, r4
+ 300 0122 2946     		mov	r1, r5
+ 301 0124 FFF7FEFF 		bl	atan2
+ 302 0128 0246     		mov	r2, r0
+ 303 012a 0B46     		mov	r3, r1
+ 304 012c 1046     		mov	r0, r2
+ 305 012e 1946     		mov	r1, r3
+ 306 0130 FFF7FEFF 		bl	__aeabi_d2f
+ 307 0134 0346     		mov	r3, r0	@ float
+ 308 0136 0F93     		str	r3, [sp, #60]	@ float
+  94:../src/MargAHRS.c ****     initialPitch = atan2( ax, -az);
+ 309              		.loc 1 94 0
+ 310 0138 0398     		ldr	r0, [sp, #12]	@ float
+ 311 013a FFF7FEFF 		bl	__aeabi_f2d
+ 312 013e 0446     		mov	r4, r0
+ 313 0140 0D46     		mov	r5, r1
+ 314 0142 DDED017A 		flds	s15, [sp, #4]
+ 315 0146 F1EE677A 		fnegs	s15, s15
+ 316 014a 17EE903A 		fmrs	r3, s15
+ 317 014e 1846     		mov	r0, r3	@ float
+ 318 0150 FFF7FEFF 		bl	__aeabi_f2d
+ 319 0154 0246     		mov	r2, r0
+ 320 0156 0B46     		mov	r3, r1
+ 321 0158 2046     		mov	r0, r4
+ 322 015a 2946     		mov	r1, r5
+ 323 015c FFF7FEFF 		bl	atan2
+ 324 0160 0246     		mov	r2, r0
+ 325 0162 0B46     		mov	r3, r1
+ 326 0164 1046     		mov	r0, r2
+ 327 0166 1946     		mov	r1, r3
+ 328 0168 FFF7FEFF 		bl	__aeabi_d2f
+ 329 016c 0346     		mov	r3, r0	@ float
+ 330 016e 0E93     		str	r3, [sp, #56]	@ float
+  95:../src/MargAHRS.c **** 
+  96:../src/MargAHRS.c ****     cosRoll  = cosf(initialRoll);
+ 331              		.loc 1 96 0
+ 332 0170 0F98     		ldr	r0, [sp, #60]	@ float
+ 333 0172 FFF7FEFF 		bl	cosf
+ 334 0176 0D90     		str	r0, [sp, #52]	@ float
+  97:../src/MargAHRS.c ****     sinRoll  = sinf(initialRoll);
+ 335              		.loc 1 97 0
+ 336 0178 0F98     		ldr	r0, [sp, #60]	@ float
+ 337 017a FFF7FEFF 		bl	sinf
+ 338 017e 0C90     		str	r0, [sp, #48]	@ float
+  98:../src/MargAHRS.c ****     cosPitch = cosf(initialPitch);
+ 339              		.loc 1 98 0
+ 340 0180 0E98     		ldr	r0, [sp, #56]	@ float
+ 341 0182 FFF7FEFF 		bl	cosf
+ 342 0186 0B90     		str	r0, [sp, #44]	@ float
+  99:../src/MargAHRS.c ****     sinPitch = sinf(initialPitch);
+ 343              		.loc 1 99 0
+ 344 0188 0E98     		ldr	r0, [sp, #56]	@ float
+ 345 018a FFF7FEFF 		bl	sinf
+ 346 018e 0A90     		str	r0, [sp, #40]	@ float
+ 100:../src/MargAHRS.c **** 
+ 101:../src/MargAHRS.c ****     magX = mx * cosPitch + my * sinRoll * sinPitch + mz * cosRoll * sinPitch;
+ 347              		.loc 1 101 0
+ 348 0190 9DED007A 		flds	s14, [sp, #0]
+ 349 0194 DDED0B7A 		flds	s15, [sp, #44]
+ 350 0198 27EE277A 		fmuls	s14, s14, s15
+ 351 019c DDED146A 		flds	s13, [sp, #80]
+ 352 01a0 DDED0C7A 		flds	s15, [sp, #48]
+ 353 01a4 66EEA77A 		fmuls	s15, s13, s15
+ 354 01a8 DDED0A6A 		flds	s13, [sp, #40]
+ 355 01ac 67EEA67A 		fmuls	s15, s15, s13
+ 356 01b0 37EE277A 		fadds	s14, s14, s15
+ 357 01b4 DDED156A 		flds	s13, [sp, #84]
+ 358 01b8 DDED0D7A 		flds	s15, [sp, #52]
+ 359 01bc 66EEA77A 		fmuls	s15, s13, s15
+ 360 01c0 DDED0A6A 		flds	s13, [sp, #40]
+ 361 01c4 67EEA67A 		fmuls	s15, s15, s13
+ 362 01c8 77EE277A 		fadds	s15, s14, s15
+ 363 01cc CDED097A 		fsts	s15, [sp, #36]
+ 102:../src/MargAHRS.c **** 
+ 103:../src/MargAHRS.c ****     magY = my * cosRoll - mz * sinRoll;
+ 364              		.loc 1 103 0
+ 365 01d0 9DED147A 		flds	s14, [sp, #80]
+ 366 01d4 DDED0D7A 		flds	s15, [sp, #52]
+ 367 01d8 27EE277A 		fmuls	s14, s14, s15
+ 368 01dc DDED156A 		flds	s13, [sp, #84]
+ 369 01e0 DDED0C7A 		flds	s15, [sp, #48]
+ 370 01e4 66EEA77A 		fmuls	s15, s13, s15
+ 371 01e8 77EE677A 		fsubs	s15, s14, s15
+ 372 01ec CDED087A 		fsts	s15, [sp, #32]
+ 104:../src/MargAHRS.c **** 
+ 105:../src/MargAHRS.c ****     initialHdg = atan2f(-magY, magX);
+ 373              		.loc 1 105 0
+ 374 01f0 DDED087A 		flds	s15, [sp, #32]
+ 375 01f4 F1EE677A 		fnegs	s15, s15
+ 376 01f8 17EE903A 		fmrs	r3, s15
+ 377 01fc 1846     		mov	r0, r3	@ float
+ 378 01fe 0999     		ldr	r1, [sp, #36]	@ float
+ 379 0200 FFF7FEFF 		bl	atan2f
+ 380 0204 0790     		str	r0, [sp, #28]	@ float
+ 106:../src/MargAHRS.c **** 
+ 107:../src/MargAHRS.c ****     cosRoll = cosf(initialRoll * 0.5f);
+ 381              		.loc 1 107 0
+ 382 0206 9DED0F7A 		flds	s14, [sp, #60]
+ 383 020a F6EE007A 		fconsts	s15, #96
+ 384 020e 67EE277A 		fmuls	s15, s14, s15
+ 385 0212 17EE900A 		fmrs	r0, s15
+ 386 0216 FFF7FEFF 		bl	cosf
+ 387 021a 0D90     		str	r0, [sp, #52]	@ float
+ 108:../src/MargAHRS.c ****     sinRoll = sinf(initialRoll * 0.5f);
+ 388              		.loc 1 108 0
+ 389 021c 9DED0F7A 		flds	s14, [sp, #60]
+ 390 0220 F6EE007A 		fconsts	s15, #96
+ 391 0224 67EE277A 		fmuls	s15, s14, s15
+ 392 0228 17EE900A 		fmrs	r0, s15
+ 393 022c FFF7FEFF 		bl	sinf
+ 394 0230 0C90     		str	r0, [sp, #48]	@ float
+ 109:../src/MargAHRS.c **** 
+ 110:../src/MargAHRS.c ****     cosPitch = cosf(initialPitch * 0.5f);
+ 395              		.loc 1 110 0
+ 396 0232 9DED0E7A 		flds	s14, [sp, #56]
+ 397 0236 F6EE007A 		fconsts	s15, #96
+ 398 023a 67EE277A 		fmuls	s15, s14, s15
+ 399 023e 17EE900A 		fmrs	r0, s15
+ 400 0242 FFF7FEFF 		bl	cosf
+ 401 0246 0B90     		str	r0, [sp, #44]	@ float
+ 111:../src/MargAHRS.c ****     sinPitch = sinf(initialPitch * 0.5f);
+ 402              		.loc 1 111 0
+ 403 0248 9DED0E7A 		flds	s14, [sp, #56]
+ 404 024c F6EE007A 		fconsts	s15, #96
+ 405 0250 67EE277A 		fmuls	s15, s14, s15
+ 406 0254 17EE900A 		fmrs	r0, s15
+ 407 0258 FFF7FEFF 		bl	sinf
+ 408 025c 0A90     		str	r0, [sp, #40]	@ float
+ 112:../src/MargAHRS.c **** 
+ 113:../src/MargAHRS.c ****     cosHeading = cosf(initialHdg * 0.5f);
+ 409              		.loc 1 113 0
+ 410 025e 9DED077A 		flds	s14, [sp, #28]
+ 411 0262 F6EE007A 		fconsts	s15, #96
+ 412 0266 67EE277A 		fmuls	s15, s14, s15
+ 413 026a 17EE900A 		fmrs	r0, s15
+ 414 026e FFF7FEFF 		bl	cosf
+ 415 0272 0690     		str	r0, [sp, #24]	@ float
+ 114:../src/MargAHRS.c ****     sinHeading = sinf(initialHdg * 0.5f);
+ 416              		.loc 1 114 0
+ 417 0274 9DED077A 		flds	s14, [sp, #28]
+ 418 0278 F6EE007A 		fconsts	s15, #96
+ 419 027c 67EE277A 		fmuls	s15, s14, s15
+ 420 0280 17EE900A 		fmrs	r0, s15
+ 421 0284 FFF7FEFF 		bl	sinf
+ 422 0288 0590     		str	r0, [sp, #20]	@ float
+ 115:../src/MargAHRS.c **** 
+ 116:../src/MargAHRS.c ****     q0 = cosRoll * cosPitch * cosHeading + sinRoll * sinPitch * sinHeading;
+ 423              		.loc 1 116 0
+ 424 028a 9DED0D7A 		flds	s14, [sp, #52]
+ 425 028e DDED0B7A 		flds	s15, [sp, #44]
+ 426 0292 67EE277A 		fmuls	s15, s14, s15
+ 427 0296 9DED067A 		flds	s14, [sp, #24]
+ 428 029a 27EE877A 		fmuls	s14, s15, s14
+ 429 029e DDED0C6A 		flds	s13, [sp, #48]
+ 430 02a2 DDED0A7A 		flds	s15, [sp, #40]
+ 431 02a6 66EEA77A 		fmuls	s15, s13, s15
+ 432 02aa DDED056A 		flds	s13, [sp, #20]
+ 433 02ae 67EEA67A 		fmuls	s15, s15, s13
+ 434 02b2 77EE277A 		fadds	s15, s14, s15
+ 435 02b6 40F20003 		movw	r3, #:lower16:q0
+ 436 02ba C0F20003 		movt	r3, #:upper16:q0
+ 437 02be C3ED007A 		fsts	s15, [r3, #0]
+ 117:../src/MargAHRS.c ****     q1 = sinRoll * cosPitch * cosHeading - cosRoll * sinPitch * sinHeading;
+ 438              		.loc 1 117 0
+ 439 02c2 9DED0C7A 		flds	s14, [sp, #48]
+ 440 02c6 DDED0B7A 		flds	s15, [sp, #44]
+ 441 02ca 67EE277A 		fmuls	s15, s14, s15
+ 442 02ce 9DED067A 		flds	s14, [sp, #24]
+ 443 02d2 27EE877A 		fmuls	s14, s15, s14
+ 444 02d6 DDED0D6A 		flds	s13, [sp, #52]
+ 445 02da DDED0A7A 		flds	s15, [sp, #40]
+ 446 02de 66EEA77A 		fmuls	s15, s13, s15
+ 447 02e2 DDED056A 		flds	s13, [sp, #20]
+ 448 02e6 67EEA67A 		fmuls	s15, s15, s13
+ 449 02ea 77EE677A 		fsubs	s15, s14, s15
+ 450 02ee 40F20003 		movw	r3, #:lower16:q1
+ 451 02f2 C0F20003 		movt	r3, #:upper16:q1
+ 452 02f6 C3ED007A 		fsts	s15, [r3, #0]
+ 118:../src/MargAHRS.c ****     q2 = cosRoll * sinPitch * cosHeading + sinRoll * cosPitch * sinHeading;
+ 453              		.loc 1 118 0
+ 454 02fa 9DED0D7A 		flds	s14, [sp, #52]
+ 455 02fe DDED0A7A 		flds	s15, [sp, #40]
+ 456 0302 67EE277A 		fmuls	s15, s14, s15
+ 457 0306 9DED067A 		flds	s14, [sp, #24]
+ 458 030a 27EE877A 		fmuls	s14, s15, s14
+ 459 030e DDED0C6A 		flds	s13, [sp, #48]
+ 460 0312 DDED0B7A 		flds	s15, [sp, #44]
+ 461 0316 66EEA77A 		fmuls	s15, s13, s15
+ 462 031a DDED056A 		flds	s13, [sp, #20]
+ 463 031e 67EEA67A 		fmuls	s15, s15, s13
+ 464 0322 77EE277A 		fadds	s15, s14, s15
+ 465 0326 40F20003 		movw	r3, #:lower16:q2
+ 466 032a C0F20003 		movt	r3, #:upper16:q2
+ 467 032e C3ED007A 		fsts	s15, [r3, #0]
+ 119:../src/MargAHRS.c ****     q3 = cosRoll * cosPitch * sinHeading - sinRoll * sinPitch * cosHeading;
+ 468              		.loc 1 119 0
+ 469 0332 9DED0D7A 		flds	s14, [sp, #52]
+ 470 0336 DDED0B7A 		flds	s15, [sp, #44]
+ 471 033a 67EE277A 		fmuls	s15, s14, s15
+ 472 033e 9DED057A 		flds	s14, [sp, #20]
+ 473 0342 27EE877A 		fmuls	s14, s15, s14
+ 474 0346 DDED0C6A 		flds	s13, [sp, #48]
+ 475 034a DDED0A7A 		flds	s15, [sp, #40]
+ 476 034e 66EEA77A 		fmuls	s15, s13, s15
+ 477 0352 DDED066A 		flds	s13, [sp, #24]
+ 478 0356 67EEA67A 		fmuls	s15, s15, s13
+ 479 035a 77EE677A 		fsubs	s15, s14, s15
+ 480 035e 40F20003 		movw	r3, #:lower16:q3
+ 481 0362 C0F20003 		movt	r3, #:upper16:q3
+ 482 0366 C3ED007A 		fsts	s15, [r3, #0]
+ 120:../src/MargAHRS.c **** 
+ 121:../src/MargAHRS.c ****     // auxillary variables to reduce number of repeated operations, for 1st pass
+ 122:../src/MargAHRS.c ****     q0q0 = q0 * q0;
+ 483              		.loc 1 122 0
+ 484 036a 40F20003 		movw	r3, #:lower16:q0
+ 485 036e C0F20003 		movt	r3, #:upper16:q0
+ 486 0372 93ED007A 		flds	s14, [r3, #0]
+ 487 0376 40F20003 		movw	r3, #:lower16:q0
+ 488 037a C0F20003 		movt	r3, #:upper16:q0
+ 489 037e D3ED007A 		flds	s15, [r3, #0]
+ 490 0382 67EE277A 		fmuls	s15, s14, s15
+ 491 0386 40F20003 		movw	r3, #:lower16:q0q0
+ 492 038a C0F20003 		movt	r3, #:upper16:q0q0
+ 493 038e C3ED007A 		fsts	s15, [r3, #0]
+ 123:../src/MargAHRS.c ****     q0q1 = q0 * q1;
+ 494              		.loc 1 123 0
+ 495 0392 40F20003 		movw	r3, #:lower16:q0
+ 496 0396 C0F20003 		movt	r3, #:upper16:q0
+ 497 039a 93ED007A 		flds	s14, [r3, #0]
+ 498 039e 40F20003 		movw	r3, #:lower16:q1
+ 499 03a2 C0F20003 		movt	r3, #:upper16:q1
+ 500 03a6 D3ED007A 		flds	s15, [r3, #0]
+ 501 03aa 67EE277A 		fmuls	s15, s14, s15
+ 502 03ae 40F20003 		movw	r3, #:lower16:q0q1
+ 503 03b2 C0F20003 		movt	r3, #:upper16:q0q1
+ 504 03b6 C3ED007A 		fsts	s15, [r3, #0]
+ 124:../src/MargAHRS.c ****     q0q2 = q0 * q2;
+ 505              		.loc 1 124 0
+ 506 03ba 40F20003 		movw	r3, #:lower16:q0
+ 507 03be C0F20003 		movt	r3, #:upper16:q0
+ 508 03c2 93ED007A 		flds	s14, [r3, #0]
+ 509 03c6 40F20003 		movw	r3, #:lower16:q2
+ 510 03ca C0F20003 		movt	r3, #:upper16:q2
+ 511 03ce D3ED007A 		flds	s15, [r3, #0]
+ 512 03d2 67EE277A 		fmuls	s15, s14, s15
+ 513 03d6 40F20003 		movw	r3, #:lower16:q0q2
+ 514 03da C0F20003 		movt	r3, #:upper16:q0q2
+ 515 03de C3ED007A 		fsts	s15, [r3, #0]
+ 125:../src/MargAHRS.c ****     q0q3 = q0 * q3;
+ 516              		.loc 1 125 0
+ 517 03e2 40F20003 		movw	r3, #:lower16:q0
+ 518 03e6 C0F20003 		movt	r3, #:upper16:q0
+ 519 03ea 93ED007A 		flds	s14, [r3, #0]
+ 520 03ee 40F20003 		movw	r3, #:lower16:q3
+ 521 03f2 C0F20003 		movt	r3, #:upper16:q3
+ 522 03f6 D3ED007A 		flds	s15, [r3, #0]
+ 523 03fa 67EE277A 		fmuls	s15, s14, s15
+ 524 03fe 40F20003 		movw	r3, #:lower16:q0q3
+ 525 0402 C0F20003 		movt	r3, #:upper16:q0q3
+ 526 0406 C3ED007A 		fsts	s15, [r3, #0]
+ 126:../src/MargAHRS.c ****     q1q1 = q1 * q1;
+ 527              		.loc 1 126 0
+ 528 040a 40F20003 		movw	r3, #:lower16:q1
+ 529 040e C0F20003 		movt	r3, #:upper16:q1
+ 530 0412 93ED007A 		flds	s14, [r3, #0]
+ 531 0416 40F20003 		movw	r3, #:lower16:q1
+ 532 041a C0F20003 		movt	r3, #:upper16:q1
+ 533 041e D3ED007A 		flds	s15, [r3, #0]
+ 534 0422 67EE277A 		fmuls	s15, s14, s15
+ 535 0426 40F20003 		movw	r3, #:lower16:q1q1
+ 536 042a C0F20003 		movt	r3, #:upper16:q1q1
+ 537 042e C3ED007A 		fsts	s15, [r3, #0]
+ 127:../src/MargAHRS.c ****     q1q2 = q1 * q2;
+ 538              		.loc 1 127 0
+ 539 0432 40F20003 		movw	r3, #:lower16:q1
+ 540 0436 C0F20003 		movt	r3, #:upper16:q1
+ 541 043a 93ED007A 		flds	s14, [r3, #0]
+ 542 043e 40F20003 		movw	r3, #:lower16:q2
+ 543 0442 C0F20003 		movt	r3, #:upper16:q2
+ 544 0446 D3ED007A 		flds	s15, [r3, #0]
+ 545 044a 67EE277A 		fmuls	s15, s14, s15
+ 546 044e 40F20003 		movw	r3, #:lower16:q1q2
+ 547 0452 C0F20003 		movt	r3, #:upper16:q1q2
+ 548 0456 C3ED007A 		fsts	s15, [r3, #0]
+ 128:../src/MargAHRS.c ****     q1q3 = q1 * q3;
+ 549              		.loc 1 128 0
+ 550 045a 40F20003 		movw	r3, #:lower16:q1
+ 551 045e C0F20003 		movt	r3, #:upper16:q1
+ 552 0462 93ED007A 		flds	s14, [r3, #0]
+ 553 0466 40F20003 		movw	r3, #:lower16:q3
+ 554 046a C0F20003 		movt	r3, #:upper16:q3
+ 555 046e D3ED007A 		flds	s15, [r3, #0]
+ 556 0472 67EE277A 		fmuls	s15, s14, s15
+ 557 0476 40F20003 		movw	r3, #:lower16:q1q3
+ 558 047a C0F20003 		movt	r3, #:upper16:q1q3
+ 559 047e C3ED007A 		fsts	s15, [r3, #0]
+ 129:../src/MargAHRS.c ****     q2q2 = q2 * q2;
+ 560              		.loc 1 129 0
+ 561 0482 40F20003 		movw	r3, #:lower16:q2
+ 562 0486 C0F20003 		movt	r3, #:upper16:q2
+ 563 048a 93ED007A 		flds	s14, [r3, #0]
+ 564 048e 40F20003 		movw	r3, #:lower16:q2
+ 565 0492 C0F20003 		movt	r3, #:upper16:q2
+ 566 0496 D3ED007A 		flds	s15, [r3, #0]
+ 567 049a 67EE277A 		fmuls	s15, s14, s15
+ 568 049e 40F20003 		movw	r3, #:lower16:q2q2
+ 569 04a2 C0F20003 		movt	r3, #:upper16:q2q2
+ 570 04a6 C3ED007A 		fsts	s15, [r3, #0]
+ 130:../src/MargAHRS.c ****     q2q3 = q2 * q3;
+ 571              		.loc 1 130 0
+ 572 04aa 40F20003 		movw	r3, #:lower16:q2
+ 573 04ae C0F20003 		movt	r3, #:upper16:q2
+ 574 04b2 93ED007A 		flds	s14, [r3, #0]
+ 575 04b6 40F20003 		movw	r3, #:lower16:q3
+ 576 04ba C0F20003 		movt	r3, #:upper16:q3
+ 577 04be D3ED007A 		flds	s15, [r3, #0]
+ 578 04c2 67EE277A 		fmuls	s15, s14, s15
+ 579 04c6 40F20003 		movw	r3, #:lower16:q2q3
+ 580 04ca C0F20003 		movt	r3, #:upper16:q2q3
+ 581 04ce C3ED007A 		fsts	s15, [r3, #0]
+ 131:../src/MargAHRS.c ****     q3q3 = q3 * q3;
+ 582              		.loc 1 131 0
+ 583 04d2 40F20003 		movw	r3, #:lower16:q3
+ 584 04d6 C0F20003 		movt	r3, #:upper16:q3
+ 585 04da 93ED007A 		flds	s14, [r3, #0]
+ 586 04de 40F20003 		movw	r3, #:lower16:q3
+ 587 04e2 C0F20003 		movt	r3, #:upper16:q3
+ 588 04e6 D3ED007A 		flds	s15, [r3, #0]
+ 589 04ea 67EE277A 		fmuls	s15, s14, s15
+ 590 04ee 40F20003 		movw	r3, #:lower16:q3q3
+ 591 04f2 C0F20003 		movt	r3, #:upper16:q3q3
+ 592 04f6 C3ED007A 		fsts	s15, [r3, #0]
+ 132:../src/MargAHRS.c **** }
+ 593              		.loc 1 132 0
+ 594 04fa 11B0     		add	sp, sp, #68
+ 595 04fc 30BD     		pop	{r4, r5, pc}
+ 596              		.cfi_endproc
+ 597              	.LFE112:
+ 599              		.global	__aeabi_ddiv
+ 600 04fe 00BF     		.align	2
+ 601              		.global	MargAHRSupdate
+ 602              		.thumb
+ 603              		.thumb_func
+ 605              	MargAHRSupdate:
+ 606              	.LFB113:
+ 133:../src/MargAHRS.c **** 
+ 134:../src/MargAHRS.c **** //=================================================================================================
+ 135:../src/MargAHRS.c **** // Function
+ 136:../src/MargAHRS.c **** //=================================================================================================
+ 137:../src/MargAHRS.c **** 
+ 138:../src/MargAHRS.c **** void MargAHRSupdate(float gx, float gy, float gz,
+ 139:../src/MargAHRS.c ****                     float ax, float ay, float az,
+ 140:../src/MargAHRS.c ****                     float mx, float my, float mz,
+ 141:../src/MargAHRS.c ****                     float accelCutoff, uint8_t newMagData, float dt)
+ 142:../src/MargAHRS.c **** {
+ 607              		.loc 1 142 0
+ 608              		.cfi_startproc
+ 609              		@ args = 32, pretend = 0, frame = 88
+ 610              		@ frame_needed = 0, uses_anonymous_args = 0
+ 611 0500 00B5     		push	{lr}
+ 612              	.LCFI4:
+ 613              		.cfi_def_cfa_offset 4
+ 614              		.cfi_offset 14, -4
+ 615 0502 99B0     		sub	sp, sp, #100
+ 616              	.LCFI5:
+ 617              		.cfi_def_cfa_offset 104
+ 618 0504 0590     		str	r0, [sp, #20]	@ float
+ 619 0506 0491     		str	r1, [sp, #16]	@ float
+ 620 0508 0392     		str	r2, [sp, #12]	@ float
+ 621 050a 0293     		str	r3, [sp, #8]	@ float
+ 143:../src/MargAHRS.c ****     float norm, normR;
+ 144:../src/MargAHRS.c ****     float hx, hy, hz, bx, bz;
+ 145:../src/MargAHRS.c ****     float vx, vy, vz, wx, wy, wz;
+ 146:../src/MargAHRS.c ****     float q0i, q1i, q2i, q3i;
+ 147:../src/MargAHRS.c **** 
+ 148:../src/MargAHRS.c ****     //-------------------------------------------
+ 149:../src/MargAHRS.c **** 
+ 150:../src/MargAHRS.c ****     if ((MargAHRSinitialized == false) && (newMagData == true))
+ 622              		.loc 1 150 0
+ 623 050c 40F20003 		movw	r3, #:lower16:MargAHRSinitialized
+ 624 0510 C0F20003 		movt	r3, #:upper16:MargAHRSinitialized
+ 625 0514 1B78     		ldrb	r3, [r3, #0]	@ zero_extendqisi2
+ 626 0516 002B     		cmp	r3, #0
+ 627 0518 14D1     		bne	.L6
+ 628              		.loc 1 150 0 is_stmt 0 discriminator 1
+ 629 051a 9DF88030 		ldrb	r3, [sp, #128]	@ zero_extendqisi2
+ 630 051e 012B     		cmp	r3, #1
+ 631 0520 10D1     		bne	.L6
+ 151:../src/MargAHRS.c ****     {
+ 152:../src/MargAHRS.c ****         MargAHRSinit(ax, ay, az, mx, my, mz);
+ 632              		.loc 1 152 0 is_stmt 1
+ 633 0522 1D9B     		ldr	r3, [sp, #116]	@ float
+ 634 0524 0093     		str	r3, [sp, #0]	@ float
+ 635 0526 1E9B     		ldr	r3, [sp, #120]	@ float
+ 636 0528 0193     		str	r3, [sp, #4]	@ float
+ 637 052a 0298     		ldr	r0, [sp, #8]	@ float
+ 638 052c 1A99     		ldr	r1, [sp, #104]	@ float
+ 639 052e 1B9A     		ldr	r2, [sp, #108]	@ float
+ 640 0530 1C9B     		ldr	r3, [sp, #112]	@ float
+ 641 0532 FFF7FEFF 		bl	MargAHRSinit
+ 153:../src/MargAHRS.c **** 
+ 154:../src/MargAHRS.c ****         MargAHRSinitialized = true;
+ 642              		.loc 1 154 0
+ 643 0536 40F20003 		movw	r3, #:lower16:MargAHRSinitialized
+ 644 053a C0F20003 		movt	r3, #:upper16:MargAHRSinitialized
+ 645 053e 4FF00102 		mov	r2, #1
+ 646 0542 1A70     		strb	r2, [r3, #0]
+ 647              	.L6:
+ 155:../src/MargAHRS.c ****     }
+ 156:../src/MargAHRS.c **** 
+ 157:../src/MargAHRS.c ****     //-------------------------------------------
+ 158:../src/MargAHRS.c **** 
+ 159:../src/MargAHRS.c ****     if (MargAHRSinitialized == true)
+ 648              		.loc 1 159 0
+ 649 0544 40F20003 		movw	r3, #:lower16:MargAHRSinitialized
+ 650 0548 C0F20003 		movt	r3, #:upper16:MargAHRSinitialized
+ 651 054c 1B78     		ldrb	r3, [r3, #0]	@ zero_extendqisi2
+ 652 054e 012B     		cmp	r3, #1
+ 653 0550 40F07187 		bne	.L5
+ 160:../src/MargAHRS.c ****     {
+ 161:../src/MargAHRS.c ****         halfT = dt * 0.5f;
+ 654              		.loc 1 161 0
+ 655 0554 9DED217A 		flds	s14, [sp, #132]
+ 656 0558 F6EE007A 		fconsts	s15, #96
+ 657 055c 67EE277A 		fmuls	s15, s14, s15
+ 658 0560 40F20003 		movw	r3, #:lower16:halfT
+ 659 0564 C0F20003 		movt	r3, #:upper16:halfT
+ 660 0568 C3ED007A 		fsts	s15, [r3, #0]
+ 162:../src/MargAHRS.c **** 
+ 163:../src/MargAHRS.c ****         norm = sqrt(SQR(ax) + SQR(ay) + SQR(az));
+ 661              		.loc 1 163 0
+ 662 056c 9DED027A 		flds	s14, [sp, #8]
+ 663 0570 DDED027A 		flds	s15, [sp, #8]
+ 664 0574 27EE277A 		fmuls	s14, s14, s15
+ 665 0578 DDED1A6A 		flds	s13, [sp, #104]
+ 666 057c DDED1A7A 		flds	s15, [sp, #104]
+ 667 0580 66EEA77A 		fmuls	s15, s13, s15
+ 668 0584 37EE277A 		fadds	s14, s14, s15
+ 669 0588 DDED1B6A 		flds	s13, [sp, #108]
+ 670 058c DDED1B7A 		flds	s15, [sp, #108]
+ 671 0590 66EEA77A 		fmuls	s15, s13, s15
+ 672 0594 77EE277A 		fadds	s15, s14, s15
+ 673 0598 17EE900A 		fmrs	r0, s15
+ 674 059c FFF7FEFF 		bl	__aeabi_f2d
+ 675 05a0 0246     		mov	r2, r0
+ 676 05a2 0B46     		mov	r3, r1
+ 677 05a4 1046     		mov	r0, r2
+ 678 05a6 1946     		mov	r1, r3
+ 679 05a8 FFF7FEFF 		bl	sqrt
+ 680 05ac 0246     		mov	r2, r0
+ 681 05ae 0B46     		mov	r3, r1
+ 682 05b0 1046     		mov	r0, r2
+ 683 05b2 1946     		mov	r1, r3
+ 684 05b4 FFF7FEFF 		bl	__aeabi_d2f
+ 685 05b8 0346     		mov	r3, r0	@ float
+ 686 05ba 1793     		str	r3, [sp, #92]	@ float
+ 164:../src/MargAHRS.c **** 
+ 165:../src/MargAHRS.c ****         if (norm != 0.0f)
+ 687              		.loc 1 165 0
+ 688 05bc DDED177A 		flds	s15, [sp, #92]
+ 689 05c0 F5EE407A 		fcmpzs	s15
+ 690 05c4 F1EE10FA 		fmstat
+ 691 05c8 00F09181 		beq	.L8
+ 166:../src/MargAHRS.c ****         {
+ 167:../src/MargAHRS.c **** 			calculateAccConfidence(norm);
+ 692              		.loc 1 167 0
+ 693 05cc 1798     		ldr	r0, [sp, #92]	@ float
+ 694 05ce FFF7FEFF 		bl	calculateAccConfidence
+ 168:../src/MargAHRS.c ****             kpAcc = eepromConfig.KpAcc * accConfidence;
+ 695              		.loc 1 168 0
+ 696 05d2 40F20003 		movw	r3, #:lower16:eepromConfig
+ 697 05d6 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 698 05da 93ED117A 		flds	s14, [r3, #68]
+ 699 05de 40F20003 		movw	r3, #:lower16:accConfidence
+ 700 05e2 C0F20003 		movt	r3, #:upper16:accConfidence
+ 701 05e6 D3ED007A 		flds	s15, [r3, #0]
+ 702 05ea 67EE277A 		fmuls	s15, s14, s15
+ 703 05ee 40F20003 		movw	r3, #:lower16:kpAcc
+ 704 05f2 C0F20003 		movt	r3, #:upper16:kpAcc
+ 705 05f6 C3ED007A 		fsts	s15, [r3, #0]
+ 169:../src/MargAHRS.c ****             kiAcc = eepromConfig.KiAcc * accConfidence;
+ 706              		.loc 1 169 0
+ 707 05fa 40F20003 		movw	r3, #:lower16:eepromConfig
+ 708 05fe C0F20003 		movt	r3, #:upper16:eepromConfig
+ 709 0602 93ED127A 		flds	s14, [r3, #72]
+ 710 0606 40F20003 		movw	r3, #:lower16:accConfidence
+ 711 060a C0F20003 		movt	r3, #:upper16:accConfidence
+ 712 060e D3ED007A 		flds	s15, [r3, #0]
+ 713 0612 67EE277A 		fmuls	s15, s14, s15
+ 714 0616 40F20003 		movw	r3, #:lower16:kiAcc
+ 715 061a C0F20003 		movt	r3, #:upper16:kiAcc
+ 716 061e C3ED007A 		fsts	s15, [r3, #0]
+ 170:../src/MargAHRS.c **** 
+ 171:../src/MargAHRS.c ****             normR = 1.0f / norm;
+ 717              		.loc 1 171 0
+ 718 0622 DFF8243E 		ldr	r3, .L10+8	@ float
+ 719 0626 DDED177A 		flds	s15, [sp, #92]
+ 720 062a 07EE103A 		fmsr	s14, r3
+ 721 062e C7EE277A 		fdivs	s15, s14, s15
+ 722 0632 CDED167A 		fsts	s15, [sp, #88]
+ 172:../src/MargAHRS.c ****             ax *= normR;
+ 723              		.loc 1 172 0
+ 724 0636 9DED027A 		flds	s14, [sp, #8]
+ 725 063a DDED167A 		flds	s15, [sp, #88]
+ 726 063e 67EE277A 		fmuls	s15, s14, s15
+ 727 0642 CDED027A 		fsts	s15, [sp, #8]
+ 173:../src/MargAHRS.c ****             ay *= normR;
+ 728              		.loc 1 173 0
+ 729 0646 9DED1A7A 		flds	s14, [sp, #104]
+ 730 064a DDED167A 		flds	s15, [sp, #88]
+ 731 064e 67EE277A 		fmuls	s15, s14, s15
+ 732 0652 CDED1A7A 		fsts	s15, [sp, #104]
+ 174:../src/MargAHRS.c ****             az *= normR;
+ 733              		.loc 1 174 0
+ 734 0656 9DED1B7A 		flds	s14, [sp, #108]
+ 735 065a DDED167A 		flds	s15, [sp, #88]
+ 736 065e 67EE277A 		fmuls	s15, s14, s15
+ 737 0662 CDED1B7A 		fsts	s15, [sp, #108]
+ 175:../src/MargAHRS.c **** 
+ 176:../src/MargAHRS.c ****             // estimated direction of gravity (v)
+ 177:../src/MargAHRS.c ****             vx = 2.0f * (q1q3 - q0q2);
+ 738              		.loc 1 177 0
+ 739 0666 40F20003 		movw	r3, #:lower16:q1q3
+ 740 066a C0F20003 		movt	r3, #:upper16:q1q3
+ 741 066e 93ED007A 		flds	s14, [r3, #0]
+ 742 0672 40F20003 		movw	r3, #:lower16:q0q2
+ 743 0676 C0F20003 		movt	r3, #:upper16:q0q2
+ 744 067a D3ED007A 		flds	s15, [r3, #0]
+ 745 067e 77EE677A 		fsubs	s15, s14, s15
+ 746 0682 77EEA77A 		fadds	s15, s15, s15
+ 747 0686 CDED157A 		fsts	s15, [sp, #84]
+ 178:../src/MargAHRS.c ****             vy = 2.0f * (q0q1 + q2q3);
+ 748              		.loc 1 178 0
+ 749 068a 40F20003 		movw	r3, #:lower16:q0q1
+ 750 068e C0F20003 		movt	r3, #:upper16:q0q1
+ 751 0692 93ED007A 		flds	s14, [r3, #0]
+ 752 0696 40F20003 		movw	r3, #:lower16:q2q3
+ 753 069a C0F20003 		movt	r3, #:upper16:q2q3
+ 754 069e D3ED007A 		flds	s15, [r3, #0]
+ 755 06a2 77EE277A 		fadds	s15, s14, s15
+ 756 06a6 77EEA77A 		fadds	s15, s15, s15
+ 757 06aa CDED147A 		fsts	s15, [sp, #80]
+ 179:../src/MargAHRS.c ****             vz = q0q0 - q1q1 - q2q2 + q3q3;
+ 758              		.loc 1 179 0
+ 759 06ae 40F20003 		movw	r3, #:lower16:q0q0
+ 760 06b2 C0F20003 		movt	r3, #:upper16:q0q0
+ 761 06b6 93ED007A 		flds	s14, [r3, #0]
+ 762 06ba 40F20003 		movw	r3, #:lower16:q1q1
+ 763 06be C0F20003 		movt	r3, #:upper16:q1q1
+ 764 06c2 D3ED007A 		flds	s15, [r3, #0]
+ 765 06c6 37EE677A 		fsubs	s14, s14, s15
+ 766 06ca 40F20003 		movw	r3, #:lower16:q2q2
+ 767 06ce C0F20003 		movt	r3, #:upper16:q2q2
+ 768 06d2 D3ED007A 		flds	s15, [r3, #0]
+ 769 06d6 37EE677A 		fsubs	s14, s14, s15
+ 770 06da 40F20003 		movw	r3, #:lower16:q3q3
+ 771 06de C0F20003 		movt	r3, #:upper16:q3q3
+ 772 06e2 D3ED007A 		flds	s15, [r3, #0]
+ 773 06e6 77EE277A 		fadds	s15, s14, s15
+ 774 06ea CDED137A 		fsts	s15, [sp, #76]
+ 180:../src/MargAHRS.c **** 
+ 181:../src/MargAHRS.c ****             // error is sum of cross product between reference direction
+ 182:../src/MargAHRS.c **** 		    // of fields and direction measured by sensors
+ 183:../src/MargAHRS.c **** 		    exAcc = vy * az - vz * ay;
+ 775              		.loc 1 183 0
+ 776 06ee 9DED147A 		flds	s14, [sp, #80]
+ 777 06f2 DDED1B7A 		flds	s15, [sp, #108]
+ 778 06f6 27EE277A 		fmuls	s14, s14, s15
+ 779 06fa DDED136A 		flds	s13, [sp, #76]
+ 780 06fe DDED1A7A 		flds	s15, [sp, #104]
+ 781 0702 66EEA77A 		fmuls	s15, s13, s15
+ 782 0706 77EE677A 		fsubs	s15, s14, s15
+ 783 070a 40F20003 		movw	r3, #:lower16:exAcc
+ 784 070e C0F20003 		movt	r3, #:upper16:exAcc
+ 785 0712 C3ED007A 		fsts	s15, [r3, #0]
+ 184:../src/MargAHRS.c ****             eyAcc = vz * ax - vx * az;
+ 786              		.loc 1 184 0
+ 787 0716 9DED137A 		flds	s14, [sp, #76]
+ 788 071a DDED027A 		flds	s15, [sp, #8]
+ 789 071e 27EE277A 		fmuls	s14, s14, s15
+ 790 0722 DDED156A 		flds	s13, [sp, #84]
+ 791 0726 DDED1B7A 		flds	s15, [sp, #108]
+ 792 072a 66EEA77A 		fmuls	s15, s13, s15
+ 793 072e 77EE677A 		fsubs	s15, s14, s15
+ 794 0732 40F20003 		movw	r3, #:lower16:eyAcc
+ 795 0736 C0F20003 		movt	r3, #:upper16:eyAcc
+ 796 073a C3ED007A 		fsts	s15, [r3, #0]
+ 185:../src/MargAHRS.c ****             ezAcc = vx * ay - vy * ax;
+ 797              		.loc 1 185 0
+ 798 073e 9DED157A 		flds	s14, [sp, #84]
+ 799 0742 DDED1A7A 		flds	s15, [sp, #104]
+ 800 0746 27EE277A 		fmuls	s14, s14, s15
+ 801 074a DDED146A 		flds	s13, [sp, #80]
+ 802 074e DDED027A 		flds	s15, [sp, #8]
+ 803 0752 66EEA77A 		fmuls	s15, s13, s15
+ 804 0756 77EE677A 		fsubs	s15, s14, s15
+ 805 075a 40F20003 		movw	r3, #:lower16:ezAcc
+ 806 075e C0F20003 		movt	r3, #:upper16:ezAcc
+ 807 0762 C3ED007A 		fsts	s15, [r3, #0]
+ 186:../src/MargAHRS.c **** 
+ 187:../src/MargAHRS.c ****             gx += exAcc * kpAcc;
+ 808              		.loc 1 187 0
+ 809 0766 40F20003 		movw	r3, #:lower16:exAcc
+ 810 076a C0F20003 		movt	r3, #:upper16:exAcc
+ 811 076e 93ED007A 		flds	s14, [r3, #0]
+ 812 0772 40F20003 		movw	r3, #:lower16:kpAcc
+ 813 0776 C0F20003 		movt	r3, #:upper16:kpAcc
+ 814 077a D3ED007A 		flds	s15, [r3, #0]
+ 815 077e 67EE277A 		fmuls	s15, s14, s15
+ 816 0782 9DED057A 		flds	s14, [sp, #20]
+ 817 0786 77EE277A 		fadds	s15, s14, s15
+ 818 078a CDED057A 		fsts	s15, [sp, #20]
+ 188:../src/MargAHRS.c ****             gy += eyAcc * kpAcc;
+ 819              		.loc 1 188 0
+ 820 078e 40F20003 		movw	r3, #:lower16:eyAcc
+ 821 0792 C0F20003 		movt	r3, #:upper16:eyAcc
+ 822 0796 93ED007A 		flds	s14, [r3, #0]
+ 823 079a 40F20003 		movw	r3, #:lower16:kpAcc
+ 824 079e C0F20003 		movt	r3, #:upper16:kpAcc
+ 825 07a2 D3ED007A 		flds	s15, [r3, #0]
+ 826 07a6 67EE277A 		fmuls	s15, s14, s15
+ 827 07aa 9DED047A 		flds	s14, [sp, #16]
+ 828 07ae 77EE277A 		fadds	s15, s14, s15
+ 829 07b2 CDED047A 		fsts	s15, [sp, #16]
+ 189:../src/MargAHRS.c ****             gz += ezAcc * kpAcc;
+ 830              		.loc 1 189 0
+ 831 07b6 40F20003 		movw	r3, #:lower16:ezAcc
+ 832 07ba C0F20003 		movt	r3, #:upper16:ezAcc
+ 833 07be 93ED007A 		flds	s14, [r3, #0]
+ 834 07c2 40F20003 		movw	r3, #:lower16:kpAcc
+ 835 07c6 C0F20003 		movt	r3, #:upper16:kpAcc
+ 836 07ca D3ED007A 		flds	s15, [r3, #0]
+ 837 07ce 67EE277A 		fmuls	s15, s14, s15
+ 838 07d2 9DED037A 		flds	s14, [sp, #12]
+ 839 07d6 77EE277A 		fadds	s15, s14, s15
+ 840 07da CDED037A 		fsts	s15, [sp, #12]
+ 190:../src/MargAHRS.c **** 
+ 191:../src/MargAHRS.c ****             if (kiAcc > 0.0f)
+ 841              		.loc 1 191 0
+ 842 07de 40F20003 		movw	r3, #:lower16:kiAcc
+ 843 07e2 C0F20003 		movt	r3, #:upper16:kiAcc
+ 844 07e6 D3ED007A 		flds	s15, [r3, #0]
+ 845 07ea F5EEC07A 		fcmpezs	s15
+ 846 07ee F1EE10FA 		fmstat
+ 847 07f2 D4BF     		ite	le
+ 848 07f4 0023     		movle	r3, #0
+ 849 07f6 0123     		movgt	r3, #1
+ 850 07f8 DBB2     		uxtb	r3, r3
+ 851 07fa 002B     		cmp	r3, #0
+ 852 07fc 77D0     		beq	.L8
+ 192:../src/MargAHRS.c ****             {
+ 193:../src/MargAHRS.c **** 		    	exAccInt += exAcc * kiAcc;
+ 853              		.loc 1 193 0
+ 854 07fe 40F20003 		movw	r3, #:lower16:exAcc
+ 855 0802 C0F20003 		movt	r3, #:upper16:exAcc
+ 856 0806 93ED007A 		flds	s14, [r3, #0]
+ 857 080a 40F20003 		movw	r3, #:lower16:kiAcc
+ 858 080e C0F20003 		movt	r3, #:upper16:kiAcc
+ 859 0812 D3ED007A 		flds	s15, [r3, #0]
+ 860 0816 67EE277A 		fmuls	s15, s14, s15
+ 861 081a 40F20003 		movw	r3, #:lower16:exAccInt
+ 862 081e C0F20003 		movt	r3, #:upper16:exAccInt
+ 863 0822 93ED007A 		flds	s14, [r3, #0]
+ 864 0826 77EE877A 		fadds	s15, s15, s14
+ 865 082a 40F20003 		movw	r3, #:lower16:exAccInt
+ 866 082e C0F20003 		movt	r3, #:upper16:exAccInt
+ 867 0832 C3ED007A 		fsts	s15, [r3, #0]
+ 194:../src/MargAHRS.c ****                 eyAccInt += eyAcc * kiAcc;
+ 868              		.loc 1 194 0
+ 869 0836 40F20003 		movw	r3, #:lower16:eyAcc
+ 870 083a C0F20003 		movt	r3, #:upper16:eyAcc
+ 871 083e 93ED007A 		flds	s14, [r3, #0]
+ 872 0842 40F20003 		movw	r3, #:lower16:kiAcc
+ 873 0846 C0F20003 		movt	r3, #:upper16:kiAcc
+ 874 084a D3ED007A 		flds	s15, [r3, #0]
+ 875 084e 67EE277A 		fmuls	s15, s14, s15
+ 876 0852 40F20003 		movw	r3, #:lower16:eyAccInt
+ 877 0856 C0F20003 		movt	r3, #:upper16:eyAccInt
+ 878 085a 93ED007A 		flds	s14, [r3, #0]
+ 879 085e 77EE877A 		fadds	s15, s15, s14
+ 880 0862 40F20003 		movw	r3, #:lower16:eyAccInt
+ 881 0866 C0F20003 		movt	r3, #:upper16:eyAccInt
+ 882 086a C3ED007A 		fsts	s15, [r3, #0]
+ 195:../src/MargAHRS.c ****                 ezAccInt += ezAcc * kiAcc;
+ 883              		.loc 1 195 0
+ 884 086e 40F20003 		movw	r3, #:lower16:ezAcc
+ 885 0872 C0F20003 		movt	r3, #:upper16:ezAcc
+ 886 0876 93ED007A 		flds	s14, [r3, #0]
+ 887 087a 40F20003 		movw	r3, #:lower16:kiAcc
+ 888 087e C0F20003 		movt	r3, #:upper16:kiAcc
+ 889 0882 D3ED007A 		flds	s15, [r3, #0]
+ 890 0886 67EE277A 		fmuls	s15, s14, s15
+ 891 088a 40F20003 		movw	r3, #:lower16:ezAccInt
+ 892 088e C0F20003 		movt	r3, #:upper16:ezAccInt
+ 893 0892 93ED007A 		flds	s14, [r3, #0]
+ 894 0896 77EE877A 		fadds	s15, s15, s14
+ 895 089a 40F20003 		movw	r3, #:lower16:ezAccInt
+ 896 089e C0F20003 		movt	r3, #:upper16:ezAccInt
+ 897 08a2 C3ED007A 		fsts	s15, [r3, #0]
+ 196:../src/MargAHRS.c **** 
+ 197:../src/MargAHRS.c ****                 gx += exAccInt;
+ 898              		.loc 1 197 0
+ 899 08a6 40F20003 		movw	r3, #:lower16:exAccInt
+ 900 08aa C0F20003 		movt	r3, #:upper16:exAccInt
+ 901 08ae D3ED007A 		flds	s15, [r3, #0]
+ 902 08b2 9DED057A 		flds	s14, [sp, #20]
+ 903 08b6 77EE277A 		fadds	s15, s14, s15
+ 904 08ba CDED057A 		fsts	s15, [sp, #20]
+ 198:../src/MargAHRS.c ****                 gy += eyAccInt;
+ 905              		.loc 1 198 0
+ 906 08be 40F20003 		movw	r3, #:lower16:eyAccInt
+ 907 08c2 C0F20003 		movt	r3, #:upper16:eyAccInt
+ 908 08c6 D3ED007A 		flds	s15, [r3, #0]
+ 909 08ca 9DED047A 		flds	s14, [sp, #16]
+ 910 08ce 77EE277A 		fadds	s15, s14, s15
+ 911 08d2 CDED047A 		fsts	s15, [sp, #16]
+ 199:../src/MargAHRS.c ****                 gz += ezAccInt;
+ 912              		.loc 1 199 0
+ 913 08d6 40F20003 		movw	r3, #:lower16:ezAccInt
+ 914 08da C0F20003 		movt	r3, #:upper16:ezAccInt
+ 915 08de D3ED007A 		flds	s15, [r3, #0]
+ 916 08e2 9DED037A 		flds	s14, [sp, #12]
+ 917 08e6 77EE277A 		fadds	s15, s14, s15
+ 918 08ea CDED037A 		fsts	s15, [sp, #12]
+ 919              	.L8:
+ 200:../src/MargAHRS.c **** 		    }
+ 201:../src/MargAHRS.c **** 	    }
+ 202:../src/MargAHRS.c **** 
+ 203:../src/MargAHRS.c ****         //-------------------------------------------
+ 204:../src/MargAHRS.c **** 
+ 205:../src/MargAHRS.c ****         norm = sqrt(SQR(mx) + SQR(my) + SQR(mz));
+ 920              		.loc 1 205 0
+ 921 08ee 9DED1C7A 		flds	s14, [sp, #112]
+ 922 08f2 DDED1C7A 		flds	s15, [sp, #112]
+ 923 08f6 27EE277A 		fmuls	s14, s14, s15
+ 924 08fa DDED1D6A 		flds	s13, [sp, #116]
+ 925 08fe DDED1D7A 		flds	s15, [sp, #116]
+ 926 0902 66EEA77A 		fmuls	s15, s13, s15
+ 927 0906 37EE277A 		fadds	s14, s14, s15
+ 928 090a DDED1E6A 		flds	s13, [sp, #120]
+ 929 090e DDED1E7A 		flds	s15, [sp, #120]
+ 930 0912 66EEA77A 		fmuls	s15, s13, s15
+ 931 0916 77EE277A 		fadds	s15, s14, s15
+ 932 091a 17EE900A 		fmrs	r0, s15
+ 933 091e FFF7FEFF 		bl	__aeabi_f2d
+ 934 0922 0246     		mov	r2, r0
+ 935 0924 0B46     		mov	r3, r1
+ 936 0926 1046     		mov	r0, r2
+ 937 0928 1946     		mov	r1, r3
+ 938 092a FFF7FEFF 		bl	sqrt
+ 939 092e 0246     		mov	r2, r0
+ 940 0930 0B46     		mov	r3, r1
+ 941 0932 1046     		mov	r0, r2
+ 942 0934 1946     		mov	r1, r3
+ 943 0936 FFF7FEFF 		bl	__aeabi_d2f
+ 944 093a 0346     		mov	r3, r0	@ float
+ 945 093c 1793     		str	r3, [sp, #92]	@ float
+ 206:../src/MargAHRS.c **** 
+ 207:../src/MargAHRS.c ****         if ((newMagData == true) && (norm != 0.0f))
+ 946              		.loc 1 207 0
+ 947 093e 9DF88030 		ldrb	r3, [sp, #128]	@ zero_extendqisi2
+ 948 0942 012B     		cmp	r3, #1
+ 949 0944 40F09882 		bne	.L9
+ 950              		.loc 1 207 0 is_stmt 0 discriminator 1
+ 951 0948 DDED177A 		flds	s15, [sp, #92]
+ 952 094c F5EE407A 		fcmpzs	s15
+ 953 0950 F1EE10FA 		fmstat
+ 954 0954 00F09082 		beq	.L9
+ 208:../src/MargAHRS.c ****         {
+ 209:../src/MargAHRS.c ****             normR = 1.0f / norm;
+ 955              		.loc 1 209 0 is_stmt 1
+ 956 0958 DFF8EC3A 		ldr	r3, .L10+8	@ float
+ 957 095c DDED177A 		flds	s15, [sp, #92]
+ 958 0960 07EE103A 		fmsr	s14, r3
+ 959 0964 C7EE277A 		fdivs	s15, s14, s15
+ 960 0968 CDED167A 		fsts	s15, [sp, #88]
+ 210:../src/MargAHRS.c ****             mx *= normR;
+ 961              		.loc 1 210 0
+ 962 096c 9DED1C7A 		flds	s14, [sp, #112]
+ 963 0970 DDED167A 		flds	s15, [sp, #88]
+ 964 0974 67EE277A 		fmuls	s15, s14, s15
+ 965 0978 CDED1C7A 		fsts	s15, [sp, #112]
+ 211:../src/MargAHRS.c ****             my *= normR;
+ 966              		.loc 1 211 0
+ 967 097c 9DED1D7A 		flds	s14, [sp, #116]
+ 968 0980 DDED167A 		flds	s15, [sp, #88]
+ 969 0984 67EE277A 		fmuls	s15, s14, s15
+ 970 0988 CDED1D7A 		fsts	s15, [sp, #116]
+ 212:../src/MargAHRS.c ****             mz *= normR;
+ 971              		.loc 1 212 0
+ 972 098c 9DED1E7A 		flds	s14, [sp, #120]
+ 973 0990 DDED167A 		flds	s15, [sp, #88]
+ 974 0994 67EE277A 		fmuls	s15, s14, s15
+ 975 0998 CDED1E7A 		fsts	s15, [sp, #120]
+ 213:../src/MargAHRS.c **** 
+ 214:../src/MargAHRS.c ****             // compute reference direction of flux
+ 215:../src/MargAHRS.c ****             hx = 2.0f * (mx * (0.5f - q2q2 - q3q3) + my * (q1q2 - q0q3) + mz * (q1q3 + q0q2));
+ 976              		.loc 1 215 0
+ 977 099c 40F20003 		movw	r3, #:lower16:q2q2
+ 978 09a0 C0F20003 		movt	r3, #:upper16:q2q2
+ 979 09a4 D3ED007A 		flds	s15, [r3, #0]
+ 980 09a8 B6EE007A 		fconsts	s14, #96
+ 981 09ac 37EE677A 		fsubs	s14, s14, s15
+ 982 09b0 40F20003 		movw	r3, #:lower16:q3q3
+ 983 09b4 C0F20003 		movt	r3, #:upper16:q3q3
+ 984 09b8 D3ED007A 		flds	s15, [r3, #0]
+ 985 09bc 37EE677A 		fsubs	s14, s14, s15
+ 986 09c0 DDED1C7A 		flds	s15, [sp, #112]
+ 987 09c4 27EE277A 		fmuls	s14, s14, s15
+ 988 09c8 40F20003 		movw	r3, #:lower16:q1q2
+ 989 09cc C0F20003 		movt	r3, #:upper16:q1q2
+ 990 09d0 D3ED006A 		flds	s13, [r3, #0]
+ 991 09d4 40F20003 		movw	r3, #:lower16:q0q3
+ 992 09d8 C0F20003 		movt	r3, #:upper16:q0q3
+ 993 09dc D3ED007A 		flds	s15, [r3, #0]
+ 994 09e0 76EEE76A 		fsubs	s13, s13, s15
+ 995 09e4 DDED1D7A 		flds	s15, [sp, #116]
+ 996 09e8 66EEA77A 		fmuls	s15, s13, s15
+ 997 09ec 37EE277A 		fadds	s14, s14, s15
+ 998 09f0 40F20003 		movw	r3, #:lower16:q1q3
+ 999 09f4 C0F20003 		movt	r3, #:upper16:q1q3
+ 1000 09f8 D3ED006A 		flds	s13, [r3, #0]
+ 1001 09fc 40F20003 		movw	r3, #:lower16:q0q2
+ 1002 0a00 C0F20003 		movt	r3, #:upper16:q0q2
+ 1003 0a04 D3ED007A 		flds	s15, [r3, #0]
+ 1004 0a08 76EEA76A 		fadds	s13, s13, s15
+ 1005 0a0c DDED1E7A 		flds	s15, [sp, #120]
+ 1006 0a10 66EEA77A 		fmuls	s15, s13, s15
+ 1007 0a14 77EE277A 		fadds	s15, s14, s15
+ 1008 0a18 77EEA77A 		fadds	s15, s15, s15
+ 1009 0a1c CDED127A 		fsts	s15, [sp, #72]
+ 216:../src/MargAHRS.c **** 
+ 217:../src/MargAHRS.c ****             hy = 2.0f * (mx * (q1q2 + q0q3) + my * (0.5f - q1q1 - q3q3) + mz * (q2q3 - q0q1));
+ 1010              		.loc 1 217 0
+ 1011 0a20 40F20003 		movw	r3, #:lower16:q1q2
+ 1012 0a24 C0F20003 		movt	r3, #:upper16:q1q2
+ 1013 0a28 93ED007A 		flds	s14, [r3, #0]
+ 1014 0a2c 40F20003 		movw	r3, #:lower16:q0q3
+ 1015 0a30 C0F20003 		movt	r3, #:upper16:q0q3
+ 1016 0a34 D3ED007A 		flds	s15, [r3, #0]
+ 1017 0a38 37EE277A 		fadds	s14, s14, s15
+ 1018 0a3c DDED1C7A 		flds	s15, [sp, #112]
+ 1019 0a40 27EE277A 		fmuls	s14, s14, s15
+ 1020 0a44 40F20003 		movw	r3, #:lower16:q1q1
+ 1021 0a48 C0F20003 		movt	r3, #:upper16:q1q1
+ 1022 0a4c D3ED007A 		flds	s15, [r3, #0]
+ 1023 0a50 F6EE006A 		fconsts	s13, #96
+ 1024 0a54 76EEE76A 		fsubs	s13, s13, s15
+ 1025 0a58 40F20003 		movw	r3, #:lower16:q3q3
+ 1026 0a5c C0F20003 		movt	r3, #:upper16:q3q3
+ 1027 0a60 D3ED007A 		flds	s15, [r3, #0]
+ 1028 0a64 76EEE76A 		fsubs	s13, s13, s15
+ 1029 0a68 DDED1D7A 		flds	s15, [sp, #116]
+ 1030 0a6c 66EEA77A 		fmuls	s15, s13, s15
+ 1031 0a70 37EE277A 		fadds	s14, s14, s15
+ 1032 0a74 40F20003 		movw	r3, #:lower16:q2q3
+ 1033 0a78 C0F20003 		movt	r3, #:upper16:q2q3
+ 1034 0a7c D3ED006A 		flds	s13, [r3, #0]
+ 1035 0a80 40F20003 		movw	r3, #:lower16:q0q1
+ 1036 0a84 C0F20003 		movt	r3, #:upper16:q0q1
+ 1037 0a88 D3ED007A 		flds	s15, [r3, #0]
+ 1038 0a8c 76EEE76A 		fsubs	s13, s13, s15
+ 1039 0a90 DDED1E7A 		flds	s15, [sp, #120]
+ 1040 0a94 66EEA77A 		fmuls	s15, s13, s15
+ 1041 0a98 77EE277A 		fadds	s15, s14, s15
+ 1042 0a9c 77EEA77A 		fadds	s15, s15, s15
+ 1043 0aa0 CDED117A 		fsts	s15, [sp, #68]
+ 218:../src/MargAHRS.c **** 
+ 219:../src/MargAHRS.c ****             hz = 2.0f * (mx * (q1q3 - q0q2) + my * (q2q3 + q0q1) + mz * (0.5f - q1q1 - q2q2));
+ 1044              		.loc 1 219 0
+ 1045 0aa4 40F20003 		movw	r3, #:lower16:q1q3
+ 1046 0aa8 C0F20003 		movt	r3, #:upper16:q1q3
+ 1047 0aac 93ED007A 		flds	s14, [r3, #0]
+ 1048 0ab0 40F20003 		movw	r3, #:lower16:q0q2
+ 1049 0ab4 C0F20003 		movt	r3, #:upper16:q0q2
+ 1050 0ab8 D3ED007A 		flds	s15, [r3, #0]
+ 1051 0abc 37EE677A 		fsubs	s14, s14, s15
+ 1052 0ac0 DDED1C7A 		flds	s15, [sp, #112]
+ 1053 0ac4 27EE277A 		fmuls	s14, s14, s15
+ 1054 0ac8 40F20003 		movw	r3, #:lower16:q2q3
+ 1055 0acc C0F20003 		movt	r3, #:upper16:q2q3
+ 1056 0ad0 D3ED006A 		flds	s13, [r3, #0]
+ 1057 0ad4 40F20003 		movw	r3, #:lower16:q0q1
+ 1058 0ad8 C0F20003 		movt	r3, #:upper16:q0q1
+ 1059 0adc D3ED007A 		flds	s15, [r3, #0]
+ 1060 0ae0 76EEA76A 		fadds	s13, s13, s15
+ 1061 0ae4 DDED1D7A 		flds	s15, [sp, #116]
+ 1062 0ae8 66EEA77A 		fmuls	s15, s13, s15
+ 1063 0aec 37EE277A 		fadds	s14, s14, s15
+ 1064 0af0 40F20003 		movw	r3, #:lower16:q1q1
+ 1065 0af4 C0F20003 		movt	r3, #:upper16:q1q1
+ 1066 0af8 D3ED007A 		flds	s15, [r3, #0]
+ 1067 0afc F6EE006A 		fconsts	s13, #96
+ 1068 0b00 76EEE76A 		fsubs	s13, s13, s15
+ 1069 0b04 40F20003 		movw	r3, #:lower16:q2q2
+ 1070 0b08 C0F20003 		movt	r3, #:upper16:q2q2
+ 1071 0b0c D3ED007A 		flds	s15, [r3, #0]
+ 1072 0b10 76EEE76A 		fsubs	s13, s13, s15
+ 1073 0b14 DDED1E7A 		flds	s15, [sp, #120]
+ 1074 0b18 66EEA77A 		fmuls	s15, s13, s15
+ 1075 0b1c 77EE277A 		fadds	s15, s14, s15
+ 1076 0b20 77EEA77A 		fadds	s15, s15, s15
+ 1077 0b24 CDED107A 		fsts	s15, [sp, #64]
+ 220:../src/MargAHRS.c **** 
+ 221:../src/MargAHRS.c ****             bx = sqrt((hx * hx) + (hy * hy));
+ 1078              		.loc 1 221 0
+ 1079 0b28 9DED127A 		flds	s14, [sp, #72]
+ 1080 0b2c DDED127A 		flds	s15, [sp, #72]
+ 1081 0b30 27EE277A 		fmuls	s14, s14, s15
+ 1082 0b34 DDED116A 		flds	s13, [sp, #68]
+ 1083 0b38 DDED117A 		flds	s15, [sp, #68]
+ 1084 0b3c 66EEA77A 		fmuls	s15, s13, s15
+ 1085 0b40 77EE277A 		fadds	s15, s14, s15
+ 1086 0b44 17EE900A 		fmrs	r0, s15
+ 1087 0b48 FFF7FEFF 		bl	__aeabi_f2d
+ 1088 0b4c 0246     		mov	r2, r0
+ 1089 0b4e 0B46     		mov	r3, r1
+ 1090 0b50 1046     		mov	r0, r2
+ 1091 0b52 1946     		mov	r1, r3
+ 1092 0b54 FFF7FEFF 		bl	sqrt
+ 1093 0b58 0246     		mov	r2, r0
+ 1094 0b5a 0B46     		mov	r3, r1
+ 1095 0b5c 1046     		mov	r0, r2
+ 1096 0b5e 1946     		mov	r1, r3
+ 1097 0b60 FFF7FEFF 		bl	__aeabi_d2f
+ 1098 0b64 0346     		mov	r3, r0	@ float
+ 1099 0b66 0F93     		str	r3, [sp, #60]	@ float
+ 222:../src/MargAHRS.c **** 
+ 223:../src/MargAHRS.c ****             bz = hz;
+ 1100              		.loc 1 223 0
+ 1101 0b68 109B     		ldr	r3, [sp, #64]	@ float
+ 1102 0b6a 0E93     		str	r3, [sp, #56]	@ float
+ 224:../src/MargAHRS.c **** 
+ 225:../src/MargAHRS.c ****             // estimated direction of flux (w)
+ 226:../src/MargAHRS.c ****             wx = 2.0f * (bx * (0.5f - q2q2 - q3q3) + bz * (q1q3 - q0q2));
+ 1103              		.loc 1 226 0
+ 1104 0b6c 40F20003 		movw	r3, #:lower16:q2q2
+ 1105 0b70 C0F20003 		movt	r3, #:upper16:q2q2
+ 1106 0b74 D3ED007A 		flds	s15, [r3, #0]
+ 1107 0b78 B6EE007A 		fconsts	s14, #96
+ 1108 0b7c 37EE677A 		fsubs	s14, s14, s15
+ 1109 0b80 40F20003 		movw	r3, #:lower16:q3q3
+ 1110 0b84 C0F20003 		movt	r3, #:upper16:q3q3
+ 1111 0b88 D3ED007A 		flds	s15, [r3, #0]
+ 1112 0b8c 37EE677A 		fsubs	s14, s14, s15
+ 1113 0b90 DDED0F7A 		flds	s15, [sp, #60]
+ 1114 0b94 27EE277A 		fmuls	s14, s14, s15
+ 1115 0b98 40F20003 		movw	r3, #:lower16:q1q3
+ 1116 0b9c C0F20003 		movt	r3, #:upper16:q1q3
+ 1117 0ba0 D3ED006A 		flds	s13, [r3, #0]
+ 1118 0ba4 40F20003 		movw	r3, #:lower16:q0q2
+ 1119 0ba8 C0F20003 		movt	r3, #:upper16:q0q2
+ 1120 0bac D3ED007A 		flds	s15, [r3, #0]
+ 1121 0bb0 76EEE76A 		fsubs	s13, s13, s15
+ 1122 0bb4 DDED0E7A 		flds	s15, [sp, #56]
+ 1123 0bb8 66EEA77A 		fmuls	s15, s13, s15
+ 1124 0bbc 77EE277A 		fadds	s15, s14, s15
+ 1125 0bc0 77EEA77A 		fadds	s15, s15, s15
+ 1126 0bc4 CDED0D7A 		fsts	s15, [sp, #52]
+ 227:../src/MargAHRS.c **** 
+ 228:../src/MargAHRS.c ****             wy = 2.0f * (bx * (q1q2 - q0q3) + bz * (q0q1 + q2q3));
+ 1127              		.loc 1 228 0
+ 1128 0bc8 40F20003 		movw	r3, #:lower16:q1q2
+ 1129 0bcc C0F20003 		movt	r3, #:upper16:q1q2
+ 1130 0bd0 93ED007A 		flds	s14, [r3, #0]
+ 1131 0bd4 40F20003 		movw	r3, #:lower16:q0q3
+ 1132 0bd8 C0F20003 		movt	r3, #:upper16:q0q3
+ 1133 0bdc D3ED007A 		flds	s15, [r3, #0]
+ 1134 0be0 37EE677A 		fsubs	s14, s14, s15
+ 1135 0be4 DDED0F7A 		flds	s15, [sp, #60]
+ 1136 0be8 27EE277A 		fmuls	s14, s14, s15
+ 1137 0bec 40F20003 		movw	r3, #:lower16:q0q1
+ 1138 0bf0 C0F20003 		movt	r3, #:upper16:q0q1
+ 1139 0bf4 D3ED006A 		flds	s13, [r3, #0]
+ 1140 0bf8 40F20003 		movw	r3, #:lower16:q2q3
+ 1141 0bfc C0F20003 		movt	r3, #:upper16:q2q3
+ 1142 0c00 D3ED007A 		flds	s15, [r3, #0]
+ 1143 0c04 76EEA76A 		fadds	s13, s13, s15
+ 1144 0c08 DDED0E7A 		flds	s15, [sp, #56]
+ 1145 0c0c 66EEA77A 		fmuls	s15, s13, s15
+ 1146 0c10 77EE277A 		fadds	s15, s14, s15
+ 1147 0c14 77EEA77A 		fadds	s15, s15, s15
+ 1148 0c18 CDED0C7A 		fsts	s15, [sp, #48]
+ 229:../src/MargAHRS.c **** 
+ 230:../src/MargAHRS.c ****             wz = 2.0f * (bx * (q0q2 + q1q3) + bz * (0.5f - q1q1 - q2q2));
+ 1149              		.loc 1 230 0
+ 1150 0c1c 40F20003 		movw	r3, #:lower16:q0q2
+ 1151 0c20 C0F20003 		movt	r3, #:upper16:q0q2
+ 1152 0c24 93ED007A 		flds	s14, [r3, #0]
+ 1153 0c28 40F20003 		movw	r3, #:lower16:q1q3
+ 1154 0c2c C0F20003 		movt	r3, #:upper16:q1q3
+ 1155 0c30 D3ED007A 		flds	s15, [r3, #0]
+ 1156 0c34 37EE277A 		fadds	s14, s14, s15
+ 1157 0c38 DDED0F7A 		flds	s15, [sp, #60]
+ 1158 0c3c 27EE277A 		fmuls	s14, s14, s15
+ 1159 0c40 40F20003 		movw	r3, #:lower16:q1q1
+ 1160 0c44 C0F20003 		movt	r3, #:upper16:q1q1
+ 1161 0c48 D3ED007A 		flds	s15, [r3, #0]
+ 1162 0c4c F6EE006A 		fconsts	s13, #96
+ 1163 0c50 76EEE76A 		fsubs	s13, s13, s15
+ 1164 0c54 40F20003 		movw	r3, #:lower16:q2q2
+ 1165 0c58 C0F20003 		movt	r3, #:upper16:q2q2
+ 1166 0c5c D3ED007A 		flds	s15, [r3, #0]
+ 1167 0c60 76EEE76A 		fsubs	s13, s13, s15
+ 1168 0c64 DDED0E7A 		flds	s15, [sp, #56]
+ 1169 0c68 66EEA77A 		fmuls	s15, s13, s15
+ 1170 0c6c 77EE277A 		fadds	s15, s14, s15
+ 1171 0c70 77EEA77A 		fadds	s15, s15, s15
+ 1172 0c74 CDED0B7A 		fsts	s15, [sp, #44]
+ 231:../src/MargAHRS.c **** 
+ 232:../src/MargAHRS.c ****             exMag = my * wz - mz * wy;
+ 1173              		.loc 1 232 0
+ 1174 0c78 9DED1D7A 		flds	s14, [sp, #116]
+ 1175 0c7c DDED0B7A 		flds	s15, [sp, #44]
+ 1176 0c80 27EE277A 		fmuls	s14, s14, s15
+ 1177 0c84 DDED1E6A 		flds	s13, [sp, #120]
+ 1178 0c88 DDED0C7A 		flds	s15, [sp, #48]
+ 1179 0c8c 66EEA77A 		fmuls	s15, s13, s15
+ 1180 0c90 77EE677A 		fsubs	s15, s14, s15
+ 1181 0c94 40F20003 		movw	r3, #:lower16:exMag
+ 1182 0c98 C0F20003 		movt	r3, #:upper16:exMag
+ 1183 0c9c C3ED007A 		fsts	s15, [r3, #0]
+ 233:../src/MargAHRS.c ****             eyMag = mz * wx - mx * wz;
+ 1184              		.loc 1 233 0
+ 1185 0ca0 9DED1E7A 		flds	s14, [sp, #120]
+ 1186 0ca4 DDED0D7A 		flds	s15, [sp, #52]
+ 1187 0ca8 27EE277A 		fmuls	s14, s14, s15
+ 1188 0cac DDED1C6A 		flds	s13, [sp, #112]
+ 1189 0cb0 DDED0B7A 		flds	s15, [sp, #44]
+ 1190 0cb4 66EEA77A 		fmuls	s15, s13, s15
+ 1191 0cb8 77EE677A 		fsubs	s15, s14, s15
+ 1192 0cbc 40F20003 		movw	r3, #:lower16:eyMag
+ 1193 0cc0 C0F20003 		movt	r3, #:upper16:eyMag
+ 1194 0cc4 C3ED007A 		fsts	s15, [r3, #0]
+ 234:../src/MargAHRS.c ****             ezMag = mx * wy - my * wx;
+ 1195              		.loc 1 234 0
+ 1196 0cc8 9DED1C7A 		flds	s14, [sp, #112]
+ 1197 0ccc DDED0C7A 		flds	s15, [sp, #48]
+ 1198 0cd0 27EE277A 		fmuls	s14, s14, s15
+ 1199 0cd4 DDED1D6A 		flds	s13, [sp, #116]
+ 1200 0cd8 DDED0D7A 		flds	s15, [sp, #52]
+ 1201 0cdc 66EEA77A 		fmuls	s15, s13, s15
+ 1202 0ce0 77EE677A 		fsubs	s15, s14, s15
+ 1203 0ce4 40F20003 		movw	r3, #:lower16:ezMag
+ 1204 0ce8 C0F20003 		movt	r3, #:upper16:ezMag
+ 1205 0cec C3ED007A 		fsts	s15, [r3, #0]
+ 235:../src/MargAHRS.c **** 
+ 236:../src/MargAHRS.c **** 			// use un-extrapolated old values between magnetometer updates
+ 237:../src/MargAHRS.c **** 			// dubious as dT does not apply to the magnetometer calculation so
+ 238:../src/MargAHRS.c **** 			// time scaling is embedded in KpMag and KiMag
+ 239:../src/MargAHRS.c **** 			gx += exMag * eepromConfig.KpMag;
+ 1206              		.loc 1 239 0
+ 1207 0cf0 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1208 0cf4 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1209 0cf8 93ED137A 		flds	s14, [r3, #76]
+ 1210 0cfc 40F20003 		movw	r3, #:lower16:exMag
+ 1211 0d00 C0F20003 		movt	r3, #:upper16:exMag
+ 1212 0d04 D3ED007A 		flds	s15, [r3, #0]
+ 1213 0d08 67EE277A 		fmuls	s15, s14, s15
+ 1214 0d0c 9DED057A 		flds	s14, [sp, #20]
+ 1215 0d10 77EE277A 		fadds	s15, s14, s15
+ 1216 0d14 CDED057A 		fsts	s15, [sp, #20]
+ 240:../src/MargAHRS.c **** 			gy += eyMag * eepromConfig.KpMag;
+ 1217              		.loc 1 240 0
+ 1218 0d18 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1219 0d1c C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1220 0d20 93ED137A 		flds	s14, [r3, #76]
+ 1221 0d24 40F20003 		movw	r3, #:lower16:eyMag
+ 1222 0d28 C0F20003 		movt	r3, #:upper16:eyMag
+ 1223 0d2c D3ED007A 		flds	s15, [r3, #0]
+ 1224 0d30 67EE277A 		fmuls	s15, s14, s15
+ 1225 0d34 9DED047A 		flds	s14, [sp, #16]
+ 1226 0d38 77EE277A 		fadds	s15, s14, s15
+ 1227 0d3c CDED047A 		fsts	s15, [sp, #16]
+ 241:../src/MargAHRS.c **** 			gz += ezMag * eepromConfig.KpMag;
+ 1228              		.loc 1 241 0
+ 1229 0d40 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1230 0d44 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1231 0d48 93ED137A 		flds	s14, [r3, #76]
+ 1232 0d4c 40F20003 		movw	r3, #:lower16:ezMag
+ 1233 0d50 C0F20003 		movt	r3, #:upper16:ezMag
+ 1234 0d54 D3ED007A 		flds	s15, [r3, #0]
+ 1235 0d58 67EE277A 		fmuls	s15, s14, s15
+ 1236 0d5c 9DED037A 		flds	s14, [sp, #12]
+ 1237 0d60 77EE277A 		fadds	s15, s14, s15
+ 1238 0d64 CDED037A 		fsts	s15, [sp, #12]
+ 242:../src/MargAHRS.c **** 
+ 243:../src/MargAHRS.c **** 			if (eepromConfig.KiMag > 0.0f)
+ 1239              		.loc 1 243 0
+ 1240 0d68 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1241 0d6c C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1242 0d70 D3ED147A 		flds	s15, [r3, #80]
+ 1243 0d74 F5EEC07A 		fcmpezs	s15
+ 1244 0d78 F1EE10FA 		fmstat
+ 1245 0d7c D4BF     		ite	le
+ 1246 0d7e 0023     		movle	r3, #0
+ 1247 0d80 0123     		movgt	r3, #1
+ 1248 0d82 DBB2     		uxtb	r3, r3
+ 1249 0d84 002B     		cmp	r3, #0
+ 1250 0d86 77D0     		beq	.L9
+ 244:../src/MargAHRS.c **** 			{
+ 245:../src/MargAHRS.c **** 				exMagInt += exMag * eepromConfig.KiMag;
+ 1251              		.loc 1 245 0
+ 1252 0d88 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1253 0d8c C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1254 0d90 93ED147A 		flds	s14, [r3, #80]
+ 1255 0d94 40F20003 		movw	r3, #:lower16:exMag
+ 1256 0d98 C0F20003 		movt	r3, #:upper16:exMag
+ 1257 0d9c D3ED007A 		flds	s15, [r3, #0]
+ 1258 0da0 67EE277A 		fmuls	s15, s14, s15
+ 1259 0da4 40F20003 		movw	r3, #:lower16:exMagInt
+ 1260 0da8 C0F20003 		movt	r3, #:upper16:exMagInt
+ 1261 0dac 93ED007A 		flds	s14, [r3, #0]
+ 1262 0db0 77EE877A 		fadds	s15, s15, s14
+ 1263 0db4 40F20003 		movw	r3, #:lower16:exMagInt
+ 1264 0db8 C0F20003 		movt	r3, #:upper16:exMagInt
+ 1265 0dbc C3ED007A 		fsts	s15, [r3, #0]
+ 246:../src/MargAHRS.c **** 				eyMagInt += eyMag * eepromConfig.KiMag;
+ 1266              		.loc 1 246 0
+ 1267 0dc0 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1268 0dc4 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1269 0dc8 93ED147A 		flds	s14, [r3, #80]
+ 1270 0dcc 40F20003 		movw	r3, #:lower16:eyMag
+ 1271 0dd0 C0F20003 		movt	r3, #:upper16:eyMag
+ 1272 0dd4 D3ED007A 		flds	s15, [r3, #0]
+ 1273 0dd8 67EE277A 		fmuls	s15, s14, s15
+ 1274 0ddc 40F20003 		movw	r3, #:lower16:eyMagInt
+ 1275 0de0 C0F20003 		movt	r3, #:upper16:eyMagInt
+ 1276 0de4 93ED007A 		flds	s14, [r3, #0]
+ 1277 0de8 77EE877A 		fadds	s15, s15, s14
+ 1278 0dec 40F20003 		movw	r3, #:lower16:eyMagInt
+ 1279 0df0 C0F20003 		movt	r3, #:upper16:eyMagInt
+ 1280 0df4 C3ED007A 		fsts	s15, [r3, #0]
+ 247:../src/MargAHRS.c **** 				ezMagInt += ezMag * eepromConfig.KiMag;
+ 1281              		.loc 1 247 0
+ 1282 0df8 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1283 0dfc C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1284 0e00 93ED147A 		flds	s14, [r3, #80]
+ 1285 0e04 40F20003 		movw	r3, #:lower16:ezMag
+ 1286 0e08 C0F20003 		movt	r3, #:upper16:ezMag
+ 1287 0e0c D3ED007A 		flds	s15, [r3, #0]
+ 1288 0e10 67EE277A 		fmuls	s15, s14, s15
+ 1289 0e14 40F20003 		movw	r3, #:lower16:ezMagInt
+ 1290 0e18 C0F20003 		movt	r3, #:upper16:ezMagInt
+ 1291 0e1c 93ED007A 		flds	s14, [r3, #0]
+ 1292 0e20 77EE877A 		fadds	s15, s15, s14
+ 1293 0e24 40F20003 		movw	r3, #:lower16:ezMagInt
+ 1294 0e28 C0F20003 		movt	r3, #:upper16:ezMagInt
+ 1295 0e2c C3ED007A 		fsts	s15, [r3, #0]
+ 248:../src/MargAHRS.c **** 
+ 249:../src/MargAHRS.c **** 				gx += exMagInt;
+ 1296              		.loc 1 249 0
+ 1297 0e30 40F20003 		movw	r3, #:lower16:exMagInt
+ 1298 0e34 C0F20003 		movt	r3, #:upper16:exMagInt
+ 1299 0e38 D3ED007A 		flds	s15, [r3, #0]
+ 1300 0e3c 9DED057A 		flds	s14, [sp, #20]
+ 1301 0e40 77EE277A 		fadds	s15, s14, s15
+ 1302 0e44 CDED057A 		fsts	s15, [sp, #20]
+ 250:../src/MargAHRS.c **** 				gy += eyMagInt;
+ 1303              		.loc 1 250 0
+ 1304 0e48 40F20003 		movw	r3, #:lower16:eyMagInt
+ 1305 0e4c C0F20003 		movt	r3, #:upper16:eyMagInt
+ 1306 0e50 D3ED007A 		flds	s15, [r3, #0]
+ 1307 0e54 9DED047A 		flds	s14, [sp, #16]
+ 1308 0e58 77EE277A 		fadds	s15, s14, s15
+ 1309 0e5c CDED047A 		fsts	s15, [sp, #16]
+ 251:../src/MargAHRS.c **** 				gz += ezMagInt;
+ 1310              		.loc 1 251 0
+ 1311 0e60 40F20003 		movw	r3, #:lower16:ezMagInt
+ 1312 0e64 C0F20003 		movt	r3, #:upper16:ezMagInt
+ 1313 0e68 D3ED007A 		flds	s15, [r3, #0]
+ 1314 0e6c 9DED037A 		flds	s14, [sp, #12]
+ 1315 0e70 77EE277A 		fadds	s15, s14, s15
+ 1316 0e74 CDED037A 		fsts	s15, [sp, #12]
+ 1317              	.L9:
+ 252:../src/MargAHRS.c **** 			}
+ 253:../src/MargAHRS.c ****         }
+ 254:../src/MargAHRS.c **** 
+ 255:../src/MargAHRS.c ****         //-------------------------------------------
+ 256:../src/MargAHRS.c **** 
+ 257:../src/MargAHRS.c ****         // integrate quaternion rate
+ 258:../src/MargAHRS.c ****         q0i = (-q1 * gx - q2 * gy - q3 * gz) * halfT;
+ 1318              		.loc 1 258 0
+ 1319 0e78 40F20003 		movw	r3, #:lower16:q1
+ 1320 0e7c C0F20003 		movt	r3, #:upper16:q1
+ 1321 0e80 D3ED007A 		flds	s15, [r3, #0]
+ 1322 0e84 B1EE677A 		fnegs	s14, s15
+ 1323 0e88 DDED057A 		flds	s15, [sp, #20]
+ 1324 0e8c 27EE277A 		fmuls	s14, s14, s15
+ 1325 0e90 40F20003 		movw	r3, #:lower16:q2
+ 1326 0e94 C0F20003 		movt	r3, #:upper16:q2
+ 1327 0e98 D3ED006A 		flds	s13, [r3, #0]
+ 1328 0e9c DDED047A 		flds	s15, [sp, #16]
+ 1329 0ea0 66EEA77A 		fmuls	s15, s13, s15
+ 1330 0ea4 37EE677A 		fsubs	s14, s14, s15
+ 1331 0ea8 40F20003 		movw	r3, #:lower16:q3
+ 1332 0eac C0F20003 		movt	r3, #:upper16:q3
+ 1333 0eb0 D3ED006A 		flds	s13, [r3, #0]
+ 1334 0eb4 DDED037A 		flds	s15, [sp, #12]
+ 1335 0eb8 66EEA77A 		fmuls	s15, s13, s15
+ 1336 0ebc 37EE677A 		fsubs	s14, s14, s15
+ 1337 0ec0 40F20003 		movw	r3, #:lower16:halfT
+ 1338 0ec4 C0F20003 		movt	r3, #:upper16:halfT
+ 1339 0ec8 D3ED007A 		flds	s15, [r3, #0]
+ 1340 0ecc 67EE277A 		fmuls	s15, s14, s15
+ 1341 0ed0 CDED0A7A 		fsts	s15, [sp, #40]
+ 259:../src/MargAHRS.c ****         q1i = ( q0 * gx + q2 * gz - q3 * gy) * halfT;
+ 1342              		.loc 1 259 0
+ 1343 0ed4 40F20003 		movw	r3, #:lower16:q0
+ 1344 0ed8 C0F20003 		movt	r3, #:upper16:q0
+ 1345 0edc 93ED007A 		flds	s14, [r3, #0]
+ 1346 0ee0 DDED057A 		flds	s15, [sp, #20]
+ 1347 0ee4 27EE277A 		fmuls	s14, s14, s15
+ 1348 0ee8 40F20003 		movw	r3, #:lower16:q2
+ 1349 0eec C0F20003 		movt	r3, #:upper16:q2
+ 1350 0ef0 D3ED006A 		flds	s13, [r3, #0]
+ 1351 0ef4 DDED037A 		flds	s15, [sp, #12]
+ 1352 0ef8 66EEA77A 		fmuls	s15, s13, s15
+ 1353 0efc 37EE277A 		fadds	s14, s14, s15
+ 1354 0f00 40F20003 		movw	r3, #:lower16:q3
+ 1355 0f04 C0F20003 		movt	r3, #:upper16:q3
+ 1356 0f08 D3ED006A 		flds	s13, [r3, #0]
+ 1357 0f0c DDED047A 		flds	s15, [sp, #16]
+ 1358 0f10 66EEA77A 		fmuls	s15, s13, s15
+ 1359 0f14 37EE677A 		fsubs	s14, s14, s15
+ 1360 0f18 40F20003 		movw	r3, #:lower16:halfT
+ 1361 0f1c C0F20003 		movt	r3, #:upper16:halfT
+ 1362 0f20 D3ED007A 		flds	s15, [r3, #0]
+ 1363 0f24 67EE277A 		fmuls	s15, s14, s15
+ 1364 0f28 CDED097A 		fsts	s15, [sp, #36]
+ 260:../src/MargAHRS.c ****         q2i = ( q0 * gy - q1 * gz + q3 * gx) * halfT;
+ 1365              		.loc 1 260 0
+ 1366 0f2c 40F20003 		movw	r3, #:lower16:q0
+ 1367 0f30 C0F20003 		movt	r3, #:upper16:q0
+ 1368 0f34 93ED007A 		flds	s14, [r3, #0]
+ 1369 0f38 DDED047A 		flds	s15, [sp, #16]
+ 1370 0f3c 27EE277A 		fmuls	s14, s14, s15
+ 1371 0f40 40F20003 		movw	r3, #:lower16:q1
+ 1372 0f44 C0F20003 		movt	r3, #:upper16:q1
+ 1373 0f48 D3ED006A 		flds	s13, [r3, #0]
+ 1374 0f4c DDED037A 		flds	s15, [sp, #12]
+ 1375 0f50 66EEA77A 		fmuls	s15, s13, s15
+ 1376 0f54 37EE677A 		fsubs	s14, s14, s15
+ 1377 0f58 40F20003 		movw	r3, #:lower16:q3
+ 1378 0f5c C0F20003 		movt	r3, #:upper16:q3
+ 1379 0f60 D3ED006A 		flds	s13, [r3, #0]
+ 1380 0f64 DDED057A 		flds	s15, [sp, #20]
+ 1381 0f68 66EEA77A 		fmuls	s15, s13, s15
+ 1382 0f6c 37EE277A 		fadds	s14, s14, s15
+ 1383 0f70 40F20003 		movw	r3, #:lower16:halfT
+ 1384 0f74 C0F20003 		movt	r3, #:upper16:halfT
+ 1385 0f78 D3ED007A 		flds	s15, [r3, #0]
+ 1386 0f7c 67EE277A 		fmuls	s15, s14, s15
+ 1387 0f80 CDED087A 		fsts	s15, [sp, #32]
+ 261:../src/MargAHRS.c ****         q3i = ( q0 * gz + q1 * gy - q2 * gx) * halfT;
+ 1388              		.loc 1 261 0
+ 1389 0f84 40F20003 		movw	r3, #:lower16:q0
+ 1390 0f88 C0F20003 		movt	r3, #:upper16:q0
+ 1391 0f8c 93ED007A 		flds	s14, [r3, #0]
+ 1392 0f90 DDED037A 		flds	s15, [sp, #12]
+ 1393 0f94 27EE277A 		fmuls	s14, s14, s15
+ 1394 0f98 40F20003 		movw	r3, #:lower16:q1
+ 1395 0f9c C0F20003 		movt	r3, #:upper16:q1
+ 1396 0fa0 D3ED006A 		flds	s13, [r3, #0]
+ 1397 0fa4 DDED047A 		flds	s15, [sp, #16]
+ 1398 0fa8 66EEA77A 		fmuls	s15, s13, s15
+ 1399 0fac 37EE277A 		fadds	s14, s14, s15
+ 1400 0fb0 40F20003 		movw	r3, #:lower16:q2
+ 1401 0fb4 C0F20003 		movt	r3, #:upper16:q2
+ 1402 0fb8 D3ED006A 		flds	s13, [r3, #0]
+ 1403 0fbc DDED057A 		flds	s15, [sp, #20]
+ 1404 0fc0 66EEA77A 		fmuls	s15, s13, s15
+ 1405 0fc4 37EE677A 		fsubs	s14, s14, s15
+ 1406 0fc8 40F20003 		movw	r3, #:lower16:halfT
+ 1407 0fcc C0F20003 		movt	r3, #:upper16:halfT
+ 1408 0fd0 D3ED007A 		flds	s15, [r3, #0]
+ 1409 0fd4 67EE277A 		fmuls	s15, s14, s15
+ 1410 0fd8 CDED077A 		fsts	s15, [sp, #28]
+ 262:../src/MargAHRS.c ****         q0 += q0i;
+ 1411              		.loc 1 262 0
+ 1412 0fdc 40F20003 		movw	r3, #:lower16:q0
+ 1413 0fe0 C0F20003 		movt	r3, #:upper16:q0
+ 1414 0fe4 93ED007A 		flds	s14, [r3, #0]
+ 1415 0fe8 DDED0A7A 		flds	s15, [sp, #40]
+ 1416 0fec 77EE277A 		fadds	s15, s14, s15
+ 1417 0ff0 40F20003 		movw	r3, #:lower16:q0
+ 1418 0ff4 C0F20003 		movt	r3, #:upper16:q0
+ 1419 0ff8 C3ED007A 		fsts	s15, [r3, #0]
+ 263:../src/MargAHRS.c ****         q1 += q1i;
+ 1420              		.loc 1 263 0
+ 1421 0ffc 40F20003 		movw	r3, #:lower16:q1
+ 1422 1000 C0F20003 		movt	r3, #:upper16:q1
+ 1423 1004 93ED007A 		flds	s14, [r3, #0]
+ 1424 1008 DDED097A 		flds	s15, [sp, #36]
+ 1425 100c 77EE277A 		fadds	s15, s14, s15
+ 1426 1010 40F20003 		movw	r3, #:lower16:q1
+ 1427 1014 C0F20003 		movt	r3, #:upper16:q1
+ 1428 1018 C3ED007A 		fsts	s15, [r3, #0]
+ 264:../src/MargAHRS.c ****         q2 += q2i;
+ 1429              		.loc 1 264 0
+ 1430 101c 40F20003 		movw	r3, #:lower16:q2
+ 1431 1020 C0F20003 		movt	r3, #:upper16:q2
+ 1432 1024 93ED007A 		flds	s14, [r3, #0]
+ 1433 1028 DDED087A 		flds	s15, [sp, #32]
+ 1434 102c 77EE277A 		fadds	s15, s14, s15
+ 1435 1030 40F20003 		movw	r3, #:lower16:q2
+ 1436 1034 C0F20003 		movt	r3, #:upper16:q2
+ 1437 1038 C3ED007A 		fsts	s15, [r3, #0]
+ 265:../src/MargAHRS.c ****         q3 += q3i;
+ 1438              		.loc 1 265 0
+ 1439 103c 40F20003 		movw	r3, #:lower16:q3
+ 1440 1040 C0F20003 		movt	r3, #:upper16:q3
+ 1441 1044 93ED007A 		flds	s14, [r3, #0]
+ 1442 1048 DDED077A 		flds	s15, [sp, #28]
+ 1443 104c 77EE277A 		fadds	s15, s14, s15
+ 1444 1050 40F20003 		movw	r3, #:lower16:q3
+ 1445 1054 C0F20003 		movt	r3, #:upper16:q3
+ 1446 1058 C3ED007A 		fsts	s15, [r3, #0]
+ 266:../src/MargAHRS.c **** 
+ 267:../src/MargAHRS.c ****         // normalise quaternion
+ 268:../src/MargAHRS.c ****         normR = 1.0f / sqrt(q0 * q0 + q1 * q1 + q2 * q2 + q3 * q3);
+ 1447              		.loc 1 268 0
+ 1448 105c 40F20003 		movw	r3, #:lower16:q0
+ 1449 1060 C0F20003 		movt	r3, #:upper16:q0
+ 1450 1064 93ED007A 		flds	s14, [r3, #0]
+ 1451 1068 40F20003 		movw	r3, #:lower16:q0
+ 1452 106c C0F20003 		movt	r3, #:upper16:q0
+ 1453 1070 D3ED007A 		flds	s15, [r3, #0]
+ 1454 1074 27EE277A 		fmuls	s14, s14, s15
+ 1455 1078 40F20003 		movw	r3, #:lower16:q1
+ 1456 107c C0F20003 		movt	r3, #:upper16:q1
+ 1457 1080 D3ED006A 		flds	s13, [r3, #0]
+ 1458 1084 40F20003 		movw	r3, #:lower16:q1
+ 1459 1088 C0F20003 		movt	r3, #:upper16:q1
+ 1460 108c D3ED007A 		flds	s15, [r3, #0]
+ 1461 1090 66EEA77A 		fmuls	s15, s13, s15
+ 1462 1094 37EE277A 		fadds	s14, s14, s15
+ 1463 1098 40F20003 		movw	r3, #:lower16:q2
+ 1464 109c C0F20003 		movt	r3, #:upper16:q2
+ 1465 10a0 D3ED006A 		flds	s13, [r3, #0]
+ 1466 10a4 40F20003 		movw	r3, #:lower16:q2
+ 1467 10a8 C0F20003 		movt	r3, #:upper16:q2
+ 1468 10ac D3ED007A 		flds	s15, [r3, #0]
+ 1469 10b0 66EEA77A 		fmuls	s15, s13, s15
+ 1470 10b4 37EE277A 		fadds	s14, s14, s15
+ 1471 10b8 40F20003 		movw	r3, #:lower16:q3
+ 1472 10bc C0F20003 		movt	r3, #:upper16:q3
+ 1473 10c0 D3ED006A 		flds	s13, [r3, #0]
+ 1474 10c4 40F20003 		movw	r3, #:lower16:q3
+ 1475 10c8 C0F20003 		movt	r3, #:upper16:q3
+ 1476 10cc D3ED007A 		flds	s15, [r3, #0]
+ 1477 10d0 66EEA77A 		fmuls	s15, s13, s15
+ 1478 10d4 77EE277A 		fadds	s15, s14, s15
+ 1479 10d8 17EE900A 		fmrs	r0, s15
+ 1480 10dc FFF7FEFF 		bl	__aeabi_f2d
+ 1481 10e0 0246     		mov	r2, r0
+ 1482 10e2 0B46     		mov	r3, r1
+ 1483 10e4 1046     		mov	r0, r2
+ 1484 10e6 1946     		mov	r1, r3
+ 1485 10e8 FFF7FEFF 		bl	sqrt
+ 1486 10ec 0246     		mov	r2, r0
+ 1487 10ee 0B46     		mov	r3, r1
+ 1488 10f0 D3A1     		adr	r1, .L10
+ 1489 10f2 D1E90001 		ldrd	r0, [r1]
+ 1490 10f6 FFF7FEFF 		bl	__aeabi_ddiv
+ 1491 10fa 0246     		mov	r2, r0
+ 1492 10fc 0B46     		mov	r3, r1
+ 1493 10fe 1046     		mov	r0, r2
+ 1494 1100 1946     		mov	r1, r3
+ 1495 1102 FFF7FEFF 		bl	__aeabi_d2f
+ 1496 1106 0346     		mov	r3, r0	@ float
+ 1497 1108 1693     		str	r3, [sp, #88]	@ float
+ 269:../src/MargAHRS.c ****         q0 *= normR;
+ 1498              		.loc 1 269 0
+ 1499 110a 40F20003 		movw	r3, #:lower16:q0
+ 1500 110e C0F20003 		movt	r3, #:upper16:q0
+ 1501 1112 93ED007A 		flds	s14, [r3, #0]
+ 1502 1116 DDED167A 		flds	s15, [sp, #88]
+ 1503 111a 67EE277A 		fmuls	s15, s14, s15
+ 1504 111e 40F20003 		movw	r3, #:lower16:q0
+ 1505 1122 C0F20003 		movt	r3, #:upper16:q0
+ 1506 1126 C3ED007A 		fsts	s15, [r3, #0]
+ 270:../src/MargAHRS.c ****         q1 *= normR;
+ 1507              		.loc 1 270 0
+ 1508 112a 40F20003 		movw	r3, #:lower16:q1
+ 1509 112e C0F20003 		movt	r3, #:upper16:q1
+ 1510 1132 93ED007A 		flds	s14, [r3, #0]
+ 1511 1136 DDED167A 		flds	s15, [sp, #88]
+ 1512 113a 67EE277A 		fmuls	s15, s14, s15
+ 1513 113e 40F20003 		movw	r3, #:lower16:q1
+ 1514 1142 C0F20003 		movt	r3, #:upper16:q1
+ 1515 1146 C3ED007A 		fsts	s15, [r3, #0]
+ 271:../src/MargAHRS.c ****         q2 *= normR;
+ 1516              		.loc 1 271 0
+ 1517 114a 40F20003 		movw	r3, #:lower16:q2
+ 1518 114e C0F20003 		movt	r3, #:upper16:q2
+ 1519 1152 93ED007A 		flds	s14, [r3, #0]
+ 1520 1156 DDED167A 		flds	s15, [sp, #88]
+ 1521 115a 67EE277A 		fmuls	s15, s14, s15
+ 1522 115e 40F20003 		movw	r3, #:lower16:q2
+ 1523 1162 C0F20003 		movt	r3, #:upper16:q2
+ 1524 1166 C3ED007A 		fsts	s15, [r3, #0]
+ 272:../src/MargAHRS.c ****         q3 *= normR;
+ 1525              		.loc 1 272 0
+ 1526 116a 40F20003 		movw	r3, #:lower16:q3
+ 1527 116e C0F20003 		movt	r3, #:upper16:q3
+ 1528 1172 93ED007A 		flds	s14, [r3, #0]
+ 1529 1176 DDED167A 		flds	s15, [sp, #88]
+ 1530 117a 67EE277A 		fmuls	s15, s14, s15
+ 1531 117e 40F20003 		movw	r3, #:lower16:q3
+ 1532 1182 C0F20003 		movt	r3, #:upper16:q3
+ 1533 1186 C3ED007A 		fsts	s15, [r3, #0]
+ 273:../src/MargAHRS.c **** 
+ 274:../src/MargAHRS.c ****         // auxiliary variables to reduce number of repeated operations
+ 275:../src/MargAHRS.c ****         q0q0 = q0 * q0;
+ 1534              		.loc 1 275 0
+ 1535 118a 40F20003 		movw	r3, #:lower16:q0
+ 1536 118e C0F20003 		movt	r3, #:upper16:q0
+ 1537 1192 93ED007A 		flds	s14, [r3, #0]
+ 1538 1196 40F20003 		movw	r3, #:lower16:q0
+ 1539 119a C0F20003 		movt	r3, #:upper16:q0
+ 1540 119e D3ED007A 		flds	s15, [r3, #0]
+ 1541 11a2 67EE277A 		fmuls	s15, s14, s15
+ 1542 11a6 40F20003 		movw	r3, #:lower16:q0q0
+ 1543 11aa C0F20003 		movt	r3, #:upper16:q0q0
+ 1544 11ae C3ED007A 		fsts	s15, [r3, #0]
+ 276:../src/MargAHRS.c ****         q0q1 = q0 * q1;
+ 1545              		.loc 1 276 0
+ 1546 11b2 40F20003 		movw	r3, #:lower16:q0
+ 1547 11b6 C0F20003 		movt	r3, #:upper16:q0
+ 1548 11ba 93ED007A 		flds	s14, [r3, #0]
+ 1549 11be 40F20003 		movw	r3, #:lower16:q1
+ 1550 11c2 C0F20003 		movt	r3, #:upper16:q1
+ 1551 11c6 D3ED007A 		flds	s15, [r3, #0]
+ 1552 11ca 67EE277A 		fmuls	s15, s14, s15
+ 1553 11ce 40F20003 		movw	r3, #:lower16:q0q1
+ 1554 11d2 C0F20003 		movt	r3, #:upper16:q0q1
+ 1555 11d6 C3ED007A 		fsts	s15, [r3, #0]
+ 277:../src/MargAHRS.c ****         q0q2 = q0 * q2;
+ 1556              		.loc 1 277 0
+ 1557 11da 40F20003 		movw	r3, #:lower16:q0
+ 1558 11de C0F20003 		movt	r3, #:upper16:q0
+ 1559 11e2 93ED007A 		flds	s14, [r3, #0]
+ 1560 11e6 40F20003 		movw	r3, #:lower16:q2
+ 1561 11ea C0F20003 		movt	r3, #:upper16:q2
+ 1562 11ee D3ED007A 		flds	s15, [r3, #0]
+ 1563 11f2 67EE277A 		fmuls	s15, s14, s15
+ 1564 11f6 40F20003 		movw	r3, #:lower16:q0q2
+ 1565 11fa C0F20003 		movt	r3, #:upper16:q0q2
+ 1566 11fe C3ED007A 		fsts	s15, [r3, #0]
+ 278:../src/MargAHRS.c ****         q0q3 = q0 * q3;
+ 1567              		.loc 1 278 0
+ 1568 1202 40F20003 		movw	r3, #:lower16:q0
+ 1569 1206 C0F20003 		movt	r3, #:upper16:q0
+ 1570 120a 93ED007A 		flds	s14, [r3, #0]
+ 1571 120e 40F20003 		movw	r3, #:lower16:q3
+ 1572 1212 C0F20003 		movt	r3, #:upper16:q3
+ 1573 1216 D3ED007A 		flds	s15, [r3, #0]
+ 1574 121a 67EE277A 		fmuls	s15, s14, s15
+ 1575 121e 40F20003 		movw	r3, #:lower16:q0q3
+ 1576 1222 C0F20003 		movt	r3, #:upper16:q0q3
+ 1577 1226 C3ED007A 		fsts	s15, [r3, #0]
+ 279:../src/MargAHRS.c ****         q1q1 = q1 * q1;
+ 1578              		.loc 1 279 0
+ 1579 122a 40F20003 		movw	r3, #:lower16:q1
+ 1580 122e C0F20003 		movt	r3, #:upper16:q1
+ 1581 1232 93ED007A 		flds	s14, [r3, #0]
+ 1582 1236 40F20003 		movw	r3, #:lower16:q1
+ 1583 123a C0F20003 		movt	r3, #:upper16:q1
+ 1584 123e D3ED007A 		flds	s15, [r3, #0]
+ 1585 1242 67EE277A 		fmuls	s15, s14, s15
+ 1586 1246 40F20003 		movw	r3, #:lower16:q1q1
+ 1587 124a C0F20003 		movt	r3, #:upper16:q1q1
+ 1588 124e C3ED007A 		fsts	s15, [r3, #0]
+ 280:../src/MargAHRS.c ****         q1q2 = q1 * q2;
+ 1589              		.loc 1 280 0
+ 1590 1252 40F20003 		movw	r3, #:lower16:q1
+ 1591 1256 C0F20003 		movt	r3, #:upper16:q1
+ 1592 125a 93ED007A 		flds	s14, [r3, #0]
+ 1593 125e 40F20003 		movw	r3, #:lower16:q2
+ 1594 1262 C0F20003 		movt	r3, #:upper16:q2
+ 1595 1266 D3ED007A 		flds	s15, [r3, #0]
+ 1596 126a 67EE277A 		fmuls	s15, s14, s15
+ 1597 126e 40F20003 		movw	r3, #:lower16:q1q2
+ 1598 1272 C0F20003 		movt	r3, #:upper16:q1q2
+ 1599 1276 C3ED007A 		fsts	s15, [r3, #0]
+ 281:../src/MargAHRS.c ****         q1q3 = q1 * q3;
+ 1600              		.loc 1 281 0
+ 1601 127a 40F20003 		movw	r3, #:lower16:q1
+ 1602 127e C0F20003 		movt	r3, #:upper16:q1
+ 1603 1282 93ED007A 		flds	s14, [r3, #0]
+ 1604 1286 40F20003 		movw	r3, #:lower16:q3
+ 1605 128a C0F20003 		movt	r3, #:upper16:q3
+ 1606 128e D3ED007A 		flds	s15, [r3, #0]
+ 1607 1292 67EE277A 		fmuls	s15, s14, s15
+ 1608 1296 40F20003 		movw	r3, #:lower16:q1q3
+ 1609 129a C0F20003 		movt	r3, #:upper16:q1q3
+ 1610 129e C3ED007A 		fsts	s15, [r3, #0]
+ 282:../src/MargAHRS.c ****         q2q2 = q2 * q2;
+ 1611              		.loc 1 282 0
+ 1612 12a2 40F20003 		movw	r3, #:lower16:q2
+ 1613 12a6 C0F20003 		movt	r3, #:upper16:q2
+ 1614 12aa 93ED007A 		flds	s14, [r3, #0]
+ 1615 12ae 40F20003 		movw	r3, #:lower16:q2
+ 1616 12b2 C0F20003 		movt	r3, #:upper16:q2
+ 1617 12b6 D3ED007A 		flds	s15, [r3, #0]
+ 1618 12ba 67EE277A 		fmuls	s15, s14, s15
+ 1619 12be 40F20003 		movw	r3, #:lower16:q2q2
+ 1620 12c2 C0F20003 		movt	r3, #:upper16:q2q2
+ 1621 12c6 C3ED007A 		fsts	s15, [r3, #0]
+ 283:../src/MargAHRS.c ****         q2q3 = q2 * q3;
+ 1622              		.loc 1 283 0
+ 1623 12ca 40F20003 		movw	r3, #:lower16:q2
+ 1624 12ce C0F20003 		movt	r3, #:upper16:q2
+ 1625 12d2 93ED007A 		flds	s14, [r3, #0]
+ 1626 12d6 40F20003 		movw	r3, #:lower16:q3
+ 1627 12da C0F20003 		movt	r3, #:upper16:q3
+ 1628 12de D3ED007A 		flds	s15, [r3, #0]
+ 1629 12e2 67EE277A 		fmuls	s15, s14, s15
+ 1630 12e6 40F20003 		movw	r3, #:lower16:q2q3
+ 1631 12ea C0F20003 		movt	r3, #:upper16:q2q3
+ 1632 12ee C3ED007A 		fsts	s15, [r3, #0]
+ 284:../src/MargAHRS.c ****         q3q3 = q3 * q3;
+ 1633              		.loc 1 284 0
+ 1634 12f2 40F20003 		movw	r3, #:lower16:q3
+ 1635 12f6 C0F20003 		movt	r3, #:upper16:q3
+ 1636 12fa 93ED007A 		flds	s14, [r3, #0]
+ 1637 12fe 40F20003 		movw	r3, #:lower16:q3
+ 1638 1302 C0F20003 		movt	r3, #:upper16:q3
+ 1639 1306 D3ED007A 		flds	s15, [r3, #0]
+ 1640 130a 67EE277A 		fmuls	s15, s14, s15
+ 1641 130e 40F20003 		movw	r3, #:lower16:q3q3
+ 1642 1312 C0F20003 		movt	r3, #:upper16:q3q3
+ 1643 1316 C3ED007A 		fsts	s15, [r3, #0]
+ 285:../src/MargAHRS.c **** 
+ 286:../src/MargAHRS.c ****         sensors.attitude500Hz[ROLL ] = atan2f( 2.0f * (q0q1 + q2q3), q0q0 - q1q1 - q2q2 + q3q3 );
+ 1644              		.loc 1 286 0
+ 1645 131a 40F20003 		movw	r3, #:lower16:q0q1
+ 1646 131e C0F20003 		movt	r3, #:upper16:q0q1
+ 1647 1322 93ED007A 		flds	s14, [r3, #0]
+ 1648 1326 40F20003 		movw	r3, #:lower16:q2q3
+ 1649 132a C0F20003 		movt	r3, #:upper16:q2q3
+ 1650 132e D3ED007A 		flds	s15, [r3, #0]
+ 1651 1332 77EE277A 		fadds	s15, s14, s15
+ 1652 1336 77EEA76A 		fadds	s13, s15, s15
+ 1653 133a 40F20003 		movw	r3, #:lower16:q0q0
+ 1654 133e C0F20003 		movt	r3, #:upper16:q0q0
+ 1655 1342 93ED007A 		flds	s14, [r3, #0]
+ 1656 1346 40F20003 		movw	r3, #:lower16:q1q1
+ 1657 134a C0F20003 		movt	r3, #:upper16:q1q1
+ 1658 134e D3ED007A 		flds	s15, [r3, #0]
+ 1659 1352 37EE677A 		fsubs	s14, s14, s15
+ 1660 1356 40F20003 		movw	r3, #:lower16:q2q2
+ 1661 135a C0F20003 		movt	r3, #:upper16:q2q2
+ 1662 135e D3ED007A 		flds	s15, [r3, #0]
+ 1663 1362 37EE677A 		fsubs	s14, s14, s15
+ 1664 1366 40F20003 		movw	r3, #:lower16:q3q3
+ 1665 136a C0F20003 		movt	r3, #:upper16:q3q3
+ 1666 136e D3ED007A 		flds	s15, [r3, #0]
+ 1667 1372 77EE277A 		fadds	s15, s14, s15
+ 1668 1376 16EE900A 		fmrs	r0, s13
+ 1669 137a 17EE901A 		fmrs	r1, s15
+ 1670 137e FFF7FEFF 		bl	atan2f
+ 1671 1382 0246     		mov	r2, r0	@ float
+ 1672 1384 40F20003 		movw	r3, #:lower16:sensors
+ 1673 1388 C0F20003 		movt	r3, #:upper16:sensors
+ 1674 138c 9A61     		str	r2, [r3, #24]	@ float
+ 287:../src/MargAHRS.c **** 		sensors.attitude500Hz[PITCH] =  asinf( 2.0f * (q0q2 - q1q3) );
+ 1675              		.loc 1 287 0
+ 1676 138e 40F20003 		movw	r3, #:lower16:q0q2
+ 1677 1392 C0F20003 		movt	r3, #:upper16:q0q2
+ 1678 1396 93ED007A 		flds	s14, [r3, #0]
+ 1679 139a 40F20003 		movw	r3, #:lower16:q1q3
+ 1680 139e C0F20003 		movt	r3, #:upper16:q1q3
+ 1681 13a2 D3ED007A 		flds	s15, [r3, #0]
+ 1682 13a6 77EE677A 		fsubs	s15, s14, s15
+ 1683 13aa 77EEA77A 		fadds	s15, s15, s15
+ 1684 13ae 17EE900A 		fmrs	r0, s15
+ 1685 13b2 FFF7FEFF 		bl	asinf
+ 1686 13b6 0246     		mov	r2, r0	@ float
+ 1687 13b8 40F20003 		movw	r3, #:lower16:sensors
+ 1688 13bc C0F20003 		movt	r3, #:upper16:sensors
+ 1689 13c0 DA61     		str	r2, [r3, #28]	@ float
+ 288:../src/MargAHRS.c **** 		sensors.attitude500Hz[YAW  ] = atan2f( 2.0f * (q0q3 + q1q2), q0q0 + q1q1 - q2q2 - q3q3 );
+ 1690              		.loc 1 288 0
+ 1691 13c2 40F20003 		movw	r3, #:lower16:q0q3
+ 1692 13c6 C0F20003 		movt	r3, #:upper16:q0q3
+ 1693 13ca 93ED007A 		flds	s14, [r3, #0]
+ 1694 13ce 40F20003 		movw	r3, #:lower16:q1q2
+ 1695 13d2 C0F20003 		movt	r3, #:upper16:q1q2
+ 1696 13d6 D3ED007A 		flds	s15, [r3, #0]
+ 1697 13da 77EE277A 		fadds	s15, s14, s15
+ 1698 13de 77EEA76A 		fadds	s13, s15, s15
+ 1699 13e2 40F20003 		movw	r3, #:lower16:q0q0
+ 1700 13e6 C0F20003 		movt	r3, #:upper16:q0q0
+ 1701 13ea 93ED007A 		flds	s14, [r3, #0]
+ 1702 13ee 40F20003 		movw	r3, #:lower16:q1q1
+ 1703 13f2 C0F20003 		movt	r3, #:upper16:q1q1
+ 1704 13f6 D3ED007A 		flds	s15, [r3, #0]
+ 1705 13fa 37EE277A 		fadds	s14, s14, s15
+ 1706 13fe 40F20003 		movw	r3, #:lower16:q2q2
+ 1707 1402 C0F20003 		movt	r3, #:upper16:q2q2
+ 1708 1406 D3ED007A 		flds	s15, [r3, #0]
+ 1709 140a 37EE677A 		fsubs	s14, s14, s15
+ 1710 140e 40F20003 		movw	r3, #:lower16:q3q3
+ 1711 1412 C0F20003 		movt	r3, #:upper16:q3q3
+ 1712 1416 D3ED007A 		flds	s15, [r3, #0]
+ 1713 141a 77EE677A 		fsubs	s15, s14, s15
+ 1714 141e 16EE900A 		fmrs	r0, s13
+ 1715 1422 17EE901A 		fmrs	r1, s15
+ 1716 1426 FFF7FEFF 		bl	atan2f
+ 1717 142a 0246     		mov	r2, r0	@ float
+ 1718 142c 40F20003 		movw	r3, #:lower16:sensors
+ 1719 1430 C0F20003 		movt	r3, #:upper16:sensors
+ 1720 1434 1A62     		str	r2, [r3, #32]	@ float
+ 1721              	.L5:
+ 289:../src/MargAHRS.c ****     }
+ 290:../src/MargAHRS.c **** }
+ 1722              		.loc 1 290 0
+ 1723 1436 19B0     		add	sp, sp, #100
+ 1724 1438 00BD     		pop	{pc}
+ 1725              	.L11:
+ 1726 143a 00BFAFF3 		.align	3
+ 1726      0080
+ 1727              	.L10:
+ 1728 1440 00000000 		.word	0
+ 1729 1444 0000F03F 		.word	1072693248
+ 1730 1448 0000803F 		.word	1065353216
+ 1731              		.cfi_endproc
+ 1732              	.LFE113:
+ 1734              		.data
+ 1735              		.align	2
+ 1738              	accMagP.8871:
+ 1739 0008 0000803F 		.word	1065353216
+ 1740              		.text
+ 1741              	.Letext0:
+ 1742              		.file 2 "c:\\program files\\codesourcery\\sourcery_codebench_lite_for_arm_eabi\\bin\\../lib/gcc/ar
+ 1743              		.file 3 "../src/pid.h"
+ 1744              		.file 4 "../src/aq32Plus_F3.h"
+ 1745              		.file 5 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\src\\gps/gpsMediaTe
+ 1746              		.file 6 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\src\\gps/gpsNMEA.h"
+ 1747              		.file 7 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\src\\gps/gpsUblox.h
+ 1748              		.file 8 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\Libraries\\CMSIS\\I
+ 1749              		.file 9 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\src\\sensors/lsm303
+DEFINED SYMBOLS
+                            *ABS*:00000000 MargAHRS.c
+                            *COM*:00000001 mtk19ProcessDataState
+                            *COM*:00000001 nmeaProcessDataState
+                            *COM*:00000001 ubloxProcessDataState
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccxvNWrG.s:27     .bss:00000000 exAcc
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccxvNWrG.s:24     .bss:00000000 $d
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccxvNWrG.s:33     .bss:00000004 eyAcc
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccxvNWrG.s:39     .bss:00000008 ezAcc
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccxvNWrG.s:45     .bss:0000000c exAccInt
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccxvNWrG.s:51     .bss:00000010 eyAccInt
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccxvNWrG.s:57     .bss:00000014 ezAccInt
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccxvNWrG.s:63     .bss:00000018 exMag
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccxvNWrG.s:69     .bss:0000001c eyMag
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccxvNWrG.s:75     .bss:00000020 ezMag
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccxvNWrG.s:81     .bss:00000024 exMagInt
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccxvNWrG.s:87     .bss:00000028 eyMagInt
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccxvNWrG.s:93     .bss:0000002c ezMagInt
+                            *COM*:00000004 kpAcc
+                            *COM*:00000004 kiAcc
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccxvNWrG.s:102    .data:00000000 q0
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccxvNWrG.s:99     .data:00000000 $d
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccxvNWrG.s:109    .bss:00000030 q1
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccxvNWrG.s:115    .bss:00000034 q2
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccxvNWrG.s:121    .bss:00000038 q3
+                            *COM*:00000004 q0q0
+                            *COM*:00000004 q0q1
+                            *COM*:00000004 q0q2
+                            *COM*:00000004 q0q3
+                            *COM*:00000004 q1q1
+                            *COM*:00000004 q1q2
+                            *COM*:00000004 q1q3
+                            *COM*:00000004 q2q2
+                            *COM*:00000004 q2q3
+                            *COM*:00000004 q3q3
+                            *COM*:00000004 halfT
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccxvNWrG.s:137    .bss:0000003c MargAHRSinitialized
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccxvNWrG.s:143    .bss:00000040 accConfidenceDecay
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccxvNWrG.s:150    .data:00000004 accConfidence
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccxvNWrG.s:157    .text:00000000 $t
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccxvNWrG.s:162    .text:00000000 calculateAccConfidence
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccxvNWrG.s:1738   .data:00000008 accMagP.8871
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccxvNWrG.s:251    .text:000000d0 $d
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccxvNWrG.s:260    .text:000000e8 $t
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccxvNWrG.s:265    .text:000000e8 MargAHRSinit
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccxvNWrG.s:605    .text:00000500 MargAHRSupdate
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccxvNWrG.s:1728   .text:00001440 $d
+                     .debug_frame:00000010 $d
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccxvNWrG.s:1750   .text:0000144c $t
+
+UNDEFINED SYMBOLS
+__aeabi_f2d
+__aeabi_dmul
+__aeabi_dsub
+__aeabi_d2f
+accelOneG
+sqrt
+constrain
+atan2
+cosf
+sinf
+atan2f
+__aeabi_ddiv
+eepromConfig
+sensors
+asinf

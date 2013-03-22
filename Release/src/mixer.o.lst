@@ -1,0 +1,4131 @@
+   1              		.syntax unified
+   2              		.cpu cortex-m4
+   3              		.eabi_attribute 27, 3
+   4              		.fpu fpv4-sp-d16
+   5              		.eabi_attribute 20, 1
+   6              		.eabi_attribute 21, 1
+   7              		.eabi_attribute 23, 3
+   8              		.eabi_attribute 24, 1
+   9              		.eabi_attribute 25, 1
+  10              		.eabi_attribute 26, 1
+  11              		.eabi_attribute 30, 6
+  12              		.eabi_attribute 34, 1
+  13              		.eabi_attribute 18, 4
+  14              		.thumb
+  15              		.file	"mixer.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.comm	mtk19ProcessDataState,1,1
+  20              		.comm	nmeaProcessDataState,1,1
+  21              		.comm	ubloxProcessDataState,1,1
+  22              		.comm	numberMotor,1,1
+  23              		.global	motor
+  24              		.data
+  25              		.align	2
+  28              	motor:
+  29 0000 0000FA44 		.word	1157234688
+  30 0004 0000FA44 		.word	1157234688
+  31 0008 0000FA44 		.word	1157234688
+  32 000c 0000FA44 		.word	1157234688
+  33 0010 0000FA44 		.word	1157234688
+  34 0014 0000FA44 		.word	1157234688
+  35 0018 0000FA44 		.word	1157234688
+  36 001c 0000FA44 		.word	1157234688
+  37              		.global	servo
+  38              		.align	2
+  41              	servo:
+  42 0020 00803B45 		.word	1161527296
+  43 0024 00803B45 		.word	1161527296
+  44              		.text
+  45              		.align	2
+  46              		.global	initMixer
+  47              		.thumb
+  48              		.thumb_func
+  50              	initMixer:
+  51              	.LFB111:
+  52              		.file 1 "../src/mixer.c"
+   1:../src/mixer.c **** /*
+   2:../src/mixer.c ****   December 2012
+   3:../src/mixer.c **** 
+   4:../src/mixer.c ****   aq32Plus_F3 Rev -
+   5:../src/mixer.c **** 
+   6:../src/mixer.c ****   Copyright (c) 2012 John Ihlein.  All rights reserved.
+   7:../src/mixer.c **** 
+   8:../src/mixer.c ****   Open Source STM32 Based Multicopter Controller Software
+   9:../src/mixer.c **** 
+  10:../src/mixer.c ****   Includes code and/or ideas from:
+  11:../src/mixer.c **** 
+  12:../src/mixer.c ****   1)AeroQuad
+  13:../src/mixer.c ****   2)BaseFlight
+  14:../src/mixer.c ****   3)CH Robotics
+  15:../src/mixer.c ****   4)MultiWii
+  16:../src/mixer.c ****   5)S.O.H. Madgwick
+  17:../src/mixer.c ****   6)UAVX
+  18:../src/mixer.c ****   7)STM DiscoveryF3 demonstration software
+  19:../src/mixer.c **** 
+  20:../src/mixer.c ****   Designed to run on the DiscoveryF3 board
+  21:../src/mixer.c **** 
+  22:../src/mixer.c ****   This program is free software: you can redistribute it and/or modify
+  23:../src/mixer.c ****   it under the terms of the GNU General Public License as published by
+  24:../src/mixer.c ****   the Free Software Foundation, either version 3 of the License, or
+  25:../src/mixer.c ****   (at your option) any later version.
+  26:../src/mixer.c **** 
+  27:../src/mixer.c ****   This program is distributed in the hope that it will be useful,
+  28:../src/mixer.c ****   but WITHOUT ANY WARRANTY; without even the implied warranty of
+  29:../src/mixer.c ****   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  30:../src/mixer.c ****   GNU General Public License for more details.
+  31:../src/mixer.c **** 
+  32:../src/mixer.c ****   You should have received a copy of the GNU General Public License
+  33:../src/mixer.c ****   along with this program. If not, see <http://www.gnu.org/licenses/>.
+  34:../src/mixer.c **** */
+  35:../src/mixer.c **** 
+  36:../src/mixer.c **** ///////////////////////////////////////////////////////////////////////////////
+  37:../src/mixer.c **** 
+  38:../src/mixer.c **** #include "board.h"
+  39:../src/mixer.c **** 
+  40:../src/mixer.c **** ///////////////////////////////////////////////////////////////////////////////
+  41:../src/mixer.c **** 
+  42:../src/mixer.c **** uint8_t numberMotor;
+  43:../src/mixer.c **** 
+  44:../src/mixer.c **** float motor[8] = { 2000.0f, 2000.0f, 2000.0f, 2000.0f, 2000.0f, 2000.0f, 2000.0f, 2000.0f, };
+  45:../src/mixer.c **** 
+  46:../src/mixer.c **** float servo[2] = { 3000.0f, 3000.0f, };
+  47:../src/mixer.c **** 
+  48:../src/mixer.c **** ///////////////////////////////////////////////////////////////////////////////
+  49:../src/mixer.c **** // Initialize Mixer
+  50:../src/mixer.c **** ///////////////////////////////////////////////////////////////////////////////
+  51:../src/mixer.c **** 
+  52:../src/mixer.c **** void initMixer(void)
+  53:../src/mixer.c **** {
+  53              		.loc 1 53 0
+  54              		.cfi_startproc
+  55              		@ args = 0, pretend = 0, frame = 0
+  56              		@ frame_needed = 0, uses_anonymous_args = 0
+  57              		@ link register save eliminated.
+  54:../src/mixer.c ****     switch (eepromConfig.mixerConfiguration)
+  58              		.loc 1 54 0
+  59 0000 40F20003 		movw	r3, #:lower16:eepromConfig
+  60 0004 C0F20003 		movt	r3, #:upper16:eepromConfig
+  61 0008 93F87C30 		ldrb	r3, [r3, #124]	@ zero_extendqisi2
+  62 000c 03F1FF33 		add	r3, r3, #-1
+  63 0010 142B     		cmp	r3, #20
+  64 0012 71D8     		bhi	.L1
+  65 0014 01A2     		adr	r2, .L11
+  66 0016 52F823F0 		ldr	pc, [r2, r3, lsl #2]
+  67 001a 00BF     		.align	2
+  68              	.L11:
+  69 001c 71000000 		.word	.L3+1
+  70 0020 81000000 		.word	.L4+1
+  71 0024 91000000 		.word	.L5+1
+  72 0028 A1000000 		.word	.L6+1
+  73 002c B1000000 		.word	.L7+1
+  74 0030 B1000000 		.word	.L7+1
+  75 0034 B1000000 		.word	.L7+1
+  76 0038 B1000000 		.word	.L7+1
+  77 003c B1000000 		.word	.L7+1
+  78 0040 B1000000 		.word	.L7+1
+  79 0044 B1000000 		.word	.L7+1
+  80 0048 B1000000 		.word	.L7+1
+  81 004c B1000000 		.word	.L7+1
+  82 0050 C1000000 		.word	.L8+1
+  83 0054 C1000000 		.word	.L8+1
+  84 0058 C1000000 		.word	.L8+1
+  85 005c D1000000 		.word	.L9+1
+  86 0060 D1000000 		.word	.L9+1
+  87 0064 D1000000 		.word	.L9+1
+  88 0068 D1000000 		.word	.L9+1
+  89 006c E1000000 		.word	.L10+1
+  90              	.L3:
+  55:../src/mixer.c ****     {
+  56:../src/mixer.c ****         case MIXERTYPE_GIMBAL:
+  57:../src/mixer.c ****             numberMotor = 0;
+  91              		.loc 1 57 0
+  92 0070 40F20003 		movw	r3, #:lower16:numberMotor
+  93 0074 C0F20003 		movt	r3, #:upper16:numberMotor
+  94 0078 4FF00002 		mov	r2, #0
+  95 007c 1A70     		strb	r2, [r3, #0]
+  58:../src/mixer.c ****             break;
+  96              		.loc 1 58 0
+  97 007e 3BE0     		b	.L1
+  98              	.L4:
+  59:../src/mixer.c **** 
+  60:../src/mixer.c ****         case MIXERTYPE_FLYING_WING:
+  61:../src/mixer.c **** 	        numberMotor = 1;
+  99              		.loc 1 61 0
+ 100 0080 40F20003 		movw	r3, #:lower16:numberMotor
+ 101 0084 C0F20003 		movt	r3, #:upper16:numberMotor
+ 102 0088 4FF00102 		mov	r2, #1
+ 103 008c 1A70     		strb	r2, [r3, #0]
+  62:../src/mixer.c **** 	        break;
+ 104              		.loc 1 62 0
+ 105 008e 33E0     		b	.L1
+ 106              	.L5:
+  63:../src/mixer.c **** 
+  64:../src/mixer.c ****         case MIXERTYPE_BI:
+  65:../src/mixer.c ****             numberMotor = 2;
+ 107              		.loc 1 65 0
+ 108 0090 40F20003 		movw	r3, #:lower16:numberMotor
+ 109 0094 C0F20003 		movt	r3, #:upper16:numberMotor
+ 110 0098 4FF00202 		mov	r2, #2
+ 111 009c 1A70     		strb	r2, [r3, #0]
+  66:../src/mixer.c ****             break;
+ 112              		.loc 1 66 0
+ 113 009e 2BE0     		b	.L1
+ 114              	.L6:
+  67:../src/mixer.c **** 
+  68:../src/mixer.c ****         case MIXERTYPE_TRI:
+  69:../src/mixer.c ****             numberMotor = 3;
+ 115              		.loc 1 69 0
+ 116 00a0 40F20003 		movw	r3, #:lower16:numberMotor
+ 117 00a4 C0F20003 		movt	r3, #:upper16:numberMotor
+ 118 00a8 4FF00302 		mov	r2, #3
+ 119 00ac 1A70     		strb	r2, [r3, #0]
+  70:../src/mixer.c ****             break;
+ 120              		.loc 1 70 0
+ 121 00ae 23E0     		b	.L1
+ 122              	.L7:
+  71:../src/mixer.c **** 
+  72:../src/mixer.c ****         case MIXERTYPE_QUADP:
+  73:../src/mixer.c ****         case MIXERTYPE_QUADX:
+  74:../src/mixer.c ****         case MIXERTYPE_VTAIL4_NO_COMP:
+  75:../src/mixer.c ****         case MIXERTYPE_VTAIL4_Y_COMP:
+  76:../src/mixer.c **** 		case MIXERTYPE_VTAIL4_RY_COMP:
+  77:../src/mixer.c **** 		case MIXERTYPE_VTAIL4_PY_COMP:
+  78:../src/mixer.c **** 		case MIXERTYPE_VTAIL4_RP_COMP:
+  79:../src/mixer.c ****         case MIXERTYPE_VTAIL4_RPY_COMP:
+  80:../src/mixer.c ****         case MIXERTYPE_Y4:
+  81:../src/mixer.c ****             numberMotor = 4;
+ 123              		.loc 1 81 0
+ 124 00b0 40F20003 		movw	r3, #:lower16:numberMotor
+ 125 00b4 C0F20003 		movt	r3, #:upper16:numberMotor
+ 126 00b8 4FF00402 		mov	r2, #4
+ 127 00bc 1A70     		strb	r2, [r3, #0]
+  82:../src/mixer.c ****             break;
+ 128              		.loc 1 82 0
+ 129 00be 1BE0     		b	.L1
+ 130              	.L8:
+  83:../src/mixer.c **** 
+  84:../src/mixer.c ****         case MIXERTYPE_HEX6P:
+  85:../src/mixer.c ****         case MIXERTYPE_HEX6X:
+  86:../src/mixer.c ****         case MIXERTYPE_Y6:
+  87:../src/mixer.c ****             numberMotor = 6;
+ 131              		.loc 1 87 0
+ 132 00c0 40F20003 		movw	r3, #:lower16:numberMotor
+ 133 00c4 C0F20003 		movt	r3, #:upper16:numberMotor
+ 134 00c8 4FF00602 		mov	r2, #6
+ 135 00cc 1A70     		strb	r2, [r3, #0]
+  88:../src/mixer.c ****             break;
+ 136              		.loc 1 88 0
+ 137 00ce 13E0     		b	.L1
+ 138              	.L9:
+  89:../src/mixer.c **** 
+  90:../src/mixer.c ****         case MIXERTYPE_OCTOF8P:
+  91:../src/mixer.c ****         case MIXERTYPE_OCTOF8X:
+  92:../src/mixer.c ****         case MIXERTYPE_OCTOX8P:
+  93:../src/mixer.c ****         case MIXERTYPE_OCTOX8X:
+  94:../src/mixer.c ****             numberMotor = 8;
+ 139              		.loc 1 94 0
+ 140 00d0 40F20003 		movw	r3, #:lower16:numberMotor
+ 141 00d4 C0F20003 		movt	r3, #:upper16:numberMotor
+ 142 00d8 4FF00802 		mov	r2, #8
+ 143 00dc 1A70     		strb	r2, [r3, #0]
+  95:../src/mixer.c ****             break;
+ 144              		.loc 1 95 0
+ 145 00de 0BE0     		b	.L1
+ 146              	.L10:
+  96:../src/mixer.c **** 
+  97:../src/mixer.c ****         case MIXERTYPE_FREEMIX:
+  98:../src/mixer.c ****         	numberMotor = eepromConfig.freeMixMotors;
+ 147              		.loc 1 98 0
+ 148 00e0 40F20003 		movw	r3, #:lower16:eepromConfig
+ 149 00e4 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 150 00e8 93F8E022 		ldrb	r2, [r3, #736]	@ zero_extendqisi2
+ 151 00ec 40F20003 		movw	r3, #:lower16:numberMotor
+ 152 00f0 C0F20003 		movt	r3, #:upper16:numberMotor
+ 153 00f4 1A70     		strb	r2, [r3, #0]
+  99:../src/mixer.c ****         	break;
+ 154              		.loc 1 99 0
+ 155 00f6 00BF     		nop
+ 156              	.L1:
+ 100:../src/mixer.c **** 
+ 101:../src/mixer.c ****     }
+ 102:../src/mixer.c **** }
+ 157              		.loc 1 102 0
+ 158 00f8 7047     		bx	lr
+ 159              		.cfi_endproc
+ 160              	.LFE111:
+ 162 00fa 00BF     		.align	2
+ 163              		.global	writeServos
+ 164              		.thumb
+ 165              		.thumb_func
+ 167              	writeServos:
+ 168              	.LFB112:
+ 103:../src/mixer.c **** 
+ 104:../src/mixer.c **** ///////////////////////////////////////////////////////////////////////////////
+ 105:../src/mixer.c **** // Write to Servos
+ 106:../src/mixer.c **** ///////////////////////////////////////////////////////////////////////////////
+ 107:../src/mixer.c **** 
+ 108:../src/mixer.c **** void writeServos(void)
+ 109:../src/mixer.c **** {
+ 169              		.loc 1 109 0
+ 170              		.cfi_startproc
+ 171              		@ args = 0, pretend = 0, frame = 0
+ 172              		@ frame_needed = 0, uses_anonymous_args = 0
+ 173 00fc 08B5     		push	{r3, lr}
+ 174              	.LCFI0:
+ 175              		.cfi_def_cfa_offset 8
+ 176              		.cfi_offset 14, -4
+ 177              		.cfi_offset 3, -8
+ 110:../src/mixer.c ****     pwmServoWrite(0, (uint16_t)servo[0]);
+ 178              		.loc 1 110 0
+ 179 00fe 40F20003 		movw	r3, #:lower16:servo
+ 180 0102 C0F20003 		movt	r3, #:upper16:servo
+ 181 0106 D3ED007A 		flds	s15, [r3, #0]
+ 182 010a FCEEE77A 		ftouizs	s15, s15
+ 183 010e 17EE903A 		fmrs	r3, s15	@ int
+ 184 0112 9BB2     		uxth	r3, r3
+ 185 0114 4FF00000 		mov	r0, #0
+ 186 0118 1946     		mov	r1, r3
+ 187 011a FFF7FEFF 		bl	pwmServoWrite
+ 111:../src/mixer.c ****     pwmServoWrite(1, (uint16_t)servo[1]);
+ 188              		.loc 1 111 0
+ 189 011e 40F20003 		movw	r3, #:lower16:servo
+ 190 0122 C0F20003 		movt	r3, #:upper16:servo
+ 191 0126 D3ED017A 		flds	s15, [r3, #4]
+ 192 012a FCEEE77A 		ftouizs	s15, s15
+ 193 012e 17EE903A 		fmrs	r3, s15	@ int
+ 194 0132 9BB2     		uxth	r3, r3
+ 195 0134 4FF00100 		mov	r0, #1
+ 196 0138 1946     		mov	r1, r3
+ 197 013a FFF7FEFF 		bl	pwmServoWrite
+ 112:../src/mixer.c **** }
+ 198              		.loc 1 112 0
+ 199 013e 08BD     		pop	{r3, pc}
+ 200              		.cfi_endproc
+ 201              	.LFE112:
+ 203              		.align	2
+ 204              		.global	writeMotors
+ 205              		.thumb
+ 206              		.thumb_func
+ 208              	writeMotors:
+ 209              	.LFB113:
+ 113:../src/mixer.c **** 
+ 114:../src/mixer.c **** ///////////////////////////////////////////////////////////////////////////////
+ 115:../src/mixer.c **** // Write to Motors
+ 116:../src/mixer.c **** ///////////////////////////////////////////////////////////////////////////////
+ 117:../src/mixer.c **** 
+ 118:../src/mixer.c **** void writeMotors(void)
+ 119:../src/mixer.c **** {
+ 210              		.loc 1 119 0
+ 211              		.cfi_startproc
+ 212              		@ args = 0, pretend = 0, frame = 8
+ 213              		@ frame_needed = 0, uses_anonymous_args = 0
+ 214 0140 00B5     		push	{lr}
+ 215              	.LCFI1:
+ 216              		.cfi_def_cfa_offset 4
+ 217              		.cfi_offset 14, -4
+ 218 0142 83B0     		sub	sp, sp, #12
+ 219              	.LCFI2:
+ 220              		.cfi_def_cfa_offset 16
+ 120:../src/mixer.c ****     uint8_t i;
+ 121:../src/mixer.c **** 
+ 122:../src/mixer.c ****     for (i = 0; i < numberMotor; i++)
+ 221              		.loc 1 122 0
+ 222 0144 4FF00003 		mov	r3, #0
+ 223 0148 8DF80730 		strb	r3, [sp, #7]
+ 224 014c 1BE0     		b	.L14
+ 225              	.L15:
+ 123:../src/mixer.c ****         pwmEscWrite(i, (uint16_t)motor[i]);
+ 226              		.loc 1 123 0 discriminator 2
+ 227 014e 9DF80720 		ldrb	r2, [sp, #7]	@ zero_extendqisi2
+ 228 0152 40F20003 		movw	r3, #:lower16:motor
+ 229 0156 C0F20003 		movt	r3, #:upper16:motor
+ 230 015a 4FEA8202 		lsl	r2, r2, #2
+ 231 015e 9B18     		adds	r3, r3, r2
+ 232 0160 D3ED007A 		flds	s15, [r3, #0]
+ 233 0164 FCEEE77A 		ftouizs	s15, s15
+ 234 0168 17EE903A 		fmrs	r3, s15	@ int
+ 235 016c 9BB2     		uxth	r3, r3
+ 236 016e 9DF80720 		ldrb	r2, [sp, #7]	@ zero_extendqisi2
+ 237 0172 1046     		mov	r0, r2
+ 238 0174 1946     		mov	r1, r3
+ 239 0176 FFF7FEFF 		bl	pwmEscWrite
+ 122:../src/mixer.c ****     for (i = 0; i < numberMotor; i++)
+ 240              		.loc 1 122 0 discriminator 2
+ 241 017a 9DF80730 		ldrb	r3, [sp, #7]
+ 242 017e 03F10103 		add	r3, r3, #1
+ 243 0182 8DF80730 		strb	r3, [sp, #7]
+ 244              	.L14:
+ 122:../src/mixer.c ****     for (i = 0; i < numberMotor; i++)
+ 245              		.loc 1 122 0 is_stmt 0 discriminator 1
+ 246 0186 40F20003 		movw	r3, #:lower16:numberMotor
+ 247 018a C0F20003 		movt	r3, #:upper16:numberMotor
+ 248 018e 1B78     		ldrb	r3, [r3, #0]	@ zero_extendqisi2
+ 249 0190 9DF80720 		ldrb	r2, [sp, #7]	@ zero_extendqisi2
+ 250 0194 9A42     		cmp	r2, r3
+ 251 0196 DAD3     		bcc	.L15
+ 124:../src/mixer.c **** }
+ 252              		.loc 1 124 0 is_stmt 1
+ 253 0198 03B0     		add	sp, sp, #12
+ 254 019a 00BD     		pop	{pc}
+ 255              		.cfi_endproc
+ 256              	.LFE113:
+ 258              		.align	2
+ 259              		.global	writeAllMotors
+ 260              		.thumb
+ 261              		.thumb_func
+ 263              	writeAllMotors:
+ 264              	.LFB114:
+ 125:../src/mixer.c **** 
+ 126:../src/mixer.c **** ///////////////////////////////////////////////////////////////////////////////
+ 127:../src/mixer.c **** // Write to All Motors
+ 128:../src/mixer.c **** ///////////////////////////////////////////////////////////////////////////////
+ 129:../src/mixer.c **** 
+ 130:../src/mixer.c **** void writeAllMotors(float mc)
+ 131:../src/mixer.c **** {
+ 265              		.loc 1 131 0
+ 266              		.cfi_startproc
+ 267              		@ args = 0, pretend = 0, frame = 16
+ 268              		@ frame_needed = 0, uses_anonymous_args = 0
+ 269 019c 00B5     		push	{lr}
+ 270              	.LCFI3:
+ 271              		.cfi_def_cfa_offset 4
+ 272              		.cfi_offset 14, -4
+ 273 019e 85B0     		sub	sp, sp, #20
+ 274              	.LCFI4:
+ 275              		.cfi_def_cfa_offset 24
+ 276 01a0 0190     		str	r0, [sp, #4]	@ float
+ 132:../src/mixer.c ****     uint8_t i;
+ 133:../src/mixer.c **** 
+ 134:../src/mixer.c ****     // Sends commands to all motors
+ 135:../src/mixer.c ****     for (i = 0; i < numberMotor; i++)
+ 277              		.loc 1 135 0
+ 278 01a2 4FF00003 		mov	r3, #0
+ 279 01a6 8DF80F30 		strb	r3, [sp, #15]
+ 280 01aa 10E0     		b	.L17
+ 281              	.L18:
+ 136:../src/mixer.c ****         motor[i] = mc;
+ 282              		.loc 1 136 0 discriminator 2
+ 283 01ac 9DF80F20 		ldrb	r2, [sp, #15]	@ zero_extendqisi2
+ 284 01b0 40F20003 		movw	r3, #:lower16:motor
+ 285 01b4 C0F20003 		movt	r3, #:upper16:motor
+ 286 01b8 4FEA8202 		lsl	r2, r2, #2
+ 287 01bc 9B18     		adds	r3, r3, r2
+ 288 01be 019A     		ldr	r2, [sp, #4]	@ float
+ 289 01c0 1A60     		str	r2, [r3, #0]	@ float
+ 135:../src/mixer.c ****     for (i = 0; i < numberMotor; i++)
+ 290              		.loc 1 135 0 discriminator 2
+ 291 01c2 9DF80F30 		ldrb	r3, [sp, #15]
+ 292 01c6 03F10103 		add	r3, r3, #1
+ 293 01ca 8DF80F30 		strb	r3, [sp, #15]
+ 294              	.L17:
+ 135:../src/mixer.c ****     for (i = 0; i < numberMotor; i++)
+ 295              		.loc 1 135 0 is_stmt 0 discriminator 1
+ 296 01ce 40F20003 		movw	r3, #:lower16:numberMotor
+ 297 01d2 C0F20003 		movt	r3, #:upper16:numberMotor
+ 298 01d6 1B78     		ldrb	r3, [r3, #0]	@ zero_extendqisi2
+ 299 01d8 9DF80F20 		ldrb	r2, [sp, #15]	@ zero_extendqisi2
+ 300 01dc 9A42     		cmp	r2, r3
+ 301 01de E5D3     		bcc	.L18
+ 137:../src/mixer.c ****     writeMotors();
+ 302              		.loc 1 137 0 is_stmt 1
+ 303 01e0 FFF7FEFF 		bl	writeMotors
+ 138:../src/mixer.c **** }
+ 304              		.loc 1 138 0
+ 305 01e4 05B0     		add	sp, sp, #20
+ 306 01e6 00BD     		pop	{pc}
+ 307              		.cfi_endproc
+ 308              	.LFE114:
+ 310              		.align	2
+ 311              		.global	pulseMotors
+ 312              		.thumb
+ 313              		.thumb_func
+ 315              	pulseMotors:
+ 316              	.LFB115:
+ 139:../src/mixer.c **** 
+ 140:../src/mixer.c **** ///////////////////////////////////////////////////////////////////////////////
+ 141:../src/mixer.c **** // Pulse Motors
+ 142:../src/mixer.c **** ///////////////////////////////////////////////////////////////////////////////
+ 143:../src/mixer.c **** 
+ 144:../src/mixer.c **** void pulseMotors(uint8_t quantity)
+ 145:../src/mixer.c **** {
+ 317              		.loc 1 145 0
+ 318              		.cfi_startproc
+ 319              		@ args = 0, pretend = 0, frame = 16
+ 320              		@ frame_needed = 0, uses_anonymous_args = 0
+ 321 01e8 00B5     		push	{lr}
+ 322              	.LCFI5:
+ 323              		.cfi_def_cfa_offset 4
+ 324              		.cfi_offset 14, -4
+ 325 01ea 85B0     		sub	sp, sp, #20
+ 326              	.LCFI6:
+ 327              		.cfi_def_cfa_offset 24
+ 328 01ec 0346     		mov	r3, r0
+ 329 01ee 8DF80730 		strb	r3, [sp, #7]
+ 146:../src/mixer.c ****     uint8_t i;
+ 147:../src/mixer.c **** 
+ 148:../src/mixer.c ****     for ( i = 0; i < quantity; i++ )
+ 330              		.loc 1 148 0
+ 331 01f2 4FF00003 		mov	r3, #0
+ 332 01f6 8DF80F30 		strb	r3, [sp, #15]
+ 333 01fa 19E0     		b	.L20
+ 334              	.L21:
+ 149:../src/mixer.c ****     {
+ 150:../src/mixer.c ****         writeAllMotors( eepromConfig.minThrottle );
+ 335              		.loc 1 150 0 discriminator 2
+ 336 01fc 40F20003 		movw	r3, #:lower16:eepromConfig
+ 337 0200 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 338 0204 D3F89030 		ldr	r3, [r3, #144]	@ float
+ 339 0208 1846     		mov	r0, r3	@ float
+ 340 020a FFF7FEFF 		bl	writeAllMotors
+ 151:../src/mixer.c ****         delay(250);
+ 341              		.loc 1 151 0 discriminator 2
+ 342 020e 4FF0FA00 		mov	r0, #250
+ 343 0212 FFF7FEFF 		bl	delay
+ 152:../src/mixer.c ****         writeAllMotors( (float)MINCOMMAND );
+ 344              		.loc 1 152 0 discriminator 2
+ 345 0216 0A48     		ldr	r0, .L22	@ float
+ 346 0218 FFF7FEFF 		bl	writeAllMotors
+ 153:../src/mixer.c ****         delay(250);
+ 347              		.loc 1 153 0 discriminator 2
+ 348 021c 4FF0FA00 		mov	r0, #250
+ 349 0220 FFF7FEFF 		bl	delay
+ 148:../src/mixer.c ****     for ( i = 0; i < quantity; i++ )
+ 350              		.loc 1 148 0 discriminator 2
+ 351 0224 9DF80F30 		ldrb	r3, [sp, #15]
+ 352 0228 03F10103 		add	r3, r3, #1
+ 353 022c 8DF80F30 		strb	r3, [sp, #15]
+ 354              	.L20:
+ 148:../src/mixer.c ****     for ( i = 0; i < quantity; i++ )
+ 355              		.loc 1 148 0 is_stmt 0 discriminator 1
+ 356 0230 9DF80F20 		ldrb	r2, [sp, #15]	@ zero_extendqisi2
+ 357 0234 9DF80730 		ldrb	r3, [sp, #7]	@ zero_extendqisi2
+ 358 0238 9A42     		cmp	r2, r3
+ 359 023a DFD3     		bcc	.L21
+ 154:../src/mixer.c ****     }
+ 155:../src/mixer.c **** }
+ 360              		.loc 1 155 0 is_stmt 1
+ 361 023c 05B0     		add	sp, sp, #20
+ 362 023e 00BD     		pop	{pc}
+ 363              	.L23:
+ 364              		.align	2
+ 365              	.L22:
+ 366 0240 0000FA44 		.word	1157234688
+ 367              		.cfi_endproc
+ 368              	.LFE115:
+ 370              		.global	__aeabi_f2d
+ 371              		.global	__aeabi_dmul
+ 372              		.global	__aeabi_dadd
+ 373              		.global	__aeabi_d2f
+ 374              		.align	2
+ 375              		.global	mixTable
+ 376              		.thumb
+ 377              		.thumb_func
+ 379              	mixTable:
+ 380              	.LFB116:
+ 156:../src/mixer.c **** 
+ 157:../src/mixer.c **** ///////////////////////////////////////////////////////////////////////////////
+ 158:../src/mixer.c **** // Mixer
+ 159:../src/mixer.c **** ///////////////////////////////////////////////////////////////////////////////
+ 160:../src/mixer.c **** 
+ 161:../src/mixer.c **** #define PIDMIX(X,Y,Z) rxCommand[THROTTLE] + axisPID[ROLL] * X + axisPID[PITCH] * Y + eepromConfig.y
+ 162:../src/mixer.c **** 
+ 163:../src/mixer.c **** void mixTable(void)
+ 164:../src/mixer.c **** {
+ 381              		.loc 1 164 0
+ 382              		.cfi_startproc
+ 383              		@ args = 0, pretend = 0, frame = 8
+ 384              		@ frame_needed = 0, uses_anonymous_args = 0
+ 385 0244 30B5     		push	{r4, r5, lr}
+ 386              	.LCFI7:
+ 387              		.cfi_def_cfa_offset 12
+ 388              		.cfi_offset 14, -4
+ 389              		.cfi_offset 5, -8
+ 390              		.cfi_offset 4, -12
+ 391 0246 83B0     		sub	sp, sp, #12
+ 392              	.LCFI8:
+ 393              		.cfi_def_cfa_offset 24
+ 165:../src/mixer.c ****     int16_t maxMotor;
+ 166:../src/mixer.c ****     uint8_t i;
+ 167:../src/mixer.c **** 
+ 168:../src/mixer.c ****     ///////////////////////////////////
+ 169:../src/mixer.c ****     /*
+ 170:../src/mixer.c ****     if ( numberMotor > 3 )
+ 171:../src/mixer.c ****     {
+ 172:../src/mixer.c ****         //prevent "yaw jump" during yaw correction
+ 173:../src/mixer.c ****         axisPID[YAW] = constrain(axisPID[YAW], -100 - fabs(rcCommand[YAW]), +100 + fabs(rcCommand[Y
+ 174:../src/mixer.c ****     }
+ 175:../src/mixer.c ****     */
+ 176:../src/mixer.c ****     ///////////////////////////////////
+ 177:../src/mixer.c **** 
+ 178:../src/mixer.c ****     switch ( eepromConfig.mixerConfiguration )
+ 394              		.loc 1 178 0
+ 395 0248 40F20003 		movw	r3, #:lower16:eepromConfig
+ 396 024c C0F20003 		movt	r3, #:upper16:eepromConfig
+ 397 0250 93F87C30 		ldrb	r3, [r3, #124]	@ zero_extendqisi2
+ 398 0254 03F1FF33 		add	r3, r3, #-1
+ 399 0258 142B     		cmp	r3, #20
+ 400 025a 02F28585 		bhi	.L25
+ 401 025e 01A2     		adr	r2, .L47
+ 402 0260 52F823F0 		ldr	pc, [r2, r3, lsl #2]
+ 403              		.align	2
+ 404              	.L47:
+ 405 0264 B9020000 		.word	.L26+1
+ 406 0268 95030000 		.word	.L27+1
+ 407 026c B5050000 		.word	.L28+1
+ 408 0270 61070000 		.word	.L29+1
+ 409 0274 0D090000 		.word	.L30+1
+ 410 0278 910A0000 		.word	.L31+1
+ 411 027c F50B0000 		.word	.L32+1
+ 412 0280 790D0000 		.word	.L33+1
+ 413 0284 110F0000 		.word	.L34+1
+ 414 0288 D9100000 		.word	.L35+1
+ 415 028c 85120000 		.word	.L36+1
+ 416 0290 45140000 		.word	.L37+1
+ 417 0294 19160000 		.word	.L38+1
+ 418 0298 9D170000 		.word	.L39+1
+ 419 029c FD190000 		.word	.L40+1
+ 420 02a0 511C0000 		.word	.L41+1
+ 421 02a4 7D200000 		.word	.L42+1
+ 422 02a8 A1230000 		.word	.L43+1
+ 423 02ac A3260000 		.word	.L44+1
+ 424 02b0 A9290000 		.word	.L45+1
+ 425 02b4 6B2C0000 		.word	.L46+1
+ 426              	.L26:
+ 179:../src/mixer.c ****     {
+ 180:../src/mixer.c ****         case MIXERTYPE_GIMBAL:
+ 181:../src/mixer.c ****             servo[0] = constrain( eepromConfig.gimbalRollServoMid + eepromConfig.gimbalRollServoGai
+ 427              		.loc 1 181 0
+ 428 02b8 40F20003 		movw	r3, #:lower16:eepromConfig
+ 429 02bc C0F20003 		movt	r3, #:upper16:eepromConfig
+ 430 02c0 93ED9F7A 		flds	s14, [r3, #636]
+ 431 02c4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 432 02c8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 433 02cc D3EDA16A 		flds	s13, [r3, #644]
+ 434 02d0 40F20003 		movw	r3, #:lower16:sensors
+ 435 02d4 C0F20003 		movt	r3, #:upper16:sensors
+ 436 02d8 D3ED067A 		flds	s15, [r3, #24]
+ 437 02dc 66EEA77A 		fmuls	s15, s13, s15
+ 438 02e0 37EE277A 		fadds	s14, s14, s15
+ 439 02e4 40F20003 		movw	r3, #:lower16:rxCommand
+ 440 02e8 C0F20003 		movt	r3, #:upper16:rxCommand
+ 441 02ec D3ED007A 		flds	s15, [r3, #0]
+ 442 02f0 77EE277A 		fadds	s15, s14, s15
+ 443 02f4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 444 02f8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 445 02fc D3F87822 		ldr	r2, [r3, #632]	@ float
+ 446 0300 40F20003 		movw	r3, #:lower16:eepromConfig
+ 447 0304 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 448 0308 D3F88032 		ldr	r3, [r3, #640]	@ float
+ 449 030c 17EE900A 		fmrs	r0, s15
+ 450 0310 1146     		mov	r1, r2	@ float
+ 451 0312 1A46     		mov	r2, r3	@ float
+ 452 0314 FFF7FEFF 		bl	constrain
+ 453 0318 0246     		mov	r2, r0	@ float
+ 454 031a 40F20003 		movw	r3, #:lower16:servo
+ 455 031e C0F20003 		movt	r3, #:upper16:servo
+ 456 0322 1A60     		str	r2, [r3, #0]	@ float
+ 182:../src/mixer.c ****                                   eepromConfig.gimbalRollServoMin, eepromConfig.gimbalRollServoMax 
+ 183:../src/mixer.c **** 
+ 184:../src/mixer.c ****             servo[1] = constrain( eepromConfig.gimbalPitchServoMid + eepromConfig.gimbalPitchServoG
+ 457              		.loc 1 184 0
+ 458 0324 40F20003 		movw	r3, #:lower16:eepromConfig
+ 459 0328 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 460 032c 93EDA37A 		flds	s14, [r3, #652]
+ 461 0330 40F20003 		movw	r3, #:lower16:eepromConfig
+ 462 0334 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 463 0338 D3EDA56A 		flds	s13, [r3, #660]
+ 464 033c 40F20003 		movw	r3, #:lower16:sensors
+ 465 0340 C0F20003 		movt	r3, #:upper16:sensors
+ 466 0344 D3ED077A 		flds	s15, [r3, #28]
+ 467 0348 66EEA77A 		fmuls	s15, s13, s15
+ 468 034c 37EE277A 		fadds	s14, s14, s15
+ 469 0350 40F20003 		movw	r3, #:lower16:rxCommand
+ 470 0354 C0F20003 		movt	r3, #:upper16:rxCommand
+ 471 0358 D3ED017A 		flds	s15, [r3, #4]
+ 472 035c 77EE277A 		fadds	s15, s14, s15
+ 473 0360 40F20003 		movw	r3, #:lower16:eepromConfig
+ 474 0364 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 475 0368 D3F88822 		ldr	r2, [r3, #648]	@ float
+ 476 036c 40F20003 		movw	r3, #:lower16:eepromConfig
+ 477 0370 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 478 0374 D3F89032 		ldr	r3, [r3, #656]	@ float
+ 479 0378 17EE900A 		fmrs	r0, s15
+ 480 037c 1146     		mov	r1, r2	@ float
+ 481 037e 1A46     		mov	r2, r3	@ float
+ 482 0380 FFF7FEFF 		bl	constrain
+ 483 0384 0246     		mov	r2, r0	@ float
+ 484 0386 40F20003 		movw	r3, #:lower16:servo
+ 485 038a C0F20003 		movt	r3, #:upper16:servo
+ 486 038e 5A60     		str	r2, [r3, #4]	@ float
+ 185:../src/mixer.c ****                                   eepromConfig.gimbalPitchServoMin, eepromConfig.gimbalPitchServoMa
+ 186:../src/mixer.c ****             break;
+ 487              		.loc 1 186 0
+ 488 0390 02F0EABC 		b	.L25
+ 489              	.L27:
+ 187:../src/mixer.c **** 
+ 188:../src/mixer.c ****         ///////////////////////////////
+ 189:../src/mixer.c **** 
+ 190:../src/mixer.c ****         case MIXERTYPE_FLYING_WING:
+ 191:../src/mixer.c ****             motor[0] = rxCommand[THROTTLE];
+ 490              		.loc 1 191 0
+ 491 0394 40F20003 		movw	r3, #:lower16:rxCommand
+ 492 0398 C0F20003 		movt	r3, #:upper16:rxCommand
+ 493 039c DA68     		ldr	r2, [r3, #12]	@ float
+ 494 039e 40F20003 		movw	r3, #:lower16:motor
+ 495 03a2 C0F20003 		movt	r3, #:upper16:motor
+ 496 03a6 1A60     		str	r2, [r3, #0]	@ float
+ 192:../src/mixer.c ****             if (flightMode != ATTITUDE)
+ 497              		.loc 1 192 0
+ 498 03a8 40F20003 		movw	r3, #:lower16:flightMode
+ 499 03ac C0F20003 		movt	r3, #:upper16:flightMode
+ 500 03b0 1B78     		ldrb	r3, [r3, #0]	@ zero_extendqisi2
+ 501 03b2 012B     		cmp	r3, #1
+ 502 03b4 68D0     		beq	.L48
+ 193:../src/mixer.c ****             {   // do not use sensors for correction, simple 2 channel mixing
+ 194:../src/mixer.c ****             	servo[0] = eepromConfig.pitchDirectionLeft  * (rxCommand[PITCH] - eepromConfig.midComm
+ 503              		.loc 1 194 0
+ 504 03b6 40F20003 		movw	r3, #:lower16:eepromConfig
+ 505 03ba C0F20003 		movt	r3, #:upper16:eepromConfig
+ 506 03be 93EDA87A 		flds	s14, [r3, #672]
+ 507 03c2 40F20003 		movw	r3, #:lower16:rxCommand
+ 508 03c6 C0F20003 		movt	r3, #:upper16:rxCommand
+ 509 03ca D3ED016A 		flds	s13, [r3, #4]
+ 510 03ce 40F20003 		movw	r3, #:lower16:eepromConfig
+ 511 03d2 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 512 03d6 D3ED217A 		flds	s15, [r3, #132]
+ 513 03da 76EEE77A 		fsubs	s15, s13, s15
+ 514 03de 27EE277A 		fmuls	s14, s14, s15
+ 195:../src/mixer.c ****             			   eepromConfig.rollDirectionLeft   * (rxCommand[ROLL ] - eepromConfig.midCommand);
+ 515              		.loc 1 195 0
+ 516 03e2 40F20003 		movw	r3, #:lower16:eepromConfig
+ 517 03e6 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 518 03ea D3EDA66A 		flds	s13, [r3, #664]
+ 519 03ee 40F20003 		movw	r3, #:lower16:rxCommand
+ 520 03f2 C0F20003 		movt	r3, #:upper16:rxCommand
+ 521 03f6 93ED006A 		flds	s12, [r3, #0]
+ 522 03fa 40F20003 		movw	r3, #:lower16:eepromConfig
+ 523 03fe C0F20003 		movt	r3, #:upper16:eepromConfig
+ 524 0402 D3ED217A 		flds	s15, [r3, #132]
+ 525 0406 76EE677A 		fsubs	s15, s12, s15
+ 526 040a 66EEA77A 		fmuls	s15, s13, s15
+ 194:../src/mixer.c ****             	servo[0] = eepromConfig.pitchDirectionLeft  * (rxCommand[PITCH] - eepromConfig.midComm
+ 527              		.loc 1 194 0
+ 528 040e 77EE277A 		fadds	s15, s14, s15
+ 529 0412 40F20003 		movw	r3, #:lower16:servo
+ 530 0416 C0F20003 		movt	r3, #:upper16:servo
+ 531 041a C3ED007A 		fsts	s15, [r3, #0]
+ 196:../src/mixer.c **** 
+ 197:../src/mixer.c ****             	servo[1] = eepromConfig.pitchDirectionRight * (rxCommand[PITCH] - eepromConfig.midComm
+ 532              		.loc 1 197 0
+ 533 041e 40F20003 		movw	r3, #:lower16:eepromConfig
+ 534 0422 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 535 0426 93EDA97A 		flds	s14, [r3, #676]
+ 536 042a 40F20003 		movw	r3, #:lower16:rxCommand
+ 537 042e C0F20003 		movt	r3, #:upper16:rxCommand
+ 538 0432 D3ED016A 		flds	s13, [r3, #4]
+ 539 0436 40F20003 		movw	r3, #:lower16:eepromConfig
+ 540 043a C0F20003 		movt	r3, #:upper16:eepromConfig
+ 541 043e D3ED217A 		flds	s15, [r3, #132]
+ 542 0442 76EEE77A 		fsubs	s15, s13, s15
+ 543 0446 27EE277A 		fmuls	s14, s14, s15
+ 198:../src/mixer.c ****             			   eepromConfig.rollDirectionRight  * (rxCommand[ROLL]  - eepromConfig.midCommand);
+ 544              		.loc 1 198 0
+ 545 044a 40F20003 		movw	r3, #:lower16:eepromConfig
+ 546 044e C0F20003 		movt	r3, #:upper16:eepromConfig
+ 547 0452 D3EDA76A 		flds	s13, [r3, #668]
+ 548 0456 40F20003 		movw	r3, #:lower16:rxCommand
+ 549 045a C0F20003 		movt	r3, #:upper16:rxCommand
+ 550 045e 93ED006A 		flds	s12, [r3, #0]
+ 551 0462 40F20003 		movw	r3, #:lower16:eepromConfig
+ 552 0466 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 553 046a D3ED217A 		flds	s15, [r3, #132]
+ 554 046e 76EE677A 		fsubs	s15, s12, s15
+ 555 0472 66EEA77A 		fmuls	s15, s13, s15
+ 197:../src/mixer.c ****             	servo[1] = eepromConfig.pitchDirectionRight * (rxCommand[PITCH] - eepromConfig.midComm
+ 556              		.loc 1 197 0
+ 557 0476 77EE277A 		fadds	s15, s14, s15
+ 558 047a 40F20003 		movw	r3, #:lower16:servo
+ 559 047e C0F20003 		movt	r3, #:upper16:servo
+ 560 0482 C3ED017A 		fsts	s15, [r3, #4]
+ 561 0486 47E0     		b	.L49
+ 562              	.L48:
+ 199:../src/mixer.c ****             }
+ 200:../src/mixer.c ****             else
+ 201:../src/mixer.c ****             {   // use sensors to correct (attitude only)
+ 202:../src/mixer.c ****             	servo[0] = eepromConfig.pitchDirectionLeft  * axisPID[PITCH] +
+ 563              		.loc 1 202 0
+ 564 0488 40F20003 		movw	r3, #:lower16:eepromConfig
+ 565 048c C0F20003 		movt	r3, #:upper16:eepromConfig
+ 566 0490 93EDA87A 		flds	s14, [r3, #672]
+ 567 0494 40F20003 		movw	r3, #:lower16:axisPID
+ 568 0498 C0F20003 		movt	r3, #:upper16:axisPID
+ 569 049c D3ED017A 		flds	s15, [r3, #4]
+ 570 04a0 27EE277A 		fmuls	s14, s14, s15
+ 203:../src/mixer.c ****             			   eepromConfig.rollDirectionLeft   * axisPID[ROLL];
+ 571              		.loc 1 203 0
+ 572 04a4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 573 04a8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 574 04ac D3EDA66A 		flds	s13, [r3, #664]
+ 575 04b0 40F20003 		movw	r3, #:lower16:axisPID
+ 576 04b4 C0F20003 		movt	r3, #:upper16:axisPID
+ 577 04b8 D3ED007A 		flds	s15, [r3, #0]
+ 578 04bc 66EEA77A 		fmuls	s15, s13, s15
+ 202:../src/mixer.c ****             	servo[0] = eepromConfig.pitchDirectionLeft  * axisPID[PITCH] +
+ 579              		.loc 1 202 0
+ 580 04c0 77EE277A 		fadds	s15, s14, s15
+ 581 04c4 40F20003 		movw	r3, #:lower16:servo
+ 582 04c8 C0F20003 		movt	r3, #:upper16:servo
+ 583 04cc C3ED007A 		fsts	s15, [r3, #0]
+ 204:../src/mixer.c **** 
+ 205:../src/mixer.c ****             	servo[1] = eepromConfig.pitchDirectionRight * axisPID[PITCH] +
+ 584              		.loc 1 205 0
+ 585 04d0 40F20003 		movw	r3, #:lower16:eepromConfig
+ 586 04d4 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 587 04d8 93EDA97A 		flds	s14, [r3, #676]
+ 588 04dc 40F20003 		movw	r3, #:lower16:axisPID
+ 589 04e0 C0F20003 		movt	r3, #:upper16:axisPID
+ 590 04e4 D3ED017A 		flds	s15, [r3, #4]
+ 591 04e8 27EE277A 		fmuls	s14, s14, s15
+ 206:../src/mixer.c ****             			   eepromConfig.rollDirectionRight  * axisPID[ROLL];
+ 592              		.loc 1 206 0
+ 593 04ec 40F20003 		movw	r3, #:lower16:eepromConfig
+ 594 04f0 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 595 04f4 D3EDA76A 		flds	s13, [r3, #668]
+ 596 04f8 40F20003 		movw	r3, #:lower16:axisPID
+ 597 04fc C0F20003 		movt	r3, #:upper16:axisPID
+ 598 0500 D3ED007A 		flds	s15, [r3, #0]
+ 599 0504 66EEA77A 		fmuls	s15, s13, s15
+ 205:../src/mixer.c ****             	servo[1] = eepromConfig.pitchDirectionRight * axisPID[PITCH] +
+ 600              		.loc 1 205 0
+ 601 0508 77EE277A 		fadds	s15, s14, s15
+ 602 050c 40F20003 		movw	r3, #:lower16:servo
+ 603 0510 C0F20003 		movt	r3, #:upper16:servo
+ 604 0514 C3ED017A 		fsts	s15, [r3, #4]
+ 605              	.L49:
+ 207:../src/mixer.c ****             }
+ 208:../src/mixer.c **** 
+ 209:../src/mixer.c ****             servo[0] = constrain(servo[0] + eepromConfig.midCommand, eepromConfig.wingLeftMinimum,
+ 606              		.loc 1 209 0
+ 607 0518 40F20003 		movw	r3, #:lower16:servo
+ 608 051c C0F20003 		movt	r3, #:upper16:servo
+ 609 0520 93ED007A 		flds	s14, [r3, #0]
+ 610 0524 40F20003 		movw	r3, #:lower16:eepromConfig
+ 611 0528 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 612 052c D3ED217A 		flds	s15, [r3, #132]
+ 613 0530 77EE277A 		fadds	s15, s14, s15
+ 614 0534 40F20003 		movw	r3, #:lower16:eepromConfig
+ 615 0538 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 616 053c D3F8A822 		ldr	r2, [r3, #680]	@ float
+ 617 0540 40F20003 		movw	r3, #:lower16:eepromConfig
+ 618 0544 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 619 0548 D3F8AC32 		ldr	r3, [r3, #684]	@ float
+ 620 054c 17EE900A 		fmrs	r0, s15
+ 621 0550 1146     		mov	r1, r2	@ float
+ 622 0552 1A46     		mov	r2, r3	@ float
+ 623 0554 FFF7FEFF 		bl	constrain
+ 624 0558 0246     		mov	r2, r0	@ float
+ 625 055a 40F20003 		movw	r3, #:lower16:servo
+ 626 055e C0F20003 		movt	r3, #:upper16:servo
+ 627 0562 1A60     		str	r2, [r3, #0]	@ float
+ 210:../src/mixer.c ****             		                                                 eepromConfig.wingLeftMaximum);
+ 211:../src/mixer.c **** 
+ 212:../src/mixer.c ****             servo[1] = constrain(servo[1] + eepromConfig.midCommand, eepromConfig.wingRightMinimum,
+ 628              		.loc 1 212 0
+ 629 0564 40F20003 		movw	r3, #:lower16:servo
+ 630 0568 C0F20003 		movt	r3, #:upper16:servo
+ 631 056c 93ED017A 		flds	s14, [r3, #4]
+ 632 0570 40F20003 		movw	r3, #:lower16:eepromConfig
+ 633 0574 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 634 0578 D3ED217A 		flds	s15, [r3, #132]
+ 635 057c 77EE277A 		fadds	s15, s14, s15
+ 636 0580 40F20003 		movw	r3, #:lower16:eepromConfig
+ 637 0584 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 638 0588 D3F8B022 		ldr	r2, [r3, #688]	@ float
+ 639 058c 40F20003 		movw	r3, #:lower16:eepromConfig
+ 640 0590 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 641 0594 D3F8B432 		ldr	r3, [r3, #692]	@ float
+ 642 0598 17EE900A 		fmrs	r0, s15
+ 643 059c 1146     		mov	r1, r2	@ float
+ 644 059e 1A46     		mov	r2, r3	@ float
+ 645 05a0 FFF7FEFF 		bl	constrain
+ 646 05a4 0246     		mov	r2, r0	@ float
+ 647 05a6 40F20003 		movw	r3, #:lower16:servo
+ 648 05aa C0F20003 		movt	r3, #:upper16:servo
+ 649 05ae 5A60     		str	r2, [r3, #4]	@ float
+ 213:../src/mixer.c ****             		                                                 eepromConfig.wingRightMaximum);
+ 214:../src/mixer.c ****             break;
+ 650              		.loc 1 214 0
+ 651 05b0 02F0DABB 		b	.L25
+ 652              	.L28:
+ 215:../src/mixer.c **** 
+ 216:../src/mixer.c ****         ///////////////////////////////
+ 217:../src/mixer.c **** 
+ 218:../src/mixer.c ****         case MIXERTYPE_BI:
+ 219:../src/mixer.c ****             motor[0] = PIDMIX(  1.0f, 0.0f, 0.0f );        // Left Motor
+ 653              		.loc 1 219 0
+ 654 05b4 40F20003 		movw	r3, #:lower16:rxCommand
+ 655 05b8 C0F20003 		movt	r3, #:upper16:rxCommand
+ 656 05bc 93ED037A 		flds	s14, [r3, #12]
+ 657 05c0 40F20003 		movw	r3, #:lower16:axisPID
+ 658 05c4 C0F20003 		movt	r3, #:upper16:axisPID
+ 659 05c8 D3ED007A 		flds	s15, [r3, #0]
+ 660 05cc 37EE277A 		fadds	s14, s14, s15
+ 661 05d0 40F20003 		movw	r3, #:lower16:axisPID
+ 662 05d4 C0F20003 		movt	r3, #:upper16:axisPID
+ 663 05d8 D3ED016A 		flds	s13, [r3, #4]
+ 664 05dc DFEDCA7A 		flds	s15, .L60+8
+ 665 05e0 66EEA77A 		fmuls	s15, s13, s15
+ 666 05e4 37EE277A 		fadds	s14, s14, s15
+ 667 05e8 40F20003 		movw	r3, #:lower16:eepromConfig
+ 668 05ec C0F20003 		movt	r3, #:upper16:eepromConfig
+ 669 05f0 D3ED206A 		flds	s13, [r3, #128]
+ 670 05f4 40F20003 		movw	r3, #:lower16:axisPID
+ 671 05f8 C0F20003 		movt	r3, #:upper16:axisPID
+ 672 05fc D3ED027A 		flds	s15, [r3, #8]
+ 673 0600 66EEA77A 		fmuls	s15, s13, s15
+ 674 0604 DFEDC06A 		flds	s13, .L60+8
+ 675 0608 67EEA67A 		fmuls	s15, s15, s13
+ 676 060c 77EE277A 		fadds	s15, s14, s15
+ 677 0610 40F20003 		movw	r3, #:lower16:motor
+ 678 0614 C0F20003 		movt	r3, #:upper16:motor
+ 679 0618 C3ED007A 		fsts	s15, [r3, #0]
+ 220:../src/mixer.c ****             motor[1] = PIDMIX( -1.0f, 0.0f, 0.0f );        // Right Motor
+ 680              		.loc 1 220 0
+ 681 061c 40F20003 		movw	r3, #:lower16:rxCommand
+ 682 0620 C0F20003 		movt	r3, #:upper16:rxCommand
+ 683 0624 93ED037A 		flds	s14, [r3, #12]
+ 684 0628 40F20003 		movw	r3, #:lower16:axisPID
+ 685 062c C0F20003 		movt	r3, #:upper16:axisPID
+ 686 0630 D3ED007A 		flds	s15, [r3, #0]
+ 687 0634 37EE677A 		fsubs	s14, s14, s15
+ 688 0638 40F20003 		movw	r3, #:lower16:axisPID
+ 689 063c C0F20003 		movt	r3, #:upper16:axisPID
+ 690 0640 D3ED016A 		flds	s13, [r3, #4]
+ 691 0644 DFEDB07A 		flds	s15, .L60+8
+ 692 0648 66EEA77A 		fmuls	s15, s13, s15
+ 693 064c 37EE277A 		fadds	s14, s14, s15
+ 694 0650 40F20003 		movw	r3, #:lower16:eepromConfig
+ 695 0654 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 696 0658 D3ED206A 		flds	s13, [r3, #128]
+ 697 065c 40F20003 		movw	r3, #:lower16:axisPID
+ 698 0660 C0F20003 		movt	r3, #:upper16:axisPID
+ 699 0664 D3ED027A 		flds	s15, [r3, #8]
+ 700 0668 66EEA77A 		fmuls	s15, s13, s15
+ 701 066c DFEDA66A 		flds	s13, .L60+8
+ 702 0670 67EEA67A 		fmuls	s15, s15, s13
+ 703 0674 77EE277A 		fadds	s15, s14, s15
+ 704 0678 40F20003 		movw	r3, #:lower16:motor
+ 705 067c C0F20003 		movt	r3, #:upper16:motor
+ 706 0680 C3ED017A 		fsts	s15, [r3, #4]
+ 221:../src/mixer.c **** 
+ 222:../src/mixer.c ****             servo[0] = constrain( eepromConfig.biLeftServoMid + (eepromConfig.yawDirection * axisPI
+ 707              		.loc 1 222 0
+ 708 0684 40F20003 		movw	r3, #:lower16:eepromConfig
+ 709 0688 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 710 068c 93EDAF7A 		flds	s14, [r3, #700]
+ 711 0690 40F20003 		movw	r3, #:lower16:eepromConfig
+ 712 0694 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 713 0698 D3ED206A 		flds	s13, [r3, #128]
+ 714 069c 40F20003 		movw	r3, #:lower16:axisPID
+ 715 06a0 C0F20003 		movt	r3, #:upper16:axisPID
+ 716 06a4 D3ED027A 		flds	s15, [r3, #8]
+ 717 06a8 66EEA77A 		fmuls	s15, s13, s15
+ 718 06ac 37EE277A 		fadds	s14, s14, s15
+ 719 06b0 40F20003 		movw	r3, #:lower16:axisPID
+ 720 06b4 C0F20003 		movt	r3, #:upper16:axisPID
+ 721 06b8 D3ED017A 		flds	s15, [r3, #4]
+ 722 06bc 77EE277A 		fadds	s15, s14, s15
+ 723 06c0 40F20003 		movw	r3, #:lower16:eepromConfig
+ 724 06c4 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 725 06c8 D3F8B822 		ldr	r2, [r3, #696]	@ float
+ 726 06cc 40F20003 		movw	r3, #:lower16:eepromConfig
+ 727 06d0 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 728 06d4 D3F8C032 		ldr	r3, [r3, #704]	@ float
+ 729 06d8 17EE900A 		fmrs	r0, s15
+ 730 06dc 1146     		mov	r1, r2	@ float
+ 731 06de 1A46     		mov	r2, r3	@ float
+ 732 06e0 FFF7FEFF 		bl	constrain
+ 733 06e4 0246     		mov	r2, r0	@ float
+ 734 06e6 40F20003 		movw	r3, #:lower16:servo
+ 735 06ea C0F20003 		movt	r3, #:upper16:servo
+ 736 06ee 1A60     		str	r2, [r3, #0]	@ float
+ 223:../src/mixer.c ****                                   eepromConfig.biLeftServoMin, eepromConfig.biLeftServoMax );   // 
+ 224:../src/mixer.c **** 
+ 225:../src/mixer.c ****             servo[1] = constrain( eepromConfig.biRightServoMid + (eepromConfig.yawDirection * axisP
+ 737              		.loc 1 225 0
+ 738 06f0 40F20003 		movw	r3, #:lower16:eepromConfig
+ 739 06f4 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 740 06f8 93EDB27A 		flds	s14, [r3, #712]
+ 741 06fc 40F20003 		movw	r3, #:lower16:eepromConfig
+ 742 0700 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 743 0704 D3ED206A 		flds	s13, [r3, #128]
+ 744 0708 40F20003 		movw	r3, #:lower16:axisPID
+ 745 070c C0F20003 		movt	r3, #:upper16:axisPID
+ 746 0710 D3ED027A 		flds	s15, [r3, #8]
+ 747 0714 66EEA77A 		fmuls	s15, s13, s15
+ 748 0718 37EE277A 		fadds	s14, s14, s15
+ 749 071c 40F20003 		movw	r3, #:lower16:axisPID
+ 750 0720 C0F20003 		movt	r3, #:upper16:axisPID
+ 751 0724 D3ED017A 		flds	s15, [r3, #4]
+ 752 0728 77EE677A 		fsubs	s15, s14, s15
+ 753 072c 40F20003 		movw	r3, #:lower16:eepromConfig
+ 754 0730 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 755 0734 D3F8C422 		ldr	r2, [r3, #708]	@ float
+ 756 0738 40F20003 		movw	r3, #:lower16:eepromConfig
+ 757 073c C0F20003 		movt	r3, #:upper16:eepromConfig
+ 758 0740 D3F8CC32 		ldr	r3, [r3, #716]	@ float
+ 759 0744 17EE900A 		fmrs	r0, s15
+ 760 0748 1146     		mov	r1, r2	@ float
+ 761 074a 1A46     		mov	r2, r3	@ float
+ 762 074c FFF7FEFF 		bl	constrain
+ 763 0750 0246     		mov	r2, r0	@ float
+ 764 0752 40F20003 		movw	r3, #:lower16:servo
+ 765 0756 C0F20003 		movt	r3, #:upper16:servo
+ 766 075a 5A60     		str	r2, [r3, #4]	@ float
+ 226:../src/mixer.c ****                                   eepromConfig.biRightServoMin, eepromConfig.biRightServoMax );   /
+ 227:../src/mixer.c ****             break;
+ 767              		.loc 1 227 0
+ 768 075c 02F004BB 		b	.L25
+ 769              	.L29:
+ 228:../src/mixer.c **** 
+ 229:../src/mixer.c ****         ///////////////////////////////
+ 230:../src/mixer.c **** 
+ 231:../src/mixer.c ****         case MIXERTYPE_TRI:
+ 232:../src/mixer.c ****             motor[0] = PIDMIX(  1.0f, -0.666667f, 0.0f );  // Left  CW
+ 770              		.loc 1 232 0
+ 771 0760 40F20003 		movw	r3, #:lower16:rxCommand
+ 772 0764 C0F20003 		movt	r3, #:upper16:rxCommand
+ 773 0768 93ED037A 		flds	s14, [r3, #12]
+ 774 076c 40F20003 		movw	r3, #:lower16:axisPID
+ 775 0770 C0F20003 		movt	r3, #:upper16:axisPID
+ 776 0774 D3ED007A 		flds	s15, [r3, #0]
+ 777 0778 37EE277A 		fadds	s14, s14, s15
+ 778 077c 40F20003 		movw	r3, #:lower16:axisPID
+ 779 0780 C0F20003 		movt	r3, #:upper16:axisPID
+ 780 0784 D3ED016A 		flds	s13, [r3, #4]
+ 781 0788 DFED5D7A 		flds	s15, .L60
+ 782 078c 66EEA77A 		fmuls	s15, s13, s15
+ 783 0790 37EE277A 		fadds	s14, s14, s15
+ 784 0794 40F20003 		movw	r3, #:lower16:eepromConfig
+ 785 0798 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 786 079c D3ED206A 		flds	s13, [r3, #128]
+ 787 07a0 40F20003 		movw	r3, #:lower16:axisPID
+ 788 07a4 C0F20003 		movt	r3, #:upper16:axisPID
+ 789 07a8 D3ED027A 		flds	s15, [r3, #8]
+ 790 07ac 66EEA77A 		fmuls	s15, s13, s15
+ 791 07b0 DFED556A 		flds	s13, .L60+8
+ 792 07b4 67EEA67A 		fmuls	s15, s15, s13
+ 793 07b8 77EE277A 		fadds	s15, s14, s15
+ 794 07bc 40F20003 		movw	r3, #:lower16:motor
+ 795 07c0 C0F20003 		movt	r3, #:upper16:motor
+ 796 07c4 C3ED007A 		fsts	s15, [r3, #0]
+ 233:../src/mixer.c ****             motor[1] = PIDMIX( -1.0f, -0.666667f, 0.0f );  // Right CCW
+ 797              		.loc 1 233 0
+ 798 07c8 40F20003 		movw	r3, #:lower16:rxCommand
+ 799 07cc C0F20003 		movt	r3, #:upper16:rxCommand
+ 800 07d0 93ED037A 		flds	s14, [r3, #12]
+ 801 07d4 40F20003 		movw	r3, #:lower16:axisPID
+ 802 07d8 C0F20003 		movt	r3, #:upper16:axisPID
+ 803 07dc D3ED007A 		flds	s15, [r3, #0]
+ 804 07e0 37EE677A 		fsubs	s14, s14, s15
+ 805 07e4 40F20003 		movw	r3, #:lower16:axisPID
+ 806 07e8 C0F20003 		movt	r3, #:upper16:axisPID
+ 807 07ec D3ED016A 		flds	s13, [r3, #4]
+ 808 07f0 DFED437A 		flds	s15, .L60
+ 809 07f4 66EEA77A 		fmuls	s15, s13, s15
+ 810 07f8 37EE277A 		fadds	s14, s14, s15
+ 811 07fc 40F20003 		movw	r3, #:lower16:eepromConfig
+ 812 0800 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 813 0804 D3ED206A 		flds	s13, [r3, #128]
+ 814 0808 40F20003 		movw	r3, #:lower16:axisPID
+ 815 080c C0F20003 		movt	r3, #:upper16:axisPID
+ 816 0810 D3ED027A 		flds	s15, [r3, #8]
+ 817 0814 66EEA77A 		fmuls	s15, s13, s15
+ 818 0818 DFED3B6A 		flds	s13, .L60+8
+ 819 081c 67EEA67A 		fmuls	s15, s15, s13
+ 820 0820 77EE277A 		fadds	s15, s14, s15
+ 821 0824 40F20003 		movw	r3, #:lower16:motor
+ 822 0828 C0F20003 		movt	r3, #:upper16:motor
+ 823 082c C3ED017A 		fsts	s15, [r3, #4]
+ 234:../src/mixer.c ****             motor[2] = PIDMIX(  0.0f,  1.333333f, 0.0f );  // Rear  CW or CCW
+ 824              		.loc 1 234 0
+ 825 0830 40F20003 		movw	r3, #:lower16:rxCommand
+ 826 0834 C0F20003 		movt	r3, #:upper16:rxCommand
+ 827 0838 93ED037A 		flds	s14, [r3, #12]
+ 828 083c 40F20003 		movw	r3, #:lower16:axisPID
+ 829 0840 C0F20003 		movt	r3, #:upper16:axisPID
+ 830 0844 D3ED006A 		flds	s13, [r3, #0]
+ 831 0848 DFED2F7A 		flds	s15, .L60+8
+ 832 084c 66EEA77A 		fmuls	s15, s13, s15
+ 833 0850 37EE277A 		fadds	s14, s14, s15
+ 834 0854 40F20003 		movw	r3, #:lower16:axisPID
+ 835 0858 C0F20003 		movt	r3, #:upper16:axisPID
+ 836 085c D3ED016A 		flds	s13, [r3, #4]
+ 837 0860 DFED287A 		flds	s15, .L60+4
+ 838 0864 66EEA77A 		fmuls	s15, s13, s15
+ 839 0868 37EE277A 		fadds	s14, s14, s15
+ 840 086c 40F20003 		movw	r3, #:lower16:eepromConfig
+ 841 0870 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 842 0874 D3ED206A 		flds	s13, [r3, #128]
+ 843 0878 40F20003 		movw	r3, #:lower16:axisPID
+ 844 087c C0F20003 		movt	r3, #:upper16:axisPID
+ 845 0880 D3ED027A 		flds	s15, [r3, #8]
+ 846 0884 66EEA77A 		fmuls	s15, s13, s15
+ 847 0888 DFED1F6A 		flds	s13, .L60+8
+ 848 088c 67EEA67A 		fmuls	s15, s15, s13
+ 849 0890 77EE277A 		fadds	s15, s14, s15
+ 850 0894 40F20003 		movw	r3, #:lower16:motor
+ 851 0898 C0F20003 		movt	r3, #:upper16:motor
+ 852 089c C3ED027A 		fsts	s15, [r3, #8]
+ 235:../src/mixer.c **** 
+ 236:../src/mixer.c ****             servo[0] = constrain( eepromConfig.triYawServoMid + eepromConfig.yawDirection * axisPID
+ 853              		.loc 1 236 0
+ 854 08a0 40F20003 		movw	r3, #:lower16:eepromConfig
+ 855 08a4 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 856 08a8 93EDB57A 		flds	s14, [r3, #724]
+ 857 08ac 40F20003 		movw	r3, #:lower16:eepromConfig
+ 858 08b0 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 859 08b4 D3ED206A 		flds	s13, [r3, #128]
+ 860 08b8 40F20003 		movw	r3, #:lower16:axisPID
+ 861 08bc C0F20003 		movt	r3, #:upper16:axisPID
+ 862 08c0 D3ED027A 		flds	s15, [r3, #8]
+ 863 08c4 66EEA77A 		fmuls	s15, s13, s15
+ 864 08c8 77EE277A 		fadds	s15, s14, s15
+ 865 08cc 40F20003 		movw	r3, #:lower16:eepromConfig
+ 866 08d0 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 867 08d4 D3F8D022 		ldr	r2, [r3, #720]	@ float
+ 868 08d8 40F20003 		movw	r3, #:lower16:eepromConfig
+ 869 08dc C0F20003 		movt	r3, #:upper16:eepromConfig
+ 870 08e0 D3F8D832 		ldr	r3, [r3, #728]	@ float
+ 871 08e4 17EE900A 		fmrs	r0, s15
+ 872 08e8 1146     		mov	r1, r2	@ float
+ 873 08ea 1A46     		mov	r2, r3	@ float
+ 874 08ec FFF7FEFF 		bl	constrain
+ 875 08f0 0246     		mov	r2, r0	@ float
+ 876 08f2 40F20003 		movw	r3, #:lower16:servo
+ 877 08f6 C0F20003 		movt	r3, #:upper16:servo
+ 878 08fa 1A60     		str	r2, [r3, #0]	@ float
+ 237:../src/mixer.c ****                                   eepromConfig.triYawServoMin, eepromConfig.triYawServoMax ); // Ta
+ 238:../src/mixer.c ****             break;
+ 879              		.loc 1 238 0
+ 880 08fc 02F034BA 		b	.L25
+ 881              	.L61:
+ 882              		.align	2
+ 883              	.L60:
+ 884 0900 B0AA2ABF 		.word	-1087722832
+ 885 0904 A8AAAA3F 		.word	1068149416
+ 886 0908 00000000 		.word	0
+ 887              	.L30:
+ 239:../src/mixer.c **** 
+ 240:../src/mixer.c ****         ///////////////////////////////
+ 241:../src/mixer.c **** 
+ 242:../src/mixer.c ****         case MIXERTYPE_QUADP:
+ 243:../src/mixer.c ****             motor[0] = PIDMIX(  0.0f, -1.0f, -1.0f );      // Front CW
+ 888              		.loc 1 243 0
+ 889 090c 40F20003 		movw	r3, #:lower16:rxCommand
+ 890 0910 C0F20003 		movt	r3, #:upper16:rxCommand
+ 891 0914 93ED037A 		flds	s14, [r3, #12]
+ 892 0918 40F20003 		movw	r3, #:lower16:axisPID
+ 893 091c C0F20003 		movt	r3, #:upper16:axisPID
+ 894 0920 D3ED006A 		flds	s13, [r3, #0]
+ 895 0924 5FED087A 		flds	s15, .L60+8
+ 896 0928 66EEA77A 		fmuls	s15, s13, s15
+ 897 092c 37EE277A 		fadds	s14, s14, s15
+ 898 0930 40F20003 		movw	r3, #:lower16:axisPID
+ 899 0934 C0F20003 		movt	r3, #:upper16:axisPID
+ 900 0938 D3ED017A 		flds	s15, [r3, #4]
+ 901 093c 37EE677A 		fsubs	s14, s14, s15
+ 902 0940 40F20003 		movw	r3, #:lower16:eepromConfig
+ 903 0944 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 904 0948 D3ED206A 		flds	s13, [r3, #128]
+ 905 094c 40F20003 		movw	r3, #:lower16:axisPID
+ 906 0950 C0F20003 		movt	r3, #:upper16:axisPID
+ 907 0954 D3ED027A 		flds	s15, [r3, #8]
+ 908 0958 66EEA77A 		fmuls	s15, s13, s15
+ 909 095c 77EE677A 		fsubs	s15, s14, s15
+ 910 0960 40F20003 		movw	r3, #:lower16:motor
+ 911 0964 C0F20003 		movt	r3, #:upper16:motor
+ 912 0968 C3ED007A 		fsts	s15, [r3, #0]
+ 244:../src/mixer.c ****             motor[1] = PIDMIX( -1.0f,  0.0f,  1.0f );      // Right CCW
+ 913              		.loc 1 244 0
+ 914 096c 40F20003 		movw	r3, #:lower16:rxCommand
+ 915 0970 C0F20003 		movt	r3, #:upper16:rxCommand
+ 916 0974 93ED037A 		flds	s14, [r3, #12]
+ 917 0978 40F20003 		movw	r3, #:lower16:axisPID
+ 918 097c C0F20003 		movt	r3, #:upper16:axisPID
+ 919 0980 D3ED007A 		flds	s15, [r3, #0]
+ 920 0984 37EE677A 		fsubs	s14, s14, s15
+ 921 0988 40F20003 		movw	r3, #:lower16:axisPID
+ 922 098c C0F20003 		movt	r3, #:upper16:axisPID
+ 923 0990 D3ED016A 		flds	s13, [r3, #4]
+ 924 0994 5FED247A 		flds	s15, .L60+8
+ 925 0998 66EEA77A 		fmuls	s15, s13, s15
+ 926 099c 37EE277A 		fadds	s14, s14, s15
+ 927 09a0 40F20003 		movw	r3, #:lower16:eepromConfig
+ 928 09a4 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 929 09a8 D3ED206A 		flds	s13, [r3, #128]
+ 930 09ac 40F20003 		movw	r3, #:lower16:axisPID
+ 931 09b0 C0F20003 		movt	r3, #:upper16:axisPID
+ 932 09b4 D3ED027A 		flds	s15, [r3, #8]
+ 933 09b8 66EEA77A 		fmuls	s15, s13, s15
+ 934 09bc 77EE277A 		fadds	s15, s14, s15
+ 935 09c0 40F20003 		movw	r3, #:lower16:motor
+ 936 09c4 C0F20003 		movt	r3, #:upper16:motor
+ 937 09c8 C3ED017A 		fsts	s15, [r3, #4]
+ 245:../src/mixer.c ****             motor[2] = PIDMIX(  0.0f,  1.0f, -1.0f );      // Rear  CW
+ 938              		.loc 1 245 0
+ 939 09cc 40F20003 		movw	r3, #:lower16:rxCommand
+ 940 09d0 C0F20003 		movt	r3, #:upper16:rxCommand
+ 941 09d4 93ED037A 		flds	s14, [r3, #12]
+ 942 09d8 40F20003 		movw	r3, #:lower16:axisPID
+ 943 09dc C0F20003 		movt	r3, #:upper16:axisPID
+ 944 09e0 D3ED006A 		flds	s13, [r3, #0]
+ 945 09e4 5FED387A 		flds	s15, .L60+8
+ 946 09e8 66EEA77A 		fmuls	s15, s13, s15
+ 947 09ec 37EE277A 		fadds	s14, s14, s15
+ 948 09f0 40F20003 		movw	r3, #:lower16:axisPID
+ 949 09f4 C0F20003 		movt	r3, #:upper16:axisPID
+ 950 09f8 D3ED017A 		flds	s15, [r3, #4]
+ 951 09fc 37EE277A 		fadds	s14, s14, s15
+ 952 0a00 40F20003 		movw	r3, #:lower16:eepromConfig
+ 953 0a04 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 954 0a08 D3ED206A 		flds	s13, [r3, #128]
+ 955 0a0c 40F20003 		movw	r3, #:lower16:axisPID
+ 956 0a10 C0F20003 		movt	r3, #:upper16:axisPID
+ 957 0a14 D3ED027A 		flds	s15, [r3, #8]
+ 958 0a18 66EEA77A 		fmuls	s15, s13, s15
+ 959 0a1c 77EE677A 		fsubs	s15, s14, s15
+ 960 0a20 40F20003 		movw	r3, #:lower16:motor
+ 961 0a24 C0F20003 		movt	r3, #:upper16:motor
+ 962 0a28 C3ED027A 		fsts	s15, [r3, #8]
+ 246:../src/mixer.c ****             motor[3] = PIDMIX(  1.0f,  0.0f,  1.0f );      // Left  CCW
+ 963              		.loc 1 246 0
+ 964 0a2c 40F20003 		movw	r3, #:lower16:rxCommand
+ 965 0a30 C0F20003 		movt	r3, #:upper16:rxCommand
+ 966 0a34 93ED037A 		flds	s14, [r3, #12]
+ 967 0a38 40F20003 		movw	r3, #:lower16:axisPID
+ 968 0a3c C0F20003 		movt	r3, #:upper16:axisPID
+ 969 0a40 D3ED007A 		flds	s15, [r3, #0]
+ 970 0a44 37EE277A 		fadds	s14, s14, s15
+ 971 0a48 40F20003 		movw	r3, #:lower16:axisPID
+ 972 0a4c C0F20003 		movt	r3, #:upper16:axisPID
+ 973 0a50 D3ED016A 		flds	s13, [r3, #4]
+ 974 0a54 5FED547A 		flds	s15, .L60+8
+ 975 0a58 66EEA77A 		fmuls	s15, s13, s15
+ 976 0a5c 37EE277A 		fadds	s14, s14, s15
+ 977 0a60 40F20003 		movw	r3, #:lower16:eepromConfig
+ 978 0a64 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 979 0a68 D3ED206A 		flds	s13, [r3, #128]
+ 980 0a6c 40F20003 		movw	r3, #:lower16:axisPID
+ 981 0a70 C0F20003 		movt	r3, #:upper16:axisPID
+ 982 0a74 D3ED027A 		flds	s15, [r3, #8]
+ 983 0a78 66EEA77A 		fmuls	s15, s13, s15
+ 984 0a7c 77EE277A 		fadds	s15, s14, s15
+ 985 0a80 40F20003 		movw	r3, #:lower16:motor
+ 986 0a84 C0F20003 		movt	r3, #:upper16:motor
+ 987 0a88 C3ED037A 		fsts	s15, [r3, #12]
+ 247:../src/mixer.c ****             break;
+ 988              		.loc 1 247 0
+ 989 0a8c 02F06CB9 		b	.L25
+ 990              	.L31:
+ 248:../src/mixer.c **** 
+ 249:../src/mixer.c ****         ///////////////////////////////
+ 250:../src/mixer.c **** 
+ 251:../src/mixer.c ****         case MIXERTYPE_QUADX:
+ 252:../src/mixer.c ****             motor[0] = PIDMIX(  1.0f, -1.0f, -1.0f );      // Front Left  CW
+ 991              		.loc 1 252 0
+ 992 0a90 40F20003 		movw	r3, #:lower16:rxCommand
+ 993 0a94 C0F20003 		movt	r3, #:upper16:rxCommand
+ 994 0a98 93ED037A 		flds	s14, [r3, #12]
+ 995 0a9c 40F20003 		movw	r3, #:lower16:axisPID
+ 996 0aa0 C0F20003 		movt	r3, #:upper16:axisPID
+ 997 0aa4 D3ED007A 		flds	s15, [r3, #0]
+ 998 0aa8 37EE277A 		fadds	s14, s14, s15
+ 999 0aac 40F20003 		movw	r3, #:lower16:axisPID
+ 1000 0ab0 C0F20003 		movt	r3, #:upper16:axisPID
+ 1001 0ab4 D3ED017A 		flds	s15, [r3, #4]
+ 1002 0ab8 37EE677A 		fsubs	s14, s14, s15
+ 1003 0abc 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1004 0ac0 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1005 0ac4 D3ED206A 		flds	s13, [r3, #128]
+ 1006 0ac8 40F20003 		movw	r3, #:lower16:axisPID
+ 1007 0acc C0F20003 		movt	r3, #:upper16:axisPID
+ 1008 0ad0 D3ED027A 		flds	s15, [r3, #8]
+ 1009 0ad4 66EEA77A 		fmuls	s15, s13, s15
+ 1010 0ad8 77EE677A 		fsubs	s15, s14, s15
+ 1011 0adc 40F20003 		movw	r3, #:lower16:motor
+ 1012 0ae0 C0F20003 		movt	r3, #:upper16:motor
+ 1013 0ae4 C3ED007A 		fsts	s15, [r3, #0]
+ 253:../src/mixer.c ****             motor[1] = PIDMIX( -1.0f, -1.0f,  1.0f );      // Front Right CCW
+ 1014              		.loc 1 253 0
+ 1015 0ae8 40F20003 		movw	r3, #:lower16:rxCommand
+ 1016 0aec C0F20003 		movt	r3, #:upper16:rxCommand
+ 1017 0af0 93ED037A 		flds	s14, [r3, #12]
+ 1018 0af4 40F20003 		movw	r3, #:lower16:axisPID
+ 1019 0af8 C0F20003 		movt	r3, #:upper16:axisPID
+ 1020 0afc D3ED007A 		flds	s15, [r3, #0]
+ 1021 0b00 37EE677A 		fsubs	s14, s14, s15
+ 1022 0b04 40F20003 		movw	r3, #:lower16:axisPID
+ 1023 0b08 C0F20003 		movt	r3, #:upper16:axisPID
+ 1024 0b0c D3ED017A 		flds	s15, [r3, #4]
+ 1025 0b10 37EE677A 		fsubs	s14, s14, s15
+ 1026 0b14 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1027 0b18 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1028 0b1c D3ED206A 		flds	s13, [r3, #128]
+ 1029 0b20 40F20003 		movw	r3, #:lower16:axisPID
+ 1030 0b24 C0F20003 		movt	r3, #:upper16:axisPID
+ 1031 0b28 D3ED027A 		flds	s15, [r3, #8]
+ 1032 0b2c 66EEA77A 		fmuls	s15, s13, s15
+ 1033 0b30 77EE277A 		fadds	s15, s14, s15
+ 1034 0b34 40F20003 		movw	r3, #:lower16:motor
+ 1035 0b38 C0F20003 		movt	r3, #:upper16:motor
+ 1036 0b3c C3ED017A 		fsts	s15, [r3, #4]
+ 254:../src/mixer.c ****             motor[2] = PIDMIX( -1.0f,  1.0f, -1.0f );      // Rear Right  CW
+ 1037              		.loc 1 254 0
+ 1038 0b40 40F20003 		movw	r3, #:lower16:rxCommand
+ 1039 0b44 C0F20003 		movt	r3, #:upper16:rxCommand
+ 1040 0b48 93ED037A 		flds	s14, [r3, #12]
+ 1041 0b4c 40F20003 		movw	r3, #:lower16:axisPID
+ 1042 0b50 C0F20003 		movt	r3, #:upper16:axisPID
+ 1043 0b54 D3ED007A 		flds	s15, [r3, #0]
+ 1044 0b58 37EE677A 		fsubs	s14, s14, s15
+ 1045 0b5c 40F20003 		movw	r3, #:lower16:axisPID
+ 1046 0b60 C0F20003 		movt	r3, #:upper16:axisPID
+ 1047 0b64 D3ED017A 		flds	s15, [r3, #4]
+ 1048 0b68 37EE277A 		fadds	s14, s14, s15
+ 1049 0b6c 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1050 0b70 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1051 0b74 D3ED206A 		flds	s13, [r3, #128]
+ 1052 0b78 40F20003 		movw	r3, #:lower16:axisPID
+ 1053 0b7c C0F20003 		movt	r3, #:upper16:axisPID
+ 1054 0b80 D3ED027A 		flds	s15, [r3, #8]
+ 1055 0b84 66EEA77A 		fmuls	s15, s13, s15
+ 1056 0b88 77EE677A 		fsubs	s15, s14, s15
+ 1057 0b8c 40F20003 		movw	r3, #:lower16:motor
+ 1058 0b90 C0F20003 		movt	r3, #:upper16:motor
+ 1059 0b94 C3ED027A 		fsts	s15, [r3, #8]
+ 255:../src/mixer.c ****             motor[3] = PIDMIX(  1.0f,  1.0f,  1.0f );      // Rear Left   CCW
+ 1060              		.loc 1 255 0
+ 1061 0b98 40F20003 		movw	r3, #:lower16:rxCommand
+ 1062 0b9c C0F20003 		movt	r3, #:upper16:rxCommand
+ 1063 0ba0 93ED037A 		flds	s14, [r3, #12]
+ 1064 0ba4 40F20003 		movw	r3, #:lower16:axisPID
+ 1065 0ba8 C0F20003 		movt	r3, #:upper16:axisPID
+ 1066 0bac D3ED007A 		flds	s15, [r3, #0]
+ 1067 0bb0 37EE277A 		fadds	s14, s14, s15
+ 1068 0bb4 40F20003 		movw	r3, #:lower16:axisPID
+ 1069 0bb8 C0F20003 		movt	r3, #:upper16:axisPID
+ 1070 0bbc D3ED017A 		flds	s15, [r3, #4]
+ 1071 0bc0 37EE277A 		fadds	s14, s14, s15
+ 1072 0bc4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1073 0bc8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1074 0bcc D3ED206A 		flds	s13, [r3, #128]
+ 1075 0bd0 40F20003 		movw	r3, #:lower16:axisPID
+ 1076 0bd4 C0F20003 		movt	r3, #:upper16:axisPID
+ 1077 0bd8 D3ED027A 		flds	s15, [r3, #8]
+ 1078 0bdc 66EEA77A 		fmuls	s15, s13, s15
+ 1079 0be0 77EE277A 		fadds	s15, s14, s15
+ 1080 0be4 40F20003 		movw	r3, #:lower16:motor
+ 1081 0be8 C0F20003 		movt	r3, #:upper16:motor
+ 1082 0bec C3ED037A 		fsts	s15, [r3, #12]
+ 256:../src/mixer.c ****             break;
+ 1083              		.loc 1 256 0
+ 1084 0bf0 02F0BAB8 		b	.L25
+ 1085              	.L32:
+ 257:../src/mixer.c **** 
+ 258:../src/mixer.c ****         ///////////////////////////////
+ 259:../src/mixer.c **** 
+ 260:../src/mixer.c ****         case MIXERTYPE_VTAIL4_NO_COMP:
+ 261:../src/mixer.c ****             motor[0] = PIDMIX(  1.0f, -1.0f,  0.0f );      // Front Left  CCW - NOTE rotation diffe
+ 1086              		.loc 1 261 0
+ 1087 0bf4 40F20003 		movw	r3, #:lower16:rxCommand
+ 1088 0bf8 C0F20003 		movt	r3, #:upper16:rxCommand
+ 1089 0bfc 93ED037A 		flds	s14, [r3, #12]
+ 1090 0c00 40F20003 		movw	r3, #:lower16:axisPID
+ 1091 0c04 C0F20003 		movt	r3, #:upper16:axisPID
+ 1092 0c08 D3ED007A 		flds	s15, [r3, #0]
+ 1093 0c0c 37EE277A 		fadds	s14, s14, s15
+ 1094 0c10 40F20003 		movw	r3, #:lower16:axisPID
+ 1095 0c14 C0F20003 		movt	r3, #:upper16:axisPID
+ 1096 0c18 D3ED017A 		flds	s15, [r3, #4]
+ 1097 0c1c 37EE677A 		fsubs	s14, s14, s15
+ 1098 0c20 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1099 0c24 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1100 0c28 D3ED206A 		flds	s13, [r3, #128]
+ 1101 0c2c 40F20003 		movw	r3, #:lower16:axisPID
+ 1102 0c30 C0F20003 		movt	r3, #:upper16:axisPID
+ 1103 0c34 D3ED027A 		flds	s15, [r3, #8]
+ 1104 0c38 66EEA77A 		fmuls	s15, s13, s15
+ 1105 0c3c 5FEDCE6A 		flds	s13, .L60+8
+ 1106 0c40 67EEA67A 		fmuls	s15, s15, s13
+ 1107 0c44 77EE277A 		fadds	s15, s14, s15
+ 1108 0c48 40F20003 		movw	r3, #:lower16:motor
+ 1109 0c4c C0F20003 		movt	r3, #:upper16:motor
+ 1110 0c50 C3ED007A 		fsts	s15, [r3, #0]
+ 262:../src/mixer.c ****             motor[1] = PIDMIX( -1.0f, -1.0f,  0.0f );      // Front Right CW  - NOTE rotation diffe
+ 1111              		.loc 1 262 0
+ 1112 0c54 40F20003 		movw	r3, #:lower16:rxCommand
+ 1113 0c58 C0F20003 		movt	r3, #:upper16:rxCommand
+ 1114 0c5c 93ED037A 		flds	s14, [r3, #12]
+ 1115 0c60 40F20003 		movw	r3, #:lower16:axisPID
+ 1116 0c64 C0F20003 		movt	r3, #:upper16:axisPID
+ 1117 0c68 D3ED007A 		flds	s15, [r3, #0]
+ 1118 0c6c 37EE677A 		fsubs	s14, s14, s15
+ 1119 0c70 40F20003 		movw	r3, #:lower16:axisPID
+ 1120 0c74 C0F20003 		movt	r3, #:upper16:axisPID
+ 1121 0c78 D3ED017A 		flds	s15, [r3, #4]
+ 1122 0c7c 37EE677A 		fsubs	s14, s14, s15
+ 1123 0c80 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1124 0c84 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1125 0c88 D3ED206A 		flds	s13, [r3, #128]
+ 1126 0c8c 40F20003 		movw	r3, #:lower16:axisPID
+ 1127 0c90 C0F20003 		movt	r3, #:upper16:axisPID
+ 1128 0c94 D3ED027A 		flds	s15, [r3, #8]
+ 1129 0c98 66EEA77A 		fmuls	s15, s13, s15
+ 1130 0c9c 5FEDE66A 		flds	s13, .L60+8
+ 1131 0ca0 67EEA67A 		fmuls	s15, s15, s13
+ 1132 0ca4 77EE277A 		fadds	s15, s14, s15
+ 1133 0ca8 40F20003 		movw	r3, #:lower16:motor
+ 1134 0cac C0F20003 		movt	r3, #:upper16:motor
+ 1135 0cb0 C3ED017A 		fsts	s15, [r3, #4]
+ 263:../src/mixer.c ****             motor[2] = PIDMIX(  0.0f,  1.0f,  1.0f );      // Rear Right  CCW - NOTE rotation diffe
+ 1136              		.loc 1 263 0
+ 1137 0cb4 40F20003 		movw	r3, #:lower16:rxCommand
+ 1138 0cb8 C0F20003 		movt	r3, #:upper16:rxCommand
+ 1139 0cbc 93ED037A 		flds	s14, [r3, #12]
+ 1140 0cc0 40F20003 		movw	r3, #:lower16:axisPID
+ 1141 0cc4 C0F20003 		movt	r3, #:upper16:axisPID
+ 1142 0cc8 D3ED006A 		flds	s13, [r3, #0]
+ 1143 0ccc 5FEDF27A 		flds	s15, .L60+8
+ 1144 0cd0 66EEA77A 		fmuls	s15, s13, s15
+ 1145 0cd4 37EE277A 		fadds	s14, s14, s15
+ 1146 0cd8 40F20003 		movw	r3, #:lower16:axisPID
+ 1147 0cdc C0F20003 		movt	r3, #:upper16:axisPID
+ 1148 0ce0 D3ED017A 		flds	s15, [r3, #4]
+ 1149 0ce4 37EE277A 		fadds	s14, s14, s15
+ 1150 0ce8 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1151 0cec C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1152 0cf0 D3ED206A 		flds	s13, [r3, #128]
+ 1153 0cf4 40F20003 		movw	r3, #:lower16:axisPID
+ 1154 0cf8 C0F20003 		movt	r3, #:upper16:axisPID
+ 1155 0cfc D3ED027A 		flds	s15, [r3, #8]
+ 1156 0d00 66EEA77A 		fmuls	s15, s13, s15
+ 1157 0d04 77EE277A 		fadds	s15, s14, s15
+ 1158 0d08 40F20003 		movw	r3, #:lower16:motor
+ 1159 0d0c C0F20003 		movt	r3, #:upper16:motor
+ 1160 0d10 C3ED027A 		fsts	s15, [r3, #8]
+ 264:../src/mixer.c ****             motor[3] = PIDMIX(  0.0f,  1.0f, -1.0f );      // Rear Left   CW  - NOTE rotation diffe
+ 1161              		.loc 1 264 0
+ 1162 0d14 40F20003 		movw	r3, #:lower16:rxCommand
+ 1163 0d18 C0F20003 		movt	r3, #:upper16:rxCommand
+ 1164 0d1c 93ED037A 		flds	s14, [r3, #12]
+ 1165 0d20 40F20003 		movw	r3, #:lower16:axisPID
+ 1166 0d24 C0F20003 		movt	r3, #:upper16:axisPID
+ 1167 0d28 D3ED006A 		flds	s13, [r3, #0]
+ 1168 0d2c DFEDE87A 		flds	s15, .L62
+ 1169 0d30 66EEA77A 		fmuls	s15, s13, s15
+ 1170 0d34 37EE277A 		fadds	s14, s14, s15
+ 1171 0d38 40F20003 		movw	r3, #:lower16:axisPID
+ 1172 0d3c C0F20003 		movt	r3, #:upper16:axisPID
+ 1173 0d40 D3ED017A 		flds	s15, [r3, #4]
+ 1174 0d44 37EE277A 		fadds	s14, s14, s15
+ 1175 0d48 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1176 0d4c C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1177 0d50 D3ED206A 		flds	s13, [r3, #128]
+ 1178 0d54 40F20003 		movw	r3, #:lower16:axisPID
+ 1179 0d58 C0F20003 		movt	r3, #:upper16:axisPID
+ 1180 0d5c D3ED027A 		flds	s15, [r3, #8]
+ 1181 0d60 66EEA77A 		fmuls	s15, s13, s15
+ 1182 0d64 77EE677A 		fsubs	s15, s14, s15
+ 1183 0d68 40F20003 		movw	r3, #:lower16:motor
+ 1184 0d6c C0F20003 		movt	r3, #:upper16:motor
+ 1185 0d70 C3ED037A 		fsts	s15, [r3, #12]
+ 265:../src/mixer.c ****             break;
+ 1186              		.loc 1 265 0
+ 1187 0d74 01F0F8BF 		b	.L25
+ 1188              	.L33:
+ 266:../src/mixer.c **** 
+ 267:../src/mixer.c ****         ///////////////////////////////
+ 268:../src/mixer.c **** 
+ 269:../src/mixer.c ****         case MIXERTYPE_VTAIL4_Y_COMP:
+ 270:../src/mixer.c **** 		    motor[0] = PIDMIX(  1.0f, -1.0f,  vTailThrust ); // Front Left  CCW - NOTE rotation differenc
+ 1189              		.loc 1 270 0
+ 1190 0d78 40F20003 		movw	r3, #:lower16:rxCommand
+ 1191 0d7c C0F20003 		movt	r3, #:upper16:rxCommand
+ 1192 0d80 93ED037A 		flds	s14, [r3, #12]
+ 1193 0d84 40F20003 		movw	r3, #:lower16:axisPID
+ 1194 0d88 C0F20003 		movt	r3, #:upper16:axisPID
+ 1195 0d8c D3ED007A 		flds	s15, [r3, #0]
+ 1196 0d90 37EE277A 		fadds	s14, s14, s15
+ 1197 0d94 40F20003 		movw	r3, #:lower16:axisPID
+ 1198 0d98 C0F20003 		movt	r3, #:upper16:axisPID
+ 1199 0d9c D3ED017A 		flds	s15, [r3, #4]
+ 1200 0da0 37EE677A 		fsubs	s14, s14, s15
+ 1201 0da4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1202 0da8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1203 0dac D3ED206A 		flds	s13, [r3, #128]
+ 1204 0db0 40F20003 		movw	r3, #:lower16:axisPID
+ 1205 0db4 C0F20003 		movt	r3, #:upper16:axisPID
+ 1206 0db8 D3ED027A 		flds	s15, [r3, #8]
+ 1207 0dbc 66EEA77A 		fmuls	s15, s13, s15
+ 1208 0dc0 40F20003 		movw	r3, #:lower16:vTailThrust
+ 1209 0dc4 C0F20003 		movt	r3, #:upper16:vTailThrust
+ 1210 0dc8 D3ED006A 		flds	s13, [r3, #0]
+ 1211 0dcc 67EEA67A 		fmuls	s15, s15, s13
+ 1212 0dd0 77EE277A 		fadds	s15, s14, s15
+ 1213 0dd4 40F20003 		movw	r3, #:lower16:motor
+ 1214 0dd8 C0F20003 		movt	r3, #:upper16:motor
+ 1215 0ddc C3ED007A 		fsts	s15, [r3, #0]
+ 271:../src/mixer.c **** 		    motor[1] = PIDMIX( -1.0f, -1.0f, -vTailThrust ); // Front Right CW  - NOTE rotation differenc
+ 1216              		.loc 1 271 0
+ 1217 0de0 40F20003 		movw	r3, #:lower16:rxCommand
+ 1218 0de4 C0F20003 		movt	r3, #:upper16:rxCommand
+ 1219 0de8 93ED037A 		flds	s14, [r3, #12]
+ 1220 0dec 40F20003 		movw	r3, #:lower16:axisPID
+ 1221 0df0 C0F20003 		movt	r3, #:upper16:axisPID
+ 1222 0df4 D3ED007A 		flds	s15, [r3, #0]
+ 1223 0df8 37EE677A 		fsubs	s14, s14, s15
+ 1224 0dfc 40F20003 		movw	r3, #:lower16:axisPID
+ 1225 0e00 C0F20003 		movt	r3, #:upper16:axisPID
+ 1226 0e04 D3ED017A 		flds	s15, [r3, #4]
+ 1227 0e08 37EE677A 		fsubs	s14, s14, s15
+ 1228 0e0c 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1229 0e10 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1230 0e14 D3ED206A 		flds	s13, [r3, #128]
+ 1231 0e18 40F20003 		movw	r3, #:lower16:axisPID
+ 1232 0e1c C0F20003 		movt	r3, #:upper16:axisPID
+ 1233 0e20 D3ED027A 		flds	s15, [r3, #8]
+ 1234 0e24 66EEA77A 		fmuls	s15, s13, s15
+ 1235 0e28 40F20003 		movw	r3, #:lower16:vTailThrust
+ 1236 0e2c C0F20003 		movt	r3, #:upper16:vTailThrust
+ 1237 0e30 D3ED006A 		flds	s13, [r3, #0]
+ 1238 0e34 F1EE666A 		fnegs	s13, s13
+ 1239 0e38 67EEA67A 		fmuls	s15, s15, s13
+ 1240 0e3c 77EE277A 		fadds	s15, s14, s15
+ 1241 0e40 40F20003 		movw	r3, #:lower16:motor
+ 1242 0e44 C0F20003 		movt	r3, #:upper16:motor
+ 1243 0e48 C3ED017A 		fsts	s15, [r3, #4]
+ 272:../src/mixer.c **** 		    motor[2] = PIDMIX(  0.0f,  1.0f,  1.0f        ); // Rear Right  CCW - NOTE rotation differenc
+ 1244              		.loc 1 272 0
+ 1245 0e4c 40F20003 		movw	r3, #:lower16:rxCommand
+ 1246 0e50 C0F20003 		movt	r3, #:upper16:rxCommand
+ 1247 0e54 93ED037A 		flds	s14, [r3, #12]
+ 1248 0e58 40F20003 		movw	r3, #:lower16:axisPID
+ 1249 0e5c C0F20003 		movt	r3, #:upper16:axisPID
+ 1250 0e60 D3ED006A 		flds	s13, [r3, #0]
+ 1251 0e64 DFED9A7A 		flds	s15, .L62
+ 1252 0e68 66EEA77A 		fmuls	s15, s13, s15
+ 1253 0e6c 37EE277A 		fadds	s14, s14, s15
+ 1254 0e70 40F20003 		movw	r3, #:lower16:axisPID
+ 1255 0e74 C0F20003 		movt	r3, #:upper16:axisPID
+ 1256 0e78 D3ED017A 		flds	s15, [r3, #4]
+ 1257 0e7c 37EE277A 		fadds	s14, s14, s15
+ 1258 0e80 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1259 0e84 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1260 0e88 D3ED206A 		flds	s13, [r3, #128]
+ 1261 0e8c 40F20003 		movw	r3, #:lower16:axisPID
+ 1262 0e90 C0F20003 		movt	r3, #:upper16:axisPID
+ 1263 0e94 D3ED027A 		flds	s15, [r3, #8]
+ 1264 0e98 66EEA77A 		fmuls	s15, s13, s15
+ 1265 0e9c 77EE277A 		fadds	s15, s14, s15
+ 1266 0ea0 40F20003 		movw	r3, #:lower16:motor
+ 1267 0ea4 C0F20003 		movt	r3, #:upper16:motor
+ 1268 0ea8 C3ED027A 		fsts	s15, [r3, #8]
+ 273:../src/mixer.c **** 		    motor[3] = PIDMIX(  0.0f,  1.0f, -1.0f        ); // Rear Left   CW  - NOTE rotation differenc
+ 1269              		.loc 1 273 0
+ 1270 0eac 40F20003 		movw	r3, #:lower16:rxCommand
+ 1271 0eb0 C0F20003 		movt	r3, #:upper16:rxCommand
+ 1272 0eb4 93ED037A 		flds	s14, [r3, #12]
+ 1273 0eb8 40F20003 		movw	r3, #:lower16:axisPID
+ 1274 0ebc C0F20003 		movt	r3, #:upper16:axisPID
+ 1275 0ec0 D3ED006A 		flds	s13, [r3, #0]
+ 1276 0ec4 DFED827A 		flds	s15, .L62
+ 1277 0ec8 66EEA77A 		fmuls	s15, s13, s15
+ 1278 0ecc 37EE277A 		fadds	s14, s14, s15
+ 1279 0ed0 40F20003 		movw	r3, #:lower16:axisPID
+ 1280 0ed4 C0F20003 		movt	r3, #:upper16:axisPID
+ 1281 0ed8 D3ED017A 		flds	s15, [r3, #4]
+ 1282 0edc 37EE277A 		fadds	s14, s14, s15
+ 1283 0ee0 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1284 0ee4 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1285 0ee8 D3ED206A 		flds	s13, [r3, #128]
+ 1286 0eec 40F20003 		movw	r3, #:lower16:axisPID
+ 1287 0ef0 C0F20003 		movt	r3, #:upper16:axisPID
+ 1288 0ef4 D3ED027A 		flds	s15, [r3, #8]
+ 1289 0ef8 66EEA77A 		fmuls	s15, s13, s15
+ 1290 0efc 77EE677A 		fsubs	s15, s14, s15
+ 1291 0f00 40F20003 		movw	r3, #:lower16:motor
+ 1292 0f04 C0F20003 		movt	r3, #:upper16:motor
+ 1293 0f08 C3ED037A 		fsts	s15, [r3, #12]
+ 274:../src/mixer.c **** 		    break;
+ 1294              		.loc 1 274 0
+ 1295 0f0c 01F02CBF 		b	.L25
+ 1296              	.L34:
+ 275:../src/mixer.c **** 
+ 276:../src/mixer.c ****         ///////////////////////////////
+ 277:../src/mixer.c **** 
+ 278:../src/mixer.c ****         case MIXERTYPE_VTAIL4_RY_COMP:
+ 279:../src/mixer.c ****         	motor[0] = PIDMIX(  1.0f, -vTailThrust,  vTailThrust ); // Front Left  CCW - NOTE rotation
+ 1297              		.loc 1 279 0
+ 1298 0f10 40F20003 		movw	r3, #:lower16:rxCommand
+ 1299 0f14 C0F20003 		movt	r3, #:upper16:rxCommand
+ 1300 0f18 93ED037A 		flds	s14, [r3, #12]
+ 1301 0f1c 40F20003 		movw	r3, #:lower16:axisPID
+ 1302 0f20 C0F20003 		movt	r3, #:upper16:axisPID
+ 1303 0f24 D3ED007A 		flds	s15, [r3, #0]
+ 1304 0f28 37EE277A 		fadds	s14, s14, s15
+ 1305 0f2c 40F20003 		movw	r3, #:lower16:axisPID
+ 1306 0f30 C0F20003 		movt	r3, #:upper16:axisPID
+ 1307 0f34 D3ED016A 		flds	s13, [r3, #4]
+ 1308 0f38 40F20003 		movw	r3, #:lower16:vTailThrust
+ 1309 0f3c C0F20003 		movt	r3, #:upper16:vTailThrust
+ 1310 0f40 D3ED007A 		flds	s15, [r3, #0]
+ 1311 0f44 F1EE677A 		fnegs	s15, s15
+ 1312 0f48 66EEA77A 		fmuls	s15, s13, s15
+ 1313 0f4c 37EE277A 		fadds	s14, s14, s15
+ 1314 0f50 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1315 0f54 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1316 0f58 D3ED206A 		flds	s13, [r3, #128]
+ 1317 0f5c 40F20003 		movw	r3, #:lower16:axisPID
+ 1318 0f60 C0F20003 		movt	r3, #:upper16:axisPID
+ 1319 0f64 D3ED027A 		flds	s15, [r3, #8]
+ 1320 0f68 66EEA77A 		fmuls	s15, s13, s15
+ 1321 0f6c 40F20003 		movw	r3, #:lower16:vTailThrust
+ 1322 0f70 C0F20003 		movt	r3, #:upper16:vTailThrust
+ 1323 0f74 D3ED006A 		flds	s13, [r3, #0]
+ 1324 0f78 67EEA67A 		fmuls	s15, s15, s13
+ 1325 0f7c 77EE277A 		fadds	s15, s14, s15
+ 1326 0f80 40F20003 		movw	r3, #:lower16:motor
+ 1327 0f84 C0F20003 		movt	r3, #:upper16:motor
+ 1328 0f88 C3ED007A 		fsts	s15, [r3, #0]
+ 280:../src/mixer.c **** 			motor[1] = PIDMIX( -1.0f, -vTailThrust, -vTailThrust ); // Front Right CW  - NOTE rotation diffe
+ 1329              		.loc 1 280 0
+ 1330 0f8c 40F20003 		movw	r3, #:lower16:rxCommand
+ 1331 0f90 C0F20003 		movt	r3, #:upper16:rxCommand
+ 1332 0f94 93ED037A 		flds	s14, [r3, #12]
+ 1333 0f98 40F20003 		movw	r3, #:lower16:axisPID
+ 1334 0f9c C0F20003 		movt	r3, #:upper16:axisPID
+ 1335 0fa0 D3ED007A 		flds	s15, [r3, #0]
+ 1336 0fa4 37EE677A 		fsubs	s14, s14, s15
+ 1337 0fa8 40F20003 		movw	r3, #:lower16:axisPID
+ 1338 0fac C0F20003 		movt	r3, #:upper16:axisPID
+ 1339 0fb0 D3ED016A 		flds	s13, [r3, #4]
+ 1340 0fb4 40F20003 		movw	r3, #:lower16:vTailThrust
+ 1341 0fb8 C0F20003 		movt	r3, #:upper16:vTailThrust
+ 1342 0fbc D3ED007A 		flds	s15, [r3, #0]
+ 1343 0fc0 F1EE677A 		fnegs	s15, s15
+ 1344 0fc4 66EEA77A 		fmuls	s15, s13, s15
+ 1345 0fc8 37EE277A 		fadds	s14, s14, s15
+ 1346 0fcc 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1347 0fd0 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1348 0fd4 D3ED206A 		flds	s13, [r3, #128]
+ 1349 0fd8 40F20003 		movw	r3, #:lower16:axisPID
+ 1350 0fdc C0F20003 		movt	r3, #:upper16:axisPID
+ 1351 0fe0 D3ED027A 		flds	s15, [r3, #8]
+ 1352 0fe4 66EEA77A 		fmuls	s15, s13, s15
+ 1353 0fe8 40F20003 		movw	r3, #:lower16:vTailThrust
+ 1354 0fec C0F20003 		movt	r3, #:upper16:vTailThrust
+ 1355 0ff0 D3ED006A 		flds	s13, [r3, #0]
+ 1356 0ff4 F1EE666A 		fnegs	s13, s13
+ 1357 0ff8 67EEA67A 		fmuls	s15, s15, s13
+ 1358 0ffc 77EE277A 		fadds	s15, s14, s15
+ 1359 1000 40F20003 		movw	r3, #:lower16:motor
+ 1360 1004 C0F20003 		movt	r3, #:upper16:motor
+ 1361 1008 C3ED017A 		fsts	s15, [r3, #4]
+ 281:../src/mixer.c **** 			motor[2] = PIDMIX(  0.0f,  1.0f,          1.0f       ); // Rear Right  CCW - NOTE rotation diffe
+ 1362              		.loc 1 281 0
+ 1363 100c 40F20003 		movw	r3, #:lower16:rxCommand
+ 1364 1010 C0F20003 		movt	r3, #:upper16:rxCommand
+ 1365 1014 93ED037A 		flds	s14, [r3, #12]
+ 1366 1018 40F20003 		movw	r3, #:lower16:axisPID
+ 1367 101c C0F20003 		movt	r3, #:upper16:axisPID
+ 1368 1020 D3ED006A 		flds	s13, [r3, #0]
+ 1369 1024 DFED2A7A 		flds	s15, .L62
+ 1370 1028 66EEA77A 		fmuls	s15, s13, s15
+ 1371 102c 37EE277A 		fadds	s14, s14, s15
+ 1372 1030 40F20003 		movw	r3, #:lower16:axisPID
+ 1373 1034 C0F20003 		movt	r3, #:upper16:axisPID
+ 1374 1038 D3ED017A 		flds	s15, [r3, #4]
+ 1375 103c 37EE277A 		fadds	s14, s14, s15
+ 1376 1040 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1377 1044 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1378 1048 D3ED206A 		flds	s13, [r3, #128]
+ 1379 104c 40F20003 		movw	r3, #:lower16:axisPID
+ 1380 1050 C0F20003 		movt	r3, #:upper16:axisPID
+ 1381 1054 D3ED027A 		flds	s15, [r3, #8]
+ 1382 1058 66EEA77A 		fmuls	s15, s13, s15
+ 1383 105c 77EE277A 		fadds	s15, s14, s15
+ 1384 1060 40F20003 		movw	r3, #:lower16:motor
+ 1385 1064 C0F20003 		movt	r3, #:upper16:motor
+ 1386 1068 C3ED027A 		fsts	s15, [r3, #8]
+ 282:../src/mixer.c **** 			motor[3] = PIDMIX(  0.0f,  1.0f,         -1.0f       ); // Rear Left   CW  - NOTE rotation diffe
+ 1387              		.loc 1 282 0
+ 1388 106c 40F20003 		movw	r3, #:lower16:rxCommand
+ 1389 1070 C0F20003 		movt	r3, #:upper16:rxCommand
+ 1390 1074 93ED037A 		flds	s14, [r3, #12]
+ 1391 1078 40F20003 		movw	r3, #:lower16:axisPID
+ 1392 107c C0F20003 		movt	r3, #:upper16:axisPID
+ 1393 1080 D3ED006A 		flds	s13, [r3, #0]
+ 1394 1084 DFED127A 		flds	s15, .L62
+ 1395 1088 66EEA77A 		fmuls	s15, s13, s15
+ 1396 108c 37EE277A 		fadds	s14, s14, s15
+ 1397 1090 40F20003 		movw	r3, #:lower16:axisPID
+ 1398 1094 C0F20003 		movt	r3, #:upper16:axisPID
+ 1399 1098 D3ED017A 		flds	s15, [r3, #4]
+ 1400 109c 37EE277A 		fadds	s14, s14, s15
+ 1401 10a0 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1402 10a4 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1403 10a8 D3ED206A 		flds	s13, [r3, #128]
+ 1404 10ac 40F20003 		movw	r3, #:lower16:axisPID
+ 1405 10b0 C0F20003 		movt	r3, #:upper16:axisPID
+ 1406 10b4 D3ED027A 		flds	s15, [r3, #8]
+ 1407 10b8 66EEA77A 		fmuls	s15, s13, s15
+ 1408 10bc 77EE677A 		fsubs	s15, s14, s15
+ 1409 10c0 40F20003 		movw	r3, #:lower16:motor
+ 1410 10c4 C0F20003 		movt	r3, #:upper16:motor
+ 1411 10c8 C3ED037A 		fsts	s15, [r3, #12]
+ 283:../src/mixer.c **** 			break;
+ 1412              		.loc 1 283 0
+ 1413 10cc 01F04CBE 		b	.L25
+ 1414              	.L63:
+ 1415              		.align	2
+ 1416              	.L62:
+ 1417 10d0 00000000 		.word	0
+ 1418 10d4 00000080 		.word	-2147483648
+ 1419              	.L35:
+ 284:../src/mixer.c **** 
+ 285:../src/mixer.c ****         ///////////////////////////////
+ 286:../src/mixer.c **** 
+ 287:../src/mixer.c ****         case MIXERTYPE_VTAIL4_PY_COMP:
+ 288:../src/mixer.c ****             motor[0] = PIDMIX(  vTailThrust, -1.0f,  vTailThrust ); // Front Left  CCW - NOTE rotat
+ 1420              		.loc 1 288 0
+ 1421 10d8 40F20003 		movw	r3, #:lower16:rxCommand
+ 1422 10dc C0F20003 		movt	r3, #:upper16:rxCommand
+ 1423 10e0 93ED037A 		flds	s14, [r3, #12]
+ 1424 10e4 40F20003 		movw	r3, #:lower16:axisPID
+ 1425 10e8 C0F20003 		movt	r3, #:upper16:axisPID
+ 1426 10ec D3ED006A 		flds	s13, [r3, #0]
+ 1427 10f0 40F20003 		movw	r3, #:lower16:vTailThrust
+ 1428 10f4 C0F20003 		movt	r3, #:upper16:vTailThrust
+ 1429 10f8 D3ED007A 		flds	s15, [r3, #0]
+ 1430 10fc 66EEA77A 		fmuls	s15, s13, s15
+ 1431 1100 37EE277A 		fadds	s14, s14, s15
+ 1432 1104 40F20003 		movw	r3, #:lower16:axisPID
+ 1433 1108 C0F20003 		movt	r3, #:upper16:axisPID
+ 1434 110c D3ED017A 		flds	s15, [r3, #4]
+ 1435 1110 37EE677A 		fsubs	s14, s14, s15
+ 1436 1114 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1437 1118 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1438 111c D3ED206A 		flds	s13, [r3, #128]
+ 1439 1120 40F20003 		movw	r3, #:lower16:axisPID
+ 1440 1124 C0F20003 		movt	r3, #:upper16:axisPID
+ 1441 1128 D3ED027A 		flds	s15, [r3, #8]
+ 1442 112c 66EEA77A 		fmuls	s15, s13, s15
+ 1443 1130 40F20003 		movw	r3, #:lower16:vTailThrust
+ 1444 1134 C0F20003 		movt	r3, #:upper16:vTailThrust
+ 1445 1138 D3ED006A 		flds	s13, [r3, #0]
+ 1446 113c 67EEA67A 		fmuls	s15, s15, s13
+ 1447 1140 77EE277A 		fadds	s15, s14, s15
+ 1448 1144 40F20003 		movw	r3, #:lower16:motor
+ 1449 1148 C0F20003 		movt	r3, #:upper16:motor
+ 1450 114c C3ED007A 		fsts	s15, [r3, #0]
+ 289:../src/mixer.c **** 			motor[1] = PIDMIX( -vTailThrust, -1.0f, -vTailThrust ); // Front Right CW  - NOTE rotation diffe
+ 1451              		.loc 1 289 0
+ 1452 1150 40F20003 		movw	r3, #:lower16:rxCommand
+ 1453 1154 C0F20003 		movt	r3, #:upper16:rxCommand
+ 1454 1158 93ED037A 		flds	s14, [r3, #12]
+ 1455 115c 40F20003 		movw	r3, #:lower16:axisPID
+ 1456 1160 C0F20003 		movt	r3, #:upper16:axisPID
+ 1457 1164 D3ED006A 		flds	s13, [r3, #0]
+ 1458 1168 40F20003 		movw	r3, #:lower16:vTailThrust
+ 1459 116c C0F20003 		movt	r3, #:upper16:vTailThrust
+ 1460 1170 D3ED007A 		flds	s15, [r3, #0]
+ 1461 1174 F1EE677A 		fnegs	s15, s15
+ 1462 1178 66EEA77A 		fmuls	s15, s13, s15
+ 1463 117c 37EE277A 		fadds	s14, s14, s15
+ 1464 1180 40F20003 		movw	r3, #:lower16:axisPID
+ 1465 1184 C0F20003 		movt	r3, #:upper16:axisPID
+ 1466 1188 D3ED017A 		flds	s15, [r3, #4]
+ 1467 118c 37EE677A 		fsubs	s14, s14, s15
+ 1468 1190 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1469 1194 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1470 1198 D3ED206A 		flds	s13, [r3, #128]
+ 1471 119c 40F20003 		movw	r3, #:lower16:axisPID
+ 1472 11a0 C0F20003 		movt	r3, #:upper16:axisPID
+ 1473 11a4 D3ED027A 		flds	s15, [r3, #8]
+ 1474 11a8 66EEA77A 		fmuls	s15, s13, s15
+ 1475 11ac 40F20003 		movw	r3, #:lower16:vTailThrust
+ 1476 11b0 C0F20003 		movt	r3, #:upper16:vTailThrust
+ 1477 11b4 D3ED006A 		flds	s13, [r3, #0]
+ 1478 11b8 F1EE666A 		fnegs	s13, s13
+ 1479 11bc 67EEA67A 		fmuls	s15, s15, s13
+ 1480 11c0 77EE277A 		fadds	s15, s14, s15
+ 1481 11c4 40F20003 		movw	r3, #:lower16:motor
+ 1482 11c8 C0F20003 		movt	r3, #:upper16:motor
+ 1483 11cc C3ED017A 		fsts	s15, [r3, #4]
+ 290:../src/mixer.c **** 			motor[2] = PIDMIX( -1.0f,         1.0f,  1.0f        ); // Rear Right  CCW - NOTE rotation diffe
+ 1484              		.loc 1 290 0
+ 1485 11d0 40F20003 		movw	r3, #:lower16:rxCommand
+ 1486 11d4 C0F20003 		movt	r3, #:upper16:rxCommand
+ 1487 11d8 93ED037A 		flds	s14, [r3, #12]
+ 1488 11dc 40F20003 		movw	r3, #:lower16:axisPID
+ 1489 11e0 C0F20003 		movt	r3, #:upper16:axisPID
+ 1490 11e4 D3ED007A 		flds	s15, [r3, #0]
+ 1491 11e8 37EE677A 		fsubs	s14, s14, s15
+ 1492 11ec 40F20003 		movw	r3, #:lower16:axisPID
+ 1493 11f0 C0F20003 		movt	r3, #:upper16:axisPID
+ 1494 11f4 D3ED017A 		flds	s15, [r3, #4]
+ 1495 11f8 37EE277A 		fadds	s14, s14, s15
+ 1496 11fc 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1497 1200 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1498 1204 D3ED206A 		flds	s13, [r3, #128]
+ 1499 1208 40F20003 		movw	r3, #:lower16:axisPID
+ 1500 120c C0F20003 		movt	r3, #:upper16:axisPID
+ 1501 1210 D3ED027A 		flds	s15, [r3, #8]
+ 1502 1214 66EEA77A 		fmuls	s15, s13, s15
+ 1503 1218 77EE277A 		fadds	s15, s14, s15
+ 1504 121c 40F20003 		movw	r3, #:lower16:motor
+ 1505 1220 C0F20003 		movt	r3, #:upper16:motor
+ 1506 1224 C3ED027A 		fsts	s15, [r3, #8]
+ 291:../src/mixer.c **** 			motor[3] = PIDMIX(  1.0f,         1.0f, -1.0f        ); // Rear Left   CW  - NOTE rotation diffe
+ 1507              		.loc 1 291 0
+ 1508 1228 40F20003 		movw	r3, #:lower16:rxCommand
+ 1509 122c C0F20003 		movt	r3, #:upper16:rxCommand
+ 1510 1230 93ED037A 		flds	s14, [r3, #12]
+ 1511 1234 40F20003 		movw	r3, #:lower16:axisPID
+ 1512 1238 C0F20003 		movt	r3, #:upper16:axisPID
+ 1513 123c D3ED007A 		flds	s15, [r3, #0]
+ 1514 1240 37EE277A 		fadds	s14, s14, s15
+ 1515 1244 40F20003 		movw	r3, #:lower16:axisPID
+ 1516 1248 C0F20003 		movt	r3, #:upper16:axisPID
+ 1517 124c D3ED017A 		flds	s15, [r3, #4]
+ 1518 1250 37EE277A 		fadds	s14, s14, s15
+ 1519 1254 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1520 1258 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1521 125c D3ED206A 		flds	s13, [r3, #128]
+ 1522 1260 40F20003 		movw	r3, #:lower16:axisPID
+ 1523 1264 C0F20003 		movt	r3, #:upper16:axisPID
+ 1524 1268 D3ED027A 		flds	s15, [r3, #8]
+ 1525 126c 66EEA77A 		fmuls	s15, s13, s15
+ 1526 1270 77EE677A 		fsubs	s15, s14, s15
+ 1527 1274 40F20003 		movw	r3, #:lower16:motor
+ 1528 1278 C0F20003 		movt	r3, #:upper16:motor
+ 1529 127c C3ED037A 		fsts	s15, [r3, #12]
+ 292:../src/mixer.c **** 			break;
+ 1530              		.loc 1 292 0
+ 1531 1280 01F072BD 		b	.L25
+ 1532              	.L36:
+ 293:../src/mixer.c **** 
+ 294:../src/mixer.c ****         ///////////////////////////////
+ 295:../src/mixer.c **** 
+ 296:../src/mixer.c ****         case MIXERTYPE_VTAIL4_RP_COMP:
+ 297:../src/mixer.c ****             motor[0] = PIDMIX(  vTailThrust, -vTailThrust,  0.0f ); // Front Left  CCW - NOTE rotat
+ 1533              		.loc 1 297 0
+ 1534 1284 40F20003 		movw	r3, #:lower16:rxCommand
+ 1535 1288 C0F20003 		movt	r3, #:upper16:rxCommand
+ 1536 128c 93ED037A 		flds	s14, [r3, #12]
+ 1537 1290 40F20003 		movw	r3, #:lower16:axisPID
+ 1538 1294 C0F20003 		movt	r3, #:upper16:axisPID
+ 1539 1298 D3ED006A 		flds	s13, [r3, #0]
+ 1540 129c 40F20003 		movw	r3, #:lower16:vTailThrust
+ 1541 12a0 C0F20003 		movt	r3, #:upper16:vTailThrust
+ 1542 12a4 D3ED007A 		flds	s15, [r3, #0]
+ 1543 12a8 66EEA77A 		fmuls	s15, s13, s15
+ 1544 12ac 37EE277A 		fadds	s14, s14, s15
+ 1545 12b0 40F20003 		movw	r3, #:lower16:axisPID
+ 1546 12b4 C0F20003 		movt	r3, #:upper16:axisPID
+ 1547 12b8 D3ED016A 		flds	s13, [r3, #4]
+ 1548 12bc 40F20003 		movw	r3, #:lower16:vTailThrust
+ 1549 12c0 C0F20003 		movt	r3, #:upper16:vTailThrust
+ 1550 12c4 D3ED007A 		flds	s15, [r3, #0]
+ 1551 12c8 F1EE677A 		fnegs	s15, s15
+ 1552 12cc 66EEA77A 		fmuls	s15, s13, s15
+ 1553 12d0 37EE277A 		fadds	s14, s14, s15
+ 1554 12d4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1555 12d8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1556 12dc D3ED206A 		flds	s13, [r3, #128]
+ 1557 12e0 40F20003 		movw	r3, #:lower16:axisPID
+ 1558 12e4 C0F20003 		movt	r3, #:upper16:axisPID
+ 1559 12e8 D3ED027A 		flds	s15, [r3, #8]
+ 1560 12ec 66EEA77A 		fmuls	s15, s13, s15
+ 1561 12f0 5FED896A 		flds	s13, .L62
+ 1562 12f4 67EEA67A 		fmuls	s15, s15, s13
+ 1563 12f8 77EE277A 		fadds	s15, s14, s15
+ 1564 12fc 40F20003 		movw	r3, #:lower16:motor
+ 1565 1300 C0F20003 		movt	r3, #:upper16:motor
+ 1566 1304 C3ED007A 		fsts	s15, [r3, #0]
+ 298:../src/mixer.c **** 			motor[1] = PIDMIX( -vTailThrust, -vTailThrust, -0.0f ); // Front Right CW  - NOTE rotation diffe
+ 1567              		.loc 1 298 0
+ 1568 1308 40F20003 		movw	r3, #:lower16:rxCommand
+ 1569 130c C0F20003 		movt	r3, #:upper16:rxCommand
+ 1570 1310 93ED037A 		flds	s14, [r3, #12]
+ 1571 1314 40F20003 		movw	r3, #:lower16:axisPID
+ 1572 1318 C0F20003 		movt	r3, #:upper16:axisPID
+ 1573 131c D3ED006A 		flds	s13, [r3, #0]
+ 1574 1320 40F20003 		movw	r3, #:lower16:vTailThrust
+ 1575 1324 C0F20003 		movt	r3, #:upper16:vTailThrust
+ 1576 1328 D3ED007A 		flds	s15, [r3, #0]
+ 1577 132c F1EE677A 		fnegs	s15, s15
+ 1578 1330 66EEA77A 		fmuls	s15, s13, s15
+ 1579 1334 37EE277A 		fadds	s14, s14, s15
+ 1580 1338 40F20003 		movw	r3, #:lower16:axisPID
+ 1581 133c C0F20003 		movt	r3, #:upper16:axisPID
+ 1582 1340 D3ED016A 		flds	s13, [r3, #4]
+ 1583 1344 40F20003 		movw	r3, #:lower16:vTailThrust
+ 1584 1348 C0F20003 		movt	r3, #:upper16:vTailThrust
+ 1585 134c D3ED007A 		flds	s15, [r3, #0]
+ 1586 1350 F1EE677A 		fnegs	s15, s15
+ 1587 1354 66EEA77A 		fmuls	s15, s13, s15
+ 1588 1358 37EE277A 		fadds	s14, s14, s15
+ 1589 135c 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1590 1360 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1591 1364 D3ED206A 		flds	s13, [r3, #128]
+ 1592 1368 40F20003 		movw	r3, #:lower16:axisPID
+ 1593 136c C0F20003 		movt	r3, #:upper16:axisPID
+ 1594 1370 D3ED027A 		flds	s15, [r3, #8]
+ 1595 1374 66EEA77A 		fmuls	s15, s13, s15
+ 1596 1378 5FEDAA6A 		flds	s13, .L62+4
+ 1597 137c 67EEA67A 		fmuls	s15, s15, s13
+ 1598 1380 77EE277A 		fadds	s15, s14, s15
+ 1599 1384 40F20003 		movw	r3, #:lower16:motor
+ 1600 1388 C0F20003 		movt	r3, #:upper16:motor
+ 1601 138c C3ED017A 		fsts	s15, [r3, #4]
+ 299:../src/mixer.c **** 			motor[2] = PIDMIX( -1.0f,         1.0f,         1.0f ); // Rear Right  CCW - NOTE rotation diffe
+ 1602              		.loc 1 299 0
+ 1603 1390 40F20003 		movw	r3, #:lower16:rxCommand
+ 1604 1394 C0F20003 		movt	r3, #:upper16:rxCommand
+ 1605 1398 93ED037A 		flds	s14, [r3, #12]
+ 1606 139c 40F20003 		movw	r3, #:lower16:axisPID
+ 1607 13a0 C0F20003 		movt	r3, #:upper16:axisPID
+ 1608 13a4 D3ED007A 		flds	s15, [r3, #0]
+ 1609 13a8 37EE677A 		fsubs	s14, s14, s15
+ 1610 13ac 40F20003 		movw	r3, #:lower16:axisPID
+ 1611 13b0 C0F20003 		movt	r3, #:upper16:axisPID
+ 1612 13b4 D3ED017A 		flds	s15, [r3, #4]
+ 1613 13b8 37EE277A 		fadds	s14, s14, s15
+ 1614 13bc 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1615 13c0 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1616 13c4 D3ED206A 		flds	s13, [r3, #128]
+ 1617 13c8 40F20003 		movw	r3, #:lower16:axisPID
+ 1618 13cc C0F20003 		movt	r3, #:upper16:axisPID
+ 1619 13d0 D3ED027A 		flds	s15, [r3, #8]
+ 1620 13d4 66EEA77A 		fmuls	s15, s13, s15
+ 1621 13d8 77EE277A 		fadds	s15, s14, s15
+ 1622 13dc 40F20003 		movw	r3, #:lower16:motor
+ 1623 13e0 C0F20003 		movt	r3, #:upper16:motor
+ 1624 13e4 C3ED027A 		fsts	s15, [r3, #8]
+ 300:../src/mixer.c **** 			motor[3] = PIDMIX(  1.0f,         1.0f,        -1.0f ); // Rear Left   CW  - NOTE rotation diffe
+ 1625              		.loc 1 300 0
+ 1626 13e8 40F20003 		movw	r3, #:lower16:rxCommand
+ 1627 13ec C0F20003 		movt	r3, #:upper16:rxCommand
+ 1628 13f0 93ED037A 		flds	s14, [r3, #12]
+ 1629 13f4 40F20003 		movw	r3, #:lower16:axisPID
+ 1630 13f8 C0F20003 		movt	r3, #:upper16:axisPID
+ 1631 13fc D3ED007A 		flds	s15, [r3, #0]
+ 1632 1400 37EE277A 		fadds	s14, s14, s15
+ 1633 1404 40F20003 		movw	r3, #:lower16:axisPID
+ 1634 1408 C0F20003 		movt	r3, #:upper16:axisPID
+ 1635 140c D3ED017A 		flds	s15, [r3, #4]
+ 1636 1410 37EE277A 		fadds	s14, s14, s15
+ 1637 1414 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1638 1418 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1639 141c D3ED206A 		flds	s13, [r3, #128]
+ 1640 1420 40F20003 		movw	r3, #:lower16:axisPID
+ 1641 1424 C0F20003 		movt	r3, #:upper16:axisPID
+ 1642 1428 D3ED027A 		flds	s15, [r3, #8]
+ 1643 142c 66EEA77A 		fmuls	s15, s13, s15
+ 1644 1430 77EE677A 		fsubs	s15, s14, s15
+ 1645 1434 40F20003 		movw	r3, #:lower16:motor
+ 1646 1438 C0F20003 		movt	r3, #:upper16:motor
+ 1647 143c C3ED037A 		fsts	s15, [r3, #12]
+ 301:../src/mixer.c **** 			break;
+ 1648              		.loc 1 301 0
+ 1649 1440 01F092BC 		b	.L25
+ 1650              	.L37:
+ 302:../src/mixer.c **** 
+ 303:../src/mixer.c ****         ///////////////////////////////
+ 304:../src/mixer.c **** 
+ 305:../src/mixer.c ****         case MIXERTYPE_VTAIL4_RPY_COMP:
+ 306:../src/mixer.c ****         	motor[0] = PIDMIX(  vTailThrust, -vTailThrust,  vTailThrust ); // Front Left  CCW - NOTE r
+ 1651              		.loc 1 306 0
+ 1652 1444 40F20003 		movw	r3, #:lower16:rxCommand
+ 1653 1448 C0F20003 		movt	r3, #:upper16:rxCommand
+ 1654 144c 93ED037A 		flds	s14, [r3, #12]
+ 1655 1450 40F20003 		movw	r3, #:lower16:axisPID
+ 1656 1454 C0F20003 		movt	r3, #:upper16:axisPID
+ 1657 1458 D3ED006A 		flds	s13, [r3, #0]
+ 1658 145c 40F20003 		movw	r3, #:lower16:vTailThrust
+ 1659 1460 C0F20003 		movt	r3, #:upper16:vTailThrust
+ 1660 1464 D3ED007A 		flds	s15, [r3, #0]
+ 1661 1468 66EEA77A 		fmuls	s15, s13, s15
+ 1662 146c 37EE277A 		fadds	s14, s14, s15
+ 1663 1470 40F20003 		movw	r3, #:lower16:axisPID
+ 1664 1474 C0F20003 		movt	r3, #:upper16:axisPID
+ 1665 1478 D3ED016A 		flds	s13, [r3, #4]
+ 1666 147c 40F20003 		movw	r3, #:lower16:vTailThrust
+ 1667 1480 C0F20003 		movt	r3, #:upper16:vTailThrust
+ 1668 1484 D3ED007A 		flds	s15, [r3, #0]
+ 1669 1488 F1EE677A 		fnegs	s15, s15
+ 1670 148c 66EEA77A 		fmuls	s15, s13, s15
+ 1671 1490 37EE277A 		fadds	s14, s14, s15
+ 1672 1494 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1673 1498 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1674 149c D3ED206A 		flds	s13, [r3, #128]
+ 1675 14a0 40F20003 		movw	r3, #:lower16:axisPID
+ 1676 14a4 C0F20003 		movt	r3, #:upper16:axisPID
+ 1677 14a8 D3ED027A 		flds	s15, [r3, #8]
+ 1678 14ac 66EEA77A 		fmuls	s15, s13, s15
+ 1679 14b0 40F20003 		movw	r3, #:lower16:vTailThrust
+ 1680 14b4 C0F20003 		movt	r3, #:upper16:vTailThrust
+ 1681 14b8 D3ED006A 		flds	s13, [r3, #0]
+ 1682 14bc 67EEA67A 		fmuls	s15, s15, s13
+ 1683 14c0 77EE277A 		fadds	s15, s14, s15
+ 1684 14c4 40F20003 		movw	r3, #:lower16:motor
+ 1685 14c8 C0F20003 		movt	r3, #:upper16:motor
+ 1686 14cc C3ED007A 		fsts	s15, [r3, #0]
+ 307:../src/mixer.c **** 			motor[1] = PIDMIX( -vTailThrust, -vTailThrust, -vTailThrust ); // Front Right CW  - NOTE rotatio
+ 1687              		.loc 1 307 0
+ 1688 14d0 40F20003 		movw	r3, #:lower16:rxCommand
+ 1689 14d4 C0F20003 		movt	r3, #:upper16:rxCommand
+ 1690 14d8 93ED037A 		flds	s14, [r3, #12]
+ 1691 14dc 40F20003 		movw	r3, #:lower16:axisPID
+ 1692 14e0 C0F20003 		movt	r3, #:upper16:axisPID
+ 1693 14e4 D3ED006A 		flds	s13, [r3, #0]
+ 1694 14e8 40F20003 		movw	r3, #:lower16:vTailThrust
+ 1695 14ec C0F20003 		movt	r3, #:upper16:vTailThrust
+ 1696 14f0 D3ED007A 		flds	s15, [r3, #0]
+ 1697 14f4 F1EE677A 		fnegs	s15, s15
+ 1698 14f8 66EEA77A 		fmuls	s15, s13, s15
+ 1699 14fc 37EE277A 		fadds	s14, s14, s15
+ 1700 1500 40F20003 		movw	r3, #:lower16:axisPID
+ 1701 1504 C0F20003 		movt	r3, #:upper16:axisPID
+ 1702 1508 D3ED016A 		flds	s13, [r3, #4]
+ 1703 150c 40F20003 		movw	r3, #:lower16:vTailThrust
+ 1704 1510 C0F20003 		movt	r3, #:upper16:vTailThrust
+ 1705 1514 D3ED007A 		flds	s15, [r3, #0]
+ 1706 1518 F1EE677A 		fnegs	s15, s15
+ 1707 151c 66EEA77A 		fmuls	s15, s13, s15
+ 1708 1520 37EE277A 		fadds	s14, s14, s15
+ 1709 1524 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1710 1528 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1711 152c D3ED206A 		flds	s13, [r3, #128]
+ 1712 1530 40F20003 		movw	r3, #:lower16:axisPID
+ 1713 1534 C0F20003 		movt	r3, #:upper16:axisPID
+ 1714 1538 D3ED027A 		flds	s15, [r3, #8]
+ 1715 153c 66EEA77A 		fmuls	s15, s13, s15
+ 1716 1540 40F20003 		movw	r3, #:lower16:vTailThrust
+ 1717 1544 C0F20003 		movt	r3, #:upper16:vTailThrust
+ 1718 1548 D3ED006A 		flds	s13, [r3, #0]
+ 1719 154c F1EE666A 		fnegs	s13, s13
+ 1720 1550 67EEA67A 		fmuls	s15, s15, s13
+ 1721 1554 77EE277A 		fadds	s15, s14, s15
+ 1722 1558 40F20003 		movw	r3, #:lower16:motor
+ 1723 155c C0F20003 		movt	r3, #:upper16:motor
+ 1724 1560 C3ED017A 		fsts	s15, [r3, #4]
+ 308:../src/mixer.c **** 			motor[2] = PIDMIX( -1.0f,         1.0f,         1.0f        ); // Rear Right  CCW - NOTE rotatio
+ 1725              		.loc 1 308 0
+ 1726 1564 40F20003 		movw	r3, #:lower16:rxCommand
+ 1727 1568 C0F20003 		movt	r3, #:upper16:rxCommand
+ 1728 156c 93ED037A 		flds	s14, [r3, #12]
+ 1729 1570 40F20003 		movw	r3, #:lower16:axisPID
+ 1730 1574 C0F20003 		movt	r3, #:upper16:axisPID
+ 1731 1578 D3ED007A 		flds	s15, [r3, #0]
+ 1732 157c 37EE677A 		fsubs	s14, s14, s15
+ 1733 1580 40F20003 		movw	r3, #:lower16:axisPID
+ 1734 1584 C0F20003 		movt	r3, #:upper16:axisPID
+ 1735 1588 D3ED017A 		flds	s15, [r3, #4]
+ 1736 158c 37EE277A 		fadds	s14, s14, s15
+ 1737 1590 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1738 1594 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1739 1598 D3ED206A 		flds	s13, [r3, #128]
+ 1740 159c 40F20003 		movw	r3, #:lower16:axisPID
+ 1741 15a0 C0F20003 		movt	r3, #:upper16:axisPID
+ 1742 15a4 D3ED027A 		flds	s15, [r3, #8]
+ 1743 15a8 66EEA77A 		fmuls	s15, s13, s15
+ 1744 15ac 77EE277A 		fadds	s15, s14, s15
+ 1745 15b0 40F20003 		movw	r3, #:lower16:motor
+ 1746 15b4 C0F20003 		movt	r3, #:upper16:motor
+ 1747 15b8 C3ED027A 		fsts	s15, [r3, #8]
+ 309:../src/mixer.c **** 			motor[3] = PIDMIX(  1.0f,         1.0f,        -1.0f        ); // Rear Left   CW  - NOTE rotatio
+ 1748              		.loc 1 309 0
+ 1749 15bc 40F20003 		movw	r3, #:lower16:rxCommand
+ 1750 15c0 C0F20003 		movt	r3, #:upper16:rxCommand
+ 1751 15c4 93ED037A 		flds	s14, [r3, #12]
+ 1752 15c8 40F20003 		movw	r3, #:lower16:axisPID
+ 1753 15cc C0F20003 		movt	r3, #:upper16:axisPID
+ 1754 15d0 D3ED007A 		flds	s15, [r3, #0]
+ 1755 15d4 37EE277A 		fadds	s14, s14, s15
+ 1756 15d8 40F20003 		movw	r3, #:lower16:axisPID
+ 1757 15dc C0F20003 		movt	r3, #:upper16:axisPID
+ 1758 15e0 D3ED017A 		flds	s15, [r3, #4]
+ 1759 15e4 37EE277A 		fadds	s14, s14, s15
+ 1760 15e8 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1761 15ec C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1762 15f0 D3ED206A 		flds	s13, [r3, #128]
+ 1763 15f4 40F20003 		movw	r3, #:lower16:axisPID
+ 1764 15f8 C0F20003 		movt	r3, #:upper16:axisPID
+ 1765 15fc D3ED027A 		flds	s15, [r3, #8]
+ 1766 1600 66EEA77A 		fmuls	s15, s13, s15
+ 1767 1604 77EE677A 		fsubs	s15, s14, s15
+ 1768 1608 40F20003 		movw	r3, #:lower16:motor
+ 1769 160c C0F20003 		movt	r3, #:upper16:motor
+ 1770 1610 C3ED037A 		fsts	s15, [r3, #12]
+ 310:../src/mixer.c **** 			break;
+ 1771              		.loc 1 310 0
+ 1772 1614 01F0A8BB 		b	.L25
+ 1773              	.L38:
+ 311:../src/mixer.c **** 
+ 312:../src/mixer.c ****         ///////////////////////////////
+ 313:../src/mixer.c **** 
+ 314:../src/mixer.c ****         case MIXERTYPE_Y4:
+ 315:../src/mixer.c ****             motor[0] = PIDMIX(  1.0f, -1.0f,  0.0f );      // Front Left  CW
+ 1774              		.loc 1 315 0
+ 1775 1618 40F20003 		movw	r3, #:lower16:rxCommand
+ 1776 161c C0F20003 		movt	r3, #:upper16:rxCommand
+ 1777 1620 93ED037A 		flds	s14, [r3, #12]
+ 1778 1624 40F20003 		movw	r3, #:lower16:axisPID
+ 1779 1628 C0F20003 		movt	r3, #:upper16:axisPID
+ 1780 162c D3ED007A 		flds	s15, [r3, #0]
+ 1781 1630 37EE277A 		fadds	s14, s14, s15
+ 1782 1634 40F20003 		movw	r3, #:lower16:axisPID
+ 1783 1638 C0F20003 		movt	r3, #:upper16:axisPID
+ 1784 163c D3ED017A 		flds	s15, [r3, #4]
+ 1785 1640 37EE677A 		fsubs	s14, s14, s15
+ 1786 1644 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1787 1648 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1788 164c D3ED206A 		flds	s13, [r3, #128]
+ 1789 1650 40F20003 		movw	r3, #:lower16:axisPID
+ 1790 1654 C0F20003 		movt	r3, #:upper16:axisPID
+ 1791 1658 D3ED027A 		flds	s15, [r3, #8]
+ 1792 165c 66EEA77A 		fmuls	s15, s13, s15
+ 1793 1660 DFEDE56A 		flds	s13, .L64+8
+ 1794 1664 67EEA67A 		fmuls	s15, s15, s13
+ 1795 1668 77EE277A 		fadds	s15, s14, s15
+ 1796 166c 40F20003 		movw	r3, #:lower16:motor
+ 1797 1670 C0F20003 		movt	r3, #:upper16:motor
+ 1798 1674 C3ED007A 		fsts	s15, [r3, #0]
+ 316:../src/mixer.c ****             motor[1] = PIDMIX( -1.0f, -1.0f,  0.0f );      // Front Right CCW
+ 1799              		.loc 1 316 0
+ 1800 1678 40F20003 		movw	r3, #:lower16:rxCommand
+ 1801 167c C0F20003 		movt	r3, #:upper16:rxCommand
+ 1802 1680 93ED037A 		flds	s14, [r3, #12]
+ 1803 1684 40F20003 		movw	r3, #:lower16:axisPID
+ 1804 1688 C0F20003 		movt	r3, #:upper16:axisPID
+ 1805 168c D3ED007A 		flds	s15, [r3, #0]
+ 1806 1690 37EE677A 		fsubs	s14, s14, s15
+ 1807 1694 40F20003 		movw	r3, #:lower16:axisPID
+ 1808 1698 C0F20003 		movt	r3, #:upper16:axisPID
+ 1809 169c D3ED017A 		flds	s15, [r3, #4]
+ 1810 16a0 37EE677A 		fsubs	s14, s14, s15
+ 1811 16a4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1812 16a8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1813 16ac D3ED206A 		flds	s13, [r3, #128]
+ 1814 16b0 40F20003 		movw	r3, #:lower16:axisPID
+ 1815 16b4 C0F20003 		movt	r3, #:upper16:axisPID
+ 1816 16b8 D3ED027A 		flds	s15, [r3, #8]
+ 1817 16bc 66EEA77A 		fmuls	s15, s13, s15
+ 1818 16c0 DFEDCD6A 		flds	s13, .L64+8
+ 1819 16c4 67EEA67A 		fmuls	s15, s15, s13
+ 1820 16c8 77EE277A 		fadds	s15, s14, s15
+ 1821 16cc 40F20003 		movw	r3, #:lower16:motor
+ 1822 16d0 C0F20003 		movt	r3, #:upper16:motor
+ 1823 16d4 C3ED017A 		fsts	s15, [r3, #4]
+ 317:../src/mixer.c ****             motor[2] = PIDMIX(  0.0f,  1.0f, -1.0f );      // Top Rear    CW
+ 1824              		.loc 1 317 0
+ 1825 16d8 40F20003 		movw	r3, #:lower16:rxCommand
+ 1826 16dc C0F20003 		movt	r3, #:upper16:rxCommand
+ 1827 16e0 93ED037A 		flds	s14, [r3, #12]
+ 1828 16e4 40F20003 		movw	r3, #:lower16:axisPID
+ 1829 16e8 C0F20003 		movt	r3, #:upper16:axisPID
+ 1830 16ec D3ED006A 		flds	s13, [r3, #0]
+ 1831 16f0 DFEDC17A 		flds	s15, .L64+8
+ 1832 16f4 66EEA77A 		fmuls	s15, s13, s15
+ 1833 16f8 37EE277A 		fadds	s14, s14, s15
+ 1834 16fc 40F20003 		movw	r3, #:lower16:axisPID
+ 1835 1700 C0F20003 		movt	r3, #:upper16:axisPID
+ 1836 1704 D3ED017A 		flds	s15, [r3, #4]
+ 1837 1708 37EE277A 		fadds	s14, s14, s15
+ 1838 170c 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1839 1710 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1840 1714 D3ED206A 		flds	s13, [r3, #128]
+ 1841 1718 40F20003 		movw	r3, #:lower16:axisPID
+ 1842 171c C0F20003 		movt	r3, #:upper16:axisPID
+ 1843 1720 D3ED027A 		flds	s15, [r3, #8]
+ 1844 1724 66EEA77A 		fmuls	s15, s13, s15
+ 1845 1728 77EE677A 		fsubs	s15, s14, s15
+ 1846 172c 40F20003 		movw	r3, #:lower16:motor
+ 1847 1730 C0F20003 		movt	r3, #:upper16:motor
+ 1848 1734 C3ED027A 		fsts	s15, [r3, #8]
+ 318:../src/mixer.c ****             motor[3] = PIDMIX(  0.0f,  1.0f,  1.0f );      // Bottom Rear CCW
+ 1849              		.loc 1 318 0
+ 1850 1738 40F20003 		movw	r3, #:lower16:rxCommand
+ 1851 173c C0F20003 		movt	r3, #:upper16:rxCommand
+ 1852 1740 93ED037A 		flds	s14, [r3, #12]
+ 1853 1744 40F20003 		movw	r3, #:lower16:axisPID
+ 1854 1748 C0F20003 		movt	r3, #:upper16:axisPID
+ 1855 174c D3ED006A 		flds	s13, [r3, #0]
+ 1856 1750 DFEDA97A 		flds	s15, .L64+8
+ 1857 1754 66EEA77A 		fmuls	s15, s13, s15
+ 1858 1758 37EE277A 		fadds	s14, s14, s15
+ 1859 175c 40F20003 		movw	r3, #:lower16:axisPID
+ 1860 1760 C0F20003 		movt	r3, #:upper16:axisPID
+ 1861 1764 D3ED017A 		flds	s15, [r3, #4]
+ 1862 1768 37EE277A 		fadds	s14, s14, s15
+ 1863 176c 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1864 1770 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1865 1774 D3ED206A 		flds	s13, [r3, #128]
+ 1866 1778 40F20003 		movw	r3, #:lower16:axisPID
+ 1867 177c C0F20003 		movt	r3, #:upper16:axisPID
+ 1868 1780 D3ED027A 		flds	s15, [r3, #8]
+ 1869 1784 66EEA77A 		fmuls	s15, s13, s15
+ 1870 1788 77EE277A 		fadds	s15, s14, s15
+ 1871 178c 40F20003 		movw	r3, #:lower16:motor
+ 1872 1790 C0F20003 		movt	r3, #:upper16:motor
+ 1873 1794 C3ED037A 		fsts	s15, [r3, #12]
+ 319:../src/mixer.c ****             break;
+ 1874              		.loc 1 319 0
+ 1875 1798 01F0E6BA 		b	.L25
+ 1876              	.L39:
+ 320:../src/mixer.c **** 
+ 321:../src/mixer.c ****         ///////////////////////////////
+ 322:../src/mixer.c **** 
+ 323:../src/mixer.c ****         case MIXERTYPE_HEX6P:
+ 324:../src/mixer.c ****             motor[0] = PIDMIX(  0.0f, -0.866025f, -1.0f ); // Front       CW
+ 1877              		.loc 1 324 0
+ 1878 179c 40F20003 		movw	r3, #:lower16:rxCommand
+ 1879 17a0 C0F20003 		movt	r3, #:upper16:rxCommand
+ 1880 17a4 93ED037A 		flds	s14, [r3, #12]
+ 1881 17a8 40F20003 		movw	r3, #:lower16:axisPID
+ 1882 17ac C0F20003 		movt	r3, #:upper16:axisPID
+ 1883 17b0 D3ED006A 		flds	s13, [r3, #0]
+ 1884 17b4 DFED907A 		flds	s15, .L64+8
+ 1885 17b8 66EEA77A 		fmuls	s15, s13, s15
+ 1886 17bc 37EE277A 		fadds	s14, s14, s15
+ 1887 17c0 40F20003 		movw	r3, #:lower16:axisPID
+ 1888 17c4 C0F20003 		movt	r3, #:upper16:axisPID
+ 1889 17c8 D3ED016A 		flds	s13, [r3, #4]
+ 1890 17cc DFED887A 		flds	s15, .L64
+ 1891 17d0 66EEA77A 		fmuls	s15, s13, s15
+ 1892 17d4 37EE277A 		fadds	s14, s14, s15
+ 1893 17d8 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1894 17dc C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1895 17e0 D3ED206A 		flds	s13, [r3, #128]
+ 1896 17e4 40F20003 		movw	r3, #:lower16:axisPID
+ 1897 17e8 C0F20003 		movt	r3, #:upper16:axisPID
+ 1898 17ec D3ED027A 		flds	s15, [r3, #8]
+ 1899 17f0 66EEA77A 		fmuls	s15, s13, s15
+ 1900 17f4 77EE677A 		fsubs	s15, s14, s15
+ 1901 17f8 40F20003 		movw	r3, #:lower16:motor
+ 1902 17fc C0F20003 		movt	r3, #:upper16:motor
+ 1903 1800 C3ED007A 		fsts	s15, [r3, #0]
+ 325:../src/mixer.c ****             motor[1] = PIDMIX( -1.0f, -0.866025f,  1.0f ); // Front Right CCW
+ 1904              		.loc 1 325 0
+ 1905 1804 40F20003 		movw	r3, #:lower16:rxCommand
+ 1906 1808 C0F20003 		movt	r3, #:upper16:rxCommand
+ 1907 180c 93ED037A 		flds	s14, [r3, #12]
+ 1908 1810 40F20003 		movw	r3, #:lower16:axisPID
+ 1909 1814 C0F20003 		movt	r3, #:upper16:axisPID
+ 1910 1818 D3ED007A 		flds	s15, [r3, #0]
+ 1911 181c 37EE677A 		fsubs	s14, s14, s15
+ 1912 1820 40F20003 		movw	r3, #:lower16:axisPID
+ 1913 1824 C0F20003 		movt	r3, #:upper16:axisPID
+ 1914 1828 D3ED016A 		flds	s13, [r3, #4]
+ 1915 182c DFED707A 		flds	s15, .L64
+ 1916 1830 66EEA77A 		fmuls	s15, s13, s15
+ 1917 1834 37EE277A 		fadds	s14, s14, s15
+ 1918 1838 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1919 183c C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1920 1840 D3ED206A 		flds	s13, [r3, #128]
+ 1921 1844 40F20003 		movw	r3, #:lower16:axisPID
+ 1922 1848 C0F20003 		movt	r3, #:upper16:axisPID
+ 1923 184c D3ED027A 		flds	s15, [r3, #8]
+ 1924 1850 66EEA77A 		fmuls	s15, s13, s15
+ 1925 1854 77EE277A 		fadds	s15, s14, s15
+ 1926 1858 40F20003 		movw	r3, #:lower16:motor
+ 1927 185c C0F20003 		movt	r3, #:upper16:motor
+ 1928 1860 C3ED017A 		fsts	s15, [r3, #4]
+ 326:../src/mixer.c ****             motor[2] = PIDMIX( -1.0f,  0.866025f, -1.0f ); // Rear Right  CW
+ 1929              		.loc 1 326 0
+ 1930 1864 40F20003 		movw	r3, #:lower16:rxCommand
+ 1931 1868 C0F20003 		movt	r3, #:upper16:rxCommand
+ 1932 186c 93ED037A 		flds	s14, [r3, #12]
+ 1933 1870 40F20003 		movw	r3, #:lower16:axisPID
+ 1934 1874 C0F20003 		movt	r3, #:upper16:axisPID
+ 1935 1878 D3ED007A 		flds	s15, [r3, #0]
+ 1936 187c 37EE677A 		fsubs	s14, s14, s15
+ 1937 1880 40F20003 		movw	r3, #:lower16:axisPID
+ 1938 1884 C0F20003 		movt	r3, #:upper16:axisPID
+ 1939 1888 D3ED016A 		flds	s13, [r3, #4]
+ 1940 188c DFED597A 		flds	s15, .L64+4
+ 1941 1890 66EEA77A 		fmuls	s15, s13, s15
+ 1942 1894 37EE277A 		fadds	s14, s14, s15
+ 1943 1898 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1944 189c C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1945 18a0 D3ED206A 		flds	s13, [r3, #128]
+ 1946 18a4 40F20003 		movw	r3, #:lower16:axisPID
+ 1947 18a8 C0F20003 		movt	r3, #:upper16:axisPID
+ 1948 18ac D3ED027A 		flds	s15, [r3, #8]
+ 1949 18b0 66EEA77A 		fmuls	s15, s13, s15
+ 1950 18b4 77EE677A 		fsubs	s15, s14, s15
+ 1951 18b8 40F20003 		movw	r3, #:lower16:motor
+ 1952 18bc C0F20003 		movt	r3, #:upper16:motor
+ 1953 18c0 C3ED027A 		fsts	s15, [r3, #8]
+ 327:../src/mixer.c ****             motor[3] = PIDMIX(  0.0f,  0.866025f,  1.0f ); // Rear        CCW
+ 1954              		.loc 1 327 0
+ 1955 18c4 40F20003 		movw	r3, #:lower16:rxCommand
+ 1956 18c8 C0F20003 		movt	r3, #:upper16:rxCommand
+ 1957 18cc 93ED037A 		flds	s14, [r3, #12]
+ 1958 18d0 40F20003 		movw	r3, #:lower16:axisPID
+ 1959 18d4 C0F20003 		movt	r3, #:upper16:axisPID
+ 1960 18d8 D3ED006A 		flds	s13, [r3, #0]
+ 1961 18dc DFED467A 		flds	s15, .L64+8
+ 1962 18e0 66EEA77A 		fmuls	s15, s13, s15
+ 1963 18e4 37EE277A 		fadds	s14, s14, s15
+ 1964 18e8 40F20003 		movw	r3, #:lower16:axisPID
+ 1965 18ec C0F20003 		movt	r3, #:upper16:axisPID
+ 1966 18f0 D3ED016A 		flds	s13, [r3, #4]
+ 1967 18f4 DFED3F7A 		flds	s15, .L64+4
+ 1968 18f8 66EEA77A 		fmuls	s15, s13, s15
+ 1969 18fc 37EE277A 		fadds	s14, s14, s15
+ 1970 1900 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1971 1904 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1972 1908 D3ED206A 		flds	s13, [r3, #128]
+ 1973 190c 40F20003 		movw	r3, #:lower16:axisPID
+ 1974 1910 C0F20003 		movt	r3, #:upper16:axisPID
+ 1975 1914 D3ED027A 		flds	s15, [r3, #8]
+ 1976 1918 66EEA77A 		fmuls	s15, s13, s15
+ 1977 191c 77EE277A 		fadds	s15, s14, s15
+ 1978 1920 40F20003 		movw	r3, #:lower16:motor
+ 1979 1924 C0F20003 		movt	r3, #:upper16:motor
+ 1980 1928 C3ED037A 		fsts	s15, [r3, #12]
+ 328:../src/mixer.c ****             motor[4] = PIDMIX(  1.0f,  0.866025f, -1.0f ); // Rear Left   CW
+ 1981              		.loc 1 328 0
+ 1982 192c 40F20003 		movw	r3, #:lower16:rxCommand
+ 1983 1930 C0F20003 		movt	r3, #:upper16:rxCommand
+ 1984 1934 93ED037A 		flds	s14, [r3, #12]
+ 1985 1938 40F20003 		movw	r3, #:lower16:axisPID
+ 1986 193c C0F20003 		movt	r3, #:upper16:axisPID
+ 1987 1940 D3ED007A 		flds	s15, [r3, #0]
+ 1988 1944 37EE277A 		fadds	s14, s14, s15
+ 1989 1948 40F20003 		movw	r3, #:lower16:axisPID
+ 1990 194c C0F20003 		movt	r3, #:upper16:axisPID
+ 1991 1950 D3ED016A 		flds	s13, [r3, #4]
+ 1992 1954 DFED277A 		flds	s15, .L64+4
+ 1993 1958 66EEA77A 		fmuls	s15, s13, s15
+ 1994 195c 37EE277A 		fadds	s14, s14, s15
+ 1995 1960 40F20003 		movw	r3, #:lower16:eepromConfig
+ 1996 1964 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 1997 1968 D3ED206A 		flds	s13, [r3, #128]
+ 1998 196c 40F20003 		movw	r3, #:lower16:axisPID
+ 1999 1970 C0F20003 		movt	r3, #:upper16:axisPID
+ 2000 1974 D3ED027A 		flds	s15, [r3, #8]
+ 2001 1978 66EEA77A 		fmuls	s15, s13, s15
+ 2002 197c 77EE677A 		fsubs	s15, s14, s15
+ 2003 1980 40F20003 		movw	r3, #:lower16:motor
+ 2004 1984 C0F20003 		movt	r3, #:upper16:motor
+ 2005 1988 C3ED047A 		fsts	s15, [r3, #16]
+ 329:../src/mixer.c ****             motor[5] = PIDMIX(  1.0f, -0.866025f,  1.0f ); // Front Left  CCW
+ 2006              		.loc 1 329 0
+ 2007 198c 40F20003 		movw	r3, #:lower16:rxCommand
+ 2008 1990 C0F20003 		movt	r3, #:upper16:rxCommand
+ 2009 1994 93ED037A 		flds	s14, [r3, #12]
+ 2010 1998 40F20003 		movw	r3, #:lower16:axisPID
+ 2011 199c C0F20003 		movt	r3, #:upper16:axisPID
+ 2012 19a0 D3ED007A 		flds	s15, [r3, #0]
+ 2013 19a4 37EE277A 		fadds	s14, s14, s15
+ 2014 19a8 40F20003 		movw	r3, #:lower16:axisPID
+ 2015 19ac C0F20003 		movt	r3, #:upper16:axisPID
+ 2016 19b0 D3ED016A 		flds	s13, [r3, #4]
+ 2017 19b4 DFED0E7A 		flds	s15, .L64
+ 2018 19b8 66EEA77A 		fmuls	s15, s13, s15
+ 2019 19bc 37EE277A 		fadds	s14, s14, s15
+ 2020 19c0 40F20003 		movw	r3, #:lower16:eepromConfig
+ 2021 19c4 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 2022 19c8 D3ED206A 		flds	s13, [r3, #128]
+ 2023 19cc 40F20003 		movw	r3, #:lower16:axisPID
+ 2024 19d0 C0F20003 		movt	r3, #:upper16:axisPID
+ 2025 19d4 D3ED027A 		flds	s15, [r3, #8]
+ 2026 19d8 66EEA77A 		fmuls	s15, s13, s15
+ 2027 19dc 77EE277A 		fadds	s15, s14, s15
+ 2028 19e0 40F20003 		movw	r3, #:lower16:motor
+ 2029 19e4 C0F20003 		movt	r3, #:upper16:motor
+ 2030 19e8 C3ED057A 		fsts	s15, [r3, #20]
+ 330:../src/mixer.c ****             break;
+ 2031              		.loc 1 330 0
+ 2032 19ec 01F0BCB9 		b	.L25
+ 2033              	.L65:
+ 2034              		.align	2
+ 2035              	.L64:
+ 2036 19f0 D0B35DBF 		.word	-1084378160
+ 2037 19f4 D0B35D3F 		.word	1063105488
+ 2038 19f8 00000000 		.word	0
+ 2039              	.L40:
+ 331:../src/mixer.c **** 
+ 332:../src/mixer.c ****         ///////////////////////////////
+ 333:../src/mixer.c **** 
+ 334:../src/mixer.c ****         case MIXERTYPE_HEX6X:
+ 335:../src/mixer.c ****             motor[0] = PIDMIX(  0.866025f, -1.0f, -1.0f ); // Front Left  CW
+ 2040              		.loc 1 335 0
+ 2041 19fc 40F20003 		movw	r3, #:lower16:rxCommand
+ 2042 1a00 C0F20003 		movt	r3, #:upper16:rxCommand
+ 2043 1a04 93ED037A 		flds	s14, [r3, #12]
+ 2044 1a08 40F20003 		movw	r3, #:lower16:axisPID
+ 2045 1a0c C0F20003 		movt	r3, #:upper16:axisPID
+ 2046 1a10 D3ED006A 		flds	s13, [r3, #0]
+ 2047 1a14 5FED097A 		flds	s15, .L64+4
+ 2048 1a18 66EEA77A 		fmuls	s15, s13, s15
+ 2049 1a1c 37EE277A 		fadds	s14, s14, s15
+ 2050 1a20 40F20003 		movw	r3, #:lower16:axisPID
+ 2051 1a24 C0F20003 		movt	r3, #:upper16:axisPID
+ 2052 1a28 D3ED017A 		flds	s15, [r3, #4]
+ 2053 1a2c 37EE677A 		fsubs	s14, s14, s15
+ 2054 1a30 40F20003 		movw	r3, #:lower16:eepromConfig
+ 2055 1a34 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 2056 1a38 D3ED206A 		flds	s13, [r3, #128]
+ 2057 1a3c 40F20003 		movw	r3, #:lower16:axisPID
+ 2058 1a40 C0F20003 		movt	r3, #:upper16:axisPID
+ 2059 1a44 D3ED027A 		flds	s15, [r3, #8]
+ 2060 1a48 66EEA77A 		fmuls	s15, s13, s15
+ 2061 1a4c 77EE677A 		fsubs	s15, s14, s15
+ 2062 1a50 40F20003 		movw	r3, #:lower16:motor
+ 2063 1a54 C0F20003 		movt	r3, #:upper16:motor
+ 2064 1a58 C3ED007A 		fsts	s15, [r3, #0]
+ 336:../src/mixer.c ****             motor[1] = PIDMIX( -0.866025f, -1.0f,  1.0f ); // Front Right CCW
+ 2065              		.loc 1 336 0
+ 2066 1a5c 40F20003 		movw	r3, #:lower16:rxCommand
+ 2067 1a60 C0F20003 		movt	r3, #:upper16:rxCommand
+ 2068 1a64 93ED037A 		flds	s14, [r3, #12]
+ 2069 1a68 40F20003 		movw	r3, #:lower16:axisPID
+ 2070 1a6c C0F20003 		movt	r3, #:upper16:axisPID
+ 2071 1a70 D3ED006A 		flds	s13, [r3, #0]
+ 2072 1a74 5FED227A 		flds	s15, .L64
+ 2073 1a78 66EEA77A 		fmuls	s15, s13, s15
+ 2074 1a7c 37EE277A 		fadds	s14, s14, s15
+ 2075 1a80 40F20003 		movw	r3, #:lower16:axisPID
+ 2076 1a84 C0F20003 		movt	r3, #:upper16:axisPID
+ 2077 1a88 D3ED017A 		flds	s15, [r3, #4]
+ 2078 1a8c 37EE677A 		fsubs	s14, s14, s15
+ 2079 1a90 40F20003 		movw	r3, #:lower16:eepromConfig
+ 2080 1a94 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 2081 1a98 D3ED206A 		flds	s13, [r3, #128]
+ 2082 1a9c 40F20003 		movw	r3, #:lower16:axisPID
+ 2083 1aa0 C0F20003 		movt	r3, #:upper16:axisPID
+ 2084 1aa4 D3ED027A 		flds	s15, [r3, #8]
+ 2085 1aa8 66EEA77A 		fmuls	s15, s13, s15
+ 2086 1aac 77EE277A 		fadds	s15, s14, s15
+ 2087 1ab0 40F20003 		movw	r3, #:lower16:motor
+ 2088 1ab4 C0F20003 		movt	r3, #:upper16:motor
+ 2089 1ab8 C3ED017A 		fsts	s15, [r3, #4]
+ 337:../src/mixer.c ****             motor[2] = PIDMIX( -0.866025f,  0.0f, -1.0f ); // Right       CW
+ 2090              		.loc 1 337 0
+ 2091 1abc 40F20003 		movw	r3, #:lower16:rxCommand
+ 2092 1ac0 C0F20003 		movt	r3, #:upper16:rxCommand
+ 2093 1ac4 93ED037A 		flds	s14, [r3, #12]
+ 2094 1ac8 40F20003 		movw	r3, #:lower16:axisPID
+ 2095 1acc C0F20003 		movt	r3, #:upper16:axisPID
+ 2096 1ad0 D3ED006A 		flds	s13, [r3, #0]
+ 2097 1ad4 5FED3A7A 		flds	s15, .L64
+ 2098 1ad8 66EEA77A 		fmuls	s15, s13, s15
+ 2099 1adc 37EE277A 		fadds	s14, s14, s15
+ 2100 1ae0 40F20003 		movw	r3, #:lower16:axisPID
+ 2101 1ae4 C0F20003 		movt	r3, #:upper16:axisPID
+ 2102 1ae8 D3ED016A 		flds	s13, [r3, #4]
+ 2103 1aec 5FED3E7A 		flds	s15, .L64+8
+ 2104 1af0 66EEA77A 		fmuls	s15, s13, s15
+ 2105 1af4 37EE277A 		fadds	s14, s14, s15
+ 2106 1af8 40F20003 		movw	r3, #:lower16:eepromConfig
+ 2107 1afc C0F20003 		movt	r3, #:upper16:eepromConfig
+ 2108 1b00 D3ED206A 		flds	s13, [r3, #128]
+ 2109 1b04 40F20003 		movw	r3, #:lower16:axisPID
+ 2110 1b08 C0F20003 		movt	r3, #:upper16:axisPID
+ 2111 1b0c D3ED027A 		flds	s15, [r3, #8]
+ 2112 1b10 66EEA77A 		fmuls	s15, s13, s15
+ 2113 1b14 77EE677A 		fsubs	s15, s14, s15
+ 2114 1b18 40F20003 		movw	r3, #:lower16:motor
+ 2115 1b1c C0F20003 		movt	r3, #:upper16:motor
+ 2116 1b20 C3ED027A 		fsts	s15, [r3, #8]
+ 338:../src/mixer.c ****             motor[3] = PIDMIX( -0.866025f,  1.0f,  1.0f ); // Rear Right  CCW
+ 2117              		.loc 1 338 0
+ 2118 1b24 40F20003 		movw	r3, #:lower16:rxCommand
+ 2119 1b28 C0F20003 		movt	r3, #:upper16:rxCommand
+ 2120 1b2c 93ED037A 		flds	s14, [r3, #12]
+ 2121 1b30 40F20003 		movw	r3, #:lower16:axisPID
+ 2122 1b34 C0F20003 		movt	r3, #:upper16:axisPID
+ 2123 1b38 D3ED006A 		flds	s13, [r3, #0]
+ 2124 1b3c 5FED547A 		flds	s15, .L64
+ 2125 1b40 66EEA77A 		fmuls	s15, s13, s15
+ 2126 1b44 37EE277A 		fadds	s14, s14, s15
+ 2127 1b48 40F20003 		movw	r3, #:lower16:axisPID
+ 2128 1b4c C0F20003 		movt	r3, #:upper16:axisPID
+ 2129 1b50 D3ED017A 		flds	s15, [r3, #4]
+ 2130 1b54 37EE277A 		fadds	s14, s14, s15
+ 2131 1b58 40F20003 		movw	r3, #:lower16:eepromConfig
+ 2132 1b5c C0F20003 		movt	r3, #:upper16:eepromConfig
+ 2133 1b60 D3ED206A 		flds	s13, [r3, #128]
+ 2134 1b64 40F20003 		movw	r3, #:lower16:axisPID
+ 2135 1b68 C0F20003 		movt	r3, #:upper16:axisPID
+ 2136 1b6c D3ED027A 		flds	s15, [r3, #8]
+ 2137 1b70 66EEA77A 		fmuls	s15, s13, s15
+ 2138 1b74 77EE277A 		fadds	s15, s14, s15
+ 2139 1b78 40F20003 		movw	r3, #:lower16:motor
+ 2140 1b7c C0F20003 		movt	r3, #:upper16:motor
+ 2141 1b80 C3ED037A 		fsts	s15, [r3, #12]
+ 339:../src/mixer.c ****             motor[4] = PIDMIX(  0.866025f,  1.0f, -1.0f ); // Rear Left   CW
+ 2142              		.loc 1 339 0
+ 2143 1b84 40F20003 		movw	r3, #:lower16:rxCommand
+ 2144 1b88 C0F20003 		movt	r3, #:upper16:rxCommand
+ 2145 1b8c 93ED037A 		flds	s14, [r3, #12]
+ 2146 1b90 40F20003 		movw	r3, #:lower16:axisPID
+ 2147 1b94 C0F20003 		movt	r3, #:upper16:axisPID
+ 2148 1b98 D3ED006A 		flds	s13, [r3, #0]
+ 2149 1b9c 5FED6B7A 		flds	s15, .L64+4
+ 2150 1ba0 66EEA77A 		fmuls	s15, s13, s15
+ 2151 1ba4 37EE277A 		fadds	s14, s14, s15
+ 2152 1ba8 40F20003 		movw	r3, #:lower16:axisPID
+ 2153 1bac C0F20003 		movt	r3, #:upper16:axisPID
+ 2154 1bb0 D3ED017A 		flds	s15, [r3, #4]
+ 2155 1bb4 37EE277A 		fadds	s14, s14, s15
+ 2156 1bb8 40F20003 		movw	r3, #:lower16:eepromConfig
+ 2157 1bbc C0F20003 		movt	r3, #:upper16:eepromConfig
+ 2158 1bc0 D3ED206A 		flds	s13, [r3, #128]
+ 2159 1bc4 40F20003 		movw	r3, #:lower16:axisPID
+ 2160 1bc8 C0F20003 		movt	r3, #:upper16:axisPID
+ 2161 1bcc D3ED027A 		flds	s15, [r3, #8]
+ 2162 1bd0 66EEA77A 		fmuls	s15, s13, s15
+ 2163 1bd4 77EE677A 		fsubs	s15, s14, s15
+ 2164 1bd8 40F20003 		movw	r3, #:lower16:motor
+ 2165 1bdc C0F20003 		movt	r3, #:upper16:motor
+ 2166 1be0 C3ED047A 		fsts	s15, [r3, #16]
+ 340:../src/mixer.c ****             motor[5] = PIDMIX(  0.866025f,  0.0f,  1.0f ); // Left        CCW
+ 2167              		.loc 1 340 0
+ 2168 1be4 40F20003 		movw	r3, #:lower16:rxCommand
+ 2169 1be8 C0F20003 		movt	r3, #:upper16:rxCommand
+ 2170 1bec 93ED037A 		flds	s14, [r3, #12]
+ 2171 1bf0 40F20003 		movw	r3, #:lower16:axisPID
+ 2172 1bf4 C0F20003 		movt	r3, #:upper16:axisPID
+ 2173 1bf8 D3ED006A 		flds	s13, [r3, #0]
+ 2174 1bfc 5FED837A 		flds	s15, .L64+4
+ 2175 1c00 66EEA77A 		fmuls	s15, s13, s15
+ 2176 1c04 37EE277A 		fadds	s14, s14, s15
+ 2177 1c08 40F20003 		movw	r3, #:lower16:axisPID
+ 2178 1c0c C0F20003 		movt	r3, #:upper16:axisPID
+ 2179 1c10 D3ED016A 		flds	s13, [r3, #4]
+ 2180 1c14 5FED887A 		flds	s15, .L64+8
+ 2181 1c18 66EEA77A 		fmuls	s15, s13, s15
+ 2182 1c1c 37EE277A 		fadds	s14, s14, s15
+ 2183 1c20 40F20003 		movw	r3, #:lower16:eepromConfig
+ 2184 1c24 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 2185 1c28 D3ED206A 		flds	s13, [r3, #128]
+ 2186 1c2c 40F20003 		movw	r3, #:lower16:axisPID
+ 2187 1c30 C0F20003 		movt	r3, #:upper16:axisPID
+ 2188 1c34 D3ED027A 		flds	s15, [r3, #8]
+ 2189 1c38 66EEA77A 		fmuls	s15, s13, s15
+ 2190 1c3c 77EE277A 		fadds	s15, s14, s15
+ 2191 1c40 40F20003 		movw	r3, #:lower16:motor
+ 2192 1c44 C0F20003 		movt	r3, #:upper16:motor
+ 2193 1c48 C3ED057A 		fsts	s15, [r3, #20]
+ 341:../src/mixer.c ****             break;
+ 2194              		.loc 1 341 0
+ 2195 1c4c 01F08CB8 		b	.L25
+ 2196              	.L41:
+ 342:../src/mixer.c **** 
+ 343:../src/mixer.c ****         ///////////////////////////////
+ 344:../src/mixer.c **** 
+ 345:../src/mixer.c ****         case MIXERTYPE_Y6:
+ 346:../src/mixer.c ****             motor[0] = PIDMIX(  1.0f, -0.666667, -1.0f );  // Top Left     CW
+ 2197              		.loc 1 346 0
+ 2198 1c50 40F20003 		movw	r3, #:lower16:rxCommand
+ 2199 1c54 C0F20003 		movt	r3, #:upper16:rxCommand
+ 2200 1c58 93ED037A 		flds	s14, [r3, #12]
+ 2201 1c5c 40F20003 		movw	r3, #:lower16:axisPID
+ 2202 1c60 C0F20003 		movt	r3, #:upper16:axisPID
+ 2203 1c64 D3ED007A 		flds	s15, [r3, #0]
+ 2204 1c68 77EE277A 		fadds	s15, s14, s15
+ 2205 1c6c 17EE900A 		fmrs	r0, s15
+ 2206 1c70 FFF7FEFF 		bl	__aeabi_f2d
+ 2207 1c74 0446     		mov	r4, r0
+ 2208 1c76 0D46     		mov	r5, r1
+ 2209 1c78 40F20003 		movw	r3, #:lower16:axisPID
+ 2210 1c7c C0F20003 		movt	r3, #:upper16:axisPID
+ 2211 1c80 5B68     		ldr	r3, [r3, #4]	@ float
+ 2212 1c82 1846     		mov	r0, r3	@ float
+ 2213 1c84 FFF7FEFF 		bl	__aeabi_f2d
+ 2214 1c88 0246     		mov	r2, r0
+ 2215 1c8a 0B46     		mov	r3, r1
+ 2216 1c8c 1046     		mov	r0, r2
+ 2217 1c8e 1946     		mov	r1, r3
+ 2218 1c90 F5A3     		adr	r3, .L66+8
+ 2219 1c92 D3E90023 		ldrd	r2, [r3]
+ 2220 1c96 FFF7FEFF 		bl	__aeabi_dmul
+ 2221 1c9a 0246     		mov	r2, r0
+ 2222 1c9c 0B46     		mov	r3, r1
+ 2223 1c9e 2046     		mov	r0, r4
+ 2224 1ca0 2946     		mov	r1, r5
+ 2225 1ca2 FFF7FEFF 		bl	__aeabi_dadd
+ 2226 1ca6 0246     		mov	r2, r0
+ 2227 1ca8 0B46     		mov	r3, r1
+ 2228 1caa 1446     		mov	r4, r2
+ 2229 1cac 1D46     		mov	r5, r3
+ 2230 1cae 40F20003 		movw	r3, #:lower16:eepromConfig
+ 2231 1cb2 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 2232 1cb6 93ED207A 		flds	s14, [r3, #128]
+ 2233 1cba 40F20003 		movw	r3, #:lower16:axisPID
+ 2234 1cbe C0F20003 		movt	r3, #:upper16:axisPID
+ 2235 1cc2 D3ED027A 		flds	s15, [r3, #8]
+ 2236 1cc6 67EE277A 		fmuls	s15, s14, s15
+ 2237 1cca F1EE677A 		fnegs	s15, s15
+ 2238 1cce 17EE903A 		fmrs	r3, s15
+ 2239 1cd2 1846     		mov	r0, r3	@ float
+ 2240 1cd4 FFF7FEFF 		bl	__aeabi_f2d
+ 2241 1cd8 0246     		mov	r2, r0
+ 2242 1cda 0B46     		mov	r3, r1
+ 2243 1cdc 2046     		mov	r0, r4
+ 2244 1cde 2946     		mov	r1, r5
+ 2245 1ce0 FFF7FEFF 		bl	__aeabi_dadd
+ 2246 1ce4 0246     		mov	r2, r0
+ 2247 1ce6 0B46     		mov	r3, r1
+ 2248 1ce8 1046     		mov	r0, r2
+ 2249 1cea 1946     		mov	r1, r3
+ 2250 1cec FFF7FEFF 		bl	__aeabi_d2f
+ 2251 1cf0 0246     		mov	r2, r0	@ float
+ 2252 1cf2 40F20003 		movw	r3, #:lower16:motor
+ 2253 1cf6 C0F20003 		movt	r3, #:upper16:motor
+ 2254 1cfa 1A60     		str	r2, [r3, #0]	@ float
+ 347:../src/mixer.c ****             motor[1] = PIDMIX( -1.0f, -0.666667, -1.0f );  // Top Right    CW
+ 2255              		.loc 1 347 0
+ 2256 1cfc 40F20003 		movw	r3, #:lower16:rxCommand
+ 2257 1d00 C0F20003 		movt	r3, #:upper16:rxCommand
+ 2258 1d04 93ED037A 		flds	s14, [r3, #12]
+ 2259 1d08 40F20003 		movw	r3, #:lower16:axisPID
+ 2260 1d0c C0F20003 		movt	r3, #:upper16:axisPID
+ 2261 1d10 D3ED007A 		flds	s15, [r3, #0]
+ 2262 1d14 77EE677A 		fsubs	s15, s14, s15
+ 2263 1d18 17EE900A 		fmrs	r0, s15
+ 2264 1d1c FFF7FEFF 		bl	__aeabi_f2d
+ 2265 1d20 0446     		mov	r4, r0
+ 2266 1d22 0D46     		mov	r5, r1
+ 2267 1d24 40F20003 		movw	r3, #:lower16:axisPID
+ 2268 1d28 C0F20003 		movt	r3, #:upper16:axisPID
+ 2269 1d2c 5B68     		ldr	r3, [r3, #4]	@ float
+ 2270 1d2e 1846     		mov	r0, r3	@ float
+ 2271 1d30 FFF7FEFF 		bl	__aeabi_f2d
+ 2272 1d34 0246     		mov	r2, r0
+ 2273 1d36 0B46     		mov	r3, r1
+ 2274 1d38 1046     		mov	r0, r2
+ 2275 1d3a 1946     		mov	r1, r3
+ 2276 1d3c CAA3     		adr	r3, .L66+8
+ 2277 1d3e D3E90023 		ldrd	r2, [r3]
+ 2278 1d42 FFF7FEFF 		bl	__aeabi_dmul
+ 2279 1d46 0246     		mov	r2, r0
+ 2280 1d48 0B46     		mov	r3, r1
+ 2281 1d4a 2046     		mov	r0, r4
+ 2282 1d4c 2946     		mov	r1, r5
+ 2283 1d4e FFF7FEFF 		bl	__aeabi_dadd
+ 2284 1d52 0246     		mov	r2, r0
+ 2285 1d54 0B46     		mov	r3, r1
+ 2286 1d56 1446     		mov	r4, r2
+ 2287 1d58 1D46     		mov	r5, r3
+ 2288 1d5a 40F20003 		movw	r3, #:lower16:eepromConfig
+ 2289 1d5e C0F20003 		movt	r3, #:upper16:eepromConfig
+ 2290 1d62 93ED207A 		flds	s14, [r3, #128]
+ 2291 1d66 40F20003 		movw	r3, #:lower16:axisPID
+ 2292 1d6a C0F20003 		movt	r3, #:upper16:axisPID
+ 2293 1d6e D3ED027A 		flds	s15, [r3, #8]
+ 2294 1d72 67EE277A 		fmuls	s15, s14, s15
+ 2295 1d76 F1EE677A 		fnegs	s15, s15
+ 2296 1d7a 17EE903A 		fmrs	r3, s15
+ 2297 1d7e 1846     		mov	r0, r3	@ float
+ 2298 1d80 FFF7FEFF 		bl	__aeabi_f2d
+ 2299 1d84 0246     		mov	r2, r0
+ 2300 1d86 0B46     		mov	r3, r1
+ 2301 1d88 2046     		mov	r0, r4
+ 2302 1d8a 2946     		mov	r1, r5
+ 2303 1d8c FFF7FEFF 		bl	__aeabi_dadd
+ 2304 1d90 0246     		mov	r2, r0
+ 2305 1d92 0B46     		mov	r3, r1
+ 2306 1d94 1046     		mov	r0, r2
+ 2307 1d96 1946     		mov	r1, r3
+ 2308 1d98 FFF7FEFF 		bl	__aeabi_d2f
+ 2309 1d9c 0246     		mov	r2, r0	@ float
+ 2310 1d9e 40F20003 		movw	r3, #:lower16:motor
+ 2311 1da2 C0F20003 		movt	r3, #:upper16:motor
+ 2312 1da6 5A60     		str	r2, [r3, #4]	@ float
+ 348:../src/mixer.c ****             motor[2] = PIDMIX(  0.0f,  1.333333,  1.0f );  // Top Rear     CCW
+ 2313              		.loc 1 348 0
+ 2314 1da8 40F20003 		movw	r3, #:lower16:rxCommand
+ 2315 1dac C0F20003 		movt	r3, #:upper16:rxCommand
+ 2316 1db0 93ED037A 		flds	s14, [r3, #12]
+ 2317 1db4 40F20003 		movw	r3, #:lower16:axisPID
+ 2318 1db8 C0F20003 		movt	r3, #:upper16:axisPID
+ 2319 1dbc D3ED006A 		flds	s13, [r3, #0]
+ 2320 1dc0 DFEDAB7A 		flds	s15, .L66+16
+ 2321 1dc4 66EEA77A 		fmuls	s15, s13, s15
+ 2322 1dc8 77EE277A 		fadds	s15, s14, s15
+ 2323 1dcc 17EE900A 		fmrs	r0, s15
+ 2324 1dd0 FFF7FEFF 		bl	__aeabi_f2d
+ 2325 1dd4 0446     		mov	r4, r0
+ 2326 1dd6 0D46     		mov	r5, r1
+ 2327 1dd8 40F20003 		movw	r3, #:lower16:axisPID
+ 2328 1ddc C0F20003 		movt	r3, #:upper16:axisPID
+ 2329 1de0 5B68     		ldr	r3, [r3, #4]	@ float
+ 2330 1de2 1846     		mov	r0, r3	@ float
+ 2331 1de4 FFF7FEFF 		bl	__aeabi_f2d
+ 2332 1de8 0246     		mov	r2, r0
+ 2333 1dea 0B46     		mov	r3, r1
+ 2334 1dec 1046     		mov	r0, r2
+ 2335 1dee 1946     		mov	r1, r3
+ 2336 1df0 9BA3     		adr	r3, .L66
+ 2337 1df2 D3E90023 		ldrd	r2, [r3]
+ 2338 1df6 FFF7FEFF 		bl	__aeabi_dmul
+ 2339 1dfa 0246     		mov	r2, r0
+ 2340 1dfc 0B46     		mov	r3, r1
+ 2341 1dfe 2046     		mov	r0, r4
+ 2342 1e00 2946     		mov	r1, r5
+ 2343 1e02 FFF7FEFF 		bl	__aeabi_dadd
+ 2344 1e06 0246     		mov	r2, r0
+ 2345 1e08 0B46     		mov	r3, r1
+ 2346 1e0a 1446     		mov	r4, r2
+ 2347 1e0c 1D46     		mov	r5, r3
+ 2348 1e0e 40F20003 		movw	r3, #:lower16:eepromConfig
+ 2349 1e12 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 2350 1e16 93ED207A 		flds	s14, [r3, #128]
+ 2351 1e1a 40F20003 		movw	r3, #:lower16:axisPID
+ 2352 1e1e C0F20003 		movt	r3, #:upper16:axisPID
+ 2353 1e22 D3ED027A 		flds	s15, [r3, #8]
+ 2354 1e26 67EE277A 		fmuls	s15, s14, s15
+ 2355 1e2a 17EE900A 		fmrs	r0, s15
+ 2356 1e2e FFF7FEFF 		bl	__aeabi_f2d
+ 2357 1e32 0246     		mov	r2, r0
+ 2358 1e34 0B46     		mov	r3, r1
+ 2359 1e36 2046     		mov	r0, r4
+ 2360 1e38 2946     		mov	r1, r5
+ 2361 1e3a FFF7FEFF 		bl	__aeabi_dadd
+ 2362 1e3e 0246     		mov	r2, r0
+ 2363 1e40 0B46     		mov	r3, r1
+ 2364 1e42 1046     		mov	r0, r2
+ 2365 1e44 1946     		mov	r1, r3
+ 2366 1e46 FFF7FEFF 		bl	__aeabi_d2f
+ 2367 1e4a 0246     		mov	r2, r0	@ float
+ 2368 1e4c 40F20003 		movw	r3, #:lower16:motor
+ 2369 1e50 C0F20003 		movt	r3, #:upper16:motor
+ 2370 1e54 9A60     		str	r2, [r3, #8]	@ float
+ 349:../src/mixer.c ****             motor[3] = PIDMIX(  1.0f, -0.666667,  1.0f );  // Bottom Left  CCW
+ 2371              		.loc 1 349 0
+ 2372 1e56 40F20003 		movw	r3, #:lower16:rxCommand
+ 2373 1e5a C0F20003 		movt	r3, #:upper16:rxCommand
+ 2374 1e5e 93ED037A 		flds	s14, [r3, #12]
+ 2375 1e62 40F20003 		movw	r3, #:lower16:axisPID
+ 2376 1e66 C0F20003 		movt	r3, #:upper16:axisPID
+ 2377 1e6a D3ED007A 		flds	s15, [r3, #0]
+ 2378 1e6e 77EE277A 		fadds	s15, s14, s15
+ 2379 1e72 17EE900A 		fmrs	r0, s15
+ 2380 1e76 FFF7FEFF 		bl	__aeabi_f2d
+ 2381 1e7a 0446     		mov	r4, r0
+ 2382 1e7c 0D46     		mov	r5, r1
+ 2383 1e7e 40F20003 		movw	r3, #:lower16:axisPID
+ 2384 1e82 C0F20003 		movt	r3, #:upper16:axisPID
+ 2385 1e86 5B68     		ldr	r3, [r3, #4]	@ float
+ 2386 1e88 1846     		mov	r0, r3	@ float
+ 2387 1e8a FFF7FEFF 		bl	__aeabi_f2d
+ 2388 1e8e 0246     		mov	r2, r0
+ 2389 1e90 0B46     		mov	r3, r1
+ 2390 1e92 1046     		mov	r0, r2
+ 2391 1e94 1946     		mov	r1, r3
+ 2392 1e96 74A3     		adr	r3, .L66+8
+ 2393 1e98 D3E90023 		ldrd	r2, [r3]
+ 2394 1e9c FFF7FEFF 		bl	__aeabi_dmul
+ 2395 1ea0 0246     		mov	r2, r0
+ 2396 1ea2 0B46     		mov	r3, r1
+ 2397 1ea4 2046     		mov	r0, r4
+ 2398 1ea6 2946     		mov	r1, r5
+ 2399 1ea8 FFF7FEFF 		bl	__aeabi_dadd
+ 2400 1eac 0246     		mov	r2, r0
+ 2401 1eae 0B46     		mov	r3, r1
+ 2402 1eb0 1446     		mov	r4, r2
+ 2403 1eb2 1D46     		mov	r5, r3
+ 2404 1eb4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 2405 1eb8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 2406 1ebc 93ED207A 		flds	s14, [r3, #128]
+ 2407 1ec0 40F20003 		movw	r3, #:lower16:axisPID
+ 2408 1ec4 C0F20003 		movt	r3, #:upper16:axisPID
+ 2409 1ec8 D3ED027A 		flds	s15, [r3, #8]
+ 2410 1ecc 67EE277A 		fmuls	s15, s14, s15
+ 2411 1ed0 17EE900A 		fmrs	r0, s15
+ 2412 1ed4 FFF7FEFF 		bl	__aeabi_f2d
+ 2413 1ed8 0246     		mov	r2, r0
+ 2414 1eda 0B46     		mov	r3, r1
+ 2415 1edc 2046     		mov	r0, r4
+ 2416 1ede 2946     		mov	r1, r5
+ 2417 1ee0 FFF7FEFF 		bl	__aeabi_dadd
+ 2418 1ee4 0246     		mov	r2, r0
+ 2419 1ee6 0B46     		mov	r3, r1
+ 2420 1ee8 1046     		mov	r0, r2
+ 2421 1eea 1946     		mov	r1, r3
+ 2422 1eec FFF7FEFF 		bl	__aeabi_d2f
+ 2423 1ef0 0246     		mov	r2, r0	@ float
+ 2424 1ef2 40F20003 		movw	r3, #:lower16:motor
+ 2425 1ef6 C0F20003 		movt	r3, #:upper16:motor
+ 2426 1efa DA60     		str	r2, [r3, #12]	@ float
+ 350:../src/mixer.c ****             motor[4] = PIDMIX( -1.0f, -0.666667,  1.0f );  // Bottom Right CCW
+ 2427              		.loc 1 350 0
+ 2428 1efc 40F20003 		movw	r3, #:lower16:rxCommand
+ 2429 1f00 C0F20003 		movt	r3, #:upper16:rxCommand
+ 2430 1f04 93ED037A 		flds	s14, [r3, #12]
+ 2431 1f08 40F20003 		movw	r3, #:lower16:axisPID
+ 2432 1f0c C0F20003 		movt	r3, #:upper16:axisPID
+ 2433 1f10 D3ED007A 		flds	s15, [r3, #0]
+ 2434 1f14 77EE677A 		fsubs	s15, s14, s15
+ 2435 1f18 17EE900A 		fmrs	r0, s15
+ 2436 1f1c FFF7FEFF 		bl	__aeabi_f2d
+ 2437 1f20 0446     		mov	r4, r0
+ 2438 1f22 0D46     		mov	r5, r1
+ 2439 1f24 40F20003 		movw	r3, #:lower16:axisPID
+ 2440 1f28 C0F20003 		movt	r3, #:upper16:axisPID
+ 2441 1f2c 5B68     		ldr	r3, [r3, #4]	@ float
+ 2442 1f2e 1846     		mov	r0, r3	@ float
+ 2443 1f30 FFF7FEFF 		bl	__aeabi_f2d
+ 2444 1f34 0246     		mov	r2, r0
+ 2445 1f36 0B46     		mov	r3, r1
+ 2446 1f38 1046     		mov	r0, r2
+ 2447 1f3a 1946     		mov	r1, r3
+ 2448 1f3c 4AA3     		adr	r3, .L66+8
+ 2449 1f3e D3E90023 		ldrd	r2, [r3]
+ 2450 1f42 FFF7FEFF 		bl	__aeabi_dmul
+ 2451 1f46 0246     		mov	r2, r0
+ 2452 1f48 0B46     		mov	r3, r1
+ 2453 1f4a 2046     		mov	r0, r4
+ 2454 1f4c 2946     		mov	r1, r5
+ 2455 1f4e FFF7FEFF 		bl	__aeabi_dadd
+ 2456 1f52 0246     		mov	r2, r0
+ 2457 1f54 0B46     		mov	r3, r1
+ 2458 1f56 1446     		mov	r4, r2
+ 2459 1f58 1D46     		mov	r5, r3
+ 2460 1f5a 40F20003 		movw	r3, #:lower16:eepromConfig
+ 2461 1f5e C0F20003 		movt	r3, #:upper16:eepromConfig
+ 2462 1f62 93ED207A 		flds	s14, [r3, #128]
+ 2463 1f66 40F20003 		movw	r3, #:lower16:axisPID
+ 2464 1f6a C0F20003 		movt	r3, #:upper16:axisPID
+ 2465 1f6e D3ED027A 		flds	s15, [r3, #8]
+ 2466 1f72 67EE277A 		fmuls	s15, s14, s15
+ 2467 1f76 17EE900A 		fmrs	r0, s15
+ 2468 1f7a FFF7FEFF 		bl	__aeabi_f2d
+ 2469 1f7e 0246     		mov	r2, r0
+ 2470 1f80 0B46     		mov	r3, r1
+ 2471 1f82 2046     		mov	r0, r4
+ 2472 1f84 2946     		mov	r1, r5
+ 2473 1f86 FFF7FEFF 		bl	__aeabi_dadd
+ 2474 1f8a 0246     		mov	r2, r0
+ 2475 1f8c 0B46     		mov	r3, r1
+ 2476 1f8e 1046     		mov	r0, r2
+ 2477 1f90 1946     		mov	r1, r3
+ 2478 1f92 FFF7FEFF 		bl	__aeabi_d2f
+ 2479 1f96 0246     		mov	r2, r0	@ float
+ 2480 1f98 40F20003 		movw	r3, #:lower16:motor
+ 2481 1f9c C0F20003 		movt	r3, #:upper16:motor
+ 2482 1fa0 1A61     		str	r2, [r3, #16]	@ float
+ 351:../src/mixer.c ****             motor[5] = PIDMIX(  0.0f,  1.333333, -1.0f );  // Bottom Rear  CW
+ 2483              		.loc 1 351 0
+ 2484 1fa2 40F20003 		movw	r3, #:lower16:rxCommand
+ 2485 1fa6 C0F20003 		movt	r3, #:upper16:rxCommand
+ 2486 1faa 93ED037A 		flds	s14, [r3, #12]
+ 2487 1fae 40F20003 		movw	r3, #:lower16:axisPID
+ 2488 1fb2 C0F20003 		movt	r3, #:upper16:axisPID
+ 2489 1fb6 D3ED006A 		flds	s13, [r3, #0]
+ 2490 1fba DFED2D7A 		flds	s15, .L66+16
+ 2491 1fbe 66EEA77A 		fmuls	s15, s13, s15
+ 2492 1fc2 77EE277A 		fadds	s15, s14, s15
+ 2493 1fc6 17EE900A 		fmrs	r0, s15
+ 2494 1fca FFF7FEFF 		bl	__aeabi_f2d
+ 2495 1fce 0446     		mov	r4, r0
+ 2496 1fd0 0D46     		mov	r5, r1
+ 2497 1fd2 40F20003 		movw	r3, #:lower16:axisPID
+ 2498 1fd6 C0F20003 		movt	r3, #:upper16:axisPID
+ 2499 1fda 5B68     		ldr	r3, [r3, #4]	@ float
+ 2500 1fdc 1846     		mov	r0, r3	@ float
+ 2501 1fde FFF7FEFF 		bl	__aeabi_f2d
+ 2502 1fe2 0246     		mov	r2, r0
+ 2503 1fe4 0B46     		mov	r3, r1
+ 2504 1fe6 1046     		mov	r0, r2
+ 2505 1fe8 1946     		mov	r1, r3
+ 2506 1fea 1DA3     		adr	r3, .L66
+ 2507 1fec D3E90023 		ldrd	r2, [r3]
+ 2508 1ff0 FFF7FEFF 		bl	__aeabi_dmul
+ 2509 1ff4 0246     		mov	r2, r0
+ 2510 1ff6 0B46     		mov	r3, r1
+ 2511 1ff8 2046     		mov	r0, r4
+ 2512 1ffa 2946     		mov	r1, r5
+ 2513 1ffc FFF7FEFF 		bl	__aeabi_dadd
+ 2514 2000 0246     		mov	r2, r0
+ 2515 2002 0B46     		mov	r3, r1
+ 2516 2004 1446     		mov	r4, r2
+ 2517 2006 1D46     		mov	r5, r3
+ 2518 2008 40F20003 		movw	r3, #:lower16:eepromConfig
+ 2519 200c C0F20003 		movt	r3, #:upper16:eepromConfig
+ 2520 2010 93ED207A 		flds	s14, [r3, #128]
+ 2521 2014 40F20003 		movw	r3, #:lower16:axisPID
+ 2522 2018 C0F20003 		movt	r3, #:upper16:axisPID
+ 2523 201c D3ED027A 		flds	s15, [r3, #8]
+ 2524 2020 67EE277A 		fmuls	s15, s14, s15
+ 2525 2024 F1EE677A 		fnegs	s15, s15
+ 2526 2028 17EE903A 		fmrs	r3, s15
+ 2527 202c 1846     		mov	r0, r3	@ float
+ 2528 202e FFF7FEFF 		bl	__aeabi_f2d
+ 2529 2032 0246     		mov	r2, r0
+ 2530 2034 0B46     		mov	r3, r1
+ 2531 2036 2046     		mov	r0, r4
+ 2532 2038 2946     		mov	r1, r5
+ 2533 203a FFF7FEFF 		bl	__aeabi_dadd
+ 2534 203e 0246     		mov	r2, r0
+ 2535 2040 0B46     		mov	r3, r1
+ 2536 2042 1046     		mov	r0, r2
+ 2537 2044 1946     		mov	r1, r3
+ 2538 2046 FFF7FEFF 		bl	__aeabi_d2f
+ 2539 204a 0246     		mov	r2, r0	@ float
+ 2540 204c 40F20003 		movw	r3, #:lower16:motor
+ 2541 2050 C0F20003 		movt	r3, #:upper16:motor
+ 2542 2054 5A61     		str	r2, [r3, #20]	@ float
+ 352:../src/mixer.c ****             break;
+ 2543              		.loc 1 352 0
+ 2544 2056 00F087BE 		b	.L25
+ 2545              	.L67:
+ 2546 205a 00BFAFF3 		.align	3
+ 2546      0080
+ 2547              	.L66:
+ 2548 2060 52D7DAFB 		.word	-69544110
+ 2549 2064 5455F53F 		.word	1073042772
+ 2550 2068 5D514A08 		.word	139088221
+ 2551 206c 5655E5BF 		.word	-1075489450
+ 2552 2070 00000000 		.word	0
+ 2553 2074 3333333F 		.word	1060320051
+ 2554 2078 333333BF 		.word	-1087163597
+ 2555              	.L42:
+ 353:../src/mixer.c **** 
+ 354:../src/mixer.c ****         ///////////////////////////////
+ 355:../src/mixer.c **** 
+ 356:../src/mixer.c ****         case MIXERTYPE_OCTOF8P:
+ 357:../src/mixer.c ****             motor[0] = PIDMIX(  0.0f, -1.0f, -1.0f );      // Front       CW
+ 2556              		.loc 1 357 0
+ 2557 207c 40F20003 		movw	r3, #:lower16:rxCommand
+ 2558 2080 C0F20003 		movt	r3, #:upper16:rxCommand
+ 2559 2084 93ED037A 		flds	s14, [r3, #12]
+ 2560 2088 40F20003 		movw	r3, #:lower16:axisPID
+ 2561 208c C0F20003 		movt	r3, #:upper16:axisPID
+ 2562 2090 D3ED006A 		flds	s13, [r3, #0]
+ 2563 2094 5FED0A7A 		flds	s15, .L66+16
+ 2564 2098 66EEA77A 		fmuls	s15, s13, s15
+ 2565 209c 37EE277A 		fadds	s14, s14, s15
+ 2566 20a0 40F20003 		movw	r3, #:lower16:axisPID
+ 2567 20a4 C0F20003 		movt	r3, #:upper16:axisPID
+ 2568 20a8 D3ED017A 		flds	s15, [r3, #4]
+ 2569 20ac 37EE677A 		fsubs	s14, s14, s15
+ 2570 20b0 40F20003 		movw	r3, #:lower16:eepromConfig
+ 2571 20b4 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 2572 20b8 D3ED206A 		flds	s13, [r3, #128]
+ 2573 20bc 40F20003 		movw	r3, #:lower16:axisPID
+ 2574 20c0 C0F20003 		movt	r3, #:upper16:axisPID
+ 2575 20c4 D3ED027A 		flds	s15, [r3, #8]
+ 2576 20c8 66EEA77A 		fmuls	s15, s13, s15
+ 2577 20cc 77EE677A 		fsubs	s15, s14, s15
+ 2578 20d0 40F20003 		movw	r3, #:lower16:motor
+ 2579 20d4 C0F20003 		movt	r3, #:upper16:motor
+ 2580 20d8 C3ED007A 		fsts	s15, [r3, #0]
+ 358:../src/mixer.c ****             motor[1] = PIDMIX( -0.7f, -0.7f,  1.0f );      // Front Right CCW
+ 2581              		.loc 1 358 0
+ 2582 20dc 40F20003 		movw	r3, #:lower16:rxCommand
+ 2583 20e0 C0F20003 		movt	r3, #:upper16:rxCommand
+ 2584 20e4 93ED037A 		flds	s14, [r3, #12]
+ 2585 20e8 40F20003 		movw	r3, #:lower16:axisPID
+ 2586 20ec C0F20003 		movt	r3, #:upper16:axisPID
+ 2587 20f0 D3ED006A 		flds	s13, [r3, #0]
+ 2588 20f4 5FED207A 		flds	s15, .L66+24
+ 2589 20f8 66EEA77A 		fmuls	s15, s13, s15
+ 2590 20fc 37EE277A 		fadds	s14, s14, s15
+ 2591 2100 40F20003 		movw	r3, #:lower16:axisPID
+ 2592 2104 C0F20003 		movt	r3, #:upper16:axisPID
+ 2593 2108 D3ED016A 		flds	s13, [r3, #4]
+ 2594 210c 5FED267A 		flds	s15, .L66+24
+ 2595 2110 66EEA77A 		fmuls	s15, s13, s15
+ 2596 2114 37EE277A 		fadds	s14, s14, s15
+ 2597 2118 40F20003 		movw	r3, #:lower16:eepromConfig
+ 2598 211c C0F20003 		movt	r3, #:upper16:eepromConfig
+ 2599 2120 D3ED206A 		flds	s13, [r3, #128]
+ 2600 2124 40F20003 		movw	r3, #:lower16:axisPID
+ 2601 2128 C0F20003 		movt	r3, #:upper16:axisPID
+ 2602 212c D3ED027A 		flds	s15, [r3, #8]
+ 2603 2130 66EEA77A 		fmuls	s15, s13, s15
+ 2604 2134 77EE277A 		fadds	s15, s14, s15
+ 2605 2138 40F20003 		movw	r3, #:lower16:motor
+ 2606 213c C0F20003 		movt	r3, #:upper16:motor
+ 2607 2140 C3ED017A 		fsts	s15, [r3, #4]
+ 359:../src/mixer.c ****             motor[2] = PIDMIX( -1.0f,  0.0f, -1.0f );      // Right       CW
+ 2608              		.loc 1 359 0
+ 2609 2144 40F20003 		movw	r3, #:lower16:rxCommand
+ 2610 2148 C0F20003 		movt	r3, #:upper16:rxCommand
+ 2611 214c 93ED037A 		flds	s14, [r3, #12]
+ 2612 2150 40F20003 		movw	r3, #:lower16:axisPID
+ 2613 2154 C0F20003 		movt	r3, #:upper16:axisPID
+ 2614 2158 D3ED007A 		flds	s15, [r3, #0]
+ 2615 215c 37EE677A 		fsubs	s14, s14, s15
+ 2616 2160 40F20003 		movw	r3, #:lower16:axisPID
+ 2617 2164 C0F20003 		movt	r3, #:upper16:axisPID
+ 2618 2168 D3ED016A 		flds	s13, [r3, #4]
+ 2619 216c 5FED407A 		flds	s15, .L66+16
+ 2620 2170 66EEA77A 		fmuls	s15, s13, s15
+ 2621 2174 37EE277A 		fadds	s14, s14, s15
+ 2622 2178 40F20003 		movw	r3, #:lower16:eepromConfig
+ 2623 217c C0F20003 		movt	r3, #:upper16:eepromConfig
+ 2624 2180 D3ED206A 		flds	s13, [r3, #128]
+ 2625 2184 40F20003 		movw	r3, #:lower16:axisPID
+ 2626 2188 C0F20003 		movt	r3, #:upper16:axisPID
+ 2627 218c D3ED027A 		flds	s15, [r3, #8]
+ 2628 2190 66EEA77A 		fmuls	s15, s13, s15
+ 2629 2194 77EE677A 		fsubs	s15, s14, s15
+ 2630 2198 40F20003 		movw	r3, #:lower16:motor
+ 2631 219c C0F20003 		movt	r3, #:upper16:motor
+ 2632 21a0 C3ED027A 		fsts	s15, [r3, #8]
+ 360:../src/mixer.c ****             motor[3] = PIDMIX( -0.7f,  0.7f,  1.0f );      // Rear Right  CCW
+ 2633              		.loc 1 360 0
+ 2634 21a4 40F20003 		movw	r3, #:lower16:rxCommand
+ 2635 21a8 C0F20003 		movt	r3, #:upper16:rxCommand
+ 2636 21ac 93ED037A 		flds	s14, [r3, #12]
+ 2637 21b0 40F20003 		movw	r3, #:lower16:axisPID
+ 2638 21b4 C0F20003 		movt	r3, #:upper16:axisPID
+ 2639 21b8 D3ED006A 		flds	s13, [r3, #0]
+ 2640 21bc 5FED527A 		flds	s15, .L66+24
+ 2641 21c0 66EEA77A 		fmuls	s15, s13, s15
+ 2642 21c4 37EE277A 		fadds	s14, s14, s15
+ 2643 21c8 40F20003 		movw	r3, #:lower16:axisPID
+ 2644 21cc C0F20003 		movt	r3, #:upper16:axisPID
+ 2645 21d0 D3ED016A 		flds	s13, [r3, #4]
+ 2646 21d4 5FED597A 		flds	s15, .L66+20
+ 2647 21d8 66EEA77A 		fmuls	s15, s13, s15
+ 2648 21dc 37EE277A 		fadds	s14, s14, s15
+ 2649 21e0 40F20003 		movw	r3, #:lower16:eepromConfig
+ 2650 21e4 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 2651 21e8 D3ED206A 		flds	s13, [r3, #128]
+ 2652 21ec 40F20003 		movw	r3, #:lower16:axisPID
+ 2653 21f0 C0F20003 		movt	r3, #:upper16:axisPID
+ 2654 21f4 D3ED027A 		flds	s15, [r3, #8]
+ 2655 21f8 66EEA77A 		fmuls	s15, s13, s15
+ 2656 21fc 77EE277A 		fadds	s15, s14, s15
+ 2657 2200 40F20003 		movw	r3, #:lower16:motor
+ 2658 2204 C0F20003 		movt	r3, #:upper16:motor
+ 2659 2208 C3ED037A 		fsts	s15, [r3, #12]
+ 361:../src/mixer.c ****             motor[4] = PIDMIX(  0.0f,  1.0f, -1.0f );      // Rear        CW
+ 2660              		.loc 1 361 0
+ 2661 220c 40F20003 		movw	r3, #:lower16:rxCommand
+ 2662 2210 C0F20003 		movt	r3, #:upper16:rxCommand
+ 2663 2214 93ED037A 		flds	s14, [r3, #12]
+ 2664 2218 40F20003 		movw	r3, #:lower16:axisPID
+ 2665 221c C0F20003 		movt	r3, #:upper16:axisPID
+ 2666 2220 D3ED006A 		flds	s13, [r3, #0]
+ 2667 2224 5FED6E7A 		flds	s15, .L66+16
+ 2668 2228 66EEA77A 		fmuls	s15, s13, s15
+ 2669 222c 37EE277A 		fadds	s14, s14, s15
+ 2670 2230 40F20003 		movw	r3, #:lower16:axisPID
+ 2671 2234 C0F20003 		movt	r3, #:upper16:axisPID
+ 2672 2238 D3ED017A 		flds	s15, [r3, #4]
+ 2673 223c 37EE277A 		fadds	s14, s14, s15
+ 2674 2240 40F20003 		movw	r3, #:lower16:eepromConfig
+ 2675 2244 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 2676 2248 D3ED206A 		flds	s13, [r3, #128]
+ 2677 224c 40F20003 		movw	r3, #:lower16:axisPID
+ 2678 2250 C0F20003 		movt	r3, #:upper16:axisPID
+ 2679 2254 D3ED027A 		flds	s15, [r3, #8]
+ 2680 2258 66EEA77A 		fmuls	s15, s13, s15
+ 2681 225c 77EE677A 		fsubs	s15, s14, s15
+ 2682 2260 40F20003 		movw	r3, #:lower16:motor
+ 2683 2264 C0F20003 		movt	r3, #:upper16:motor
+ 2684 2268 C3ED047A 		fsts	s15, [r3, #16]
+ 362:../src/mixer.c ****             motor[5] = PIDMIX(  0.7f,  0.7f,  1.0f );      // Rear left   CCW
+ 2685              		.loc 1 362 0
+ 2686 226c 40F20003 		movw	r3, #:lower16:rxCommand
+ 2687 2270 C0F20003 		movt	r3, #:upper16:rxCommand
+ 2688 2274 93ED037A 		flds	s14, [r3, #12]
+ 2689 2278 40F20003 		movw	r3, #:lower16:axisPID
+ 2690 227c C0F20003 		movt	r3, #:upper16:axisPID
+ 2691 2280 D3ED006A 		flds	s13, [r3, #0]
+ 2692 2284 5FED857A 		flds	s15, .L66+20
+ 2693 2288 66EEA77A 		fmuls	s15, s13, s15
+ 2694 228c 37EE277A 		fadds	s14, s14, s15
+ 2695 2290 40F20003 		movw	r3, #:lower16:axisPID
+ 2696 2294 C0F20003 		movt	r3, #:upper16:axisPID
+ 2697 2298 D3ED016A 		flds	s13, [r3, #4]
+ 2698 229c 5FED8B7A 		flds	s15, .L66+20
+ 2699 22a0 66EEA77A 		fmuls	s15, s13, s15
+ 2700 22a4 37EE277A 		fadds	s14, s14, s15
+ 2701 22a8 40F20003 		movw	r3, #:lower16:eepromConfig
+ 2702 22ac C0F20003 		movt	r3, #:upper16:eepromConfig
+ 2703 22b0 D3ED206A 		flds	s13, [r3, #128]
+ 2704 22b4 40F20003 		movw	r3, #:lower16:axisPID
+ 2705 22b8 C0F20003 		movt	r3, #:upper16:axisPID
+ 2706 22bc D3ED027A 		flds	s15, [r3, #8]
+ 2707 22c0 66EEA77A 		fmuls	s15, s13, s15
+ 2708 22c4 77EE277A 		fadds	s15, s14, s15
+ 2709 22c8 40F20003 		movw	r3, #:lower16:motor
+ 2710 22cc C0F20003 		movt	r3, #:upper16:motor
+ 2711 22d0 C3ED057A 		fsts	s15, [r3, #20]
+ 363:../src/mixer.c ****             motor[6] = PIDMIX(  1.0f,  0.0f, -1.0f );      // Left        CW
+ 2712              		.loc 1 363 0
+ 2713 22d4 40F20003 		movw	r3, #:lower16:rxCommand
+ 2714 22d8 C0F20003 		movt	r3, #:upper16:rxCommand
+ 2715 22dc 93ED037A 		flds	s14, [r3, #12]
+ 2716 22e0 40F20003 		movw	r3, #:lower16:axisPID
+ 2717 22e4 C0F20003 		movt	r3, #:upper16:axisPID
+ 2718 22e8 D3ED007A 		flds	s15, [r3, #0]
+ 2719 22ec 37EE277A 		fadds	s14, s14, s15
+ 2720 22f0 40F20003 		movw	r3, #:lower16:axisPID
+ 2721 22f4 C0F20003 		movt	r3, #:upper16:axisPID
+ 2722 22f8 D3ED016A 		flds	s13, [r3, #4]
+ 2723 22fc 5FEDA47A 		flds	s15, .L66+16
+ 2724 2300 66EEA77A 		fmuls	s15, s13, s15
+ 2725 2304 37EE277A 		fadds	s14, s14, s15
+ 2726 2308 40F20003 		movw	r3, #:lower16:eepromConfig
+ 2727 230c C0F20003 		movt	r3, #:upper16:eepromConfig
+ 2728 2310 D3ED206A 		flds	s13, [r3, #128]
+ 2729 2314 40F20003 		movw	r3, #:lower16:axisPID
+ 2730 2318 C0F20003 		movt	r3, #:upper16:axisPID
+ 2731 231c D3ED027A 		flds	s15, [r3, #8]
+ 2732 2320 66EEA77A 		fmuls	s15, s13, s15
+ 2733 2324 77EE677A 		fsubs	s15, s14, s15
+ 2734 2328 40F20003 		movw	r3, #:lower16:motor
+ 2735 232c C0F20003 		movt	r3, #:upper16:motor
+ 2736 2330 C3ED067A 		fsts	s15, [r3, #24]
+ 364:../src/mixer.c ****             motor[7] = PIDMIX(  0.7f, -0.7f,  1.0f );      // Front Left  CCW
+ 2737              		.loc 1 364 0
+ 2738 2334 40F20003 		movw	r3, #:lower16:rxCommand
+ 2739 2338 C0F20003 		movt	r3, #:upper16:rxCommand
+ 2740 233c 93ED037A 		flds	s14, [r3, #12]
+ 2741 2340 40F20003 		movw	r3, #:lower16:axisPID
+ 2742 2344 C0F20003 		movt	r3, #:upper16:axisPID
+ 2743 2348 D3ED006A 		flds	s13, [r3, #0]
+ 2744 234c 5FEDB77A 		flds	s15, .L66+20
+ 2745 2350 66EEA77A 		fmuls	s15, s13, s15
+ 2746 2354 37EE277A 		fadds	s14, s14, s15
+ 2747 2358 40F20003 		movw	r3, #:lower16:axisPID
+ 2748 235c C0F20003 		movt	r3, #:upper16:axisPID
+ 2749 2360 D3ED016A 		flds	s13, [r3, #4]
+ 2750 2364 5FEDBC7A 		flds	s15, .L66+24
+ 2751 2368 66EEA77A 		fmuls	s15, s13, s15
+ 2752 236c 37EE277A 		fadds	s14, s14, s15
+ 2753 2370 40F20003 		movw	r3, #:lower16:eepromConfig
+ 2754 2374 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 2755 2378 D3ED206A 		flds	s13, [r3, #128]
+ 2756 237c 40F20003 		movw	r3, #:lower16:axisPID
+ 2757 2380 C0F20003 		movt	r3, #:upper16:axisPID
+ 2758 2384 D3ED027A 		flds	s15, [r3, #8]
+ 2759 2388 66EEA77A 		fmuls	s15, s13, s15
+ 2760 238c 77EE277A 		fadds	s15, s14, s15
+ 2761 2390 40F20003 		movw	r3, #:lower16:motor
+ 2762 2394 C0F20003 		movt	r3, #:upper16:motor
+ 2763 2398 C3ED077A 		fsts	s15, [r3, #28]
+ 365:../src/mixer.c ****             break;
+ 2764              		.loc 1 365 0
+ 2765 239c 00F0E4BC 		b	.L25
+ 2766              	.L43:
+ 366:../src/mixer.c **** 
+ 367:../src/mixer.c ****         ///////////////////////////////
+ 368:../src/mixer.c **** 
+ 369:../src/mixer.c ****         case MIXERTYPE_OCTOF8X:
+ 370:../src/mixer.c ****             motor[0] = PIDMIX(  0.5f, -1.0f, -1.0f );      // Front Left      CW
+ 2767              		.loc 1 370 0
+ 2768 23a0 40F20003 		movw	r3, #:lower16:rxCommand
+ 2769 23a4 C0F20003 		movt	r3, #:upper16:rxCommand
+ 2770 23a8 93ED037A 		flds	s14, [r3, #12]
+ 2771 23ac 40F20003 		movw	r3, #:lower16:axisPID
+ 2772 23b0 C0F20003 		movt	r3, #:upper16:axisPID
+ 2773 23b4 D3ED006A 		flds	s13, [r3, #0]
+ 2774 23b8 F6EE007A 		fconsts	s15, #96
+ 2775 23bc 66EEA77A 		fmuls	s15, s13, s15
+ 2776 23c0 37EE277A 		fadds	s14, s14, s15
+ 2777 23c4 40F20003 		movw	r3, #:lower16:axisPID
+ 2778 23c8 C0F20003 		movt	r3, #:upper16:axisPID
+ 2779 23cc D3ED017A 		flds	s15, [r3, #4]
+ 2780 23d0 37EE677A 		fsubs	s14, s14, s15
+ 2781 23d4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 2782 23d8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 2783 23dc D3ED206A 		flds	s13, [r3, #128]
+ 2784 23e0 40F20003 		movw	r3, #:lower16:axisPID
+ 2785 23e4 C0F20003 		movt	r3, #:upper16:axisPID
+ 2786 23e8 D3ED027A 		flds	s15, [r3, #8]
+ 2787 23ec 66EEA77A 		fmuls	s15, s13, s15
+ 2788 23f0 77EE677A 		fsubs	s15, s14, s15
+ 2789 23f4 40F20003 		movw	r3, #:lower16:motor
+ 2790 23f8 C0F20003 		movt	r3, #:upper16:motor
+ 2791 23fc C3ED007A 		fsts	s15, [r3, #0]
+ 371:../src/mixer.c ****             motor[1] = PIDMIX( -0.5f, -1.0f,  1.0f );      // Front Right     CCW
+ 2792              		.loc 1 371 0
+ 2793 2400 40F20003 		movw	r3, #:lower16:rxCommand
+ 2794 2404 C0F20003 		movt	r3, #:upper16:rxCommand
+ 2795 2408 93ED037A 		flds	s14, [r3, #12]
+ 2796 240c 40F20003 		movw	r3, #:lower16:axisPID
+ 2797 2410 C0F20003 		movt	r3, #:upper16:axisPID
+ 2798 2414 D3ED006A 		flds	s13, [r3, #0]
+ 2799 2418 FEEE007A 		fconsts	s15, #224
+ 2800 241c 66EEA77A 		fmuls	s15, s13, s15
+ 2801 2420 37EE277A 		fadds	s14, s14, s15
+ 2802 2424 40F20003 		movw	r3, #:lower16:axisPID
+ 2803 2428 C0F20003 		movt	r3, #:upper16:axisPID
+ 2804 242c D3ED017A 		flds	s15, [r3, #4]
+ 2805 2430 37EE677A 		fsubs	s14, s14, s15
+ 2806 2434 40F20003 		movw	r3, #:lower16:eepromConfig
+ 2807 2438 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 2808 243c D3ED206A 		flds	s13, [r3, #128]
+ 2809 2440 40F20003 		movw	r3, #:lower16:axisPID
+ 2810 2444 C0F20003 		movt	r3, #:upper16:axisPID
+ 2811 2448 D3ED027A 		flds	s15, [r3, #8]
+ 2812 244c 66EEA77A 		fmuls	s15, s13, s15
+ 2813 2450 77EE277A 		fadds	s15, s14, s15
+ 2814 2454 40F20003 		movw	r3, #:lower16:motor
+ 2815 2458 C0F20003 		movt	r3, #:upper16:motor
+ 2816 245c C3ED017A 		fsts	s15, [r3, #4]
+ 372:../src/mixer.c ****             motor[2] = PIDMIX( -1.0f, -0.5f, -1.0f );      // Mid Front Right CW
+ 2817              		.loc 1 372 0
+ 2818 2460 40F20003 		movw	r3, #:lower16:rxCommand
+ 2819 2464 C0F20003 		movt	r3, #:upper16:rxCommand
+ 2820 2468 93ED037A 		flds	s14, [r3, #12]
+ 2821 246c 40F20003 		movw	r3, #:lower16:axisPID
+ 2822 2470 C0F20003 		movt	r3, #:upper16:axisPID
+ 2823 2474 D3ED007A 		flds	s15, [r3, #0]
+ 2824 2478 37EE677A 		fsubs	s14, s14, s15
+ 2825 247c 40F20003 		movw	r3, #:lower16:axisPID
+ 2826 2480 C0F20003 		movt	r3, #:upper16:axisPID
+ 2827 2484 D3ED016A 		flds	s13, [r3, #4]
+ 2828 2488 FEEE007A 		fconsts	s15, #224
+ 2829 248c 66EEA77A 		fmuls	s15, s13, s15
+ 2830 2490 37EE277A 		fadds	s14, s14, s15
+ 2831 2494 40F20003 		movw	r3, #:lower16:eepromConfig
+ 2832 2498 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 2833 249c D3ED206A 		flds	s13, [r3, #128]
+ 2834 24a0 40F20003 		movw	r3, #:lower16:axisPID
+ 2835 24a4 C0F20003 		movt	r3, #:upper16:axisPID
+ 2836 24a8 D3ED027A 		flds	s15, [r3, #8]
+ 2837 24ac 66EEA77A 		fmuls	s15, s13, s15
+ 2838 24b0 77EE677A 		fsubs	s15, s14, s15
+ 2839 24b4 40F20003 		movw	r3, #:lower16:motor
+ 2840 24b8 C0F20003 		movt	r3, #:upper16:motor
+ 2841 24bc C3ED027A 		fsts	s15, [r3, #8]
+ 373:../src/mixer.c ****             motor[3] = PIDMIX( -1.0f,  0.5f,  1.0f );      // Mid Rear Right  CCW
+ 2842              		.loc 1 373 0
+ 2843 24c0 40F20003 		movw	r3, #:lower16:rxCommand
+ 2844 24c4 C0F20003 		movt	r3, #:upper16:rxCommand
+ 2845 24c8 93ED037A 		flds	s14, [r3, #12]
+ 2846 24cc 40F20003 		movw	r3, #:lower16:axisPID
+ 2847 24d0 C0F20003 		movt	r3, #:upper16:axisPID
+ 2848 24d4 D3ED007A 		flds	s15, [r3, #0]
+ 2849 24d8 37EE677A 		fsubs	s14, s14, s15
+ 2850 24dc 40F20003 		movw	r3, #:lower16:axisPID
+ 2851 24e0 C0F20003 		movt	r3, #:upper16:axisPID
+ 2852 24e4 D3ED016A 		flds	s13, [r3, #4]
+ 2853 24e8 F6EE007A 		fconsts	s15, #96
+ 2854 24ec 66EEA77A 		fmuls	s15, s13, s15
+ 2855 24f0 37EE277A 		fadds	s14, s14, s15
+ 2856 24f4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 2857 24f8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 2858 24fc D3ED206A 		flds	s13, [r3, #128]
+ 2859 2500 40F20003 		movw	r3, #:lower16:axisPID
+ 2860 2504 C0F20003 		movt	r3, #:upper16:axisPID
+ 2861 2508 D3ED027A 		flds	s15, [r3, #8]
+ 2862 250c 66EEA77A 		fmuls	s15, s13, s15
+ 2863 2510 77EE277A 		fadds	s15, s14, s15
+ 2864 2514 40F20003 		movw	r3, #:lower16:motor
+ 2865 2518 C0F20003 		movt	r3, #:upper16:motor
+ 2866 251c C3ED037A 		fsts	s15, [r3, #12]
+ 374:../src/mixer.c ****             motor[4] = PIDMIX( -0.5f,  1.0f, -1.0f );      // Rear Right      CW
+ 2867              		.loc 1 374 0
+ 2868 2520 40F20003 		movw	r3, #:lower16:rxCommand
+ 2869 2524 C0F20003 		movt	r3, #:upper16:rxCommand
+ 2870 2528 93ED037A 		flds	s14, [r3, #12]
+ 2871 252c 40F20003 		movw	r3, #:lower16:axisPID
+ 2872 2530 C0F20003 		movt	r3, #:upper16:axisPID
+ 2873 2534 D3ED006A 		flds	s13, [r3, #0]
+ 2874 2538 FEEE007A 		fconsts	s15, #224
+ 2875 253c 66EEA77A 		fmuls	s15, s13, s15
+ 2876 2540 37EE277A 		fadds	s14, s14, s15
+ 2877 2544 40F20003 		movw	r3, #:lower16:axisPID
+ 2878 2548 C0F20003 		movt	r3, #:upper16:axisPID
+ 2879 254c D3ED017A 		flds	s15, [r3, #4]
+ 2880 2550 37EE277A 		fadds	s14, s14, s15
+ 2881 2554 40F20003 		movw	r3, #:lower16:eepromConfig
+ 2882 2558 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 2883 255c D3ED206A 		flds	s13, [r3, #128]
+ 2884 2560 40F20003 		movw	r3, #:lower16:axisPID
+ 2885 2564 C0F20003 		movt	r3, #:upper16:axisPID
+ 2886 2568 D3ED027A 		flds	s15, [r3, #8]
+ 2887 256c 66EEA77A 		fmuls	s15, s13, s15
+ 2888 2570 77EE677A 		fsubs	s15, s14, s15
+ 2889 2574 40F20003 		movw	r3, #:lower16:motor
+ 2890 2578 C0F20003 		movt	r3, #:upper16:motor
+ 2891 257c C3ED047A 		fsts	s15, [r3, #16]
+ 375:../src/mixer.c ****             motor[5] = PIDMIX(  0.5f,  1.0f,  1.0f );      // Rear Left       CCW
+ 2892              		.loc 1 375 0
+ 2893 2580 40F20003 		movw	r3, #:lower16:rxCommand
+ 2894 2584 C0F20003 		movt	r3, #:upper16:rxCommand
+ 2895 2588 93ED037A 		flds	s14, [r3, #12]
+ 2896 258c 40F20003 		movw	r3, #:lower16:axisPID
+ 2897 2590 C0F20003 		movt	r3, #:upper16:axisPID
+ 2898 2594 D3ED006A 		flds	s13, [r3, #0]
+ 2899 2598 F6EE007A 		fconsts	s15, #96
+ 2900 259c 66EEA77A 		fmuls	s15, s13, s15
+ 2901 25a0 37EE277A 		fadds	s14, s14, s15
+ 2902 25a4 40F20003 		movw	r3, #:lower16:axisPID
+ 2903 25a8 C0F20003 		movt	r3, #:upper16:axisPID
+ 2904 25ac D3ED017A 		flds	s15, [r3, #4]
+ 2905 25b0 37EE277A 		fadds	s14, s14, s15
+ 2906 25b4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 2907 25b8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 2908 25bc D3ED206A 		flds	s13, [r3, #128]
+ 2909 25c0 40F20003 		movw	r3, #:lower16:axisPID
+ 2910 25c4 C0F20003 		movt	r3, #:upper16:axisPID
+ 2911 25c8 D3ED027A 		flds	s15, [r3, #8]
+ 2912 25cc 66EEA77A 		fmuls	s15, s13, s15
+ 2913 25d0 77EE277A 		fadds	s15, s14, s15
+ 2914 25d4 40F20003 		movw	r3, #:lower16:motor
+ 2915 25d8 C0F20003 		movt	r3, #:upper16:motor
+ 2916 25dc C3ED057A 		fsts	s15, [r3, #20]
+ 376:../src/mixer.c ****             motor[6] = PIDMIX(  1.0f,  0.5f, -1.0f );      // Mid Rear left   CW
+ 2917              		.loc 1 376 0
+ 2918 25e0 40F20003 		movw	r3, #:lower16:rxCommand
+ 2919 25e4 C0F20003 		movt	r3, #:upper16:rxCommand
+ 2920 25e8 93ED037A 		flds	s14, [r3, #12]
+ 2921 25ec 40F20003 		movw	r3, #:lower16:axisPID
+ 2922 25f0 C0F20003 		movt	r3, #:upper16:axisPID
+ 2923 25f4 D3ED007A 		flds	s15, [r3, #0]
+ 2924 25f8 37EE277A 		fadds	s14, s14, s15
+ 2925 25fc 40F20003 		movw	r3, #:lower16:axisPID
+ 2926 2600 C0F20003 		movt	r3, #:upper16:axisPID
+ 2927 2604 D3ED016A 		flds	s13, [r3, #4]
+ 2928 2608 F6EE007A 		fconsts	s15, #96
+ 2929 260c 66EEA77A 		fmuls	s15, s13, s15
+ 2930 2610 37EE277A 		fadds	s14, s14, s15
+ 2931 2614 40F20003 		movw	r3, #:lower16:eepromConfig
+ 2932 2618 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 2933 261c D3ED206A 		flds	s13, [r3, #128]
+ 2934 2620 40F20003 		movw	r3, #:lower16:axisPID
+ 2935 2624 C0F20003 		movt	r3, #:upper16:axisPID
+ 2936 2628 D3ED027A 		flds	s15, [r3, #8]
+ 2937 262c 66EEA77A 		fmuls	s15, s13, s15
+ 2938 2630 77EE677A 		fsubs	s15, s14, s15
+ 2939 2634 40F20003 		movw	r3, #:lower16:motor
+ 2940 2638 C0F20003 		movt	r3, #:upper16:motor
+ 2941 263c C3ED067A 		fsts	s15, [r3, #24]
+ 377:../src/mixer.c ****             motor[7] = PIDMIX(  1.0f, -0.5f,  1.0f );      // Mid Front Left  CCW
+ 2942              		.loc 1 377 0
+ 2943 2640 40F20003 		movw	r3, #:lower16:rxCommand
+ 2944 2644 C0F20003 		movt	r3, #:upper16:rxCommand
+ 2945 2648 93ED037A 		flds	s14, [r3, #12]
+ 2946 264c 40F20003 		movw	r3, #:lower16:axisPID
+ 2947 2650 C0F20003 		movt	r3, #:upper16:axisPID
+ 2948 2654 D3ED007A 		flds	s15, [r3, #0]
+ 2949 2658 37EE277A 		fadds	s14, s14, s15
+ 2950 265c 40F20003 		movw	r3, #:lower16:axisPID
+ 2951 2660 C0F20003 		movt	r3, #:upper16:axisPID
+ 2952 2664 D3ED016A 		flds	s13, [r3, #4]
+ 2953 2668 FEEE007A 		fconsts	s15, #224
+ 2954 266c 66EEA77A 		fmuls	s15, s13, s15
+ 2955 2670 37EE277A 		fadds	s14, s14, s15
+ 2956 2674 40F20003 		movw	r3, #:lower16:eepromConfig
+ 2957 2678 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 2958 267c D3ED206A 		flds	s13, [r3, #128]
+ 2959 2680 40F20003 		movw	r3, #:lower16:axisPID
+ 2960 2684 C0F20003 		movt	r3, #:upper16:axisPID
+ 2961 2688 D3ED027A 		flds	s15, [r3, #8]
+ 2962 268c 66EEA77A 		fmuls	s15, s13, s15
+ 2963 2690 77EE277A 		fadds	s15, s14, s15
+ 2964 2694 40F20003 		movw	r3, #:lower16:motor
+ 2965 2698 C0F20003 		movt	r3, #:upper16:motor
+ 2966 269c C3ED077A 		fsts	s15, [r3, #28]
+ 378:../src/mixer.c ****             break;
+ 2967              		.loc 1 378 0
+ 2968 26a0 62E3     		b	.L25
+ 2969              	.L44:
+ 379:../src/mixer.c **** 
+ 380:../src/mixer.c ****         ///////////////////////////////
+ 381:../src/mixer.c **** 
+ 382:../src/mixer.c ****         case MIXERTYPE_OCTOX8P:
+ 383:../src/mixer.c ****             motor[0] = PIDMIX(  0.0f, -1.0f, -1.0f );      // Top Front    CW
+ 2970              		.loc 1 383 0
+ 2971 26a2 40F20003 		movw	r3, #:lower16:rxCommand
+ 2972 26a6 C0F20003 		movt	r3, #:upper16:rxCommand
+ 2973 26aa 93ED037A 		flds	s14, [r3, #12]
+ 2974 26ae 40F20003 		movw	r3, #:lower16:axisPID
+ 2975 26b2 C0F20003 		movt	r3, #:upper16:axisPID
+ 2976 26b6 D3ED006A 		flds	s13, [r3, #0]
+ 2977 26ba DFEDBA7A 		flds	s15, .L68
+ 2978 26be 66EEA77A 		fmuls	s15, s13, s15
+ 2979 26c2 37EE277A 		fadds	s14, s14, s15
+ 2980 26c6 40F20003 		movw	r3, #:lower16:axisPID
+ 2981 26ca C0F20003 		movt	r3, #:upper16:axisPID
+ 2982 26ce D3ED017A 		flds	s15, [r3, #4]
+ 2983 26d2 37EE677A 		fsubs	s14, s14, s15
+ 2984 26d6 40F20003 		movw	r3, #:lower16:eepromConfig
+ 2985 26da C0F20003 		movt	r3, #:upper16:eepromConfig
+ 2986 26de D3ED206A 		flds	s13, [r3, #128]
+ 2987 26e2 40F20003 		movw	r3, #:lower16:axisPID
+ 2988 26e6 C0F20003 		movt	r3, #:upper16:axisPID
+ 2989 26ea D3ED027A 		flds	s15, [r3, #8]
+ 2990 26ee 66EEA77A 		fmuls	s15, s13, s15
+ 2991 26f2 77EE677A 		fsubs	s15, s14, s15
+ 2992 26f6 40F20003 		movw	r3, #:lower16:motor
+ 2993 26fa C0F20003 		movt	r3, #:upper16:motor
+ 2994 26fe C3ED007A 		fsts	s15, [r3, #0]
+ 384:../src/mixer.c ****             motor[1] = PIDMIX( -1.0f,  0.0f,  1.0f );      // Top Right    CCW
+ 2995              		.loc 1 384 0
+ 2996 2702 40F20003 		movw	r3, #:lower16:rxCommand
+ 2997 2706 C0F20003 		movt	r3, #:upper16:rxCommand
+ 2998 270a 93ED037A 		flds	s14, [r3, #12]
+ 2999 270e 40F20003 		movw	r3, #:lower16:axisPID
+ 3000 2712 C0F20003 		movt	r3, #:upper16:axisPID
+ 3001 2716 D3ED007A 		flds	s15, [r3, #0]
+ 3002 271a 37EE677A 		fsubs	s14, s14, s15
+ 3003 271e 40F20003 		movw	r3, #:lower16:axisPID
+ 3004 2722 C0F20003 		movt	r3, #:upper16:axisPID
+ 3005 2726 D3ED016A 		flds	s13, [r3, #4]
+ 3006 272a DFED9E7A 		flds	s15, .L68
+ 3007 272e 66EEA77A 		fmuls	s15, s13, s15
+ 3008 2732 37EE277A 		fadds	s14, s14, s15
+ 3009 2736 40F20003 		movw	r3, #:lower16:eepromConfig
+ 3010 273a C0F20003 		movt	r3, #:upper16:eepromConfig
+ 3011 273e D3ED206A 		flds	s13, [r3, #128]
+ 3012 2742 40F20003 		movw	r3, #:lower16:axisPID
+ 3013 2746 C0F20003 		movt	r3, #:upper16:axisPID
+ 3014 274a D3ED027A 		flds	s15, [r3, #8]
+ 3015 274e 66EEA77A 		fmuls	s15, s13, s15
+ 3016 2752 77EE277A 		fadds	s15, s14, s15
+ 3017 2756 40F20003 		movw	r3, #:lower16:motor
+ 3018 275a C0F20003 		movt	r3, #:upper16:motor
+ 3019 275e C3ED017A 		fsts	s15, [r3, #4]
+ 385:../src/mixer.c ****             motor[2] = PIDMIX(  0.0f,  1.0f, -1.0f );      // Top Rear     CW
+ 3020              		.loc 1 385 0
+ 3021 2762 40F20003 		movw	r3, #:lower16:rxCommand
+ 3022 2766 C0F20003 		movt	r3, #:upper16:rxCommand
+ 3023 276a 93ED037A 		flds	s14, [r3, #12]
+ 3024 276e 40F20003 		movw	r3, #:lower16:axisPID
+ 3025 2772 C0F20003 		movt	r3, #:upper16:axisPID
+ 3026 2776 D3ED006A 		flds	s13, [r3, #0]
+ 3027 277a DFED8A7A 		flds	s15, .L68
+ 3028 277e 66EEA77A 		fmuls	s15, s13, s15
+ 3029 2782 37EE277A 		fadds	s14, s14, s15
+ 3030 2786 40F20003 		movw	r3, #:lower16:axisPID
+ 3031 278a C0F20003 		movt	r3, #:upper16:axisPID
+ 3032 278e D3ED017A 		flds	s15, [r3, #4]
+ 3033 2792 37EE277A 		fadds	s14, s14, s15
+ 3034 2796 40F20003 		movw	r3, #:lower16:eepromConfig
+ 3035 279a C0F20003 		movt	r3, #:upper16:eepromConfig
+ 3036 279e D3ED206A 		flds	s13, [r3, #128]
+ 3037 27a2 40F20003 		movw	r3, #:lower16:axisPID
+ 3038 27a6 C0F20003 		movt	r3, #:upper16:axisPID
+ 3039 27aa D3ED027A 		flds	s15, [r3, #8]
+ 3040 27ae 66EEA77A 		fmuls	s15, s13, s15
+ 3041 27b2 77EE677A 		fsubs	s15, s14, s15
+ 3042 27b6 40F20003 		movw	r3, #:lower16:motor
+ 3043 27ba C0F20003 		movt	r3, #:upper16:motor
+ 3044 27be C3ED027A 		fsts	s15, [r3, #8]
+ 386:../src/mixer.c ****             motor[3] = PIDMIX(  1.0f,  0.0f,  1.0f );      // Top Left     CCW
+ 3045              		.loc 1 386 0
+ 3046 27c2 40F20003 		movw	r3, #:lower16:rxCommand
+ 3047 27c6 C0F20003 		movt	r3, #:upper16:rxCommand
+ 3048 27ca 93ED037A 		flds	s14, [r3, #12]
+ 3049 27ce 40F20003 		movw	r3, #:lower16:axisPID
+ 3050 27d2 C0F20003 		movt	r3, #:upper16:axisPID
+ 3051 27d6 D3ED007A 		flds	s15, [r3, #0]
+ 3052 27da 37EE277A 		fadds	s14, s14, s15
+ 3053 27de 40F20003 		movw	r3, #:lower16:axisPID
+ 3054 27e2 C0F20003 		movt	r3, #:upper16:axisPID
+ 3055 27e6 D3ED016A 		flds	s13, [r3, #4]
+ 3056 27ea DFED6E7A 		flds	s15, .L68
+ 3057 27ee 66EEA77A 		fmuls	s15, s13, s15
+ 3058 27f2 37EE277A 		fadds	s14, s14, s15
+ 3059 27f6 40F20003 		movw	r3, #:lower16:eepromConfig
+ 3060 27fa C0F20003 		movt	r3, #:upper16:eepromConfig
+ 3061 27fe D3ED206A 		flds	s13, [r3, #128]
+ 3062 2802 40F20003 		movw	r3, #:lower16:axisPID
+ 3063 2806 C0F20003 		movt	r3, #:upper16:axisPID
+ 3064 280a D3ED027A 		flds	s15, [r3, #8]
+ 3065 280e 66EEA77A 		fmuls	s15, s13, s15
+ 3066 2812 77EE277A 		fadds	s15, s14, s15
+ 3067 2816 40F20003 		movw	r3, #:lower16:motor
+ 3068 281a C0F20003 		movt	r3, #:upper16:motor
+ 3069 281e C3ED037A 		fsts	s15, [r3, #12]
+ 387:../src/mixer.c ****             motor[4] = PIDMIX(  0.0f, -1.0f, -1.0f );      // Bottom Front CCW
+ 3070              		.loc 1 387 0
+ 3071 2822 40F20003 		movw	r3, #:lower16:rxCommand
+ 3072 2826 C0F20003 		movt	r3, #:upper16:rxCommand
+ 3073 282a 93ED037A 		flds	s14, [r3, #12]
+ 3074 282e 40F20003 		movw	r3, #:lower16:axisPID
+ 3075 2832 C0F20003 		movt	r3, #:upper16:axisPID
+ 3076 2836 D3ED006A 		flds	s13, [r3, #0]
+ 3077 283a DFED5A7A 		flds	s15, .L68
+ 3078 283e 66EEA77A 		fmuls	s15, s13, s15
+ 3079 2842 37EE277A 		fadds	s14, s14, s15
+ 3080 2846 40F20003 		movw	r3, #:lower16:axisPID
+ 3081 284a C0F20003 		movt	r3, #:upper16:axisPID
+ 3082 284e D3ED017A 		flds	s15, [r3, #4]
+ 3083 2852 37EE677A 		fsubs	s14, s14, s15
+ 3084 2856 40F20003 		movw	r3, #:lower16:eepromConfig
+ 3085 285a C0F20003 		movt	r3, #:upper16:eepromConfig
+ 3086 285e D3ED206A 		flds	s13, [r3, #128]
+ 3087 2862 40F20003 		movw	r3, #:lower16:axisPID
+ 3088 2866 C0F20003 		movt	r3, #:upper16:axisPID
+ 3089 286a D3ED027A 		flds	s15, [r3, #8]
+ 3090 286e 66EEA77A 		fmuls	s15, s13, s15
+ 3091 2872 77EE677A 		fsubs	s15, s14, s15
+ 3092 2876 40F20003 		movw	r3, #:lower16:motor
+ 3093 287a C0F20003 		movt	r3, #:upper16:motor
+ 3094 287e C3ED047A 		fsts	s15, [r3, #16]
+ 388:../src/mixer.c ****             motor[5] = PIDMIX( -1.0f,  0.0f,  1.0f );      // Bottom Right CW
+ 3095              		.loc 1 388 0
+ 3096 2882 40F20003 		movw	r3, #:lower16:rxCommand
+ 3097 2886 C0F20003 		movt	r3, #:upper16:rxCommand
+ 3098 288a 93ED037A 		flds	s14, [r3, #12]
+ 3099 288e 40F20003 		movw	r3, #:lower16:axisPID
+ 3100 2892 C0F20003 		movt	r3, #:upper16:axisPID
+ 3101 2896 D3ED007A 		flds	s15, [r3, #0]
+ 3102 289a 37EE677A 		fsubs	s14, s14, s15
+ 3103 289e 40F20003 		movw	r3, #:lower16:axisPID
+ 3104 28a2 C0F20003 		movt	r3, #:upper16:axisPID
+ 3105 28a6 D3ED016A 		flds	s13, [r3, #4]
+ 3106 28aa DFED3E7A 		flds	s15, .L68
+ 3107 28ae 66EEA77A 		fmuls	s15, s13, s15
+ 3108 28b2 37EE277A 		fadds	s14, s14, s15
+ 3109 28b6 40F20003 		movw	r3, #:lower16:eepromConfig
+ 3110 28ba C0F20003 		movt	r3, #:upper16:eepromConfig
+ 3111 28be D3ED206A 		flds	s13, [r3, #128]
+ 3112 28c2 40F20003 		movw	r3, #:lower16:axisPID
+ 3113 28c6 C0F20003 		movt	r3, #:upper16:axisPID
+ 3114 28ca D3ED027A 		flds	s15, [r3, #8]
+ 3115 28ce 66EEA77A 		fmuls	s15, s13, s15
+ 3116 28d2 77EE277A 		fadds	s15, s14, s15
+ 3117 28d6 40F20003 		movw	r3, #:lower16:motor
+ 3118 28da C0F20003 		movt	r3, #:upper16:motor
+ 3119 28de C3ED057A 		fsts	s15, [r3, #20]
+ 389:../src/mixer.c ****             motor[6] = PIDMIX(  0.0f,  1.0f, -1.0f );      // Bottom Rear  CCW
+ 3120              		.loc 1 389 0
+ 3121 28e2 40F20003 		movw	r3, #:lower16:rxCommand
+ 3122 28e6 C0F20003 		movt	r3, #:upper16:rxCommand
+ 3123 28ea 93ED037A 		flds	s14, [r3, #12]
+ 3124 28ee 40F20003 		movw	r3, #:lower16:axisPID
+ 3125 28f2 C0F20003 		movt	r3, #:upper16:axisPID
+ 3126 28f6 D3ED006A 		flds	s13, [r3, #0]
+ 3127 28fa DFED2A7A 		flds	s15, .L68
+ 3128 28fe 66EEA77A 		fmuls	s15, s13, s15
+ 3129 2902 37EE277A 		fadds	s14, s14, s15
+ 3130 2906 40F20003 		movw	r3, #:lower16:axisPID
+ 3131 290a C0F20003 		movt	r3, #:upper16:axisPID
+ 3132 290e D3ED017A 		flds	s15, [r3, #4]
+ 3133 2912 37EE277A 		fadds	s14, s14, s15
+ 3134 2916 40F20003 		movw	r3, #:lower16:eepromConfig
+ 3135 291a C0F20003 		movt	r3, #:upper16:eepromConfig
+ 3136 291e D3ED206A 		flds	s13, [r3, #128]
+ 3137 2922 40F20003 		movw	r3, #:lower16:axisPID
+ 3138 2926 C0F20003 		movt	r3, #:upper16:axisPID
+ 3139 292a D3ED027A 		flds	s15, [r3, #8]
+ 3140 292e 66EEA77A 		fmuls	s15, s13, s15
+ 3141 2932 77EE677A 		fsubs	s15, s14, s15
+ 3142 2936 40F20003 		movw	r3, #:lower16:motor
+ 3143 293a C0F20003 		movt	r3, #:upper16:motor
+ 3144 293e C3ED067A 		fsts	s15, [r3, #24]
+ 390:../src/mixer.c ****             motor[7] = PIDMIX(  1.0f,  0.0f,  1.0f );      // Bottom Left  CW
+ 3145              		.loc 1 390 0
+ 3146 2942 40F20003 		movw	r3, #:lower16:rxCommand
+ 3147 2946 C0F20003 		movt	r3, #:upper16:rxCommand
+ 3148 294a 93ED037A 		flds	s14, [r3, #12]
+ 3149 294e 40F20003 		movw	r3, #:lower16:axisPID
+ 3150 2952 C0F20003 		movt	r3, #:upper16:axisPID
+ 3151 2956 D3ED007A 		flds	s15, [r3, #0]
+ 3152 295a 37EE277A 		fadds	s14, s14, s15
+ 3153 295e 40F20003 		movw	r3, #:lower16:axisPID
+ 3154 2962 C0F20003 		movt	r3, #:upper16:axisPID
+ 3155 2966 D3ED016A 		flds	s13, [r3, #4]
+ 3156 296a DFED0E7A 		flds	s15, .L68
+ 3157 296e 66EEA77A 		fmuls	s15, s13, s15
+ 3158 2972 37EE277A 		fadds	s14, s14, s15
+ 3159 2976 40F20003 		movw	r3, #:lower16:eepromConfig
+ 3160 297a C0F20003 		movt	r3, #:upper16:eepromConfig
+ 3161 297e D3ED206A 		flds	s13, [r3, #128]
+ 3162 2982 40F20003 		movw	r3, #:lower16:axisPID
+ 3163 2986 C0F20003 		movt	r3, #:upper16:axisPID
+ 3164 298a D3ED027A 		flds	s15, [r3, #8]
+ 3165 298e 66EEA77A 		fmuls	s15, s13, s15
+ 3166 2992 77EE277A 		fadds	s15, s14, s15
+ 3167 2996 40F20003 		movw	r3, #:lower16:motor
+ 3168 299a C0F20003 		movt	r3, #:upper16:motor
+ 3169 299e C3ED077A 		fsts	s15, [r3, #28]
+ 391:../src/mixer.c ****             break;
+ 3170              		.loc 1 391 0
+ 3171 29a2 E1E1     		b	.L25
+ 3172              	.L69:
+ 3173              		.align	2
+ 3174              	.L68:
+ 3175 29a4 00000000 		.word	0
+ 3176              	.L45:
+ 392:../src/mixer.c **** 
+ 393:../src/mixer.c ****         ///////////////////////////////
+ 394:../src/mixer.c **** 
+ 395:../src/mixer.c ****         case MIXERTYPE_OCTOX8X:
+ 396:../src/mixer.c ****             motor[0] = PIDMIX(  1.0f, -1.0f, -1.0f );      // Top Front Left     CW
+ 3177              		.loc 1 396 0
+ 3178 29a8 40F20003 		movw	r3, #:lower16:rxCommand
+ 3179 29ac C0F20003 		movt	r3, #:upper16:rxCommand
+ 3180 29b0 93ED037A 		flds	s14, [r3, #12]
+ 3181 29b4 40F20003 		movw	r3, #:lower16:axisPID
+ 3182 29b8 C0F20003 		movt	r3, #:upper16:axisPID
+ 3183 29bc D3ED007A 		flds	s15, [r3, #0]
+ 3184 29c0 37EE277A 		fadds	s14, s14, s15
+ 3185 29c4 40F20003 		movw	r3, #:lower16:axisPID
+ 3186 29c8 C0F20003 		movt	r3, #:upper16:axisPID
+ 3187 29cc D3ED017A 		flds	s15, [r3, #4]
+ 3188 29d0 37EE677A 		fsubs	s14, s14, s15
+ 3189 29d4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 3190 29d8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 3191 29dc D3ED206A 		flds	s13, [r3, #128]
+ 3192 29e0 40F20003 		movw	r3, #:lower16:axisPID
+ 3193 29e4 C0F20003 		movt	r3, #:upper16:axisPID
+ 3194 29e8 D3ED027A 		flds	s15, [r3, #8]
+ 3195 29ec 66EEA77A 		fmuls	s15, s13, s15
+ 3196 29f0 77EE677A 		fsubs	s15, s14, s15
+ 3197 29f4 40F20003 		movw	r3, #:lower16:motor
+ 3198 29f8 C0F20003 		movt	r3, #:upper16:motor
+ 3199 29fc C3ED007A 		fsts	s15, [r3, #0]
+ 397:../src/mixer.c ****             motor[1] = PIDMIX( -1.0f, -1.0f,  1.0f );      // Top Front Right    CCW
+ 3200              		.loc 1 397 0
+ 3201 2a00 40F20003 		movw	r3, #:lower16:rxCommand
+ 3202 2a04 C0F20003 		movt	r3, #:upper16:rxCommand
+ 3203 2a08 93ED037A 		flds	s14, [r3, #12]
+ 3204 2a0c 40F20003 		movw	r3, #:lower16:axisPID
+ 3205 2a10 C0F20003 		movt	r3, #:upper16:axisPID
+ 3206 2a14 D3ED007A 		flds	s15, [r3, #0]
+ 3207 2a18 37EE677A 		fsubs	s14, s14, s15
+ 3208 2a1c 40F20003 		movw	r3, #:lower16:axisPID
+ 3209 2a20 C0F20003 		movt	r3, #:upper16:axisPID
+ 3210 2a24 D3ED017A 		flds	s15, [r3, #4]
+ 3211 2a28 37EE677A 		fsubs	s14, s14, s15
+ 3212 2a2c 40F20003 		movw	r3, #:lower16:eepromConfig
+ 3213 2a30 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 3214 2a34 D3ED206A 		flds	s13, [r3, #128]
+ 3215 2a38 40F20003 		movw	r3, #:lower16:axisPID
+ 3216 2a3c C0F20003 		movt	r3, #:upper16:axisPID
+ 3217 2a40 D3ED027A 		flds	s15, [r3, #8]
+ 3218 2a44 66EEA77A 		fmuls	s15, s13, s15
+ 3219 2a48 77EE277A 		fadds	s15, s14, s15
+ 3220 2a4c 40F20003 		movw	r3, #:lower16:motor
+ 3221 2a50 C0F20003 		movt	r3, #:upper16:motor
+ 3222 2a54 C3ED017A 		fsts	s15, [r3, #4]
+ 398:../src/mixer.c ****             motor[2] = PIDMIX( -1.0f,  1.0f, -1.0f );      // Top Rear Right     CW
+ 3223              		.loc 1 398 0
+ 3224 2a58 40F20003 		movw	r3, #:lower16:rxCommand
+ 3225 2a5c C0F20003 		movt	r3, #:upper16:rxCommand
+ 3226 2a60 93ED037A 		flds	s14, [r3, #12]
+ 3227 2a64 40F20003 		movw	r3, #:lower16:axisPID
+ 3228 2a68 C0F20003 		movt	r3, #:upper16:axisPID
+ 3229 2a6c D3ED007A 		flds	s15, [r3, #0]
+ 3230 2a70 37EE677A 		fsubs	s14, s14, s15
+ 3231 2a74 40F20003 		movw	r3, #:lower16:axisPID
+ 3232 2a78 C0F20003 		movt	r3, #:upper16:axisPID
+ 3233 2a7c D3ED017A 		flds	s15, [r3, #4]
+ 3234 2a80 37EE277A 		fadds	s14, s14, s15
+ 3235 2a84 40F20003 		movw	r3, #:lower16:eepromConfig
+ 3236 2a88 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 3237 2a8c D3ED206A 		flds	s13, [r3, #128]
+ 3238 2a90 40F20003 		movw	r3, #:lower16:axisPID
+ 3239 2a94 C0F20003 		movt	r3, #:upper16:axisPID
+ 3240 2a98 D3ED027A 		flds	s15, [r3, #8]
+ 3241 2a9c 66EEA77A 		fmuls	s15, s13, s15
+ 3242 2aa0 77EE677A 		fsubs	s15, s14, s15
+ 3243 2aa4 40F20003 		movw	r3, #:lower16:motor
+ 3244 2aa8 C0F20003 		movt	r3, #:upper16:motor
+ 3245 2aac C3ED027A 		fsts	s15, [r3, #8]
+ 399:../src/mixer.c ****             motor[3] = PIDMIX(  1.0f,  1.0f,  1.0f );      // Top Rear Left      CCW
+ 3246              		.loc 1 399 0
+ 3247 2ab0 40F20003 		movw	r3, #:lower16:rxCommand
+ 3248 2ab4 C0F20003 		movt	r3, #:upper16:rxCommand
+ 3249 2ab8 93ED037A 		flds	s14, [r3, #12]
+ 3250 2abc 40F20003 		movw	r3, #:lower16:axisPID
+ 3251 2ac0 C0F20003 		movt	r3, #:upper16:axisPID
+ 3252 2ac4 D3ED007A 		flds	s15, [r3, #0]
+ 3253 2ac8 37EE277A 		fadds	s14, s14, s15
+ 3254 2acc 40F20003 		movw	r3, #:lower16:axisPID
+ 3255 2ad0 C0F20003 		movt	r3, #:upper16:axisPID
+ 3256 2ad4 D3ED017A 		flds	s15, [r3, #4]
+ 3257 2ad8 37EE277A 		fadds	s14, s14, s15
+ 3258 2adc 40F20003 		movw	r3, #:lower16:eepromConfig
+ 3259 2ae0 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 3260 2ae4 D3ED206A 		flds	s13, [r3, #128]
+ 3261 2ae8 40F20003 		movw	r3, #:lower16:axisPID
+ 3262 2aec C0F20003 		movt	r3, #:upper16:axisPID
+ 3263 2af0 D3ED027A 		flds	s15, [r3, #8]
+ 3264 2af4 66EEA77A 		fmuls	s15, s13, s15
+ 3265 2af8 77EE277A 		fadds	s15, s14, s15
+ 3266 2afc 40F20003 		movw	r3, #:lower16:motor
+ 3267 2b00 C0F20003 		movt	r3, #:upper16:motor
+ 3268 2b04 C3ED037A 		fsts	s15, [r3, #12]
+ 400:../src/mixer.c ****             motor[4] = PIDMIX(  1.0f, -1.0f, -1.0f );      // Bottom Front Left  CCW
+ 3269              		.loc 1 400 0
+ 3270 2b08 40F20003 		movw	r3, #:lower16:rxCommand
+ 3271 2b0c C0F20003 		movt	r3, #:upper16:rxCommand
+ 3272 2b10 93ED037A 		flds	s14, [r3, #12]
+ 3273 2b14 40F20003 		movw	r3, #:lower16:axisPID
+ 3274 2b18 C0F20003 		movt	r3, #:upper16:axisPID
+ 3275 2b1c D3ED007A 		flds	s15, [r3, #0]
+ 3276 2b20 37EE277A 		fadds	s14, s14, s15
+ 3277 2b24 40F20003 		movw	r3, #:lower16:axisPID
+ 3278 2b28 C0F20003 		movt	r3, #:upper16:axisPID
+ 3279 2b2c D3ED017A 		flds	s15, [r3, #4]
+ 3280 2b30 37EE677A 		fsubs	s14, s14, s15
+ 3281 2b34 40F20003 		movw	r3, #:lower16:eepromConfig
+ 3282 2b38 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 3283 2b3c D3ED206A 		flds	s13, [r3, #128]
+ 3284 2b40 40F20003 		movw	r3, #:lower16:axisPID
+ 3285 2b44 C0F20003 		movt	r3, #:upper16:axisPID
+ 3286 2b48 D3ED027A 		flds	s15, [r3, #8]
+ 3287 2b4c 66EEA77A 		fmuls	s15, s13, s15
+ 3288 2b50 77EE677A 		fsubs	s15, s14, s15
+ 3289 2b54 40F20003 		movw	r3, #:lower16:motor
+ 3290 2b58 C0F20003 		movt	r3, #:upper16:motor
+ 3291 2b5c C3ED047A 		fsts	s15, [r3, #16]
+ 401:../src/mixer.c ****             motor[5] = PIDMIX( -1.0f, -1.0f,  1.0f );      // Bottom Front Right CW
+ 3292              		.loc 1 401 0
+ 3293 2b60 40F20003 		movw	r3, #:lower16:rxCommand
+ 3294 2b64 C0F20003 		movt	r3, #:upper16:rxCommand
+ 3295 2b68 93ED037A 		flds	s14, [r3, #12]
+ 3296 2b6c 40F20003 		movw	r3, #:lower16:axisPID
+ 3297 2b70 C0F20003 		movt	r3, #:upper16:axisPID
+ 3298 2b74 D3ED007A 		flds	s15, [r3, #0]
+ 3299 2b78 37EE677A 		fsubs	s14, s14, s15
+ 3300 2b7c 40F20003 		movw	r3, #:lower16:axisPID
+ 3301 2b80 C0F20003 		movt	r3, #:upper16:axisPID
+ 3302 2b84 D3ED017A 		flds	s15, [r3, #4]
+ 3303 2b88 37EE677A 		fsubs	s14, s14, s15
+ 3304 2b8c 40F20003 		movw	r3, #:lower16:eepromConfig
+ 3305 2b90 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 3306 2b94 D3ED206A 		flds	s13, [r3, #128]
+ 3307 2b98 40F20003 		movw	r3, #:lower16:axisPID
+ 3308 2b9c C0F20003 		movt	r3, #:upper16:axisPID
+ 3309 2ba0 D3ED027A 		flds	s15, [r3, #8]
+ 3310 2ba4 66EEA77A 		fmuls	s15, s13, s15
+ 3311 2ba8 77EE277A 		fadds	s15, s14, s15
+ 3312 2bac 40F20003 		movw	r3, #:lower16:motor
+ 3313 2bb0 C0F20003 		movt	r3, #:upper16:motor
+ 3314 2bb4 C3ED057A 		fsts	s15, [r3, #20]
+ 402:../src/mixer.c ****             motor[6] = PIDMIX( -1.0f,  1.0f, -1.0f );      // Bottom Rear Right  CCW
+ 3315              		.loc 1 402 0
+ 3316 2bb8 40F20003 		movw	r3, #:lower16:rxCommand
+ 3317 2bbc C0F20003 		movt	r3, #:upper16:rxCommand
+ 3318 2bc0 93ED037A 		flds	s14, [r3, #12]
+ 3319 2bc4 40F20003 		movw	r3, #:lower16:axisPID
+ 3320 2bc8 C0F20003 		movt	r3, #:upper16:axisPID
+ 3321 2bcc D3ED007A 		flds	s15, [r3, #0]
+ 3322 2bd0 37EE677A 		fsubs	s14, s14, s15
+ 3323 2bd4 40F20003 		movw	r3, #:lower16:axisPID
+ 3324 2bd8 C0F20003 		movt	r3, #:upper16:axisPID
+ 3325 2bdc D3ED017A 		flds	s15, [r3, #4]
+ 3326 2be0 37EE277A 		fadds	s14, s14, s15
+ 3327 2be4 40F20003 		movw	r3, #:lower16:eepromConfig
+ 3328 2be8 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 3329 2bec D3ED206A 		flds	s13, [r3, #128]
+ 3330 2bf0 40F20003 		movw	r3, #:lower16:axisPID
+ 3331 2bf4 C0F20003 		movt	r3, #:upper16:axisPID
+ 3332 2bf8 D3ED027A 		flds	s15, [r3, #8]
+ 3333 2bfc 66EEA77A 		fmuls	s15, s13, s15
+ 3334 2c00 77EE677A 		fsubs	s15, s14, s15
+ 3335 2c04 40F20003 		movw	r3, #:lower16:motor
+ 3336 2c08 C0F20003 		movt	r3, #:upper16:motor
+ 3337 2c0c C3ED067A 		fsts	s15, [r3, #24]
+ 403:../src/mixer.c ****             motor[7] = PIDMIX(  1.0f,  1.0f,  1.0f );      // Bottom Rear Left   CW
+ 3338              		.loc 1 403 0
+ 3339 2c10 40F20003 		movw	r3, #:lower16:rxCommand
+ 3340 2c14 C0F20003 		movt	r3, #:upper16:rxCommand
+ 3341 2c18 93ED037A 		flds	s14, [r3, #12]
+ 3342 2c1c 40F20003 		movw	r3, #:lower16:axisPID
+ 3343 2c20 C0F20003 		movt	r3, #:upper16:axisPID
+ 3344 2c24 D3ED007A 		flds	s15, [r3, #0]
+ 3345 2c28 37EE277A 		fadds	s14, s14, s15
+ 3346 2c2c 40F20003 		movw	r3, #:lower16:axisPID
+ 3347 2c30 C0F20003 		movt	r3, #:upper16:axisPID
+ 3348 2c34 D3ED017A 		flds	s15, [r3, #4]
+ 3349 2c38 37EE277A 		fadds	s14, s14, s15
+ 3350 2c3c 40F20003 		movw	r3, #:lower16:eepromConfig
+ 3351 2c40 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 3352 2c44 D3ED206A 		flds	s13, [r3, #128]
+ 3353 2c48 40F20003 		movw	r3, #:lower16:axisPID
+ 3354 2c4c C0F20003 		movt	r3, #:upper16:axisPID
+ 3355 2c50 D3ED027A 		flds	s15, [r3, #8]
+ 3356 2c54 66EEA77A 		fmuls	s15, s13, s15
+ 3357 2c58 77EE277A 		fadds	s15, s14, s15
+ 3358 2c5c 40F20003 		movw	r3, #:lower16:motor
+ 3359 2c60 C0F20003 		movt	r3, #:upper16:motor
+ 3360 2c64 C3ED077A 		fsts	s15, [r3, #28]
+ 404:../src/mixer.c ****             break;
+ 3361              		.loc 1 404 0
+ 3362 2c68 7EE0     		b	.L25
+ 3363              	.L46:
+ 405:../src/mixer.c **** 
+ 406:../src/mixer.c ****         ///////////////////////////////
+ 407:../src/mixer.c **** 
+ 408:../src/mixer.c ****         case MIXERTYPE_FREEMIX:
+ 409:../src/mixer.c ****         	for ( i = 0; i < numberMotor; i++ )
+ 3364              		.loc 1 409 0
+ 3365 2c6a 4FF00003 		mov	r3, #0
+ 3366 2c6e 8DF80530 		strb	r3, [sp, #5]
+ 3367 2c72 6FE0     		b	.L50
+ 3368              	.L51:
+ 410:../src/mixer.c ****         	{
+ 411:../src/mixer.c ****         		motor[i] = PIDMIX ( eepromConfig.freeMix[i][ROLL],
+ 3369              		.loc 1 411 0 discriminator 2
+ 3370 2c74 9DF80500 		ldrb	r0, [sp, #5]	@ zero_extendqisi2
+ 3371 2c78 40F20003 		movw	r3, #:lower16:rxCommand
+ 3372 2c7c C0F20003 		movt	r3, #:upper16:rxCommand
+ 3373 2c80 93ED037A 		flds	s14, [r3, #12]
+ 3374 2c84 40F20003 		movw	r3, #:lower16:axisPID
+ 3375 2c88 C0F20003 		movt	r3, #:upper16:axisPID
+ 3376 2c8c D3ED006A 		flds	s13, [r3, #0]
+ 3377 2c90 9DF80510 		ldrb	r1, [sp, #5]	@ zero_extendqisi2
+ 3378 2c94 40F20002 		movw	r2, #:lower16:eepromConfig
+ 3379 2c98 C0F20002 		movt	r2, #:upper16:eepromConfig
+ 3380 2c9c 0B46     		mov	r3, r1
+ 3381 2c9e 4FEA4303 		lsl	r3, r3, #1
+ 3382 2ca2 5B18     		adds	r3, r3, r1
+ 3383 2ca4 4FEA8303 		lsl	r3, r3, #2
+ 3384 2ca8 D318     		adds	r3, r2, r3
+ 3385 2caa 03F53973 		add	r3, r3, #740
+ 3386 2cae D3ED007A 		flds	s15, [r3, #0]
+ 3387 2cb2 66EEA77A 		fmuls	s15, s13, s15
+ 3388 2cb6 37EE277A 		fadds	s14, s14, s15
+ 3389 2cba 40F20003 		movw	r3, #:lower16:axisPID
+ 3390 2cbe C0F20003 		movt	r3, #:upper16:axisPID
+ 3391 2cc2 D3ED016A 		flds	s13, [r3, #4]
+ 3392 2cc6 9DF80510 		ldrb	r1, [sp, #5]	@ zero_extendqisi2
+ 3393 2cca 40F20002 		movw	r2, #:lower16:eepromConfig
+ 3394 2cce C0F20002 		movt	r2, #:upper16:eepromConfig
+ 3395 2cd2 0B46     		mov	r3, r1
+ 3396 2cd4 4FEA4303 		lsl	r3, r3, #1
+ 3397 2cd8 5B18     		adds	r3, r3, r1
+ 3398 2cda 4FEA8303 		lsl	r3, r3, #2
+ 3399 2cde D318     		adds	r3, r2, r3
+ 3400 2ce0 03F53A73 		add	r3, r3, #744
+ 3401 2ce4 D3ED007A 		flds	s15, [r3, #0]
+ 3402 2ce8 66EEA77A 		fmuls	s15, s13, s15
+ 3403 2cec 37EE277A 		fadds	s14, s14, s15
+ 3404 2cf0 40F20003 		movw	r3, #:lower16:eepromConfig
+ 3405 2cf4 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 3406 2cf8 D3ED206A 		flds	s13, [r3, #128]
+ 3407 2cfc 40F20003 		movw	r3, #:lower16:axisPID
+ 3408 2d00 C0F20003 		movt	r3, #:upper16:axisPID
+ 3409 2d04 D3ED027A 		flds	s15, [r3, #8]
+ 3410 2d08 66EEA77A 		fmuls	s15, s13, s15
+ 3411 2d0c 9DF80510 		ldrb	r1, [sp, #5]	@ zero_extendqisi2
+ 3412 2d10 40F20002 		movw	r2, #:lower16:eepromConfig
+ 3413 2d14 C0F20002 		movt	r2, #:upper16:eepromConfig
+ 3414 2d18 0B46     		mov	r3, r1
+ 3415 2d1a 4FEA4303 		lsl	r3, r3, #1
+ 3416 2d1e 5B18     		adds	r3, r3, r1
+ 3417 2d20 4FEA8303 		lsl	r3, r3, #2
+ 3418 2d24 D318     		adds	r3, r2, r3
+ 3419 2d26 03F53B73 		add	r3, r3, #748
+ 3420 2d2a D3ED006A 		flds	s13, [r3, #0]
+ 3421 2d2e 67EEA67A 		fmuls	s15, s15, s13
+ 3422 2d32 77EE277A 		fadds	s15, s14, s15
+ 3423 2d36 40F20003 		movw	r3, #:lower16:motor
+ 3424 2d3a C0F20003 		movt	r3, #:upper16:motor
+ 3425 2d3e 4FEA8002 		lsl	r2, r0, #2
+ 3426 2d42 9B18     		adds	r3, r3, r2
+ 3427 2d44 C3ED007A 		fsts	s15, [r3, #0]
+ 409:../src/mixer.c ****         	for ( i = 0; i < numberMotor; i++ )
+ 3428              		.loc 1 409 0 discriminator 2
+ 3429 2d48 9DF80530 		ldrb	r3, [sp, #5]
+ 3430 2d4c 03F10103 		add	r3, r3, #1
+ 3431 2d50 8DF80530 		strb	r3, [sp, #5]
+ 3432              	.L50:
+ 409:../src/mixer.c ****         	for ( i = 0; i < numberMotor; i++ )
+ 3433              		.loc 1 409 0 is_stmt 0 discriminator 1
+ 3434 2d54 40F20003 		movw	r3, #:lower16:numberMotor
+ 3435 2d58 C0F20003 		movt	r3, #:upper16:numberMotor
+ 3436 2d5c 1B78     		ldrb	r3, [r3, #0]	@ zero_extendqisi2
+ 3437 2d5e 9DF80520 		ldrb	r2, [sp, #5]	@ zero_extendqisi2
+ 3438 2d62 9A42     		cmp	r2, r3
+ 3439 2d64 86D3     		bcc	.L51
+ 412:../src/mixer.c ****         				            eepromConfig.freeMix[i][PITCH],
+ 413:../src/mixer.c ****         				            eepromConfig.freeMix[i][YAW] );
+ 414:../src/mixer.c ****         	}
+ 415:../src/mixer.c **** 
+ 416:../src/mixer.c ****         	break;
+ 3440              		.loc 1 416 0 is_stmt 1
+ 3441 2d66 00BF     		nop
+ 3442              	.L25:
+ 417:../src/mixer.c ****     }
+ 418:../src/mixer.c **** 
+ 419:../src/mixer.c ****     ///////////////////////////////////
+ 420:../src/mixer.c **** 
+ 421:../src/mixer.c ****     // this is a way to still have good gyro corrections if any motor reaches its max.
+ 422:../src/mixer.c **** 
+ 423:../src/mixer.c ****     maxMotor = motor[0];
+ 3443              		.loc 1 423 0
+ 3444 2d68 40F20003 		movw	r3, #:lower16:motor
+ 3445 2d6c C0F20003 		movt	r3, #:upper16:motor
+ 3446 2d70 D3ED007A 		flds	s15, [r3, #0]
+ 3447 2d74 FDEEE77A 		ftosizs	s15, s15
+ 3448 2d78 17EE903A 		fmrs	r3, s15	@ int
+ 3449 2d7c ADF80630 		strh	r3, [sp, #6]	@ movhi
+ 424:../src/mixer.c **** 
+ 425:../src/mixer.c ****     for (i = 1; i < numberMotor; i++)
+ 3450              		.loc 1 425 0
+ 3451 2d80 4FF00103 		mov	r3, #1
+ 3452 2d84 8DF80530 		strb	r3, [sp, #5]
+ 3453 2d88 31E0     		b	.L52
+ 3454              	.L54:
+ 426:../src/mixer.c ****         if (motor[i] > maxMotor)
+ 3455              		.loc 1 426 0
+ 3456 2d8a 9DF80520 		ldrb	r2, [sp, #5]	@ zero_extendqisi2
+ 3457 2d8e 40F20003 		movw	r3, #:lower16:motor
+ 3458 2d92 C0F20003 		movt	r3, #:upper16:motor
+ 3459 2d96 4FEA8202 		lsl	r2, r2, #2
+ 3460 2d9a 9B18     		adds	r3, r3, r2
+ 3461 2d9c 93ED007A 		flds	s14, [r3, #0]
+ 3462 2da0 BDF90630 		ldrsh	r3, [sp, #6]
+ 3463 2da4 06EE903A 		fmsr	s13, r3	@ int
+ 3464 2da8 F8EEE67A 		fsitos	s15, s13
+ 3465 2dac B4EEE77A 		fcmpes	s14, s15
+ 3466 2db0 F1EE10FA 		fmstat
+ 3467 2db4 D4BF     		ite	le
+ 3468 2db6 0023     		movle	r3, #0
+ 3469 2db8 0123     		movgt	r3, #1
+ 3470 2dba DBB2     		uxtb	r3, r3
+ 3471 2dbc 002B     		cmp	r3, #0
+ 3472 2dbe 10D0     		beq	.L53
+ 427:../src/mixer.c ****             maxMotor = motor[i];
+ 3473              		.loc 1 427 0
+ 3474 2dc0 9DF80520 		ldrb	r2, [sp, #5]	@ zero_extendqisi2
+ 3475 2dc4 40F20003 		movw	r3, #:lower16:motor
+ 3476 2dc8 C0F20003 		movt	r3, #:upper16:motor
+ 3477 2dcc 4FEA8202 		lsl	r2, r2, #2
+ 3478 2dd0 9B18     		adds	r3, r3, r2
+ 3479 2dd2 D3ED007A 		flds	s15, [r3, #0]
+ 3480 2dd6 FDEEE77A 		ftosizs	s15, s15
+ 3481 2dda 17EE903A 		fmrs	r3, s15	@ int
+ 3482 2dde ADF80630 		strh	r3, [sp, #6]	@ movhi
+ 3483              	.L53:
+ 425:../src/mixer.c ****     for (i = 1; i < numberMotor; i++)
+ 3484              		.loc 1 425 0
+ 3485 2de2 9DF80530 		ldrb	r3, [sp, #5]
+ 3486 2de6 03F10103 		add	r3, r3, #1
+ 3487 2dea 8DF80530 		strb	r3, [sp, #5]
+ 3488              	.L52:
+ 425:../src/mixer.c ****     for (i = 1; i < numberMotor; i++)
+ 3489              		.loc 1 425 0 is_stmt 0 discriminator 1
+ 3490 2dee 40F20003 		movw	r3, #:lower16:numberMotor
+ 3491 2df2 C0F20003 		movt	r3, #:upper16:numberMotor
+ 3492 2df6 1B78     		ldrb	r3, [r3, #0]	@ zero_extendqisi2
+ 3493 2df8 9DF80520 		ldrb	r2, [sp, #5]	@ zero_extendqisi2
+ 3494 2dfc 9A42     		cmp	r2, r3
+ 3495 2dfe C4D3     		bcc	.L54
+ 428:../src/mixer.c **** 
+ 429:../src/mixer.c ****     for (i = 0; i < numberMotor; i++)
+ 3496              		.loc 1 429 0 is_stmt 1
+ 3497 2e00 4FF00003 		mov	r3, #0
+ 3498 2e04 8DF80530 		strb	r3, [sp, #5]
+ 3499 2e08 9FE0     		b	.L55
+ 3500              	.L59:
+ 430:../src/mixer.c ****     {
+ 431:../src/mixer.c ****         if (maxMotor > eepromConfig.maxThrottle)
+ 3501              		.loc 1 431 0
+ 3502 2e0a BDF90630 		ldrsh	r3, [sp, #6]
+ 3503 2e0e 07EE903A 		fmsr	s15, r3	@ int
+ 3504 2e12 B8EEE77A 		fsitos	s14, s15
+ 3505 2e16 40F20003 		movw	r3, #:lower16:eepromConfig
+ 3506 2e1a C0F20003 		movt	r3, #:upper16:eepromConfig
+ 3507 2e1e D3ED257A 		flds	s15, [r3, #148]
+ 3508 2e22 B4EEE77A 		fcmpes	s14, s15
+ 3509 2e26 F1EE10FA 		fmstat
+ 3510 2e2a D4BF     		ite	le
+ 3511 2e2c 0023     		movle	r3, #0
+ 3512 2e2e 0123     		movgt	r3, #1
+ 3513 2e30 DBB2     		uxtb	r3, r3
+ 3514 2e32 002B     		cmp	r3, #0
+ 3515 2e34 25D0     		beq	.L56
+ 432:../src/mixer.c ****             motor[i] -= maxMotor - eepromConfig.maxThrottle;
+ 3516              		.loc 1 432 0
+ 3517 2e36 9DF80520 		ldrb	r2, [sp, #5]	@ zero_extendqisi2
+ 3518 2e3a 9DF80510 		ldrb	r1, [sp, #5]	@ zero_extendqisi2
+ 3519 2e3e 40F20003 		movw	r3, #:lower16:motor
+ 3520 2e42 C0F20003 		movt	r3, #:upper16:motor
+ 3521 2e46 4FEA8101 		lsl	r1, r1, #2
+ 3522 2e4a 5B18     		adds	r3, r3, r1
+ 3523 2e4c 93ED007A 		flds	s14, [r3, #0]
+ 3524 2e50 BDF90630 		ldrsh	r3, [sp, #6]
+ 3525 2e54 07EE903A 		fmsr	s15, r3	@ int
+ 3526 2e58 F8EEE76A 		fsitos	s13, s15
+ 3527 2e5c 40F20003 		movw	r3, #:lower16:eepromConfig
+ 3528 2e60 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 3529 2e64 D3ED257A 		flds	s15, [r3, #148]
+ 3530 2e68 76EEE77A 		fsubs	s15, s13, s15
+ 3531 2e6c 77EE677A 		fsubs	s15, s14, s15
+ 3532 2e70 40F20003 		movw	r3, #:lower16:motor
+ 3533 2e74 C0F20003 		movt	r3, #:upper16:motor
+ 3534 2e78 4FEA8202 		lsl	r2, r2, #2
+ 3535 2e7c 9B18     		adds	r3, r3, r2
+ 3536 2e7e C3ED007A 		fsts	s15, [r3, #0]
+ 3537              	.L56:
+ 433:../src/mixer.c **** 
+ 434:../src/mixer.c ****         motor[i] = constrain(motor[i], eepromConfig.minThrottle, eepromConfig.maxThrottle);
+ 3538              		.loc 1 434 0
+ 3539 2e82 9DF80540 		ldrb	r4, [sp, #5]	@ zero_extendqisi2
+ 3540 2e86 9DF80520 		ldrb	r2, [sp, #5]	@ zero_extendqisi2
+ 3541 2e8a 40F20003 		movw	r3, #:lower16:motor
+ 3542 2e8e C0F20003 		movt	r3, #:upper16:motor
+ 3543 2e92 4FEA8202 		lsl	r2, r2, #2
+ 3544 2e96 9B18     		adds	r3, r3, r2
+ 3545 2e98 1968     		ldr	r1, [r3, #0]	@ float
+ 3546 2e9a 40F20003 		movw	r3, #:lower16:eepromConfig
+ 3547 2e9e C0F20003 		movt	r3, #:upper16:eepromConfig
+ 3548 2ea2 D3F89020 		ldr	r2, [r3, #144]	@ float
+ 3549 2ea6 40F20003 		movw	r3, #:lower16:eepromConfig
+ 3550 2eaa C0F20003 		movt	r3, #:upper16:eepromConfig
+ 3551 2eae D3F89430 		ldr	r3, [r3, #148]	@ float
+ 3552 2eb2 0846     		mov	r0, r1	@ float
+ 3553 2eb4 1146     		mov	r1, r2	@ float
+ 3554 2eb6 1A46     		mov	r2, r3	@ float
+ 3555 2eb8 FFF7FEFF 		bl	constrain
+ 3556 2ebc 0246     		mov	r2, r0	@ float
+ 3557 2ebe 40F20003 		movw	r3, #:lower16:motor
+ 3558 2ec2 C0F20003 		movt	r3, #:upper16:motor
+ 3559 2ec6 4FEA8401 		lsl	r1, r4, #2
+ 3560 2eca 5B18     		adds	r3, r3, r1
+ 3561 2ecc 1A60     		str	r2, [r3, #0]	@ float
+ 435:../src/mixer.c **** 
+ 436:../src/mixer.c ****         if ((rxCommand[THROTTLE]) < eepromConfig.minCheck)
+ 3562              		.loc 1 436 0
+ 3563 2ece 40F20003 		movw	r3, #:lower16:rxCommand
+ 3564 2ed2 C0F20003 		movt	r3, #:upper16:rxCommand
+ 3565 2ed6 93ED037A 		flds	s14, [r3, #12]
+ 3566 2eda 40F20003 		movw	r3, #:lower16:eepromConfig
+ 3567 2ede C0F20003 		movt	r3, #:upper16:eepromConfig
+ 3568 2ee2 D3ED227A 		flds	s15, [r3, #136]
+ 3569 2ee6 B4EEE77A 		fcmpes	s14, s15
+ 3570 2eea F1EE10FA 		fmstat
+ 3571 2eee 54BF     		ite	pl
+ 3572 2ef0 0023     		movpl	r3, #0
+ 3573 2ef2 0123     		movmi	r3, #1
+ 3574 2ef4 DBB2     		uxtb	r3, r3
+ 3575 2ef6 002B     		cmp	r3, #0
+ 3576 2ef8 0FD0     		beq	.L57
+ 437:../src/mixer.c ****         {
+ 438:../src/mixer.c ****             motor[i] = eepromConfig.minThrottle;
+ 3577              		.loc 1 438 0
+ 3578 2efa 9DF80510 		ldrb	r1, [sp, #5]	@ zero_extendqisi2
+ 3579 2efe 40F20003 		movw	r3, #:lower16:eepromConfig
+ 3580 2f02 C0F20003 		movt	r3, #:upper16:eepromConfig
+ 3581 2f06 D3F89020 		ldr	r2, [r3, #144]	@ float
+ 3582 2f0a 40F20003 		movw	r3, #:lower16:motor
+ 3583 2f0e C0F20003 		movt	r3, #:upper16:motor
+ 3584 2f12 4FEA8101 		lsl	r1, r1, #2
+ 3585 2f16 5B18     		adds	r3, r3, r1
+ 3586 2f18 1A60     		str	r2, [r3, #0]	@ float
+ 3587              	.L57:
+ 439:../src/mixer.c ****         }
+ 440:../src/mixer.c **** 
+ 441:../src/mixer.c ****         if ( armed == false )
+ 3588              		.loc 1 441 0
+ 3589 2f1a 40F20003 		movw	r3, #:lower16:armed
+ 3590 2f1e C0F20003 		movt	r3, #:upper16:armed
+ 3591 2f22 1B78     		ldrb	r3, [r3, #0]	@ zero_extendqisi2
+ 3592 2f24 002B     		cmp	r3, #0
+ 3593 2f26 0AD1     		bne	.L58
+ 442:../src/mixer.c ****             motor[i] = (float)MINCOMMAND;
+ 3594              		.loc 1 442 0
+ 3595 2f28 9DF80520 		ldrb	r2, [sp, #5]	@ zero_extendqisi2
+ 3596 2f2c 40F20003 		movw	r3, #:lower16:motor
+ 3597 2f30 C0F20003 		movt	r3, #:upper16:motor
+ 3598 2f34 4FEA8202 		lsl	r2, r2, #2
+ 3599 2f38 9B18     		adds	r3, r3, r2
+ 3600 2f3a 0A4A     		ldr	r2, .L70	@ float
+ 3601 2f3c 1A60     		str	r2, [r3, #0]	@ float
+ 3602              	.L58:
+ 429:../src/mixer.c ****     for (i = 0; i < numberMotor; i++)
+ 3603              		.loc 1 429 0
+ 3604 2f3e 9DF80530 		ldrb	r3, [sp, #5]
+ 3605 2f42 03F10103 		add	r3, r3, #1
+ 3606 2f46 8DF80530 		strb	r3, [sp, #5]
+ 3607              	.L55:
+ 429:../src/mixer.c ****     for (i = 0; i < numberMotor; i++)
+ 3608              		.loc 1 429 0 is_stmt 0 discriminator 1
+ 3609 2f4a 40F20003 		movw	r3, #:lower16:numberMotor
+ 3610 2f4e C0F20003 		movt	r3, #:upper16:numberMotor
+ 3611 2f52 1B78     		ldrb	r3, [r3, #0]	@ zero_extendqisi2
+ 3612 2f54 9DF80520 		ldrb	r2, [sp, #5]	@ zero_extendqisi2
+ 3613 2f58 9A42     		cmp	r2, r3
+ 3614 2f5a FFF456AF 		bcc	.L59
+ 443:../src/mixer.c ****     }
+ 444:../src/mixer.c **** }
+ 3615              		.loc 1 444 0 is_stmt 1
+ 3616 2f5e 03B0     		add	sp, sp, #12
+ 3617 2f60 30BD     		pop	{r4, r5, pc}
+ 3618              	.L71:
+ 3619 2f62 00BF     		.align	2
+ 3620              	.L70:
+ 3621 2f64 0000FA44 		.word	1157234688
+ 3622              		.cfi_endproc
+ 3623              	.LFE116:
+ 3625              	.Letext0:
+ 3626              		.file 2 "c:\\program files\\codesourcery\\sourcery_codebench_lite_for_arm_eabi\\bin\\../lib/gcc/ar
+ 3627              		.file 3 "../src/pid.h"
+ 3628              		.file 4 "../src/aq32Plus_F3.h"
+ 3629              		.file 5 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\src\\gps/gpsMediaTe
+ 3630              		.file 6 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\src\\gps/gpsNMEA.h"
+ 3631              		.file 7 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\src\\gps/gpsUblox.h
+ 3632              		.file 8 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\Libraries\\CMSIS\\I
+ 3633              		.file 9 "../src/computeAxisCommands.h"
+ 3634              		.file 10 "../src/config.h"
+ 3635              		.file 11 "../src/flightCommand.h"
+DEFINED SYMBOLS
+                            *ABS*:00000000 mixer.c
+                            *COM*:00000001 mtk19ProcessDataState
+                            *COM*:00000001 nmeaProcessDataState
+                            *COM*:00000001 ubloxProcessDataState
+                            *COM*:00000001 numberMotor
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccjrIvH6.s:28     .data:00000000 motor
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccjrIvH6.s:25     .data:00000000 $d
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccjrIvH6.s:41     .data:00000020 servo
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccjrIvH6.s:45     .text:00000000 $t
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccjrIvH6.s:50     .text:00000000 initMixer
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccjrIvH6.s:69     .text:0000001c $d
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccjrIvH6.s:92     .text:00000070 $t
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccjrIvH6.s:167    .text:000000fc writeServos
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccjrIvH6.s:208    .text:00000140 writeMotors
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccjrIvH6.s:263    .text:0000019c writeAllMotors
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccjrIvH6.s:315    .text:000001e8 pulseMotors
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccjrIvH6.s:366    .text:00000240 $d
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccjrIvH6.s:374    .text:00000244 $t
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccjrIvH6.s:379    .text:00000244 mixTable
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccjrIvH6.s:405    .text:00000264 $d
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccjrIvH6.s:428    .text:000002b8 $t
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccjrIvH6.s:884    .text:00000900 $d
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccjrIvH6.s:889    .text:0000090c $t
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccjrIvH6.s:1417   .text:000010d0 $d
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccjrIvH6.s:1421   .text:000010d8 $t
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccjrIvH6.s:2036   .text:000019f0 $d
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccjrIvH6.s:2041   .text:000019fc $t
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccjrIvH6.s:2548   .text:00002060 $d
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccjrIvH6.s:2557   .text:0000207c $t
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccjrIvH6.s:3175   .text:000029a4 $d
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccjrIvH6.s:3178   .text:000029a8 $t
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccjrIvH6.s:3621   .text:00002f64 $d
+                     .debug_frame:00000010 $d
+
+UNDEFINED SYMBOLS
+eepromConfig
+pwmServoWrite
+pwmEscWrite
+delay
+__aeabi_f2d
+__aeabi_dmul
+__aeabi_dadd
+__aeabi_d2f
+sensors
+rxCommand
+constrain
+flightMode
+axisPID
+vTailThrust
+armed

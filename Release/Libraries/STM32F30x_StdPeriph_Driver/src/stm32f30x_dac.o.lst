@@ -1,0 +1,1495 @@
+   1              		.syntax unified
+   2              		.cpu cortex-m4
+   3              		.eabi_attribute 27, 3
+   4              		.fpu fpv4-sp-d16
+   5              		.eabi_attribute 20, 1
+   6              		.eabi_attribute 21, 1
+   7              		.eabi_attribute 23, 3
+   8              		.eabi_attribute 24, 1
+   9              		.eabi_attribute 25, 1
+  10              		.eabi_attribute 26, 1
+  11              		.eabi_attribute 30, 6
+  12              		.eabi_attribute 34, 1
+  13              		.eabi_attribute 18, 4
+  14              		.thumb
+  15              		.file	"stm32f30x_dac.c"
+  16              		.text
+  17              	.Ltext0:
+  18              		.cfi_sections	.debug_frame
+  19              		.align	2
+  20              		.global	DAC_DeInit
+  21              		.thumb
+  22              		.thumb_func
+  24              	DAC_DeInit:
+  25              	.LFB111:
+  26              		.file 1 "../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c"
+   1:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** /**
+   2:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   ******************************************************************************
+   3:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @file    stm32f30x_dac.c
+   4:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @author  MCD Application Team
+   5:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @version V1.0.1
+   6:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @date    23-October-2012
+   7:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @brief   This file provides firmware functions to manage the following 
+   8:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *          functionalities of the Digital-to-Analog Converter (DAC) peripheral: 
+   9:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *           + DAC channels configuration: trigger, output buffer, data format
+  10:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *           + DMA management      
+  11:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *           + Interrupts and flags management
+  12:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *
+  13:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   @verbatim
+  14:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     
+  15:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****  ===============================================================================
+  16:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****                       ##### DAC Peripheral features #####
+  17:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****  ===============================================================================
+  18:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     [..] The device integrates two 12-bit Digital Analog Converters that can 
+  19:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****          be used independently or simultaneously (dual mode):
+  20:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****          (#) DAC channel1 with DAC_OUT1 as output
+  21:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****          (#) DAC channel2 with DAC_OUT2 as output
+  22:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     [..] Digital to Analog conversion can be non-triggered using DAC_Trigger_None
+  23:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****          and DAC_OUT1/DAC_OUT2 is available once writing to DHRx register using 
+  24:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****          DAC_SetChannel1Data()/DAC_SetChannel2Data.
+  25:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     [..] Digital to Analog conversion can be triggered by:
+  26:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****          (#) External event: EXTI Line 9 (any GPIOx_Pin9) using DAC_Trigger_Ext_IT9.
+  27:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****              The used pin (GPIOx_Pin9) must be configured in input mode.
+  28:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****          (#) Timers TRGO: TIM2, TIM8/TIM3, TIM4, TIM6, TIM7, and TIM15 
+  29:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****              (DAC_Trigger_T2_TRGO, DAC_Trigger_T4_TRGO...)
+  30:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****              The timer TRGO event should be selected using TIM_SelectOutputTrigger()
+  31:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****              (++) To trigger DAC conversions by TIM3 instead of TIM8 follow
+  32:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****                  this sequence:
+  33:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****                  (+++) Enable SYSCFG APB clock by calling
+  34:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****                        RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE);
+  35:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****                  (+++) Select DAC_Trigger_T3_TRGO when calling DAC_Init()
+  36:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****                  (+++) Remap the DAC trigger from TIM8 to TIM3 by calling
+  37:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****                        SYSCFG_TriggerRemapConfig(SYSCFG_TriggerRemap_DACTIM3, ENABLE)
+  38:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****          (#) Software using DAC_Trigger_Software
+  39:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     [..] Each DAC channel integrates an output buffer that can be used to 
+  40:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****          reduce the output impedance, and to drive external loads directly
+  41:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****          without having to add an external operational amplifier.
+  42:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****          To enable, the output buffer use  
+  43:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****          DAC_InitStructure.DAC_OutputBuffer = DAC_OutputBuffer_Enable;
+  44:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     [..] Refer to the device datasheet for more details about output impedance
+  45:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****          value with and without output buffer.
+  46:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     [..] Both DAC channels can be used to generate:
+  47:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****          (+) Noise wave using DAC_WaveGeneration_Noise
+  48:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****          (+) Triangle wave using DAC_WaveGeneration_Triangle
+  49:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     [..] Wave generation can be disabled using DAC_WaveGeneration_None
+  50:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     [..] The DAC data format can be:
+  51:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****          (+) 8-bit right alignment using DAC_Align_8b_R
+  52:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****          (+) 12-bit left alignment using DAC_Align_12b_L
+  53:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****          (+) 12-bit right alignment using DAC_Align_12b_R
+  54:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     [..] The analog output voltage on each DAC channel pin is determined
+  55:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****          by the following equation: 
+  56:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****          (+) DAC_OUTx = VREF+ * DOR / 4095 with DOR is the Data Output Register. 
+  57:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****          VREF+ is the input voltage reference (refer to the device datasheet)
+  58:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****          e.g. To set DAC_OUT1 to 0.7V, use DAC_SetChannel1Data(DAC_Align_12b_R, 868);
+  59:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****          Assuming that VREF+ = 3.3, DAC_OUT1 = (3.3 * 868) / 4095 = 0.7V
+  60:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     [..] A DMA request can be generated when an external trigger (but not
+  61:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****          a software trigger) occurs if DMA2 requests are enabled using
+  62:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****          DAC_DMACmd();
+  63:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****          DMA requests are mapped as following:
+  64:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****          (+) DAC channel1 is mapped on DMA2 channel3 which must be already 
+  65:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****              configured.
+  66:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****          (+) DAC channel2 is mapped on DMA2 channel4 which must be already 
+  67:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****              configured.
+  68:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****  
+  69:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****                     ##### How to use this driver #####
+  70:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****  ===============================================================================          
+  71:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     [..]
+  72:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     (+) DAC APB clock must be enabled to get write access to DAC
+  73:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****         registers using RCC_APB1PeriphClockCmd(RCC_APB1Periph_DAC, ENABLE);
+  74:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     (+) Configure DAC_OUTx (DAC_OUT1: PA4, DAC_OUT2: PA5) in analog mode.
+  75:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     (+) Configure the DAC channel using DAC_Init();
+  76:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     (+) Enable the DAC channel using DAC_Cmd();
+  77:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****  
+  78:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   @endverbatim
+  79:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     
+  80:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   ******************************************************************************
+  81:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @attention
+  82:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *
+  83:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * <h2><center>&copy; COPYRIGHT 2012 STMicroelectronics</center></h2>
+  84:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *
+  85:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * Licensed under MCD-ST Liberty SW License Agreement V2, (the "License");
+  86:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * You may not use this file except in compliance with the License.
+  87:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * You may obtain a copy of the License at:
+  88:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *
+  89:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *        http://www.st.com/software_license_agreement_liberty_v2
+  90:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *
+  91:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * Unless required by applicable law or agreed to in writing, software 
+  92:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * distributed under the License is distributed on an "AS IS" BASIS, 
+  93:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  94:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * See the License for the specific language governing permissions and
+  95:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * limitations under the License.
+  96:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *
+  97:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   ******************************************************************************
+  98:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   */
+  99:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 100:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 101:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** /* Includes ------------------------------------------------------------------*/
+ 102:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** #include "stm32f30x_dac.h"
+ 103:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** #include "stm32f30x_rcc.h"
+ 104:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 105:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** /** @addtogroup STM32F30x_StdPeriph_Driver
+ 106:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @{
+ 107:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   */
+ 108:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 109:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** /** @defgroup DAC 
+ 110:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @brief DAC driver modules
+ 111:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @{
+ 112:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   */ 
+ 113:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 114:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** /* Private typedef -----------------------------------------------------------*/
+ 115:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** /* Private define ------------------------------------------------------------*/
+ 116:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 117:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** /* CR register Mask */
+ 118:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** #define CR_CLEAR_MASK              ((uint32_t)0x00000FFE)
+ 119:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 120:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** /* DAC Dual Channels SWTRIG masks */
+ 121:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** #define DUAL_SWTRIG_SET            ((uint32_t)0x00000003)
+ 122:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** #define DUAL_SWTRIG_RESET          ((uint32_t)0xFFFFFFFC)
+ 123:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 124:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** /* DHR registers offsets */
+ 125:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** #define DHR12R1_OFFSET             ((uint32_t)0x00000008)
+ 126:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** #define DHR12R2_OFFSET             ((uint32_t)0x00000014)
+ 127:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** #define DHR12RD_OFFSET             ((uint32_t)0x00000020)
+ 128:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 129:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** /* DOR register offset */
+ 130:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** #define DOR_OFFSET                 ((uint32_t)0x0000002C)
+ 131:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 132:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** /* Private macro -------------------------------------------------------------*/
+ 133:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** /* Private variables ---------------------------------------------------------*/
+ 134:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** /* Private function prototypes -----------------------------------------------*/
+ 135:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** /* Private functions ---------------------------------------------------------*/
+ 136:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 137:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** /** @defgroup DAC_Private_Functions
+ 138:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @{
+ 139:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   */
+ 140:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 141:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** /** @defgroup DAC_Group1 DAC channels configuration
+ 142:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****  *  @brief   DAC channels configuration: trigger, output buffer, data format 
+ 143:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****  *
+ 144:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** @verbatim   
+ 145:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****  ===============================================================================
+ 146:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     ##### DAC channels configuration: trigger, output buffer, data format #####
+ 147:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****  ===============================================================================  
+ 148:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 149:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** @endverbatim
+ 150:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @{
+ 151:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   */
+ 152:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 153:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** /**
+ 154:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @brief  Deinitializes the DAC peripheral registers to their default reset values.
+ 155:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @param  None
+ 156:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @retval None
+ 157:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   */
+ 158:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** void DAC_DeInit(void)
+ 159:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** {
+  27              		.loc 1 159 0
+  28              		.cfi_startproc
+  29              		@ args = 0, pretend = 0, frame = 0
+  30              		@ frame_needed = 0, uses_anonymous_args = 0
+  31 0000 08B5     		push	{r3, lr}
+  32              	.LCFI0:
+  33              		.cfi_def_cfa_offset 8
+  34              		.cfi_offset 14, -4
+  35              		.cfi_offset 3, -8
+ 160:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   /* Enable DAC reset state */
+ 161:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   RCC_APB1PeriphResetCmd(RCC_APB1Periph_DAC, ENABLE);
+  36              		.loc 1 161 0
+  37 0002 4FF00050 		mov	r0, #536870912
+  38 0006 4FF00101 		mov	r1, #1
+  39 000a FFF7FEFF 		bl	RCC_APB1PeriphResetCmd
+ 162:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   /* Release DAC from reset state */
+ 163:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   RCC_APB1PeriphResetCmd(RCC_APB1Periph_DAC, DISABLE);
+  40              		.loc 1 163 0
+  41 000e 4FF00050 		mov	r0, #536870912
+  42 0012 4FF00001 		mov	r1, #0
+  43 0016 FFF7FEFF 		bl	RCC_APB1PeriphResetCmd
+ 164:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** }
+  44              		.loc 1 164 0
+  45 001a 08BD     		pop	{r3, pc}
+  46              		.cfi_endproc
+  47              	.LFE111:
+  49              		.align	2
+  50              		.global	DAC_Init
+  51              		.thumb
+  52              		.thumb_func
+  54              	DAC_Init:
+  55              	.LFB112:
+ 165:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 166:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** /**
+ 167:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @brief  Initializes the DAC peripheral according to the specified parameters
+ 168:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *         in the DAC_InitStruct.
+ 169:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @param  DAC_Channel: the selected DAC channel. 
+ 170:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *          This parameter can be:
+ 171:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *            @arg DAC_Channel_1: DAC Channel1 selected
+ 172:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *            @arg DAC_Channel_2: DAC Channel2 selected
+ 173:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @param  DAC_InitStruct: pointer to a DAC_InitTypeDef structure that contains
+ 174:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *         the configuration information for the  specified DAC channel.
+ 175:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @retval None
+ 176:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   */
+ 177:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** void DAC_Init(uint32_t DAC_Channel, DAC_InitTypeDef* DAC_InitStruct)
+ 178:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** {
+  56              		.loc 1 178 0
+  57              		.cfi_startproc
+  58              		@ args = 0, pretend = 0, frame = 16
+  59              		@ frame_needed = 0, uses_anonymous_args = 0
+  60              		@ link register save eliminated.
+  61 001c 84B0     		sub	sp, sp, #16
+  62              	.LCFI1:
+  63              		.cfi_def_cfa_offset 16
+  64 001e 0190     		str	r0, [sp, #4]
+  65 0020 0091     		str	r1, [sp, #0]
+ 179:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   uint32_t tmpreg1 = 0, tmpreg2 = 0;
+  66              		.loc 1 179 0
+  67 0022 4FF00003 		mov	r3, #0
+  68 0026 0393     		str	r3, [sp, #12]
+  69 0028 4FF00003 		mov	r3, #0
+  70 002c 0293     		str	r3, [sp, #8]
+ 180:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 181:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   /* Check the DAC parameters */
+ 182:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   assert_param(IS_DAC_TRIGGER(DAC_InitStruct->DAC_Trigger));
+ 183:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   assert_param(IS_DAC_GENERATE_WAVE(DAC_InitStruct->DAC_WaveGeneration));
+ 184:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   assert_param(IS_DAC_LFSR_UNMASK_TRIANGLE_AMPLITUDE(DAC_InitStruct->DAC_LFSRUnmask_TriangleAmplitu
+ 185:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   assert_param(IS_DAC_OUTPUT_BUFFER_STATE(DAC_InitStruct->DAC_OutputBuffer));
+ 186:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 187:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** /*---------------------------- DAC CR Configuration --------------------------*/
+ 188:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   /* Get the DAC CR value */
+ 189:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   tmpreg1 = DAC->CR;
+  71              		.loc 1 189 0
+  72 002e 4FF4E843 		mov	r3, #29696
+  73 0032 C4F20003 		movt	r3, 16384
+  74 0036 1B68     		ldr	r3, [r3, #0]
+  75 0038 0393     		str	r3, [sp, #12]
+ 190:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   /* Clear BOFFx, TENx, TSELx, WAVEx and MAMPx bits */
+ 191:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   tmpreg1 &= ~(CR_CLEAR_MASK << DAC_Channel);
+  76              		.loc 1 191 0
+  77 003a 019B     		ldr	r3, [sp, #4]
+  78 003c 40F6FE72 		movw	r2, #4094
+  79 0040 02FA03F3 		lsl	r3, r2, r3
+  80 0044 6FEA0303 		mvn	r3, r3
+  81 0048 039A     		ldr	r2, [sp, #12]
+  82 004a 1340     		ands	r3, r3, r2
+  83 004c 0393     		str	r3, [sp, #12]
+ 192:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   /* Configure for the selected DAC channel: buffer output, trigger, 
+ 193:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****      wave generation, mask/amplitude for wave generation */
+ 194:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   /* Set TSELx and TENx bits according to DAC_Trigger value */
+ 195:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   /* Set WAVEx bits according to DAC_WaveGeneration value */
+ 196:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   /* Set MAMPx bits according to DAC_LFSRUnmask_TriangleAmplitude value */ 
+ 197:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   /* Set BOFFx bit according to DAC_OutputBuffer value */   
+ 198:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   tmpreg2 = (DAC_InitStruct->DAC_Trigger | DAC_InitStruct->DAC_WaveGeneration |
+  84              		.loc 1 198 0
+  85 004e 009B     		ldr	r3, [sp, #0]
+  86 0050 1A68     		ldr	r2, [r3, #0]
+  87 0052 009B     		ldr	r3, [sp, #0]
+  88 0054 5B68     		ldr	r3, [r3, #4]
+  89 0056 1A43     		orrs	r2, r2, r3
+ 199:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****              DAC_InitStruct->DAC_LFSRUnmask_TriangleAmplitude | \
+  90              		.loc 1 199 0
+  91 0058 009B     		ldr	r3, [sp, #0]
+  92 005a 9B68     		ldr	r3, [r3, #8]
+ 198:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   tmpreg2 = (DAC_InitStruct->DAC_Trigger | DAC_InitStruct->DAC_WaveGeneration |
+  93              		.loc 1 198 0
+  94 005c 1A43     		orrs	r2, r2, r3
+ 200:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****              DAC_InitStruct->DAC_OutputBuffer);
+  95              		.loc 1 200 0
+  96 005e 009B     		ldr	r3, [sp, #0]
+  97 0060 DB68     		ldr	r3, [r3, #12]
+ 198:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   tmpreg2 = (DAC_InitStruct->DAC_Trigger | DAC_InitStruct->DAC_WaveGeneration |
+  98              		.loc 1 198 0
+  99 0062 1343     		orrs	r3, r3, r2
+ 100 0064 0293     		str	r3, [sp, #8]
+ 201:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   /* Calculate CR register value depending on DAC_Channel */
+ 202:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   tmpreg1 |= tmpreg2 << DAC_Channel;
+ 101              		.loc 1 202 0
+ 102 0066 019B     		ldr	r3, [sp, #4]
+ 103 0068 029A     		ldr	r2, [sp, #8]
+ 104 006a 02FA03F3 		lsl	r3, r2, r3
+ 105 006e 039A     		ldr	r2, [sp, #12]
+ 106 0070 1343     		orrs	r3, r3, r2
+ 107 0072 0393     		str	r3, [sp, #12]
+ 203:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   /* Write to DAC CR */
+ 204:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   DAC->CR = tmpreg1;
+ 108              		.loc 1 204 0
+ 109 0074 4FF4E843 		mov	r3, #29696
+ 110 0078 C4F20003 		movt	r3, 16384
+ 111 007c 039A     		ldr	r2, [sp, #12]
+ 112 007e 1A60     		str	r2, [r3, #0]
+ 205:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** }
+ 113              		.loc 1 205 0
+ 114 0080 04B0     		add	sp, sp, #16
+ 115 0082 7047     		bx	lr
+ 116              		.cfi_endproc
+ 117              	.LFE112:
+ 119              		.align	2
+ 120              		.global	DAC_StructInit
+ 121              		.thumb
+ 122              		.thumb_func
+ 124              	DAC_StructInit:
+ 125              	.LFB113:
+ 206:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 207:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** /**
+ 208:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @brief  Fills each DAC_InitStruct member with its default value.
+ 209:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @param  DAC_InitStruct: pointer to a DAC_InitTypeDef structure which will 
+ 210:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *         be initialized.
+ 211:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @retval None
+ 212:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   */
+ 213:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** void DAC_StructInit(DAC_InitTypeDef* DAC_InitStruct)
+ 214:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** {
+ 126              		.loc 1 214 0
+ 127              		.cfi_startproc
+ 128              		@ args = 0, pretend = 0, frame = 8
+ 129              		@ frame_needed = 0, uses_anonymous_args = 0
+ 130              		@ link register save eliminated.
+ 131 0084 82B0     		sub	sp, sp, #8
+ 132              	.LCFI2:
+ 133              		.cfi_def_cfa_offset 8
+ 134 0086 0190     		str	r0, [sp, #4]
+ 215:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** /*--------------- Reset DAC init structure parameters values -----------------*/
+ 216:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   /* Initialize the DAC_Trigger member */
+ 217:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   DAC_InitStruct->DAC_Trigger = DAC_Trigger_None;
+ 135              		.loc 1 217 0
+ 136 0088 019B     		ldr	r3, [sp, #4]
+ 137 008a 4FF00002 		mov	r2, #0
+ 138 008e 1A60     		str	r2, [r3, #0]
+ 218:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   /* Initialize the DAC_WaveGeneration member */
+ 219:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   DAC_InitStruct->DAC_WaveGeneration = DAC_WaveGeneration_None;
+ 139              		.loc 1 219 0
+ 140 0090 019B     		ldr	r3, [sp, #4]
+ 141 0092 4FF00002 		mov	r2, #0
+ 142 0096 5A60     		str	r2, [r3, #4]
+ 220:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   /* Initialize the DAC_LFSRUnmask_TriangleAmplitude member */
+ 221:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   DAC_InitStruct->DAC_LFSRUnmask_TriangleAmplitude = DAC_LFSRUnmask_Bit0;
+ 143              		.loc 1 221 0
+ 144 0098 019B     		ldr	r3, [sp, #4]
+ 145 009a 4FF00002 		mov	r2, #0
+ 146 009e 9A60     		str	r2, [r3, #8]
+ 222:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   /* Initialize the DAC_OutputBuffer member */
+ 223:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   DAC_InitStruct->DAC_OutputBuffer = DAC_OutputBuffer_Enable;
+ 147              		.loc 1 223 0
+ 148 00a0 019B     		ldr	r3, [sp, #4]
+ 149 00a2 4FF00002 		mov	r2, #0
+ 150 00a6 DA60     		str	r2, [r3, #12]
+ 224:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** }
+ 151              		.loc 1 224 0
+ 152 00a8 02B0     		add	sp, sp, #8
+ 153 00aa 7047     		bx	lr
+ 154              		.cfi_endproc
+ 155              	.LFE113:
+ 157              		.align	2
+ 158              		.global	DAC_Cmd
+ 159              		.thumb
+ 160              		.thumb_func
+ 162              	DAC_Cmd:
+ 163              	.LFB114:
+ 225:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 226:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** /**
+ 227:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @brief  Enables or disables the specified DAC channel.
+ 228:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @param  DAC_Channel: The selected DAC channel. 
+ 229:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *          This parameter can be:
+ 230:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *            @arg DAC_Channel_1: DAC Channel1 selected
+ 231:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *            @arg DAC_Channel_2: DAC Channel2 selected
+ 232:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @param  NewState: new state of the DAC channel. 
+ 233:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *          This parameter can be: ENABLE or DISABLE.
+ 234:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @note   When the DAC channel is enabled the trigger source can no more be modified.
+ 235:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @retval None
+ 236:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   */
+ 237:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** void DAC_Cmd(uint32_t DAC_Channel, FunctionalState NewState)
+ 238:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** {
+ 164              		.loc 1 238 0
+ 165              		.cfi_startproc
+ 166              		@ args = 0, pretend = 0, frame = 8
+ 167              		@ frame_needed = 0, uses_anonymous_args = 0
+ 168              		@ link register save eliminated.
+ 169 00ac 82B0     		sub	sp, sp, #8
+ 170              	.LCFI3:
+ 171              		.cfi_def_cfa_offset 8
+ 172 00ae 0190     		str	r0, [sp, #4]
+ 173 00b0 0B46     		mov	r3, r1
+ 174 00b2 8DF80330 		strb	r3, [sp, #3]
+ 239:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   /* Check the parameters */
+ 240:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   assert_param(IS_DAC_CHANNEL(DAC_Channel));
+ 241:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   assert_param(IS_FUNCTIONAL_STATE(NewState));
+ 242:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 243:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   if (NewState != DISABLE)
+ 175              		.loc 1 243 0
+ 176 00b6 9DF80330 		ldrb	r3, [sp, #3]	@ zero_extendqisi2
+ 177 00ba 002B     		cmp	r3, #0
+ 178 00bc 10D0     		beq	.L5
+ 244:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   {
+ 245:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     /* Enable the selected DAC channel */
+ 246:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     DAC->CR |= (DAC_CR_EN1 << DAC_Channel);
+ 179              		.loc 1 246 0
+ 180 00be 4FF4E843 		mov	r3, #29696
+ 181 00c2 C4F20003 		movt	r3, 16384
+ 182 00c6 4FF4E842 		mov	r2, #29696
+ 183 00ca C4F20002 		movt	r2, 16384
+ 184 00ce 1168     		ldr	r1, [r2, #0]
+ 185 00d0 019A     		ldr	r2, [sp, #4]
+ 186 00d2 4FF00100 		mov	r0, #1
+ 187 00d6 00FA02F2 		lsl	r2, r0, r2
+ 188 00da 0A43     		orrs	r2, r2, r1
+ 189 00dc 1A60     		str	r2, [r3, #0]
+ 190 00de 11E0     		b	.L4
+ 191              	.L5:
+ 247:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   }
+ 248:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   else
+ 249:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   {
+ 250:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     /* Disable the selected DAC channel */
+ 251:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     DAC->CR &= (~(DAC_CR_EN1 << DAC_Channel));
+ 192              		.loc 1 251 0
+ 193 00e0 4FF4E843 		mov	r3, #29696
+ 194 00e4 C4F20003 		movt	r3, 16384
+ 195 00e8 4FF4E842 		mov	r2, #29696
+ 196 00ec C4F20002 		movt	r2, 16384
+ 197 00f0 1168     		ldr	r1, [r2, #0]
+ 198 00f2 019A     		ldr	r2, [sp, #4]
+ 199 00f4 4FF00100 		mov	r0, #1
+ 200 00f8 00FA02F2 		lsl	r2, r0, r2
+ 201 00fc 6FEA0202 		mvn	r2, r2
+ 202 0100 0A40     		ands	r2, r2, r1
+ 203 0102 1A60     		str	r2, [r3, #0]
+ 204              	.L4:
+ 252:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   }
+ 253:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** }
+ 205              		.loc 1 253 0
+ 206 0104 02B0     		add	sp, sp, #8
+ 207 0106 7047     		bx	lr
+ 208              		.cfi_endproc
+ 209              	.LFE114:
+ 211              		.align	2
+ 212              		.global	DAC_SoftwareTriggerCmd
+ 213              		.thumb
+ 214              		.thumb_func
+ 216              	DAC_SoftwareTriggerCmd:
+ 217              	.LFB115:
+ 254:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 255:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** /**
+ 256:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @brief  Enables or disables the selected DAC channel software trigger.
+ 257:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @param  DAC_Channel: The selected DAC channel. 
+ 258:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *          This parameter can be:
+ 259:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *            @arg DAC_Channel_1: DAC Channel1 selected
+ 260:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *            @arg DAC_Channel_2: DAC Channel2 selected
+ 261:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @param  NewState: new state of the selected DAC channel software trigger.
+ 262:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *          This parameter can be: ENABLE or DISABLE.
+ 263:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @retval None
+ 264:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   */
+ 265:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** void DAC_SoftwareTriggerCmd(uint32_t DAC_Channel, FunctionalState NewState)
+ 266:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** {
+ 218              		.loc 1 266 0
+ 219              		.cfi_startproc
+ 220              		@ args = 0, pretend = 0, frame = 8
+ 221              		@ frame_needed = 0, uses_anonymous_args = 0
+ 222              		@ link register save eliminated.
+ 223 0108 82B0     		sub	sp, sp, #8
+ 224              	.LCFI4:
+ 225              		.cfi_def_cfa_offset 8
+ 226 010a 0190     		str	r0, [sp, #4]
+ 227 010c 0B46     		mov	r3, r1
+ 228 010e 8DF80330 		strb	r3, [sp, #3]
+ 267:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   /* Check the parameters */
+ 268:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   assert_param(IS_DAC_CHANNEL(DAC_Channel));
+ 269:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   assert_param(IS_FUNCTIONAL_STATE(NewState));
+ 270:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 271:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   if (NewState != DISABLE)
+ 229              		.loc 1 271 0
+ 230 0112 9DF80330 		ldrb	r3, [sp, #3]	@ zero_extendqisi2
+ 231 0116 002B     		cmp	r3, #0
+ 232 0118 12D0     		beq	.L8
+ 272:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   {
+ 273:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     /* Enable software trigger for the selected DAC channel */
+ 274:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     DAC->SWTRIGR |= (uint32_t)DAC_SWTRIGR_SWTRIG1 << (DAC_Channel >> 4);
+ 233              		.loc 1 274 0
+ 234 011a 4FF4E843 		mov	r3, #29696
+ 235 011e C4F20003 		movt	r3, 16384
+ 236 0122 4FF4E842 		mov	r2, #29696
+ 237 0126 C4F20002 		movt	r2, 16384
+ 238 012a 5168     		ldr	r1, [r2, #4]
+ 239 012c 019A     		ldr	r2, [sp, #4]
+ 240 012e 4FEA1212 		lsr	r2, r2, #4
+ 241 0132 4FF00100 		mov	r0, #1
+ 242 0136 00FA02F2 		lsl	r2, r0, r2
+ 243 013a 0A43     		orrs	r2, r2, r1
+ 244 013c 5A60     		str	r2, [r3, #4]
+ 245 013e 13E0     		b	.L7
+ 246              	.L8:
+ 275:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   }
+ 276:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   else
+ 277:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   {
+ 278:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     /* Disable software trigger for the selected DAC channel */
+ 279:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     DAC->SWTRIGR &= ~((uint32_t)DAC_SWTRIGR_SWTRIG1 << (DAC_Channel >> 4));
+ 247              		.loc 1 279 0
+ 248 0140 4FF4E843 		mov	r3, #29696
+ 249 0144 C4F20003 		movt	r3, 16384
+ 250 0148 4FF4E842 		mov	r2, #29696
+ 251 014c C4F20002 		movt	r2, 16384
+ 252 0150 5168     		ldr	r1, [r2, #4]
+ 253 0152 019A     		ldr	r2, [sp, #4]
+ 254 0154 4FEA1212 		lsr	r2, r2, #4
+ 255 0158 4FF00100 		mov	r0, #1
+ 256 015c 00FA02F2 		lsl	r2, r0, r2
+ 257 0160 6FEA0202 		mvn	r2, r2
+ 258 0164 0A40     		ands	r2, r2, r1
+ 259 0166 5A60     		str	r2, [r3, #4]
+ 260              	.L7:
+ 280:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   }
+ 281:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** }
+ 261              		.loc 1 281 0
+ 262 0168 02B0     		add	sp, sp, #8
+ 263 016a 7047     		bx	lr
+ 264              		.cfi_endproc
+ 265              	.LFE115:
+ 267              		.align	2
+ 268              		.global	DAC_DualSoftwareTriggerCmd
+ 269              		.thumb
+ 270              		.thumb_func
+ 272              	DAC_DualSoftwareTriggerCmd:
+ 273              	.LFB116:
+ 282:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 283:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** /**
+ 284:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @brief  Enables or disables simultaneously the two DAC channels software triggers.
+ 285:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @param  NewState: new state of the DAC channels software triggers.
+ 286:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *          This parameter can be: ENABLE or DISABLE.
+ 287:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @retval None
+ 288:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   */
+ 289:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** void DAC_DualSoftwareTriggerCmd(FunctionalState NewState)
+ 290:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** {
+ 274              		.loc 1 290 0
+ 275              		.cfi_startproc
+ 276              		@ args = 0, pretend = 0, frame = 8
+ 277              		@ frame_needed = 0, uses_anonymous_args = 0
+ 278              		@ link register save eliminated.
+ 279 016c 82B0     		sub	sp, sp, #8
+ 280              	.LCFI5:
+ 281              		.cfi_def_cfa_offset 8
+ 282 016e 0346     		mov	r3, r0
+ 283 0170 8DF80730 		strb	r3, [sp, #7]
+ 291:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   /* Check the parameters */
+ 292:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   assert_param(IS_FUNCTIONAL_STATE(NewState));
+ 293:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 294:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   if (NewState != DISABLE)
+ 284              		.loc 1 294 0
+ 285 0174 9DF80730 		ldrb	r3, [sp, #7]	@ zero_extendqisi2
+ 286 0178 002B     		cmp	r3, #0
+ 287 017a 0CD0     		beq	.L11
+ 295:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   {
+ 296:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     /* Enable software trigger for both DAC channels */
+ 297:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     DAC->SWTRIGR |= DUAL_SWTRIG_SET;
+ 288              		.loc 1 297 0
+ 289 017c 4FF4E843 		mov	r3, #29696
+ 290 0180 C4F20003 		movt	r3, 16384
+ 291 0184 4FF4E842 		mov	r2, #29696
+ 292 0188 C4F20002 		movt	r2, 16384
+ 293 018c 5268     		ldr	r2, [r2, #4]
+ 294 018e 42F00302 		orr	r2, r2, #3
+ 295 0192 5A60     		str	r2, [r3, #4]
+ 296 0194 0BE0     		b	.L10
+ 297              	.L11:
+ 298:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   }
+ 299:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   else
+ 300:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   {
+ 301:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     /* Disable software trigger for both DAC channels */
+ 302:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     DAC->SWTRIGR &= DUAL_SWTRIG_RESET;
+ 298              		.loc 1 302 0
+ 299 0196 4FF4E843 		mov	r3, #29696
+ 300 019a C4F20003 		movt	r3, 16384
+ 301 019e 4FF4E842 		mov	r2, #29696
+ 302 01a2 C4F20002 		movt	r2, 16384
+ 303 01a6 5268     		ldr	r2, [r2, #4]
+ 304 01a8 22F00302 		bic	r2, r2, #3
+ 305 01ac 5A60     		str	r2, [r3, #4]
+ 306              	.L10:
+ 303:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   }
+ 304:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** }
+ 307              		.loc 1 304 0
+ 308 01ae 02B0     		add	sp, sp, #8
+ 309 01b0 7047     		bx	lr
+ 310              		.cfi_endproc
+ 311              	.LFE116:
+ 313 01b2 00BF     		.align	2
+ 314              		.global	DAC_WaveGenerationCmd
+ 315              		.thumb
+ 316              		.thumb_func
+ 318              	DAC_WaveGenerationCmd:
+ 319              	.LFB117:
+ 305:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 306:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** /**
+ 307:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @brief  Enables or disables the selected DAC channel wave generation.
+ 308:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @param  DAC_Channel: The selected DAC channel. 
+ 309:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *          This parameter can be:
+ 310:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *            @arg DAC_Channel_1: DAC Channel1 selected
+ 311:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *            @arg DAC_Channel_2: DAC Channel2 selected
+ 312:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @param  DAC_Wave: specifies the wave type to enable or disable.
+ 313:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *          This parameter can be:
+ 314:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *            @arg DAC_Wave_Noise: noise wave generation
+ 315:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *            @arg DAC_Wave_Triangle: triangle wave generation
+ 316:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @param  NewState: new state of the selected DAC channel wave generation.
+ 317:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *          This parameter can be: ENABLE or DISABLE.  
+ 318:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @retval None
+ 319:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   */
+ 320:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** void DAC_WaveGenerationCmd(uint32_t DAC_Channel, uint32_t DAC_Wave, FunctionalState NewState)
+ 321:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** {
+ 320              		.loc 1 321 0
+ 321              		.cfi_startproc
+ 322              		@ args = 0, pretend = 0, frame = 16
+ 323              		@ frame_needed = 0, uses_anonymous_args = 0
+ 324              		@ link register save eliminated.
+ 325 01b4 84B0     		sub	sp, sp, #16
+ 326              	.LCFI6:
+ 327              		.cfi_def_cfa_offset 16
+ 328 01b6 0390     		str	r0, [sp, #12]
+ 329 01b8 0291     		str	r1, [sp, #8]
+ 330 01ba 1346     		mov	r3, r2
+ 331 01bc 8DF80730 		strb	r3, [sp, #7]
+ 322:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   /* Check the parameters */
+ 323:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   assert_param(IS_DAC_CHANNEL(DAC_Channel));
+ 324:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   assert_param(IS_DAC_WAVE(DAC_Wave)); 
+ 325:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   assert_param(IS_FUNCTIONAL_STATE(NewState));
+ 326:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 327:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   if (NewState != DISABLE)
+ 332              		.loc 1 327 0
+ 333 01c0 9DF80730 		ldrb	r3, [sp, #7]	@ zero_extendqisi2
+ 334 01c4 002B     		cmp	r3, #0
+ 335 01c6 0FD0     		beq	.L14
+ 328:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   {
+ 329:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     /* Enable the selected wave generation for the selected DAC channel */
+ 330:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     DAC->CR |= DAC_Wave << DAC_Channel;
+ 336              		.loc 1 330 0
+ 337 01c8 4FF4E843 		mov	r3, #29696
+ 338 01cc C4F20003 		movt	r3, 16384
+ 339 01d0 4FF4E842 		mov	r2, #29696
+ 340 01d4 C4F20002 		movt	r2, 16384
+ 341 01d8 1168     		ldr	r1, [r2, #0]
+ 342 01da 039A     		ldr	r2, [sp, #12]
+ 343 01dc 0298     		ldr	r0, [sp, #8]
+ 344 01de 00FA02F2 		lsl	r2, r0, r2
+ 345 01e2 0A43     		orrs	r2, r2, r1
+ 346 01e4 1A60     		str	r2, [r3, #0]
+ 347 01e6 10E0     		b	.L13
+ 348              	.L14:
+ 331:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   }
+ 332:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   else
+ 333:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   {
+ 334:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     /* Disable the selected wave generation for the selected DAC channel */
+ 335:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     DAC->CR &= ~(DAC_Wave << DAC_Channel);
+ 349              		.loc 1 335 0
+ 350 01e8 4FF4E843 		mov	r3, #29696
+ 351 01ec C4F20003 		movt	r3, 16384
+ 352 01f0 4FF4E842 		mov	r2, #29696
+ 353 01f4 C4F20002 		movt	r2, 16384
+ 354 01f8 1168     		ldr	r1, [r2, #0]
+ 355 01fa 039A     		ldr	r2, [sp, #12]
+ 356 01fc 0298     		ldr	r0, [sp, #8]
+ 357 01fe 00FA02F2 		lsl	r2, r0, r2
+ 358 0202 6FEA0202 		mvn	r2, r2
+ 359 0206 0A40     		ands	r2, r2, r1
+ 360 0208 1A60     		str	r2, [r3, #0]
+ 361              	.L13:
+ 336:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   }
+ 337:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** }
+ 362              		.loc 1 337 0
+ 363 020a 04B0     		add	sp, sp, #16
+ 364 020c 7047     		bx	lr
+ 365              		.cfi_endproc
+ 366              	.LFE117:
+ 368 020e 00BF     		.align	2
+ 369              		.global	DAC_SetChannel1Data
+ 370              		.thumb
+ 371              		.thumb_func
+ 373              	DAC_SetChannel1Data:
+ 374              	.LFB118:
+ 338:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 339:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** /**
+ 340:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @brief  Sets the specified data holding register value for DAC channel1.
+ 341:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @param  DAC_Align: Specifies the data alignment for DAC channel1.
+ 342:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *          This parameter can be:
+ 343:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *            @arg DAC_Align_8b_R: 8bit right data alignment selected
+ 344:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *            @arg DAC_Align_12b_L: 12bit left data alignment selected
+ 345:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *            @arg DAC_Align_12b_R: 12bit right data alignment selected
+ 346:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @param  Data: Data to be loaded in the selected data holding register.
+ 347:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @retval None
+ 348:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   */
+ 349:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** void DAC_SetChannel1Data(uint32_t DAC_Align, uint16_t Data)
+ 350:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** {  
+ 375              		.loc 1 350 0
+ 376              		.cfi_startproc
+ 377              		@ args = 0, pretend = 0, frame = 16
+ 378              		@ frame_needed = 0, uses_anonymous_args = 0
+ 379              		@ link register save eliminated.
+ 380 0210 84B0     		sub	sp, sp, #16
+ 381              	.LCFI7:
+ 382              		.cfi_def_cfa_offset 16
+ 383 0212 0190     		str	r0, [sp, #4]
+ 384 0214 0B46     		mov	r3, r1
+ 385 0216 ADF80230 		strh	r3, [sp, #2]	@ movhi
+ 351:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   __IO uint32_t tmp = 0;
+ 386              		.loc 1 351 0
+ 387 021a 4FF00003 		mov	r3, #0
+ 388 021e 0393     		str	r3, [sp, #12]
+ 352:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   
+ 353:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   /* Check the parameters */
+ 354:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   assert_param(IS_DAC_ALIGN(DAC_Align));
+ 355:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   assert_param(IS_DAC_DATA(Data));
+ 356:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   
+ 357:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   tmp = (uint32_t)DAC_BASE; 
+ 389              		.loc 1 357 0
+ 390 0220 4FF4E843 		mov	r3, #29696
+ 391 0224 C4F20003 		movt	r3, 16384
+ 392 0228 0393     		str	r3, [sp, #12]
+ 358:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   tmp += DHR12R1_OFFSET + DAC_Align;
+ 393              		.loc 1 358 0
+ 394 022a 039A     		ldr	r2, [sp, #12]
+ 395 022c 019B     		ldr	r3, [sp, #4]
+ 396 022e D318     		adds	r3, r2, r3
+ 397 0230 03F10803 		add	r3, r3, #8
+ 398 0234 0393     		str	r3, [sp, #12]
+ 359:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 360:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   /* Set the DAC channel1 selected data holding register */
+ 361:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *(__IO uint32_t *) tmp = Data;
+ 399              		.loc 1 361 0
+ 400 0236 039B     		ldr	r3, [sp, #12]
+ 401 0238 BDF80220 		ldrh	r2, [sp, #2]
+ 402 023c 1A60     		str	r2, [r3, #0]
+ 362:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** }
+ 403              		.loc 1 362 0
+ 404 023e 04B0     		add	sp, sp, #16
+ 405 0240 7047     		bx	lr
+ 406              		.cfi_endproc
+ 407              	.LFE118:
+ 409 0242 00BF     		.align	2
+ 410              		.global	DAC_SetChannel2Data
+ 411              		.thumb
+ 412              		.thumb_func
+ 414              	DAC_SetChannel2Data:
+ 415              	.LFB119:
+ 363:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 364:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** /**
+ 365:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @brief  Sets the specified data holding register value for DAC channel2.
+ 366:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @param  DAC_Align: Specifies the data alignment for DAC channel2.
+ 367:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *          This parameter can be:
+ 368:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *            @arg DAC_Align_8b_R: 8bit right data alignment selected
+ 369:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *            @arg DAC_Align_12b_L: 12bit left data alignment selected
+ 370:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *            @arg DAC_Align_12b_R: 12bit right data alignment selected
+ 371:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @param  Data: Data to be loaded in the selected data holding register.
+ 372:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @retval None
+ 373:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   */
+ 374:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** void DAC_SetChannel2Data(uint32_t DAC_Align, uint16_t Data)
+ 375:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** {
+ 416              		.loc 1 375 0
+ 417              		.cfi_startproc
+ 418              		@ args = 0, pretend = 0, frame = 16
+ 419              		@ frame_needed = 0, uses_anonymous_args = 0
+ 420              		@ link register save eliminated.
+ 421 0244 84B0     		sub	sp, sp, #16
+ 422              	.LCFI8:
+ 423              		.cfi_def_cfa_offset 16
+ 424 0246 0190     		str	r0, [sp, #4]
+ 425 0248 0B46     		mov	r3, r1
+ 426 024a ADF80230 		strh	r3, [sp, #2]	@ movhi
+ 376:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   __IO uint32_t tmp = 0;
+ 427              		.loc 1 376 0
+ 428 024e 4FF00003 		mov	r3, #0
+ 429 0252 0393     		str	r3, [sp, #12]
+ 377:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 378:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   /* Check the parameters */
+ 379:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   assert_param(IS_DAC_ALIGN(DAC_Align));
+ 380:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   assert_param(IS_DAC_DATA(Data));
+ 381:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   
+ 382:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   tmp = (uint32_t)DAC_BASE;
+ 430              		.loc 1 382 0
+ 431 0254 4FF4E843 		mov	r3, #29696
+ 432 0258 C4F20003 		movt	r3, 16384
+ 433 025c 0393     		str	r3, [sp, #12]
+ 383:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   tmp += DHR12R2_OFFSET + DAC_Align;
+ 434              		.loc 1 383 0
+ 435 025e 039A     		ldr	r2, [sp, #12]
+ 436 0260 019B     		ldr	r3, [sp, #4]
+ 437 0262 D318     		adds	r3, r2, r3
+ 438 0264 03F11403 		add	r3, r3, #20
+ 439 0268 0393     		str	r3, [sp, #12]
+ 384:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 385:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   /* Set the DAC channel2 selected data holding register */
+ 386:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *(__IO uint32_t *)tmp = Data;
+ 440              		.loc 1 386 0
+ 441 026a 039B     		ldr	r3, [sp, #12]
+ 442 026c BDF80220 		ldrh	r2, [sp, #2]
+ 443 0270 1A60     		str	r2, [r3, #0]
+ 387:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** }
+ 444              		.loc 1 387 0
+ 445 0272 04B0     		add	sp, sp, #16
+ 446 0274 7047     		bx	lr
+ 447              		.cfi_endproc
+ 448              	.LFE119:
+ 450 0276 00BF     		.align	2
+ 451              		.global	DAC_SetDualChannelData
+ 452              		.thumb
+ 453              		.thumb_func
+ 455              	DAC_SetDualChannelData:
+ 456              	.LFB120:
+ 388:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 389:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** /**
+ 390:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @brief  Sets the specified data holding register value for dual channel DAC.
+ 391:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @param  DAC_Align: Specifies the data alignment for dual channel DAC.
+ 392:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *          This parameter can be:
+ 393:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *            @arg DAC_Align_8b_R: 8bit right data alignment selected
+ 394:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *            @arg DAC_Align_12b_L: 12bit left data alignment selected
+ 395:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *            @arg DAC_Align_12b_R: 12bit right data alignment selected
+ 396:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @param  Data2: Data for DAC Channel2 to be loaded in the selected data holding register.
+ 397:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @param  Data1: Data for DAC Channel1 to be loaded in the selected data  holding register.
+ 398:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @note   In dual mode, a unique register access is required to write in both
+ 399:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *          DAC channels at the same time.
+ 400:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @retval None
+ 401:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   */
+ 402:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** void DAC_SetDualChannelData(uint32_t DAC_Align, uint16_t Data2, uint16_t Data1)
+ 403:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** {
+ 457              		.loc 1 403 0
+ 458              		.cfi_startproc
+ 459              		@ args = 0, pretend = 0, frame = 16
+ 460              		@ frame_needed = 0, uses_anonymous_args = 0
+ 461              		@ link register save eliminated.
+ 462 0278 84B0     		sub	sp, sp, #16
+ 463              	.LCFI9:
+ 464              		.cfi_def_cfa_offset 16
+ 465 027a 0190     		str	r0, [sp, #4]
+ 466 027c 1346     		mov	r3, r2
+ 467 027e 0A46     		mov	r2, r1	@ movhi
+ 468 0280 ADF80220 		strh	r2, [sp, #2]	@ movhi
+ 469 0284 ADF80030 		strh	r3, [sp, #0]	@ movhi
+ 404:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   uint32_t data = 0, tmp = 0;
+ 470              		.loc 1 404 0
+ 471 0288 4FF00003 		mov	r3, #0
+ 472 028c 0393     		str	r3, [sp, #12]
+ 473 028e 4FF00003 		mov	r3, #0
+ 474 0292 0293     		str	r3, [sp, #8]
+ 405:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   
+ 406:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   /* Check the parameters */
+ 407:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   assert_param(IS_DAC_ALIGN(DAC_Align));
+ 408:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   assert_param(IS_DAC_DATA(Data1));
+ 409:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   assert_param(IS_DAC_DATA(Data2));
+ 410:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   
+ 411:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   /* Calculate and set dual DAC data holding register value */
+ 412:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   if (DAC_Align == DAC_Align_8b_R)
+ 475              		.loc 1 412 0
+ 476 0294 019B     		ldr	r3, [sp, #4]
+ 477 0296 082B     		cmp	r3, #8
+ 478 0298 08D1     		bne	.L19
+ 413:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   {
+ 414:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     data = ((uint32_t)Data2 << 8) | Data1; 
+ 479              		.loc 1 414 0
+ 480 029a BDF80230 		ldrh	r3, [sp, #2]
+ 481 029e 4FEA0322 		lsl	r2, r3, #8
+ 482 02a2 BDF80030 		ldrh	r3, [sp, #0]
+ 483 02a6 1343     		orrs	r3, r3, r2
+ 484 02a8 0393     		str	r3, [sp, #12]
+ 485 02aa 07E0     		b	.L20
+ 486              	.L19:
+ 415:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   }
+ 416:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   else
+ 417:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   {
+ 418:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     data = ((uint32_t)Data2 << 16) | Data1;
+ 487              		.loc 1 418 0
+ 488 02ac BDF80230 		ldrh	r3, [sp, #2]
+ 489 02b0 4FEA0342 		lsl	r2, r3, #16
+ 490 02b4 BDF80030 		ldrh	r3, [sp, #0]
+ 491 02b8 1343     		orrs	r3, r3, r2
+ 492 02ba 0393     		str	r3, [sp, #12]
+ 493              	.L20:
+ 419:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   }
+ 420:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   
+ 421:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   tmp = (uint32_t)DAC_BASE;
+ 494              		.loc 1 421 0
+ 495 02bc 4FF4E843 		mov	r3, #29696
+ 496 02c0 C4F20003 		movt	r3, 16384
+ 497 02c4 0293     		str	r3, [sp, #8]
+ 422:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   tmp += DHR12RD_OFFSET + DAC_Align;
+ 498              		.loc 1 422 0
+ 499 02c6 019A     		ldr	r2, [sp, #4]
+ 500 02c8 029B     		ldr	r3, [sp, #8]
+ 501 02ca D318     		adds	r3, r2, r3
+ 502 02cc 03F12003 		add	r3, r3, #32
+ 503 02d0 0293     		str	r3, [sp, #8]
+ 423:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 424:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   /* Set the dual DAC selected data holding register */
+ 425:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *(__IO uint32_t *)tmp = data;
+ 504              		.loc 1 425 0
+ 505 02d2 029B     		ldr	r3, [sp, #8]
+ 506 02d4 039A     		ldr	r2, [sp, #12]
+ 507 02d6 1A60     		str	r2, [r3, #0]
+ 426:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** }
+ 508              		.loc 1 426 0
+ 509 02d8 04B0     		add	sp, sp, #16
+ 510 02da 7047     		bx	lr
+ 511              		.cfi_endproc
+ 512              	.LFE120:
+ 514              		.align	2
+ 515              		.global	DAC_GetDataOutputValue
+ 516              		.thumb
+ 517              		.thumb_func
+ 519              	DAC_GetDataOutputValue:
+ 520              	.LFB121:
+ 427:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 428:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** /**
+ 429:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @brief  Returns the last data output value of the selected DAC channel.
+ 430:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @param  DAC_Channel: The selected DAC channel. 
+ 431:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *          This parameter can be:
+ 432:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *            @arg DAC_Channel_1: DAC Channel1 selected
+ 433:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *            @arg DAC_Channel_2: DAC Channel2 selected
+ 434:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @retval The selected DAC channel data output value.
+ 435:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   */
+ 436:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** uint16_t DAC_GetDataOutputValue(uint32_t DAC_Channel)
+ 437:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** {
+ 521              		.loc 1 437 0
+ 522              		.cfi_startproc
+ 523              		@ args = 0, pretend = 0, frame = 16
+ 524              		@ frame_needed = 0, uses_anonymous_args = 0
+ 525              		@ link register save eliminated.
+ 526 02dc 84B0     		sub	sp, sp, #16
+ 527              	.LCFI10:
+ 528              		.cfi_def_cfa_offset 16
+ 529 02de 0190     		str	r0, [sp, #4]
+ 438:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   __IO uint32_t tmp = 0;
+ 530              		.loc 1 438 0
+ 531 02e0 4FF00003 		mov	r3, #0
+ 532 02e4 0393     		str	r3, [sp, #12]
+ 439:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   
+ 440:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   /* Check the parameters */
+ 441:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   assert_param(IS_DAC_CHANNEL(DAC_Channel));
+ 442:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   
+ 443:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   tmp = (uint32_t) DAC_BASE ;
+ 533              		.loc 1 443 0
+ 534 02e6 4FF4E843 		mov	r3, #29696
+ 535 02ea C4F20003 		movt	r3, 16384
+ 536 02ee 0393     		str	r3, [sp, #12]
+ 444:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   tmp += DOR_OFFSET + ((uint32_t)DAC_Channel >> 2);
+ 537              		.loc 1 444 0
+ 538 02f0 019B     		ldr	r3, [sp, #4]
+ 539 02f2 4FEA9302 		lsr	r2, r3, #2
+ 540 02f6 039B     		ldr	r3, [sp, #12]
+ 541 02f8 D318     		adds	r3, r2, r3
+ 542 02fa 03F12C03 		add	r3, r3, #44
+ 543 02fe 0393     		str	r3, [sp, #12]
+ 445:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   
+ 446:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   /* Returns the DAC channel data output register value */
+ 447:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   return (uint16_t) (*(__IO uint32_t*) tmp);
+ 544              		.loc 1 447 0
+ 545 0300 039B     		ldr	r3, [sp, #12]
+ 546 0302 1B68     		ldr	r3, [r3, #0]
+ 547 0304 9BB2     		uxth	r3, r3
+ 448:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** }
+ 548              		.loc 1 448 0
+ 549 0306 1846     		mov	r0, r3
+ 550 0308 04B0     		add	sp, sp, #16
+ 551 030a 7047     		bx	lr
+ 552              		.cfi_endproc
+ 553              	.LFE121:
+ 555              		.align	2
+ 556              		.global	DAC_DMACmd
+ 557              		.thumb
+ 558              		.thumb_func
+ 560              	DAC_DMACmd:
+ 561              	.LFB122:
+ 449:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** /**
+ 450:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @}
+ 451:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   */
+ 452:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 453:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** /** @defgroup DAC_Group2 DMA management functions
+ 454:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****  *  @brief   DMA management functions
+ 455:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****  *
+ 456:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** @verbatim   
+ 457:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****  ===============================================================================
+ 458:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****                     ##### DMA management functions #####
+ 459:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****  ===============================================================================  
+ 460:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 461:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** @endverbatim
+ 462:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @{
+ 463:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   */
+ 464:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 465:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** /**
+ 466:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @brief  Enables or disables the specified DAC channel DMA request.
+ 467:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @note   When enabled DMA1 is generated when an external trigger (EXTI Line9,
+ 468:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *         TIM2, TIM4, TIM5, TIM6, TIM7 or TIM8  but not a software trigger) occurs.
+ 469:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @param  DAC_Channel: The selected DAC channel. 
+ 470:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *          This parameter can be:
+ 471:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *            @arg DAC_Channel_1: DAC Channel1 selected
+ 472:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *            @arg DAC_Channel_2: DAC Channel2 selected
+ 473:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @param  NewState: new state of the selected DAC channel DMA request.
+ 474:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *          This parameter can be: ENABLE or DISABLE.
+ 475:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @note   The DAC channel1 is mapped on DMA1 channel3 which must be
+ 476:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *          already configured.
+ 477:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @note   The DAC channel2 is mapped on DMA1 channel4 which must be
+ 478:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *          already configured.    
+ 479:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @retval None
+ 480:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   */
+ 481:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** void DAC_DMACmd(uint32_t DAC_Channel, FunctionalState NewState)
+ 482:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** {
+ 562              		.loc 1 482 0
+ 563              		.cfi_startproc
+ 564              		@ args = 0, pretend = 0, frame = 8
+ 565              		@ frame_needed = 0, uses_anonymous_args = 0
+ 566              		@ link register save eliminated.
+ 567 030c 82B0     		sub	sp, sp, #8
+ 568              	.LCFI11:
+ 569              		.cfi_def_cfa_offset 8
+ 570 030e 0190     		str	r0, [sp, #4]
+ 571 0310 0B46     		mov	r3, r1
+ 572 0312 8DF80330 		strb	r3, [sp, #3]
+ 483:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   /* Check the parameters */
+ 484:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   assert_param(IS_DAC_CHANNEL(DAC_Channel));
+ 485:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   assert_param(IS_FUNCTIONAL_STATE(NewState));
+ 486:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 487:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   if (NewState != DISABLE)
+ 573              		.loc 1 487 0
+ 574 0316 9DF80330 		ldrb	r3, [sp, #3]	@ zero_extendqisi2
+ 575 031a 002B     		cmp	r3, #0
+ 576 031c 10D0     		beq	.L23
+ 488:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   {
+ 489:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     /* Enable the selected DAC channel DMA request */
+ 490:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     DAC->CR |= (DAC_CR_DMAEN1 << DAC_Channel);
+ 577              		.loc 1 490 0
+ 578 031e 4FF4E843 		mov	r3, #29696
+ 579 0322 C4F20003 		movt	r3, 16384
+ 580 0326 4FF4E842 		mov	r2, #29696
+ 581 032a C4F20002 		movt	r2, 16384
+ 582 032e 1168     		ldr	r1, [r2, #0]
+ 583 0330 019A     		ldr	r2, [sp, #4]
+ 584 0332 4FF48050 		mov	r0, #4096
+ 585 0336 00FA02F2 		lsl	r2, r0, r2
+ 586 033a 0A43     		orrs	r2, r2, r1
+ 587 033c 1A60     		str	r2, [r3, #0]
+ 588 033e 11E0     		b	.L22
+ 589              	.L23:
+ 491:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   }
+ 492:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   else
+ 493:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   {
+ 494:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     /* Disable the selected DAC channel DMA request */
+ 495:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     DAC->CR &= (~(DAC_CR_DMAEN1 << DAC_Channel));
+ 590              		.loc 1 495 0
+ 591 0340 4FF4E843 		mov	r3, #29696
+ 592 0344 C4F20003 		movt	r3, 16384
+ 593 0348 4FF4E842 		mov	r2, #29696
+ 594 034c C4F20002 		movt	r2, 16384
+ 595 0350 1168     		ldr	r1, [r2, #0]
+ 596 0352 019A     		ldr	r2, [sp, #4]
+ 597 0354 4FF48050 		mov	r0, #4096
+ 598 0358 00FA02F2 		lsl	r2, r0, r2
+ 599 035c 6FEA0202 		mvn	r2, r2
+ 600 0360 0A40     		ands	r2, r2, r1
+ 601 0362 1A60     		str	r2, [r3, #0]
+ 602              	.L22:
+ 496:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   }
+ 497:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** }
+ 603              		.loc 1 497 0
+ 604 0364 02B0     		add	sp, sp, #8
+ 605 0366 7047     		bx	lr
+ 606              		.cfi_endproc
+ 607              	.LFE122:
+ 609              		.align	2
+ 610              		.global	DAC_ITConfig
+ 611              		.thumb
+ 612              		.thumb_func
+ 614              	DAC_ITConfig:
+ 615              	.LFB123:
+ 498:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** /**
+ 499:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @}
+ 500:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   */
+ 501:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 502:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** /** @defgroup DAC_Group3 Interrupts and flags management functions
+ 503:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****  *  @brief   Interrupts and flags management functions
+ 504:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****  *
+ 505:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** @verbatim   
+ 506:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****  ===============================================================================
+ 507:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****               ##### Interrupts and flags management functions #####
+ 508:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****  ===============================================================================  
+ 509:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 510:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** @endverbatim
+ 511:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @{
+ 512:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   */
+ 513:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 514:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** /**
+ 515:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @brief  Enables or disables the specified DAC interrupts.
+ 516:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @param  DAC_Channel: The selected DAC channel. 
+ 517:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *          This parameter can be:
+ 518:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *            @arg DAC_Channel_1: DAC Channel1 selected
+ 519:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *            @arg DAC_Channel_2: DAC Channel2 selected
+ 520:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @param  DAC_IT: specifies the DAC interrupt sources to be enabled or disabled. 
+ 521:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *          This parameter can be the following values:
+ 522:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *            @arg DAC_IT_DMAUDR: DMA underrun interrupt mask
+ 523:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @note   The DMA underrun occurs when a second external trigger arrives before the 
+ 524:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *         acknowledgement for the first external trigger is received (first request).
+ 525:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @param  NewState: new state of the specified DAC interrupts.
+ 526:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *          This parameter can be: ENABLE or DISABLE.
+ 527:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @retval None
+ 528:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   */ 
+ 529:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** void DAC_ITConfig(uint32_t DAC_Channel, uint32_t DAC_IT, FunctionalState NewState)  
+ 530:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** {
+ 616              		.loc 1 530 0
+ 617              		.cfi_startproc
+ 618              		@ args = 0, pretend = 0, frame = 16
+ 619              		@ frame_needed = 0, uses_anonymous_args = 0
+ 620              		@ link register save eliminated.
+ 621 0368 84B0     		sub	sp, sp, #16
+ 622              	.LCFI12:
+ 623              		.cfi_def_cfa_offset 16
+ 624 036a 0390     		str	r0, [sp, #12]
+ 625 036c 0291     		str	r1, [sp, #8]
+ 626 036e 1346     		mov	r3, r2
+ 627 0370 8DF80730 		strb	r3, [sp, #7]
+ 531:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   /* Check the parameters */
+ 532:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   assert_param(IS_DAC_CHANNEL(DAC_Channel));
+ 533:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   assert_param(IS_FUNCTIONAL_STATE(NewState));
+ 534:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   assert_param(IS_DAC_IT(DAC_IT)); 
+ 535:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 536:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   if (NewState != DISABLE)
+ 628              		.loc 1 536 0
+ 629 0374 9DF80730 		ldrb	r3, [sp, #7]	@ zero_extendqisi2
+ 630 0378 002B     		cmp	r3, #0
+ 631 037a 0FD0     		beq	.L26
+ 537:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   {
+ 538:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     /* Enable the selected DAC interrupts */
+ 539:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     DAC->CR |=  (DAC_IT << DAC_Channel);
+ 632              		.loc 1 539 0
+ 633 037c 4FF4E843 		mov	r3, #29696
+ 634 0380 C4F20003 		movt	r3, 16384
+ 635 0384 4FF4E842 		mov	r2, #29696
+ 636 0388 C4F20002 		movt	r2, 16384
+ 637 038c 1168     		ldr	r1, [r2, #0]
+ 638 038e 039A     		ldr	r2, [sp, #12]
+ 639 0390 0298     		ldr	r0, [sp, #8]
+ 640 0392 00FA02F2 		lsl	r2, r0, r2
+ 641 0396 0A43     		orrs	r2, r2, r1
+ 642 0398 1A60     		str	r2, [r3, #0]
+ 643 039a 10E0     		b	.L25
+ 644              	.L26:
+ 540:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   }
+ 541:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   else
+ 542:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   {
+ 543:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     /* Disable the selected DAC interrupts */
+ 544:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     DAC->CR &= (~(uint32_t)(DAC_IT << DAC_Channel));
+ 645              		.loc 1 544 0
+ 646 039c 4FF4E843 		mov	r3, #29696
+ 647 03a0 C4F20003 		movt	r3, 16384
+ 648 03a4 4FF4E842 		mov	r2, #29696
+ 649 03a8 C4F20002 		movt	r2, 16384
+ 650 03ac 1168     		ldr	r1, [r2, #0]
+ 651 03ae 039A     		ldr	r2, [sp, #12]
+ 652 03b0 0298     		ldr	r0, [sp, #8]
+ 653 03b2 00FA02F2 		lsl	r2, r0, r2
+ 654 03b6 6FEA0202 		mvn	r2, r2
+ 655 03ba 0A40     		ands	r2, r2, r1
+ 656 03bc 1A60     		str	r2, [r3, #0]
+ 657              	.L25:
+ 545:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   }
+ 546:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** }
+ 658              		.loc 1 546 0
+ 659 03be 04B0     		add	sp, sp, #16
+ 660 03c0 7047     		bx	lr
+ 661              		.cfi_endproc
+ 662              	.LFE123:
+ 664 03c2 00BF     		.align	2
+ 665              		.global	DAC_GetFlagStatus
+ 666              		.thumb
+ 667              		.thumb_func
+ 669              	DAC_GetFlagStatus:
+ 670              	.LFB124:
+ 547:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 548:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** /**
+ 549:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @brief  Checks whether the specified DAC flag is set or not.
+ 550:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @param  DAC_Channel: The selected DAC channel. 
+ 551:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *          This parameter can be:
+ 552:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *            @arg DAC_Channel_1: DAC Channel1 selected
+ 553:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *            @arg DAC_Channel_2: DAC Channel2 selected
+ 554:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @param  DAC_FLAG: specifies the flag to check. 
+ 555:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *          This parameter can be only of the following value:
+ 556:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *            @arg DAC_FLAG_DMAUDR: DMA underrun flag
+ 557:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @note   The DMA underrun occurs when a second external trigger arrives before the 
+ 558:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *         acknowledgement for the first external trigger is received (first request).
+ 559:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @retval The new state of DAC_FLAG (SET or RESET).
+ 560:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   */
+ 561:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** FlagStatus DAC_GetFlagStatus(uint32_t DAC_Channel, uint32_t DAC_FLAG)
+ 562:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** {
+ 671              		.loc 1 562 0
+ 672              		.cfi_startproc
+ 673              		@ args = 0, pretend = 0, frame = 16
+ 674              		@ frame_needed = 0, uses_anonymous_args = 0
+ 675              		@ link register save eliminated.
+ 676 03c4 84B0     		sub	sp, sp, #16
+ 677              	.LCFI13:
+ 678              		.cfi_def_cfa_offset 16
+ 679 03c6 0190     		str	r0, [sp, #4]
+ 680 03c8 0091     		str	r1, [sp, #0]
+ 563:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   FlagStatus bitstatus = RESET;
+ 681              		.loc 1 563 0
+ 682 03ca 4FF00003 		mov	r3, #0
+ 683 03ce 8DF80F30 		strb	r3, [sp, #15]
+ 564:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   /* Check the parameters */
+ 565:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   assert_param(IS_DAC_CHANNEL(DAC_Channel));
+ 566:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   assert_param(IS_DAC_FLAG(DAC_FLAG));
+ 567:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 568:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   /* Check the status of the specified DAC flag */
+ 569:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   if ((DAC->SR & (DAC_FLAG << DAC_Channel)) != (uint8_t)RESET)
+ 684              		.loc 1 569 0
+ 685 03d2 4FF4E843 		mov	r3, #29696
+ 686 03d6 C4F20003 		movt	r3, 16384
+ 687 03da 5A6B     		ldr	r2, [r3, #52]
+ 688 03dc 019B     		ldr	r3, [sp, #4]
+ 689 03de 0099     		ldr	r1, [sp, #0]
+ 690 03e0 01FA03F3 		lsl	r3, r1, r3
+ 691 03e4 1340     		ands	r3, r3, r2
+ 692 03e6 002B     		cmp	r3, #0
+ 693 03e8 04D0     		beq	.L29
+ 570:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   {
+ 571:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     /* DAC_FLAG is set */
+ 572:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     bitstatus = SET;
+ 694              		.loc 1 572 0
+ 695 03ea 4FF00103 		mov	r3, #1
+ 696 03ee 8DF80F30 		strb	r3, [sp, #15]
+ 697 03f2 03E0     		b	.L30
+ 698              	.L29:
+ 573:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   }
+ 574:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   else
+ 575:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   {
+ 576:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     /* DAC_FLAG is reset */
+ 577:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     bitstatus = RESET;
+ 699              		.loc 1 577 0
+ 700 03f4 4FF00003 		mov	r3, #0
+ 701 03f8 8DF80F30 		strb	r3, [sp, #15]
+ 702              	.L30:
+ 578:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   }
+ 579:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   /* Return the DAC_FLAG status */
+ 580:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   return  bitstatus;
+ 703              		.loc 1 580 0
+ 704 03fc 9DF80F30 		ldrb	r3, [sp, #15]	@ zero_extendqisi2
+ 581:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** }
+ 705              		.loc 1 581 0
+ 706 0400 1846     		mov	r0, r3
+ 707 0402 04B0     		add	sp, sp, #16
+ 708 0404 7047     		bx	lr
+ 709              		.cfi_endproc
+ 710              	.LFE124:
+ 712 0406 00BF     		.align	2
+ 713              		.global	DAC_ClearFlag
+ 714              		.thumb
+ 715              		.thumb_func
+ 717              	DAC_ClearFlag:
+ 718              	.LFB125:
+ 582:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 583:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** /**
+ 584:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @brief  Clears the DAC channel's pending flags.
+ 585:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @param  DAC_Channel: The selected DAC channel. 
+ 586:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *          This parameter can be:
+ 587:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *            @arg DAC_Channel_1: DAC Channel1 selected
+ 588:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *            @arg DAC_Channel_2: DAC Channel2 selected
+ 589:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @param  DAC_FLAG: specifies the flag to clear. 
+ 590:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *          This parameter can be of the following value:
+ 591:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *            @arg DAC_FLAG_DMAUDR: DMA underrun flag                           
+ 592:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @retval None
+ 593:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   */
+ 594:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** void DAC_ClearFlag(uint32_t DAC_Channel, uint32_t DAC_FLAG)
+ 595:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** {
+ 719              		.loc 1 595 0
+ 720              		.cfi_startproc
+ 721              		@ args = 0, pretend = 0, frame = 8
+ 722              		@ frame_needed = 0, uses_anonymous_args = 0
+ 723              		@ link register save eliminated.
+ 724 0408 82B0     		sub	sp, sp, #8
+ 725              	.LCFI14:
+ 726              		.cfi_def_cfa_offset 8
+ 727 040a 0190     		str	r0, [sp, #4]
+ 728 040c 0091     		str	r1, [sp, #0]
+ 596:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   /* Check the parameters */
+ 597:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   assert_param(IS_DAC_CHANNEL(DAC_Channel));
+ 598:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   assert_param(IS_DAC_FLAG(DAC_FLAG));
+ 599:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 600:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   /* Clear the selected DAC flags */
+ 601:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   DAC->SR = (DAC_FLAG << DAC_Channel);
+ 729              		.loc 1 601 0
+ 730 040e 4FF4E843 		mov	r3, #29696
+ 731 0412 C4F20003 		movt	r3, 16384
+ 732 0416 019A     		ldr	r2, [sp, #4]
+ 733 0418 0099     		ldr	r1, [sp, #0]
+ 734 041a 01FA02F2 		lsl	r2, r1, r2
+ 735 041e 5A63     		str	r2, [r3, #52]
+ 602:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** }
+ 736              		.loc 1 602 0
+ 737 0420 02B0     		add	sp, sp, #8
+ 738 0422 7047     		bx	lr
+ 739              		.cfi_endproc
+ 740              	.LFE125:
+ 742              		.align	2
+ 743              		.global	DAC_GetITStatus
+ 744              		.thumb
+ 745              		.thumb_func
+ 747              	DAC_GetITStatus:
+ 748              	.LFB126:
+ 603:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 604:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** /**
+ 605:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @brief  Checks whether the specified DAC interrupt has occurred or not.
+ 606:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @param  DAC_Channel: The selected DAC channel. 
+ 607:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *          This parameter can be:
+ 608:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *            @arg DAC_Channel_1: DAC Channel1 selected
+ 609:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *            @arg DAC_Channel_2: DAC Channel2 selected
+ 610:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @param  DAC_IT: specifies the DAC interrupt source to check. 
+ 611:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *          This parameter can be the following values:
+ 612:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *            @arg DAC_IT_DMAUDR: DMA underrun interrupt mask
+ 613:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @note   The DMA underrun occurs when a second external trigger arrives before the 
+ 614:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *         acknowledgement for the first external trigger is received (first request).
+ 615:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @retval The new state of DAC_IT (SET or RESET).
+ 616:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   */
+ 617:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** ITStatus DAC_GetITStatus(uint32_t DAC_Channel, uint32_t DAC_IT)
+ 618:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** {
+ 749              		.loc 1 618 0
+ 750              		.cfi_startproc
+ 751              		@ args = 0, pretend = 0, frame = 16
+ 752              		@ frame_needed = 0, uses_anonymous_args = 0
+ 753              		@ link register save eliminated.
+ 754 0424 84B0     		sub	sp, sp, #16
+ 755              	.LCFI15:
+ 756              		.cfi_def_cfa_offset 16
+ 757 0426 0190     		str	r0, [sp, #4]
+ 758 0428 0091     		str	r1, [sp, #0]
+ 619:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   ITStatus bitstatus = RESET;
+ 759              		.loc 1 619 0
+ 760 042a 4FF00003 		mov	r3, #0
+ 761 042e 8DF80F30 		strb	r3, [sp, #15]
+ 620:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   uint32_t enablestatus = 0;
+ 762              		.loc 1 620 0
+ 763 0432 4FF00003 		mov	r3, #0
+ 764 0436 0293     		str	r3, [sp, #8]
+ 621:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   
+ 622:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   /* Check the parameters */
+ 623:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   assert_param(IS_DAC_CHANNEL(DAC_Channel));
+ 624:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   assert_param(IS_DAC_IT(DAC_IT));
+ 625:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 626:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   /* Get the DAC_IT enable bit status */
+ 627:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   enablestatus = (DAC->CR & (DAC_IT << DAC_Channel)) ;
+ 765              		.loc 1 627 0
+ 766 0438 4FF4E843 		mov	r3, #29696
+ 767 043c C4F20003 		movt	r3, 16384
+ 768 0440 1A68     		ldr	r2, [r3, #0]
+ 769 0442 019B     		ldr	r3, [sp, #4]
+ 770 0444 0099     		ldr	r1, [sp, #0]
+ 771 0446 01FA03F3 		lsl	r3, r1, r3
+ 772 044a 1340     		ands	r3, r3, r2
+ 773 044c 0293     		str	r3, [sp, #8]
+ 628:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   
+ 629:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   /* Check the status of the specified DAC interrupt */
+ 630:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   if (((DAC->SR & (DAC_IT << DAC_Channel)) != (uint32_t)RESET) && enablestatus)
+ 774              		.loc 1 630 0
+ 775 044e 4FF4E843 		mov	r3, #29696
+ 776 0452 C4F20003 		movt	r3, 16384
+ 777 0456 5A6B     		ldr	r2, [r3, #52]
+ 778 0458 019B     		ldr	r3, [sp, #4]
+ 779 045a 0099     		ldr	r1, [sp, #0]
+ 780 045c 01FA03F3 		lsl	r3, r1, r3
+ 781 0460 1340     		ands	r3, r3, r2
+ 782 0462 002B     		cmp	r3, #0
+ 783 0464 07D0     		beq	.L33
+ 784              		.loc 1 630 0 is_stmt 0 discriminator 1
+ 785 0466 029B     		ldr	r3, [sp, #8]
+ 786 0468 002B     		cmp	r3, #0
+ 787 046a 04D0     		beq	.L33
+ 631:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   {
+ 632:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     /* DAC_IT is set */
+ 633:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     bitstatus = SET;
+ 788              		.loc 1 633 0 is_stmt 1
+ 789 046c 4FF00103 		mov	r3, #1
+ 790 0470 8DF80F30 		strb	r3, [sp, #15]
+ 791 0474 03E0     		b	.L34
+ 792              	.L33:
+ 634:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   }
+ 635:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   else
+ 636:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   {
+ 637:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     /* DAC_IT is reset */
+ 638:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****     bitstatus = RESET;
+ 793              		.loc 1 638 0
+ 794 0476 4FF00003 		mov	r3, #0
+ 795 047a 8DF80F30 		strb	r3, [sp, #15]
+ 796              	.L34:
+ 639:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   }
+ 640:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   /* Return the DAC_IT status */
+ 641:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   return  bitstatus;
+ 797              		.loc 1 641 0
+ 798 047e 9DF80F30 		ldrb	r3, [sp, #15]	@ zero_extendqisi2
+ 642:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** }
+ 799              		.loc 1 642 0
+ 800 0482 1846     		mov	r0, r3
+ 801 0484 04B0     		add	sp, sp, #16
+ 802 0486 7047     		bx	lr
+ 803              		.cfi_endproc
+ 804              	.LFE126:
+ 806              		.align	2
+ 807              		.global	DAC_ClearITPendingBit
+ 808              		.thumb
+ 809              		.thumb_func
+ 811              	DAC_ClearITPendingBit:
+ 812              	.LFB127:
+ 643:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 644:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** /**
+ 645:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @brief  Clears the DAC channel's interrupt pending bits.
+ 646:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @param  DAC_Channel: The selected DAC channel. 
+ 647:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *          This parameter can be:
+ 648:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *            @arg DAC_Channel_1: DAC Channel1 selected
+ 649:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *            @arg DAC_Channel_2: DAC Channel2 selected
+ 650:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @param  DAC_IT: specifies the DAC interrupt pending bit to clear.
+ 651:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *          This parameter can be the following values:
+ 652:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   *            @arg DAC_IT_DMAUDR: DMA underrun interrupt mask                                     
+ 653:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   * @retval None
+ 654:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   */
+ 655:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** void DAC_ClearITPendingBit(uint32_t DAC_Channel, uint32_t DAC_IT)
+ 656:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** {
+ 813              		.loc 1 656 0
+ 814              		.cfi_startproc
+ 815              		@ args = 0, pretend = 0, frame = 8
+ 816              		@ frame_needed = 0, uses_anonymous_args = 0
+ 817              		@ link register save eliminated.
+ 818 0488 82B0     		sub	sp, sp, #8
+ 819              	.LCFI16:
+ 820              		.cfi_def_cfa_offset 8
+ 821 048a 0190     		str	r0, [sp, #4]
+ 822 048c 0091     		str	r1, [sp, #0]
+ 657:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   /* Check the parameters */
+ 658:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   assert_param(IS_DAC_CHANNEL(DAC_Channel));
+ 659:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   assert_param(IS_DAC_IT(DAC_IT)); 
+ 660:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** 
+ 661:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   /* Clear the selected DAC interrupt pending bits */
+ 662:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c ****   DAC->SR = (DAC_IT << DAC_Channel);
+ 823              		.loc 1 662 0
+ 824 048e 4FF4E843 		mov	r3, #29696
+ 825 0492 C4F20003 		movt	r3, 16384
+ 826 0496 019A     		ldr	r2, [sp, #4]
+ 827 0498 0099     		ldr	r1, [sp, #0]
+ 828 049a 01FA02F2 		lsl	r2, r1, r2
+ 829 049e 5A63     		str	r2, [r3, #52]
+ 663:../Libraries/STM32F30x_StdPeriph_Driver/src/stm32f30x_dac.c **** }
+ 830              		.loc 1 663 0
+ 831 04a0 02B0     		add	sp, sp, #8
+ 832 04a2 7047     		bx	lr
+ 833              		.cfi_endproc
+ 834              	.LFE127:
+ 836              	.Letext0:
+ 837              		.file 2 "c:\\program files\\codesourcery\\sourcery_codebench_lite_for_arm_eabi\\bin\\../lib/gcc/ar
+ 838              		.file 3 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\Libraries\\Device\\
+ 839              		.file 4 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\Libraries\\STM32F30
+ 840              		.file 5 "D:\\Documents and Settings\\e722209\\Desktop\\workspace\\aq32Plus_F3\\Libraries\\CMSIS\\I
+DEFINED SYMBOLS
+                            *ABS*:00000000 stm32f30x_dac.c
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccVREEXK.s:19     .text:00000000 $t
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccVREEXK.s:24     .text:00000000 DAC_DeInit
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccVREEXK.s:54     .text:0000001c DAC_Init
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccVREEXK.s:124    .text:00000084 DAC_StructInit
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccVREEXK.s:162    .text:000000ac DAC_Cmd
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccVREEXK.s:216    .text:00000108 DAC_SoftwareTriggerCmd
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccVREEXK.s:272    .text:0000016c DAC_DualSoftwareTriggerCmd
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccVREEXK.s:318    .text:000001b4 DAC_WaveGenerationCmd
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccVREEXK.s:373    .text:00000210 DAC_SetChannel1Data
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccVREEXK.s:414    .text:00000244 DAC_SetChannel2Data
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccVREEXK.s:455    .text:00000278 DAC_SetDualChannelData
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccVREEXK.s:519    .text:000002dc DAC_GetDataOutputValue
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccVREEXK.s:560    .text:0000030c DAC_DMACmd
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccVREEXK.s:614    .text:00000368 DAC_ITConfig
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccVREEXK.s:669    .text:000003c4 DAC_GetFlagStatus
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccVREEXK.s:717    .text:00000408 DAC_ClearFlag
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccVREEXK.s:747    .text:00000424 DAC_GetITStatus
+D:\DOCUME~1\e722209\LOCALS~1\Temp\ccVREEXK.s:811    .text:00000488 DAC_ClearITPendingBit
+                     .debug_frame:00000010 $d
+
+UNDEFINED SYMBOLS
+RCC_APB1PeriphResetCmd
