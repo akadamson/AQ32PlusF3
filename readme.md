@@ -1,6 +1,8 @@
 AQ32PlusF3
 ==============
 
+See AQ32Plus project for STM32 Tool Archieve, containing compiler and ST Tools
+
 Features of aq32Plus: (Needs updating for the F3 version)
 
 1)Focused at the capabilities of the aq32/STM32F407 hardware
