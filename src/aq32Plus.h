@@ -124,6 +124,14 @@ typedef struct sensors_t
 
 extern sensors_t sensors;
 
+typedef struct heading_t
+{
+	float    mag;
+	float    tru;
+} heading_t;
+
+extern heading_t heading;
+
 ///////////////////////////////////////////////////////////////////////////////
 // PID Definitions
 ///////////////////////////////////////////////////////////////////////////////
@@ -335,6 +343,10 @@ typedef struct eepromConfig_t
     ///////////////////////////////////
 
     uint8_t gpsType;
+
+    ///////////////////////////////////
+
+    float   magVar;                // + east, - west
 
 } eepromConfig_t;
 

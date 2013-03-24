@@ -1056,6 +1056,15 @@ void sensorCLI()
 
             ///////////////////////////
 
+            case 'M': // Magnetic Variation
+                eepromConfig.magVar = readFloatUart1() * D2R;
+
+                sensorQuery = 'a';
+                validQuery = true;
+                break;
+
+            ///////////////////////////
+
             case 'W': // Write EEPROM Parameters
                 uart1Print("\nWriting EEPROM Parameters....\n\n");
                 writeEEPROM();

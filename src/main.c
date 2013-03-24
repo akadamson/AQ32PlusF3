@@ -45,6 +45,8 @@ uint8_t        execUpCount = 0;
 
 sensors_t      sensors;
 
+heading_t      heading;
+
 uint16_t       timerValue;
 
 char           numberString[32];

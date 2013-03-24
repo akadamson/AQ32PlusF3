@@ -86,12 +86,12 @@ void computeAxisCommands(float dt)
         {
             setPIDintegralError(HEADING_PID, 0.0f);  // First pass in heading hold with new reference, zero integral PID error
         }
-        rateCmd[YAW] = updatePID( headingReference, sensors.attitude500Hz[YAW], dt, holdIntegrators, &eepromConfig.PID[HEADING_PID] );
+        rateCmd[YAW] = updatePID( headingReference, heading.mag, dt, holdIntegrators, &eepromConfig.PID[HEADING_PID] );
     }
     else  // Heading Hold is OFF
     {
         rateCmd[YAW] = rxCommand[YAW] * eepromConfig.rateScaling;
-        headingReference = sensors.attitude500Hz[YAW];
+        headingReference = heading.mag;
     }
 
     previousHeadingHoldEngaged = headingHoldEngaged;
