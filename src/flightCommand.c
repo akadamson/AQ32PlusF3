@@ -1,7 +1,7 @@
 /*
-  December 2012
+  October 2012
 
-  aq32Plus_F3 Rev -
+  aq32Plus Rev -
 
   Copyright (c) 2012 John Ihlein.  All rights reserved.
 
@@ -15,9 +15,8 @@
   4)MultiWii
   5)S.O.H. Madgwick
   6)UAVX
-  7)STM DiscoveryF3 demonstration software
 
-  Designed to run on the DiscoveryF3 board
+  Designed to run on the AQ32 Flight Control Board
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -52,7 +51,7 @@ uint8_t  previousCommandInDetent[3] = { true, true, true };
 
 uint8_t flightMode = RATE;
 
-uint8_t headingHoldEngaged = false;
+uint8_t headingHoldEngaged     = false;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Arm State Variables
@@ -166,6 +165,7 @@ void processFlightCommands(void)
 	///////////////////////////////////
 
 	// Check for armed true and throttle command > minThrottle
+
     if ((armed == true) && (rxCommand[THROTTLE] > eepromConfig.minThrottle))
     	holdIntegrators = false;
     else
@@ -198,6 +198,8 @@ void processFlightCommands(void)
 
 	///////////////////////////////////
 
+	// Check yaw in detent and flight mode to determine hdg hold engaged state
+
 	if ((commandInDetent[YAW] == true) && (flightMode == ATTITUDE))
 	    headingHoldEngaged = true;
 	else
@@ -224,6 +226,7 @@ void processFlightCommands(void)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+
 
 
 

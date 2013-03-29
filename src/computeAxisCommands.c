@@ -1,7 +1,7 @@
 /*
-  December 2012
+  October 2012
 
-  aq32Plus_F3 Rev -
+  aq32Plus Rev -
 
   Copyright (c) 2012 John Ihlein.  All rights reserved.
 
@@ -15,9 +15,8 @@
   4)MultiWii
   5)S.O.H. Madgwick
   6)UAVX
-  7)STM DiscoveryF3 demonstration software
 
-  Designed to run on the DiscoveryF3 board
+  Designed to run on the AQ32 Flight Control Board
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -80,11 +79,14 @@ void computeAxisCommands(float dt)
         rateCmd[PITCH] = attPID[PITCH];
     }
 
+    ///////////////////////////////////
+
     if (headingHoldEngaged == true)  // Heading Hold is ON
     {
         if (previousHeadingHoldEngaged == false)
         {
-            setPIDintegralError(HEADING_PID, 0.0f);  // First pass in heading hold with new reference, zero integral PID error
+            setPIDintegralError(HEADING_PID, 0.0f);  // First pass heading hold engaged
+            setPIDstates(YAW_RATE_PID,       0.0f);
         }
         rateCmd[YAW] = updatePID( headingReference, heading.mag, dt, holdIntegrators, &eepromConfig.PID[HEADING_PID] );
     }
@@ -94,7 +96,15 @@ void computeAxisCommands(float dt)
         headingReference = heading.mag;
     }
 
+    if (previousHeadingHoldEngaged == true && headingHoldEngaged ==false)
+    	{
+    	    setPIDintegralError(HEADING_PID, 0.0f);  // First pass heading hold disengaged
+    	    setPIDstates(YAW_RATE_PID,       0.0f);
+    	}
+
     previousHeadingHoldEngaged = headingHoldEngaged;
+
+    ///////////////////////////////////
 
     axisPID[ROLL ] = updatePID( rateCmd[ROLL ],  sensors.gyro500Hz[ROLL ], dt, holdIntegrators, &eepromConfig.PID[ROLL_RATE_PID ] );
     axisPID[PITCH] = updatePID( rateCmd[PITCH], -sensors.gyro500Hz[PITCH], dt, holdIntegrators, &eepromConfig.PID[PITCH_RATE_PID] );
