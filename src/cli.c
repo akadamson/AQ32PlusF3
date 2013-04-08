@@ -41,8 +41,8 @@
 
 uint8_t cliBusy = false;
 
-static volatile uint8_t queryType;
-static volatile uint8_t validCommand = false;
+static volatile uint8_t cliQuery;
+static volatile uint8_t validCliCommand = false;
 
 uint8_t highSpeedTelem1Enabled = false;
 uint8_t highSpeedTelem2Enabled = false;
@@ -72,24 +72,24 @@ void highSpeedTelemDisable(void)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// Read Character String from Uart1 Comm
+// Read Character String from CLI
 ///////////////////////////////////////////////////////////////////////////////
 
-char *readStringUart1(char *data, uint8_t length)
+char *readStringCLI(char *data, uint8_t length)
 {
     uint8_t index    = 0;
     uint8_t timeout  = 0;
 
     do
     {
-        if (uart1Available() == false)
+        if (cliAvailable() == false)
         {
             delay(10);
             timeout++;
         }
         else
         {
-            data[index] = uart1Read();
+            data[index] = cliRead();
             timeout = 0;
             index++;
         }
@@ -102,10 +102,10 @@ char *readStringUart1(char *data, uint8_t length)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// Read Float from Uart1 Comm
+// Read Float from CLI
 ///////////////////////////////////////////////////////////////////////////////
 
-float readFloatUart1(void)
+float readFloatCLI(void)
 {
     uint8_t index    = 0;
     uint8_t timeout  = 0;
@@ -113,14 +113,14 @@ float readFloatUart1(void)
 
     do
     {
-        if (uart1Available() == false)
+        if (cliAvailable() == false)
         {
             delay(10);
             timeout++;
         }
         else
         {
-            data[index] = uart1Read();
+            data[index] = cliRead();
             timeout = 0;
             index++;
         }
@@ -133,23 +133,23 @@ float readFloatUart1(void)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// Read PID Values from Uart1 Comm
+// Read PID Values from CLI
 ///////////////////////////////////////////////////////////////////////////////
 
-void readUsbPID(unsigned char PIDid)
+void readCliPID(unsigned char PIDid)
 {
   struct PIDdata* pid = &eepromConfig.PID[PIDid];
 
-  pid->B             = readFloatUart1();
-  pid->P             = readFloatUart1();
-  pid->I             = readFloatUart1();
-  pid->D             = readFloatUart1();
-  pid->windupGuard   = readFloatUart1();
+  pid->B             = readFloatCLI();
+  pid->P             = readFloatCLI();
+  pid->I             = readFloatCLI();
+  pid->D             = readFloatCLI();
+  pid->windupGuard   = readFloatCLI();
   pid->iTerm          = 0.0f;
   pid->lastDcalcValue = 0.0f;
   pid->lastDterm      = 0.0f;
   pid->lastLastDterm  = 0.0f;
-  pid->dErrorCalc     =(uint8_t)readFloatUart1();
+  pid->dErrorCalc     =(uint8_t)readFloatCLI();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -160,348 +160,348 @@ void cliCom(void)
 {
 	uint8_t  index;
 
-    if ((uart1Available() && !validCommand))
-    	queryType = uart1Read();
+    if ((cliAvailable() && !validCliCommand))
+    	cliQuery = cliRead();
 
-    switch (queryType)
+    switch (cliQuery)
     {
         ///////////////////////////////
 
         case 'a': // Rate PIDs
-            uart1Print("\n");
+            cliPrint("\n");
 
-            uart1Print("Roll Rate PID:  ");
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[ROLL_RATE_PID].B);           uart1Print(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[ROLL_RATE_PID].P);           uart1Print(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[ROLL_RATE_PID].I);           uart1Print(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[ROLL_RATE_PID].D);           uart1Print(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[ROLL_RATE_PID].windupGuard); uart1Print(numberString);
+            cliPrint("Roll Rate PID:  ");
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[ROLL_RATE_PID].B);           cliPrint(numberString);
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[ROLL_RATE_PID].P);           cliPrint(numberString);
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[ROLL_RATE_PID].I);           cliPrint(numberString);
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[ROLL_RATE_PID].D);           cliPrint(numberString);
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[ROLL_RATE_PID].windupGuard); cliPrint(numberString);
             if  (eepromConfig.PID[ROLL_RATE_PID].dErrorCalc)
-                uart1Print("Error\n");
+                cliPrint("Error\n");
             else
-                uart1Print("State\n");
+                cliPrint("State\n");
 
-            uart1Print("Pitch Rate PID: ");
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[PITCH_RATE_PID].B);           uart1Print(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[PITCH_RATE_PID].P);           uart1Print(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[PITCH_RATE_PID].I);           uart1Print(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[PITCH_RATE_PID].D);           uart1Print(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[PITCH_RATE_PID].windupGuard); uart1Print(numberString);
+            cliPrint("Pitch Rate PID: ");
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[PITCH_RATE_PID].B);           cliPrint(numberString);
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[PITCH_RATE_PID].P);           cliPrint(numberString);
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[PITCH_RATE_PID].I);           cliPrint(numberString);
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[PITCH_RATE_PID].D);           cliPrint(numberString);
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[PITCH_RATE_PID].windupGuard); cliPrint(numberString);
             if  (eepromConfig.PID[PITCH_RATE_PID].dErrorCalc)
-                uart1Print("Error\n");
+                cliPrint("Error\n");
             else
-                uart1Print("State\n");
+                cliPrint("State\n");
 
-            uart1Print("Yaw Rate PID:   ");
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[YAW_RATE_PID].B);           uart1Print(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[YAW_RATE_PID].P);           uart1Print(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[YAW_RATE_PID].I);           uart1Print(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[YAW_RATE_PID].D);           uart1Print(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[YAW_RATE_PID].windupGuard); uart1Print(numberString);
+            cliPrint("Yaw Rate PID:   ");
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[YAW_RATE_PID].B);           cliPrint(numberString);
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[YAW_RATE_PID].P);           cliPrint(numberString);
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[YAW_RATE_PID].I);           cliPrint(numberString);
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[YAW_RATE_PID].D);           cliPrint(numberString);
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[YAW_RATE_PID].windupGuard); cliPrint(numberString);
             if  (eepromConfig.PID[YAW_RATE_PID].dErrorCalc)
-                uart1Print("Error\n");
+                cliPrint("Error\n");
             else
-                uart1Print("State\n");
+                cliPrint("State\n");
 
-            queryType = 'x';
-            validCommand = false;
+            cliQuery = 'x';
+            validCliCommand = false;
             break;
 
         ///////////////////////////////
 
         case 'b': // Attitude PIDs
-            uart1Print("\n");
+            cliPrint("\n");
 
-            uart1Print("Roll Attitude PID:  ");
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[ROLL_ATT_PID].B);           uart1Print(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[ROLL_ATT_PID].P);           uart1Print(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[ROLL_ATT_PID].I);           uart1Print(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[ROLL_ATT_PID].D);           uart1Print(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[ROLL_ATT_PID].windupGuard); uart1Print(numberString);
+            cliPrint("Roll Attitude PID:  ");
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[ROLL_ATT_PID].B);           cliPrint(numberString);
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[ROLL_ATT_PID].P);           cliPrint(numberString);
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[ROLL_ATT_PID].I);           cliPrint(numberString);
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[ROLL_ATT_PID].D);           cliPrint(numberString);
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[ROLL_ATT_PID].windupGuard); cliPrint(numberString);
             if  (eepromConfig.PID[ROLL_ATT_PID].dErrorCalc)
-                uart1Print("Error\n");
+                cliPrint("Error\n");
             else
-                uart1Print("State\n");
+                cliPrint("State\n");
 
-            uart1Print("Pitch Attitude PID: ");
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[PITCH_ATT_PID].B);           uart1Print(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[PITCH_ATT_PID].P);           uart1Print(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[PITCH_ATT_PID].I);           uart1Print(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[PITCH_ATT_PID].D);           uart1Print(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[PITCH_ATT_PID].windupGuard); uart1Print(numberString);
+            cliPrint("Pitch Attitude PID: ");
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[PITCH_ATT_PID].B);           cliPrint(numberString);
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[PITCH_ATT_PID].P);           cliPrint(numberString);
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[PITCH_ATT_PID].I);           cliPrint(numberString);
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[PITCH_ATT_PID].D);           cliPrint(numberString);
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[PITCH_ATT_PID].windupGuard); cliPrint(numberString);
             if  (eepromConfig.PID[PITCH_ATT_PID].dErrorCalc)
-                uart1Print("Error\n");
+                cliPrint("Error\n");
             else
-                uart1Print("State\n");
+                cliPrint("State\n");
 
-            uart1Print("Heading PID:        ");
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[HEADING_PID].B);           uart1Print(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[HEADING_PID].P);           uart1Print(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[HEADING_PID].I);           uart1Print(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[HEADING_PID].D);           uart1Print(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[HEADING_PID].windupGuard); uart1Print(numberString);
+            cliPrint("Heading PID:        ");
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[HEADING_PID].B);           cliPrint(numberString);
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[HEADING_PID].P);           cliPrint(numberString);
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[HEADING_PID].I);           cliPrint(numberString);
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[HEADING_PID].D);           cliPrint(numberString);
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[HEADING_PID].windupGuard); cliPrint(numberString);
             if  (eepromConfig.PID[HEADING_PID].dErrorCalc)
-                uart1Print("Error\n");
+                cliPrint("Error\n");
             else
-                uart1Print("State\n");
+                cliPrint("State\n");
 
-            queryType = 'x';
-            validCommand = false;
+            cliQuery = 'x';
+            validCliCommand = false;
             break;
 
         ///////////////////////////////
 
         case 'c': // Velocity PIDs
-            uart1Print("\n");
+            cliPrint("\n");
 
-            uart1Print("nDot PID:  ");
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[NDOT_PID].B);           uart1Print(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[NDOT_PID].P);           uart1Print(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[NDOT_PID].I);           uart1Print(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[NDOT_PID].D);           uart1Print(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[NDOT_PID].windupGuard); uart1Print(numberString);
+            cliPrint("nDot PID:  ");
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[NDOT_PID].B);           cliPrint(numberString);
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[NDOT_PID].P);           cliPrint(numberString);
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[NDOT_PID].I);           cliPrint(numberString);
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[NDOT_PID].D);           cliPrint(numberString);
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[NDOT_PID].windupGuard); cliPrint(numberString);
             if  (eepromConfig.PID[NDOT_PID].dErrorCalc)
-                uart1Print("Error\n");
+                cliPrint("Error\n");
             else
-                uart1Print("State\n");
+                cliPrint("State\n");
 
-            uart1Print("eDot PID:  ");
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[EDOT_PID].B);           uart1Print(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[EDOT_PID].P);           uart1Print(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[EDOT_PID].I);           uart1Print(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[EDOT_PID].D);           uart1Print(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[EDOT_PID].windupGuard); uart1Print(numberString);
+            cliPrint("eDot PID:  ");
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[EDOT_PID].B);           cliPrint(numberString);
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[EDOT_PID].P);           cliPrint(numberString);
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[EDOT_PID].I);           cliPrint(numberString);
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[EDOT_PID].D);           cliPrint(numberString);
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[EDOT_PID].windupGuard); cliPrint(numberString);
             if  (eepromConfig.PID[EDOT_PID].dErrorCalc)
-                uart1Print("Error\n");
+                cliPrint("Error\n");
             else
-                uart1Print("State\n");
+                cliPrint("State\n");
 
-            uart1Print("hDot PID:  ");
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[HDOT_PID].B);           uart1Print(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[HDOT_PID].P);           uart1Print(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[HDOT_PID].I);           uart1Print(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[HDOT_PID].D);           uart1Print(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[HDOT_PID].windupGuard); uart1Print(numberString);
+            cliPrint("hDot PID:  ");
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[HDOT_PID].B);           cliPrint(numberString);
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[HDOT_PID].P);           cliPrint(numberString);
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[HDOT_PID].I);           cliPrint(numberString);
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[HDOT_PID].D);           cliPrint(numberString);
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[HDOT_PID].windupGuard); cliPrint(numberString);
             if  (eepromConfig.PID[HDOT_PID].dErrorCalc)
-                uart1Print("Error\n");
+                cliPrint("Error\n");
             else
-                uart1Print("State\n");
+                cliPrint("State\n");
 
-            queryType = 'x';
-            validCommand = false;
+            cliQuery = 'x';
+            validCliCommand = false;
         	break;
 
         ///////////////////////////////
 
         case 'd': // Position PIDs
-            uart1Print("\n");
+            cliPrint("\n");
 
-            uart1Print("n PID:  ");
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[N_PID].B);           uart1Print(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[N_PID].P);           uart1Print(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[N_PID].I);           uart1Print(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[N_PID].D);           uart1Print(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[N_PID].windupGuard); uart1Print(numberString);
+            cliPrint("n PID:  ");
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[N_PID].B);           cliPrint(numberString);
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[N_PID].P);           cliPrint(numberString);
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[N_PID].I);           cliPrint(numberString);
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[N_PID].D);           cliPrint(numberString);
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[N_PID].windupGuard); cliPrint(numberString);
             if  (eepromConfig.PID[N_PID].dErrorCalc)
-                uart1Print("Error\n");
+                cliPrint("Error\n");
             else
-                uart1Print("State\n");
+                cliPrint("State\n");
 
-            uart1Print("e PID:  ");
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[E_PID].B);           uart1Print(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[E_PID].P);           uart1Print(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[E_PID].I);           uart1Print(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[E_PID].D);           uart1Print(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[E_PID].windupGuard); uart1Print(numberString);
+            cliPrint("e PID:  ");
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[E_PID].B);           cliPrint(numberString);
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[E_PID].P);           cliPrint(numberString);
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[E_PID].I);           cliPrint(numberString);
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[E_PID].D);           cliPrint(numberString);
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[E_PID].windupGuard); cliPrint(numberString);
             if  (eepromConfig.PID[E_PID].dErrorCalc)
-                uart1Print("Error\n");
+                cliPrint("Error\n");
             else
-                uart1Print("State\n");
+                cliPrint("State\n");
 
-            uart1Print("h PID:  ");
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[H_PID].B);           uart1Print(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[H_PID].P);           uart1Print(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[H_PID].I);           uart1Print(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[H_PID].D);           uart1Print(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[H_PID].windupGuard); uart1Print(numberString);
+            cliPrint("h PID:  ");
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[H_PID].B);           cliPrint(numberString);
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[H_PID].P);           cliPrint(numberString);
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[H_PID].I);           cliPrint(numberString);
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[H_PID].D);           cliPrint(numberString);
+            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[H_PID].windupGuard); cliPrint(numberString);
             if  (eepromConfig.PID[H_PID].dErrorCalc)
-                uart1Print("Error\n");
+                cliPrint("Error\n");
             else
-                uart1Print("State\n");
+                cliPrint("State\n");
 
-            queryType = 'x';
-            validCommand = false;
+            cliQuery = 'x';
+            validCliCommand = false;
         	break;
 
          ///////////////////////////////
 
         case 'e': // Loop Delta Times
-        	snprintf(numberString, 16, "%7ld, ", deltaTime1000Hz); uart1Print(numberString);
-        	snprintf(numberString, 16, "%7ld, ", deltaTime500Hz ); uart1Print(numberString);
-        	snprintf(numberString, 16, "%7ld, ", deltaTime100Hz ); uart1Print(numberString);
-        	snprintf(numberString, 16, "%7ld, ", deltaTime50Hz  ); uart1Print(numberString);
-        	snprintf(numberString, 16, "%7ld, ", deltaTime10Hz  ); uart1Print(numberString);
-        	snprintf(numberString, 16, "%7ld, ", deltaTime5Hz   ); uart1Print(numberString);
-        	snprintf(numberString, 16, "%7ld\n", deltaTime1Hz   ); uart1Print(numberString);
+        	snprintf(numberString, 16, "%7ld, ", deltaTime1000Hz); cliPrint(numberString);
+        	snprintf(numberString, 16, "%7ld, ", deltaTime500Hz ); cliPrint(numberString);
+        	snprintf(numberString, 16, "%7ld, ", deltaTime100Hz ); cliPrint(numberString);
+        	snprintf(numberString, 16, "%7ld, ", deltaTime50Hz  ); cliPrint(numberString);
+        	snprintf(numberString, 16, "%7ld, ", deltaTime10Hz  ); cliPrint(numberString);
+        	snprintf(numberString, 16, "%7ld, ", deltaTime5Hz   ); cliPrint(numberString);
+        	snprintf(numberString, 16, "%7ld\n", deltaTime1Hz   ); cliPrint(numberString);
 
-        	validCommand = false;
+        	validCliCommand = false;
         	break;
 
         ///////////////////////////////
 
         case 'f': // Loop Execution Times
-        	snprintf(numberString, 16, "%7ld, ", executionTime1000Hz); uart1Print(numberString);
-        	snprintf(numberString, 16, "%7ld, ", executionTime500Hz ); uart1Print(numberString);
-        	snprintf(numberString, 16, "%7ld, ", executionTime100Hz ); uart1Print(numberString);
-        	snprintf(numberString, 16, "%7ld, ", executionTime50Hz  ); uart1Print(numberString);
-        	snprintf(numberString, 16, "%7ld, ", executionTime10Hz  ); uart1Print(numberString);
-        	snprintf(numberString, 16, "%7ld, ", executionTime5Hz   ); uart1Print(numberString);
-        	snprintf(numberString, 16, "%7ld\n", executionTime1Hz   ); uart1Print(numberString);
+        	snprintf(numberString, 16, "%7ld, ", executionTime1000Hz); cliPrint(numberString);
+        	snprintf(numberString, 16, "%7ld, ", executionTime500Hz ); cliPrint(numberString);
+        	snprintf(numberString, 16, "%7ld, ", executionTime100Hz ); cliPrint(numberString);
+        	snprintf(numberString, 16, "%7ld, ", executionTime50Hz  ); cliPrint(numberString);
+        	snprintf(numberString, 16, "%7ld, ", executionTime10Hz  ); cliPrint(numberString);
+        	snprintf(numberString, 16, "%7ld, ", executionTime5Hz   ); cliPrint(numberString);
+        	snprintf(numberString, 16, "%7ld\n", executionTime1Hz   ); cliPrint(numberString);
 
-        	validCommand = false;
+        	validCliCommand = false;
         	break;
 
         ///////////////////////////////
 
         case 'g': // 500 Hz Accels
-        	ftoa(sensors.accel500Hz[XAXIS], numberString); uart1Print(numberString); uart1Print(", ");
-        	ftoa(sensors.accel500Hz[YAXIS], numberString); uart1Print(numberString); uart1Print(", ");
-        	ftoa(sensors.accel500Hz[ZAXIS], numberString); uart1Print(numberString); uart1Print("\n");
+        	ftoa(sensors.accel500Hz[XAXIS], numberString); cliPrint(numberString); cliPrint(", ");
+        	ftoa(sensors.accel500Hz[YAXIS], numberString); cliPrint(numberString); cliPrint(", ");
+        	ftoa(sensors.accel500Hz[ZAXIS], numberString); cliPrint(numberString); cliPrint("\n");
 
-        	validCommand = false;
+        	validCliCommand = false;
         	break;
 
         ///////////////////////////////
 
         case 'h': // 100 hz Earth Axis Accels
-        	ftoa(earthAxisAccels[XAXIS], numberString); uart1Print(numberString); uart1Print(", ");
-        	ftoa(earthAxisAccels[YAXIS], numberString); uart1Print(numberString); uart1Print(", ");
-        	ftoa(earthAxisAccels[ZAXIS], numberString); uart1Print(numberString); uart1Print("\n");
+        	ftoa(earthAxisAccels[XAXIS], numberString); cliPrint(numberString); cliPrint(", ");
+        	ftoa(earthAxisAccels[YAXIS], numberString); cliPrint(numberString); cliPrint(", ");
+        	ftoa(earthAxisAccels[ZAXIS], numberString); cliPrint(numberString); cliPrint("\n");
 
-        	validCommand = false;
+        	validCliCommand = false;
         	break;
 
         ///////////////////////////////
 
         case 'i': // 500 Hz Gyros
-        	ftoa(sensors.gyro500Hz[ROLL ] * R2D, numberString); uart1Print(numberString); uart1Print(", ");
-        	ftoa(sensors.gyro500Hz[PITCH] * R2D, numberString); uart1Print(numberString); uart1Print(", ");
-        	ftoa(sensors.gyro500Hz[YAW  ] * R2D, numberString); uart1Print(numberString); uart1Print(", ");
-        	// HJI ftoa(mpu6000Temperature,             numberString); uart1Print(numberString); uart1Print("\n");
+        	ftoa(sensors.gyro500Hz[ROLL ] * R2D, numberString); cliPrint(numberString); cliPrint(", ");
+        	ftoa(sensors.gyro500Hz[PITCH] * R2D, numberString); cliPrint(numberString); cliPrint(", ");
+        	ftoa(sensors.gyro500Hz[YAW  ] * R2D, numberString); cliPrint(numberString); cliPrint(", ");
+        	// HJI ftoa(mpu6000Temperature,             numberString); cliPrint(numberString); cliPrint("\n");
 
-        	validCommand = false;
+        	validCliCommand = false;
         	break;
 
         ///////////////////////////////
 
         case 'j': // 10 Hz Mag Data
-        	ftoa(sensors.mag10Hz[XAXIS], numberString); uart1Print(numberString); uart1Print(", ");
-        	ftoa(sensors.mag10Hz[YAXIS], numberString); uart1Print(numberString); uart1Print(", ");
-        	ftoa(sensors.mag10Hz[ZAXIS], numberString); uart1Print(numberString); uart1Print("\n");
+        	ftoa(sensors.mag10Hz[XAXIS], numberString); cliPrint(numberString); cliPrint(", ");
+        	ftoa(sensors.mag10Hz[YAXIS], numberString); cliPrint(numberString); cliPrint(", ");
+        	ftoa(sensors.mag10Hz[ZAXIS], numberString); cliPrint(numberString); cliPrint("\n");
 
-        	validCommand = false;
+        	validCliCommand = false;
         	break;
 
         ///////////////////////////////
 
         case 'k': // Vertical Axis Variables
-        	ftoa(earthAxisAccels[ZAXIS],  numberString); uart1Print(numberString); uart1Print(", ");
-        	ftoa(sensors.pressureAlt10Hz, numberString); uart1Print(numberString); uart1Print(", ");
-        	ftoa(hDotEstimate,            numberString); uart1Print(numberString); uart1Print(", ");
-        	ftoa(hEstimate,               numberString); uart1Print(numberString); uart1Print("\n");
+        	ftoa(earthAxisAccels[ZAXIS],  numberString); cliPrint(numberString); cliPrint(", ");
+        	ftoa(sensors.pressureAlt10Hz, numberString); cliPrint(numberString); cliPrint(", ");
+        	ftoa(hDotEstimate,            numberString); cliPrint(numberString); cliPrint(", ");
+        	ftoa(hEstimate,               numberString); cliPrint(numberString); cliPrint("\n");
 
-        	validCommand = false;
+        	validCliCommand = false;
         	break;
 
         ///////////////////////////////
 
         case 'l': // Attitudes
-        	snprintf(numberString, 16, "%9.4f, ", sensors.attitude500Hz[ROLL ] * R2D); uart1Print(numberString);
-        	snprintf(numberString, 16, "%9.4f, ", sensors.attitude500Hz[PITCH] * R2D); uart1Print(numberString);
-        	snprintf(numberString, 16, "%9.4f, ", heading.mag * R2D);                  uart1Print(numberString);
-        	snprintf(numberString, 16, "%9.4f\n", heading.tru * R2D);                  uart1Print(numberString);
+        	snprintf(numberString, 16, "%9.4f, ", sensors.attitude500Hz[ROLL ] * R2D); cliPrint(numberString);
+        	snprintf(numberString, 16, "%9.4f, ", sensors.attitude500Hz[PITCH] * R2D); cliPrint(numberString);
+        	snprintf(numberString, 16, "%9.4f, ", heading.mag * R2D);                  cliPrint(numberString);
+        	snprintf(numberString, 16, "%9.4f\n", heading.tru * R2D);                  cliPrint(numberString);
 
-        	validCommand = false;
+        	validCliCommand = false;
         	break;
 
        ///////////////////////////////
 
         case 'm': // GPS Data
-        	snprintf(numberString, 16, "%12.7f, ", sensors.gpsLatitude  * R2D); uart1Print(numberString);
-        	snprintf(numberString, 16, "%12.7f, ", sensors.gpsLongitude * R2D); uart1Print(numberString);
+        	snprintf(numberString, 16, "%12.7f, ", sensors.gpsLatitude  * R2D); cliPrint(numberString);
+        	snprintf(numberString, 16, "%12.7f, ", sensors.gpsLongitude * R2D); cliPrint(numberString);
 
-        	ftoa(sensors.gpsAltitude,          numberString); uart1Print(numberString); uart1Print(", ");
-        	ftoa(sensors.gpsGroundSpeed,       numberString); uart1Print(numberString); uart1Print(", ");
-        	ftoa(sensors.gpsGroundTrack * R2D, numberString); uart1Print(numberString); uart1Print("\n");
+        	ftoa(sensors.gpsAltitude,          numberString); cliPrint(numberString); cliPrint(", ");
+        	ftoa(sensors.gpsGroundSpeed,       numberString); cliPrint(numberString); cliPrint(", ");
+        	ftoa(sensors.gpsGroundTrack * R2D, numberString); cliPrint(numberString); cliPrint("\n");
 
-            validCommand = false;
+            validCliCommand = false;
             break;
 
         ///////////////////////////////
 
         case 'n': // GPS Stats
             if (sensors.gpsFix == FIX_2D)
-                uart1Print("2D Fix,  ");
+                cliPrint("2D Fix,  ");
             else if (sensors.gpsFix == FIX_3D)
-                uart1Print("3D Fix,  ");
+                cliPrint("3D Fix,  ");
             else if (sensors.gpsFix == FIX_2D_SBAS)
-            	uart1Print("2D SBAS, ");
+            	cliPrint("2D SBAS, ");
             else if (sensors.gpsFix == FIX_3D_SBAS)
-            	uart1Print("3D SBAS, ");
+            	cliPrint("3D SBAS, ");
             else
-                uart1Print("No Fix, ");
+                cliPrint("No Fix, ");
 
-            itoa(sensors.gpsNumSats, numberString, 10); uart1Print(numberString); uart1Print(", ");
-        	itoa(sensors.gpsDate,    numberString, 10); uart1Print(numberString); uart1Print(" ");
-        	ftoa(sensors.gpsTime,    numberString);     uart1Print(numberString); uart1Print(", ");
-            ftoa(sensors.gpsHdop,    numberString);     uart1Print(numberString); uart1Print("\n");
-            validCommand = false;
+            itoa(sensors.gpsNumSats, numberString, 10); cliPrint(numberString); cliPrint(", ");
+        	itoa(sensors.gpsDate,    numberString, 10); cliPrint(numberString); cliPrint(" ");
+        	ftoa(sensors.gpsTime,    numberString);     cliPrint(numberString); cliPrint(", ");
+            ftoa(sensors.gpsHdop,    numberString);     cliPrint(numberString); cliPrint("\n");
+            validCliCommand = false;
         	break;
 
         ///////////////////////////////
 
         case 'o': // Not Used
-            queryType = 'x';
-            validCommand = false;
+            cliQuery = 'x';
+            validCliCommand = false;
             break;
 
         ///////////////////////////////
 
         case 'p': // Not Used
-            queryType = 'x';
-        	validCommand = false;
+            cliQuery = 'x';
+        	validCliCommand = false;
         	break;
 
         ///////////////////////////////
 
         case 'q': // Not Used
-            queryType = 'x';
-           	validCommand = false;
+            cliQuery = 'x';
+           	validCliCommand = false;
            	break;
 
         ///////////////////////////////
 
         case 'r':
         	if (flightMode == RATE)
-        		uart1Print("Flight Mode = RATE      ");
+        		cliPrint("Flight Mode = RATE      ");
         	else if (flightMode == ATTITUDE)
-        		uart1Print("Flight Mode = ATTITUDE  ");
+        		cliPrint("Flight Mode = ATTITUDE  ");
         	else if (flightMode == GPS)
-        		uart1Print("Flight Mode = GPS       ");
+        		cliPrint("Flight Mode = GPS       ");
 
         	if (headingHoldEngaged == true)
-        	    uart1Print("Heading Hold = ENGAGED     ");
+        	    cliPrint("Heading Hold = ENGAGED     ");
         	else
-        	    uart1Print("Heading Hold = DISENGAGED  ");
+        	    cliPrint("Heading Hold = DISENGAGED  ");
 
         	if (altitudeHoldState == DISENGAGED)
-        		uart1Print("Altitude Hold = DISENAGED\n");
+        		cliPrint("Altitude Hold = DISENAGED\n");
             else if (altitudeHoldState == ENGAGED)
-            	uart1Print("Altitude Hold = ENGAGED\n");
+            	cliPrint("Altitude Hold = ENGAGED\n");
             else if (altitudeHoldState == PANIC)
-            	uart1Print("Altitude Hold = PANIC\n");
+            	cliPrint("Altitude Hold = PANIC\n");
 
-        	validCommand = false;
+        	validCliCommand = false;
         	break;
 
         ///////////////////////////////
@@ -512,25 +512,25 @@ void cliCom(void)
 				for (index = 0; index < eepromConfig.spektrumChannels - 1; index++)
                 {
     		    	itoa(spektrumChannelData[index], numberString, 10);
-    		    	uart1Print(numberString); uart1Print(", ");
+    		    	cliPrint(numberString); cliPrint(", ");
     		    }
 
                 itoa(spektrumChannelData[eepromConfig.spektrumChannels - 1], numberString, 10);
-                uart1Print(numberString); uart1Print("\n");
+                cliPrint(numberString); cliPrint("\n");
 		    }
 		    else
 		    {
 				for (index = 0; index < 7; index++)
                 {
     		    	itoa(rxRead(index), numberString, 10);
-    		    	uart1Print(numberString); uart1Print(", ");
+    		    	cliPrint(numberString); cliPrint(", ");
     		    }
 
                 itoa(rxRead(7), numberString, 10);
-                uart1Print(numberString); uart1Print("\n");
+                cliPrint(numberString); cliPrint("\n");
 			}
 
-        	validCommand = false;
+        	validCliCommand = false;
         	break;
 
         ///////////////////////////////
@@ -539,67 +539,67 @@ void cliCom(void)
             for (index = 0; index < 7; index++)
             {
     			ftoa( rxCommand[index], numberString );
-    			uart1Print( numberString ); uart1Print( ", " );
+    			cliPrint( numberString ); cliPrint( ", " );
     		}
 
             ftoa( rxCommand[7], numberString );
-            uart1Print( numberString ); uart1Print( "\n" );
+            cliPrint( numberString ); cliPrint( "\n" );
 
-            validCommand = false;
+            validCliCommand = false;
             break;
 
         ///////////////////////////////
 
         case 'u': // Command in Detent Discretes
             if ( commandInDetent[ROLL] == true )
-                uart1Print( "true" );
+                cliPrint( "true" );
             else
-                uart1Print( "false" );
-            uart1Print(", ");
+                cliPrint( "false" );
+            cliPrint(", ");
 
             if ( commandInDetent[PITCH] == true )
-                uart1Print( "true" );
+                cliPrint( "true" );
             else
-                uart1Print( "false" );
-            uart1Print(", ");
+                cliPrint( "false" );
+            cliPrint(", ");
 
             if ( commandInDetent[YAW] == true )
-                uart1Print( "true" );
+                cliPrint( "true" );
             else
-                uart1Print( "false" );
-            uart1Print("\n");
+                cliPrint( "false" );
+            cliPrint("\n");
 
-            validCommand = false;
+            validCliCommand = false;
             break;
 
         ///////////////////////////////
 
         case 'v': // ESC PWM Outputs
-            itoa(TIM17->CCR1, numberString, 10); uart1Print(numberString); uart1Print(", ");
-            itoa(TIM4->CCR1,  numberString, 10); uart1Print(numberString); uart1Print(", ");
-            itoa(TIM4->CCR2,  numberString, 10); uart1Print(numberString); uart1Print(", ");
-            itoa(TIM4->CCR3,  numberString, 10); uart1Print(numberString); uart1Print(", ");
-            itoa(TIM4->CCR4,  numberString, 10); uart1Print(numberString); uart1Print(", ");
-            itoa(TIM8->CCR1,  numberString, 10); uart1Print(numberString); uart1Print(", ");
-            itoa(TIM8->CCR2,  numberString, 10); uart1Print(numberString); uart1Print(", ");
-            itoa(TIM8->CCR3,  numberString, 10); uart1Print(numberString); uart1Print("\n");
+            itoa(TIM17->CCR1, numberString, 10); cliPrint(numberString); cliPrint(", ");
+            itoa(TIM4->CCR1,  numberString, 10); cliPrint(numberString); cliPrint(", ");
+            itoa(TIM4->CCR2,  numberString, 10); cliPrint(numberString); cliPrint(", ");
+            itoa(TIM4->CCR3,  numberString, 10); cliPrint(numberString); cliPrint(", ");
+            itoa(TIM4->CCR4,  numberString, 10); cliPrint(numberString); cliPrint(", ");
+            itoa(TIM8->CCR1,  numberString, 10); cliPrint(numberString); cliPrint(", ");
+            itoa(TIM8->CCR2,  numberString, 10); cliPrint(numberString); cliPrint(", ");
+            itoa(TIM8->CCR3,  numberString, 10); cliPrint(numberString); cliPrint("\n");
 
-            validCommand = false;
+            validCliCommand = false;
             break;
 
         ///////////////////////////////
 
         case 'w': // Servo PWM Outputs
-            itoa(TIM15->CCR1, numberString, 10); uart1Print(numberString); uart1Print(", ");
-            itoa(TIM15->CCR2, numberString, 10); uart1Print(numberString); uart1Print(", ");
+            itoa(TIM15->CCR1, numberString, 10); cliPrint(numberString); cliPrint(", ");
+            itoa(TIM15->CCR2, numberString, 10); cliPrint(numberString); cliPrint(", ");
 
-            validCommand = false;
+            validCliCommand = false;
             break;
 
         ///////////////////////////////
 
         case 'x':
-        	validCommand = false;
+        	validCliCommand = false;
         	break;
 
         ///////////////////////////////
@@ -607,13 +607,13 @@ void cliCom(void)
         case 'y': // ESC Calibration
         	escCalibration();
 
-        	queryType = 'x';
+        	cliQuery = 'x';
         	break;
 
         ///////////////////////////////
 
         case 'z':
-            queryType = 'x';
+            cliQuery = 'x';
             break;
 
         ///////////////////////////////
@@ -622,7 +622,7 @@ void cliCom(void)
         	highSpeedTelemDisable();
           	highSpeedTelem1Enabled = true;
 
-        	queryType = 'x';
+        	cliQuery = 'x';
             break;
 
         ///////////////////////////////
@@ -631,7 +631,7 @@ void cliCom(void)
            	highSpeedTelemDisable();
            	highSpeedTelem2Enabled = true;
 
-            queryType = 'x';
+            cliQuery = 'x';
            	break;
 
         ///////////////////////////////
@@ -640,7 +640,7 @@ void cliCom(void)
            	highSpeedTelemDisable();
            	highSpeedTelem3Enabled = true;
 
-            queryType = 'x';
+            cliQuery = 'x';
            	break;
 
         ///////////////////////////////
@@ -649,7 +649,7 @@ void cliCom(void)
            	highSpeedTelemDisable();
            	highSpeedTelem4Enabled = true;
 
-            queryType = 'x';
+            cliQuery = 'x';
            	break;
 
         ///////////////////////////////
@@ -658,7 +658,7 @@ void cliCom(void)
            	highSpeedTelemDisable();
            	highSpeedTelem5Enabled = true;
 
-            queryType = 'x';
+            cliQuery = 'x';
            	break;
 
         ///////////////////////////////
@@ -667,7 +667,7 @@ void cliCom(void)
            	highSpeedTelemDisable();
            	highSpeedTelem6Enabled = true;
 
-            queryType = 'x';
+            cliQuery = 'x';
            	break;
 
         ///////////////////////////////
@@ -676,7 +676,7 @@ void cliCom(void)
            	highSpeedTelemDisable();
            	highSpeedTelem7Enabled = true;
 
-            queryType = 'x';
+            cliQuery = 'x';
            	break;
 
         ///////////////////////////////
@@ -685,7 +685,7 @@ void cliCom(void)
            	highSpeedTelemDisable();
            	highSpeedTelem8Enabled = true;
 
-            queryType = 'x';
+            cliQuery = 'x';
            	break;
 
         ///////////////////////////////
@@ -694,7 +694,7 @@ void cliCom(void)
            	highSpeedTelemDisable();
            	highSpeedTelem9Enabled = true;
 
-            queryType = 'x';
+            cliQuery = 'x';
            	break;
 
         ///////////////////////////////
@@ -702,7 +702,7 @@ void cliCom(void)
         case '0': // Disable high speed telemetry
            	highSpeedTelemDisable();
 
-            queryType = 'x';
+            cliQuery = 'x';
            	break;
 
         ///////////////////////////////
@@ -715,121 +715,121 @@ void cliCom(void)
         ///////////////////////////////
 
         case 'A': // Read Roll Rate PID Values
-            readUsbPID(ROLL_RATE_PID);
-            uart1Print( "\nRoll Rate PID Received....\n" );
+            readCliPID(ROLL_RATE_PID);
+            cliPrint( "\nRoll Rate PID Received....\n" );
 
-        	queryType = 'a';
-        	validCommand = false;
+        	cliQuery = 'a';
+        	validCliCommand = false;
         	break;
 
         ///////////////////////////////
 
         case 'B': // Read Pitch Rate PID Values
-            readUsbPID(PITCH_RATE_PID);
-            uart1Print( "\nPitch Rate PID Received....\n" );
+            readCliPID(PITCH_RATE_PID);
+            cliPrint( "\nPitch Rate PID Received....\n" );
 
-        	queryType = 'a';
-        	validCommand = false;
+        	cliQuery = 'a';
+        	validCliCommand = false;
         	break;
 
         ///////////////////////////////
 
         case 'C': // Read Yaw Rate PID Values
-            readUsbPID(YAW_RATE_PID);
-            uart1Print( "\nYaw Rate PID Received....\n" );
+            readCliPID(YAW_RATE_PID);
+            cliPrint( "\nYaw Rate PID Received....\n" );
 
-        	queryType = 'a';
-        	validCommand = false;
+        	cliQuery = 'a';
+        	validCliCommand = false;
         	break;
 
         ///////////////////////////////
 
         case 'D': // Read Roll Attitude PID Values
-            readUsbPID(ROLL_ATT_PID);
-            uart1Print( "\nRoll Attitude PID Received....\n" );
+            readCliPID(ROLL_ATT_PID);
+            cliPrint( "\nRoll Attitude PID Received....\n" );
 
-        	queryType = 'b';
-        	validCommand = false;
+        	cliQuery = 'b';
+        	validCliCommand = false;
         	break;
 
         ///////////////////////////////
 
         case 'E': // Read Pitch Attitude PID Values
-            readUsbPID(PITCH_ATT_PID);
-            uart1Print( "\nPitch Attitude PID Received....\n" );
+            readCliPID(PITCH_ATT_PID);
+            cliPrint( "\nPitch Attitude PID Received....\n" );
 
-        	queryType = 'b';
-        	validCommand = false;
+        	cliQuery = 'b';
+        	validCliCommand = false;
         	break;
 
         ///////////////////////////////
 
         case 'F': // Read Heading Hold PID Values
-            readUsbPID(HEADING_PID);
-            uart1Print( "\nHeading PID Received....\n" );
+            readCliPID(HEADING_PID);
+            cliPrint( "\nHeading PID Received....\n" );
 
-        	queryType = 'b';
-        	validCommand = false;
+        	cliQuery = 'b';
+        	validCliCommand = false;
         	break;
 
         ///////////////////////////////
 
         case 'G': // Read nDot PID Values
-            readUsbPID(NDOT_PID);
-            uart1Print( "\nnDot PID Received....\n" );
+            readCliPID(NDOT_PID);
+            cliPrint( "\nnDot PID Received....\n" );
 
-        	queryType = 'c';
-        	validCommand = false;
+        	cliQuery = 'c';
+        	validCliCommand = false;
         	break;
 
         ///////////////////////////////
 
         case 'H': // Read eDot PID Values
-            readUsbPID(EDOT_PID);
-            uart1Print( "\neDot PID Received....\n" );
+            readCliPID(EDOT_PID);
+            cliPrint( "\neDot PID Received....\n" );
 
-            queryType = 'c';
-          	validCommand = false;
+            cliQuery = 'c';
+          	validCliCommand = false;
           	break;
 
         ///////////////////////////////
 
         case 'I': // Read hDot PID Values
-            readUsbPID(HDOT_PID);
-            uart1Print( "\nhDot PID Received....\n" );
+            readCliPID(HDOT_PID);
+            cliPrint( "\nhDot PID Received....\n" );
 
-          	queryType = 'c';
-          	validCommand = false;
+          	cliQuery = 'c';
+          	validCliCommand = false;
           	break;
 
        	///////////////////////////////
 
         case 'J': // Read n PID Values
-            readUsbPID(N_PID);
-            uart1Print( "\nn PID Received....\n" );
+            readCliPID(N_PID);
+            cliPrint( "\nn PID Received....\n" );
 
-            queryType = 'd';
-            validCommand = false;
+            cliQuery = 'd';
+            validCliCommand = false;
         	break;
 
         ///////////////////////////////
 
         case 'K': // Read e PID Values
-            readUsbPID(E_PID);
-            uart1Print( "\ne PID Received....\n" );
+            readCliPID(E_PID);
+            cliPrint( "\ne PID Received....\n" );
 
-            queryType = 'd';
-            validCommand = false;
+            cliQuery = 'd';
+            validCliCommand = false;
         	break;
 
         ///////////////////////////////
 
         case 'L': // Read h PID Values
-            readUsbPID(H_PID);
-            uart1Print( "\nh PID Received....\n" );
+            readCliPID(H_PID);
+            cliPrint( "\nh PID Received....\n" );
 
-            queryType = 'd';
-        	validCommand = false;
+            cliQuery = 'd';
+        	validCliCommand = false;
         	break;
 
         ///////////////////////////////
@@ -837,8 +837,8 @@ void cliCom(void)
         case 'M': // MAX7456 CLI
            	max7456CLI();
 
-           	queryType = 'x';
-        	validCommand = false;
+           	cliQuery = 'x';
+        	validCliCommand = false;
         	break;
 
         ///////////////////////////////
@@ -846,8 +846,8 @@ void cliCom(void)
         case 'N': // Mixer CLI
             mixerCLI();
 
-            queryType = 'x';
-            validCommand = false;
+            cliQuery = 'x';
+            validCliCommand = false;
             break;
 
         ///////////////////////////////
@@ -855,8 +855,8 @@ void cliCom(void)
         case 'O': // Receiver CLI
             receiverCLI();
 
-            queryType = 'x';
-            validCommand = false;
+            cliQuery = 'x';
+            validCliCommand = false;
             break;
 
         ///////////////////////////////
@@ -864,8 +864,8 @@ void cliCom(void)
         case 'P': // Sensor CLI
            	sensorCLI();
 
-           	queryType = 'x';
-           	validCommand = false;
+           	cliQuery = 'x';
+           	validCliCommand = false;
            	break;
 
         ///////////////////////////////
@@ -873,14 +873,14 @@ void cliCom(void)
         case 'Q': // GPS CLI
             gpsCLI();
 
-            queryType = 'x';
-           	validCommand = false;
+            cliQuery = 'x';
+           	validCliCommand = false;
            	break;
 
         ///////////////////////////////
 
         case 'R': // Reset to Bootloader
-        	uart1Print("Entering Bootloader....\n\n");
+        	cliPrint("Entering Bootloader....\n\n");
         	delay(100);
         	systemReset(true);
         	break;
@@ -888,7 +888,7 @@ void cliCom(void)
         ///////////////////////////////
 
         case 'S': // Reset System
-        	uart1Print("\nSystem Reseting....\n\n");
+        	cliPrint("\nSystem Reseting....\n\n");
         	delay(100);
         	systemReset(false);
         	break;
@@ -896,23 +896,23 @@ void cliCom(void)
         ///////////////////////////////
 
         case 'T': // Not Used
-            queryType = 'x';
-           	validCommand = false;
+            cliQuery = 'x';
+           	validCliCommand = false;
            	break;
 
         ///////////////////////////////
 
         case 'U': // Not Used
-            queryType = 'x';
-         	validCommand = false;
+            cliQuery = 'x';
+         	validCliCommand = false;
          	break;
 
         ///////////////////////////////
 
         case 'V': // Reset EEPROM Parameters
-            uart1Print( "\nEEPROM Parameters Reset....\n" );
+            cliPrint( "\nEEPROM Parameters Reset....\n" );
             checkFirstTime(true);
-            uart1Print("\nSystem Resetting....\n\n");
+            cliPrint("\nSystem Resetting....\n\n");
             delay(100);
             systemReset(false);
             break;
@@ -920,30 +920,30 @@ void cliCom(void)
         ///////////////////////////////
 
         case 'W': // Write EEPROM Parameters
-            uart1Print("\nWriting EEPROM Parameters....\n");
+            cliPrint("\nWriting EEPROM Parameters....\n");
             writeEEPROM();
 
-            queryType = 'x';
-         	validCommand = false;
+            cliQuery = 'x';
+         	validCliCommand = false;
          	break;
 
         ///////////////////////////////
 
         case 'X': // Not Used
-            queryType = 'x';
-            validCommand = false;
+            cliQuery = 'x';
+            validCliCommand = false;
             break;
 
         ///////////////////////////////
 
         case 'Y': // Not Used
-            queryType = 'x';
+            cliQuery = 'x';
             break;
 
         ///////////////////////////////
 
         case 'Z': // Not Used
-            queryType = 'x';
+            cliQuery = 'x';
             break;
 
         ///////////////////////////////
@@ -951,72 +951,72 @@ void cliCom(void)
         case '?': // Command Summary
         	cliBusy = true;
 
-        	uart1Print("\n");
-   		    uart1Print("'a' Rate PIDs                              'A' Set Roll Rate PID Data   AB;P;I;D;windupGuard;dErrorCalc\n");
-   		    uart1Print("'b' Attitude PIDs                          'B' Set Pitch Rate PID Data  BB;P;I;D;windupGuard;dErrorCalc\n");
-   		    uart1Print("'c' Velocity PIDs                          'C' Set Yaw Rate PID Data    CB;P;I;D;windupGuard;dErrorCalc\n");
-   		    uart1Print("'d' Position PIDs                          'D' Set Roll Att PID Data    DB;P;I;D;windupGuard;dErrorCalc\n");
-   		    uart1Print("'e' Loop Delta Times                       'E' Set Pitch Att PID Data   EB;P;I;D;windupGuard;dErrorCalc\n");
-   		    uart1Print("'f' Loop Execution Times                   'F' Set Hdg Hold PID Data    FB;P;I;D;windupGuard;dErrorCalc\n");
-   		    uart1Print("'g' 500 Hz Accels                          'G' Set nDot PID Data        GB;P;I;D;windupGuard;dErrorCalc\n");
-   		    uart1Print("'h' 100 Hz Earth Axis Accels               'H' Set eDot PID Data        HB;P;I;D;windupGuard;dErrorCalc\n");
-   		    uart1Print("'i' 500 Hz Gyros                           'I' Set hDot PID Data        IB;P;I;D;windupGuard;dErrorCalc\n");
-   		    uart1Print("'j' 10 hz Mag Data                         'J' Set n PID Data           JB;P;I;D;windupGuard;dErrorCalc\n");
-   		    uart1Print("'k' Vertical Axis Variable                 'K' Set e PID Data           KB;P;I;D;windupGuard;dErrorCalc\n");
-   		    uart1Print("'l' Attitudes                              'L' Set h PID Data           LB;P;I;D;windupGuard;dErrorCalc\n");
-   		    uart1Print("\n");
+        	cliPrint("\n");
+   		    cliPrint("'a' Rate PIDs                              'A' Set Roll Rate PID Data   AB;P;I;D;windupGuard;dErrorCalc\n");
+   		    cliPrint("'b' Attitude PIDs                          'B' Set Pitch Rate PID Data  BB;P;I;D;windupGuard;dErrorCalc\n");
+   		    cliPrint("'c' Velocity PIDs                          'C' Set Yaw Rate PID Data    CB;P;I;D;windupGuard;dErrorCalc\n");
+   		    cliPrint("'d' Position PIDs                          'D' Set Roll Att PID Data    DB;P;I;D;windupGuard;dErrorCalc\n");
+   		    cliPrint("'e' Loop Delta Times                       'E' Set Pitch Att PID Data   EB;P;I;D;windupGuard;dErrorCalc\n");
+   		    cliPrint("'f' Loop Execution Times                   'F' Set Hdg Hold PID Data    FB;P;I;D;windupGuard;dErrorCalc\n");
+   		    cliPrint("'g' 500 Hz Accels                          'G' Set nDot PID Data        GB;P;I;D;windupGuard;dErrorCalc\n");
+   		    cliPrint("'h' 100 Hz Earth Axis Accels               'H' Set eDot PID Data        HB;P;I;D;windupGuard;dErrorCalc\n");
+   		    cliPrint("'i' 500 Hz Gyros                           'I' Set hDot PID Data        IB;P;I;D;windupGuard;dErrorCalc\n");
+   		    cliPrint("'j' 10 hz Mag Data                         'J' Set n PID Data           JB;P;I;D;windupGuard;dErrorCalc\n");
+   		    cliPrint("'k' Vertical Axis Variable                 'K' Set e PID Data           KB;P;I;D;windupGuard;dErrorCalc\n");
+   		    cliPrint("'l' Attitudes                              'L' Set h PID Data           LB;P;I;D;windupGuard;dErrorCalc\n");
+   		    cliPrint("\n");
 
-   		    uart1Print("Press space bar for more, or enter a command....\n");
-   		    while (uart1Available() == false);
-   		    queryType = uart1Read();
-   		    if (queryType != ' ')
+   		    cliPrint("Press space bar for more, or enter a command....\n");
+   		    while (cliAvailable() == false);
+   		    cliQuery = cliRead();
+   		    if (cliQuery != ' ')
    		    {
-   		        validCommand = true;
+   		        validCliCommand = true;
    		        cliBusy = false;
    		    	return;
    		    }
 
-   		    uart1Print("\n");
-   		    uart1Print("'m' GPS Data                               'M' MAX7456 CLI\n");
-   		    uart1Print("'n' GPS Stats                              'N' Mixer CLI\n");
-   		    uart1Print("'o' Not Used                               'O' Receiver CLI\n");
-   		    uart1Print("'p' Not Used                               'P' Sensor CLI\n");
-   		    uart1Print("'q' Not Used                               'Q' GPS CLI\n");
-   		    uart1Print("'r' Mode States                            'R' Reset and Enter Bootloader\n");
-   		    uart1Print("'s' Raw Receiver Commands                  'S' Reset\n");
-   		    uart1Print("'t' Processed Receiver Commands            'T' Not Used\n");
-   		    uart1Print("'u' Command In Detent Discretes            'U' Not Used\n");
-   		    uart1Print("'v' Motor PWM Outputs                      'V' Reset EEPROM Parameters\n");
-   		    uart1Print("'w' Servo PWM Outputs                      'W' Write EEPROM Parameters\n");
-   		    uart1Print("'x' Terminate Serial Communication         'X' Not Used\n");
-   		    uart1Print("\n");
+   		    cliPrint("\n");
+   		    cliPrint("'m' GPS Data                               'M' MAX7456 CLI\n");
+   		    cliPrint("'n' GPS Stats                              'N' Mixer CLI\n");
+   		    cliPrint("'o' Not Used                               'O' Receiver CLI\n");
+   		    cliPrint("'p' Not Used                               'P' Sensor CLI\n");
+   		    cliPrint("'q' Not Used                               'Q' GPS CLI\n");
+   		    cliPrint("'r' Mode States                            'R' Reset and Enter Bootloader\n");
+   		    cliPrint("'s' Raw Receiver Commands                  'S' Reset\n");
+   		    cliPrint("'t' Processed Receiver Commands            'T' Not Used\n");
+   		    cliPrint("'u' Command In Detent Discretes            'U' Not Used\n");
+   		    cliPrint("'v' Motor PWM Outputs                      'V' Reset EEPROM Parameters\n");
+   		    cliPrint("'w' Servo PWM Outputs                      'W' Write EEPROM Parameters\n");
+   		    cliPrint("'x' Terminate Serial Communication         'X' Not Used\n");
+   		    cliPrint("\n");
 
-   		    uart1Print("Press space bar for more, or enter a command....\n");
-   		    while (uart1Available() == false);
-   		    queryType = uart1Read();
-   		    if (queryType != ' ')
+   		    cliPrint("Press space bar for more, or enter a command....\n");
+   		    while (cliAvailable() == false);
+   		    cliQuery = cliRead();
+   		    if (cliQuery != ' ')
    		    {
-   		    	validCommand = true;
+   		    	validCliCommand = true;
    		    	cliBusy = false;
    		    	return;
    		    }
 
-   		    uart1Print("\n");
-   		    uart1Print("'y' ESC Calibration                        'Y' Not Used\n");
-   		    uart1Print("'z' Not Used                               'Z' Not Used\n");
-   		    uart1Print("'1' High Speed Telemetry 1 Enable\n");
-   		    uart1Print("'2' High Speed Telemetry 2 Enable\n");
-   		    uart1Print("'3' High Speed Telemetry 3 Enable\n");
-   		    uart1Print("'4' High Speed Telemetry 4 Enable\n");
-   		    uart1Print("'5' High Speed Telemetry 5 Enable\n");
-   		    uart1Print("'6' High Speed Telemetry 6 Enable\n");
-   		    uart1Print("'7' High Speed Telemetry 7 Enable\n");
-   		    uart1Print("'8' High Speed Telemetry 8 Enable\n");
-   		    uart1Print("'9' High Speed Telemetry 9 Enable\n");
-   		    uart1Print("'0' High Speed Telemetry Disable           '?' Command Summary\n");
-   		    uart1Print("\n");
+   		    cliPrint("\n");
+   		    cliPrint("'y' ESC Calibration                        'Y' Not Used\n");
+   		    cliPrint("'z' Not Used                               'Z' Not Used\n");
+   		    cliPrint("'1' High Speed Telemetry 1 Enable\n");
+   		    cliPrint("'2' High Speed Telemetry 2 Enable\n");
+   		    cliPrint("'3' High Speed Telemetry 3 Enable\n");
+   		    cliPrint("'4' High Speed Telemetry 4 Enable\n");
+   		    cliPrint("'5' High Speed Telemetry 5 Enable\n");
+   		    cliPrint("'6' High Speed Telemetry 6 Enable\n");
+   		    cliPrint("'7' High Speed Telemetry 7 Enable\n");
+   		    cliPrint("'8' High Speed Telemetry 8 Enable\n");
+   		    cliPrint("'9' High Speed Telemetry 9 Enable\n");
+   		    cliPrint("'0' High Speed Telemetry Disable           '?' Command Summary\n");
+   		    cliPrint("\n");
 
-  		    queryType = 'x';
+  		    cliQuery = 'x';
   		    cliBusy = false;
    		    break;
 

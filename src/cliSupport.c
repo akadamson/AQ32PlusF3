@@ -47,69 +47,69 @@ void max7456CLI()
 
     cliBusy = true;
 
-    uart1Print("\nEntering MAX7456 CLI....\n\n");
+    cliPrint("\nEntering MAX7456 CLI....\n\n");
 
    	resetMax7456();
 
     while(true)
     {
-    	if (!validQuery) uart1Print("MAX7456 CLI -> ");
+    	if (!validQuery) cliPrint("MAX7456 CLI -> ");
 
-		while ((uart1Available() == false) && (validQuery == false));
+		while ((cliAvailable() == false) && (validQuery == false));
 
 		if (validQuery == false)
-		    max7456query = uart1Read();
+		    max7456query = cliRead();
 
-		if (!validQuery) uart1Print("\n");
+		if (!validQuery) cliPrint("\n");
 
 		switch(max7456query)
 		{
             ///////////////////////
 
             case 'a': // OSD Configuration
-                uart1Print("\nMAX7456 OSD Status:             ");
+                cliPrint("\nMAX7456 OSD Status:             ");
                 if (eepromConfig.osdEnabled)
-                	uart1Print("Enabled\n");
+                	cliPrint("Enabled\n");
                 else
-               	    uart1Print("Disabled\n");
+               	    cliPrint("Disabled\n");
 
-                uart1Print("OSD Default Video Standard:     ");
+                cliPrint("OSD Default Video Standard:     ");
                 if (eepromConfig.defaultVideoStandard)
-                    uart1Print("PAL\n");
+                    cliPrint("PAL\n");
                 else
-                    uart1Print("NTSC\n");
+                    cliPrint("NTSC\n");
 
-                uart1Print("OSD Display Units:              ");
+                cliPrint("OSD Display Units:              ");
                 if (eepromConfig.metricUnits)
-                    uart1Print("Metric\n");
+                    cliPrint("Metric\n");
                 else
-                    uart1Print("English\n");
+                    cliPrint("English\n");
 
-                uart1Print("OSD Altitude Display:           ");
+                cliPrint("OSD Altitude Display:           ");
                 if (eepromConfig.osdDisplayAlt)
-                    uart1Print("On\n");
+                    cliPrint("On\n");
                 else
-                    uart1Print("Off\n");
+                    cliPrint("Off\n");
 
-                uart1Print("OSD Artifical Horizon Display:  ");
+                cliPrint("OSD Artifical Horizon Display:  ");
                 if (eepromConfig.osdDisplayAH)
-                    uart1Print("On\n");
+                    cliPrint("On\n");
                 else
-                    uart1Print("Off\n");
+                    cliPrint("Off\n");
 
-                uart1Print("OSD Attitude Display:           ");
+                cliPrint("OSD Attitude Display:           ");
                 if (eepromConfig.osdDisplayAtt)
-                    uart1Print("On\n");
+                    cliPrint("On\n");
                 else
-                    uart1Print("Off\n");
+                    cliPrint("Off\n");
 
-                uart1Print("OSD Heading Display:            ");
+                cliPrint("OSD Heading Display:            ");
                 if (eepromConfig.osdDisplayHdg)
-                    uart1Print("On\n");
+                    cliPrint("On\n");
                 else
-                    uart1Print("Off\n");
+                    cliPrint("Off\n");
 
-                uart1Print("\n");
+                cliPrint("\n");
                 validQuery = false;
                 break;
 
@@ -164,14 +164,14 @@ void max7456CLI()
 
             case 'r': // Reset MAX7456
                 resetMax7456();
-                uart1Print("\nMAX7456 Reset....\n\n");
+                cliPrint("\nMAX7456 Reset....\n\n");
                 break;
 
             ///////////////////////
 
             case 's': // Show character set
                 showMax7456Font();
-                uart1Print("\nMAX7456 Character Set Displayed....\n\n");
+                cliPrint("\nMAX7456 Character Set Displayed....\n\n");
                 break;
 
             ///////////////////////
@@ -210,7 +210,7 @@ void max7456CLI()
    		    ///////////////////////
 
    			case 'x':
-   			    uart1Print("\nExiting MAX7456 CLI....\n\n");
+   			    cliPrint("\nExiting MAX7456 CLI....\n\n");
    			    cliBusy = false;
    			    return;
    			    break;
@@ -263,27 +263,27 @@ void max7456CLI()
             ///////////////////////////
 
             case 'W': // Write EEPROM Parameters
-                uart1Print("\nWriting EEPROM Parameters....\n\n");
+                cliPrint("\nWriting EEPROM Parameters....\n\n");
                 writeEEPROM();
                 break;
 
     		///////////////////////
 
 			case '?':
-			   	uart1Print("\n");
-			   	uart1Print("'a' OSD Configuration\n");
-			    uart1Print("'b' Enable OSD Altitude Display            'B' Disable OSD Altitude Display\n");
-			   	uart1Print("'c' Enable OSD Artificial Horizon Display  'C' Disable OSD Artificial Horizon Display\n");
-			   	uart1Print("'d' Enable OSD Attitude Display            'D' Disable OSD Attitude Display\n");
-			   	uart1Print("'e' Enable OSD Heading Display             'E' Disable OSD Heading Display\n");
-			   	uart1Print("'q' Set English Display Units              'Q' Set Metric Display Units\n");
-			    uart1Print("'r' Reset MAX7456\n");
-			   	uart1Print("'s' Display MAX7456 Character Set\n");
-			   	uart1Print("'t' Download Font to MAX7456\n");
-			   	uart1Print("'u' Change OSD Installed State\n");
-			   	uart1Print("'v' Change Default Video Standard          'W' Write EEPROM Parameters\n");
-			   	uart1Print("'x' Exit Sensor CLI                        '?' Command Summary\n");
-			   	uart1Print("\n");
+			   	cliPrint("\n");
+			   	cliPrint("'a' OSD Configuration\n");
+			    cliPrint("'b' Enable OSD Altitude Display            'B' Disable OSD Altitude Display\n");
+			   	cliPrint("'c' Enable OSD Artificial Horizon Display  'C' Disable OSD Artificial Horizon Display\n");
+			   	cliPrint("'d' Enable OSD Attitude Display            'D' Disable OSD Attitude Display\n");
+			   	cliPrint("'e' Enable OSD Heading Display             'E' Disable OSD Heading Display\n");
+			   	cliPrint("'q' Set English Display Units              'Q' Set Metric Display Units\n");
+			    cliPrint("'r' Reset MAX7456\n");
+			   	cliPrint("'s' Display MAX7456 Character Set\n");
+			   	cliPrint("'t' Download Font to MAX7456\n");
+			   	cliPrint("'u' Change OSD Installed State\n");
+			   	cliPrint("'v' Change Default Video Standard          'W' Write EEPROM Parameters\n");
+			   	cliPrint("'x' Exit Sensor CLI                        '?' Command Summary\n");
+			   	cliPrint("\n");
 	    	    break;
 
 	    	///////////////////////
@@ -307,199 +307,199 @@ void mixerCLI()
 
     cliBusy = true;
 
-    uart1Print("\nEntering Mixer CLI....\n\n");
+    cliPrint("\nEntering Mixer CLI....\n\n");
 
     while(true)
     {
-        uart1Print("Mixer CLI -> ");
+        cliPrint("Mixer CLI -> ");
 
-		while ((uart1Available() == false) && (validQuery == false));
+		while ((cliAvailable() == false) && (validQuery == false));
 
 		if (validQuery == false)
-		    mixerQuery = uart1Read();
+		    mixerQuery = cliRead();
 
-		uart1Print("\n");
+		cliPrint("\n");
 
 		switch(mixerQuery)
 		{
             ///////////////////////////
 
             case 'a': // Mixer Configuration
-                uart1Print("\nMixer Configuration:            ");
+                cliPrint("\nMixer Configuration:            ");
                 switch (eepromConfig.mixerConfiguration)
                 {
                     case MIXERTYPE_GIMBAL:
-                    	uart1Print("MIXERTYPE GIMBAL\n");
+                    	cliPrint("MIXERTYPE GIMBAL\n");
                     	break;
 
                     ///////////////////////
 
                     case MIXERTYPE_FLYING_WING:
-                    	uart1Print("MIXERTYPE FLYING WING\n");
+                    	cliPrint("MIXERTYPE FLYING WING\n");
                     	break;
 
                     ///////////////////////
 
                     case MIXERTYPE_BI:
-                        uart1Print("MIXERTYPE BICOPTER\n");
+                        cliPrint("MIXERTYPE BICOPTER\n");
                         break;
 
                     ///////////////////////
 
                     case MIXERTYPE_TRI:
-                        uart1Print("MIXERTYPE TRICOPTER\n");
+                        cliPrint("MIXERTYPE TRICOPTER\n");
                         break;
 
                     ///////////////////////
 
                     case MIXERTYPE_QUADP:
-                        uart1Print("MIXERTYPE QUAD PLUS\n");
+                        cliPrint("MIXERTYPE QUAD PLUS\n");
                         break;
 
                     case MIXERTYPE_QUADX:
-                        uart1Print("MIXERTYPE QUAD X\n");
+                        cliPrint("MIXERTYPE QUAD X\n");
                         break;
 
                     case MIXERTYPE_VTAIL4_NO_COMP:
-                    	uart1Print("MULTITYPE VTAIL NO COMP\n");
+                    	cliPrint("MULTITYPE VTAIL NO COMP\n");
                     	break;
 
                     case MIXERTYPE_VTAIL4_Y_COMP:
-                    	uart1Print("MULTITYPE VTAIL Y COMP\n");
+                    	cliPrint("MULTITYPE VTAIL Y COMP\n");
                     	break;
 
                     case MIXERTYPE_VTAIL4_RY_COMP:
-                    	uart1Print("MULTITYPE VTAIL RY COMP\n");
+                    	cliPrint("MULTITYPE VTAIL RY COMP\n");
                     	break;
 
                     case MIXERTYPE_VTAIL4_PY_COMP:
-                    	uart1Print("MULTITYPE VTAIL PY COMP\n");
+                    	cliPrint("MULTITYPE VTAIL PY COMP\n");
                     	break;
 
                     case MIXERTYPE_VTAIL4_RP_COMP:
-                    	uart1Print("MULTITYPE VTAIL RP COMP\n");
+                    	cliPrint("MULTITYPE VTAIL RP COMP\n");
                     	break;
 
                     case MIXERTYPE_VTAIL4_RPY_COMP:
-                    	uart1Print("MULTITYPE VTAIL RPY COMP\n");
+                    	cliPrint("MULTITYPE VTAIL RPY COMP\n");
                     	break;
 
                     case MIXERTYPE_Y4:
-                    	uart1Print("MIXERTYPE Y4\n");
+                    	cliPrint("MIXERTYPE Y4\n");
                     	break;
 
                     ///////////////////////
 
                     case MIXERTYPE_HEX6P:
-                        uart1Print("MIXERTYPE HEX PLUS\n");
+                        cliPrint("MIXERTYPE HEX PLUS\n");
                         break;
 
                     case MIXERTYPE_HEX6X:
-                        uart1Print("MIXERTYPE HEX X\n");
+                        cliPrint("MIXERTYPE HEX X\n");
                         break;
 
                     case MIXERTYPE_Y6:
-                        uart1Print("MIXERTYPE Y6\n");
+                        cliPrint("MIXERTYPE Y6\n");
                         break;
 
                     ///////////////////////
 
                     case MIXERTYPE_OCTOF8P:
-                        uart1Print("MIXERTYPE FLAT OCTO PLUS\n");
+                        cliPrint("MIXERTYPE FLAT OCTO PLUS\n");
                         break;
 
                     case MIXERTYPE_OCTOF8X:
-                        uart1Print("MIXERTYPE FLAT OCTO X\n");
+                        cliPrint("MIXERTYPE FLAT OCTO X\n");
                         break;
 
                     case MIXERTYPE_OCTOX8P:
-                        uart1Print("MIXERTYPE COAXIAL OCTO PLUS\n");
+                        cliPrint("MIXERTYPE COAXIAL OCTO PLUS\n");
                         break;
 
                     case MIXERTYPE_OCTOX8X:
-                        uart1Print("MIXERTYPE COAXIAL OCTO X\n");
+                        cliPrint("MIXERTYPE COAXIAL OCTO X\n");
                         break;
 
                     ///////////////////////
 
                     case MIXERTYPE_FREEMIX:
-                    	uart1Print("MIXERTYPE FREE MIX\n");
+                    	cliPrint("MIXERTYPE FREE MIX\n");
                     	break;
                 }
 
-                uart1Print("Number of Motors:               ");
-                itoa(numberMotor,                         numberString, 10); uart1Print(numberString); uart1Print("\n");
+                cliPrint("Number of Motors:               ");
+                itoa(numberMotor,                         numberString, 10); cliPrint(numberString); cliPrint("\n");
 
-                uart1Print("ESC PWM Rate:                   ");
-                itoa((uint16_t)eepromConfig.escPwmRate,   numberString, 10); uart1Print(numberString); uart1Print("\n");
+                cliPrint("ESC PWM Rate:                   ");
+                itoa((uint16_t)eepromConfig.escPwmRate,   numberString, 10); cliPrint(numberString); cliPrint("\n");
 
-                uart1Print("Servo PWM Rate:                 ");
-                itoa((uint16_t)eepromConfig.servoPwmRate, numberString, 10); uart1Print(numberString); uart1Print("\n");
+                cliPrint("Servo PWM Rate:                 ");
+                itoa((uint16_t)eepromConfig.servoPwmRate, numberString, 10); cliPrint(numberString); cliPrint("\n");
 
                 if ( eepromConfig.mixerConfiguration == MIXERTYPE_BI )
                 {
-                    uart1Print("BiCopter Left Servo Min:        ");
-                    itoa((uint16_t)eepromConfig.biLeftServoMin,  numberString, 10); uart1Print(numberString); uart1Print("\n");
-                    uart1Print("BiCopter Left Servo Mid:        ");
-                    itoa((uint16_t)eepromConfig.biLeftServoMid,  numberString, 10); uart1Print(numberString); uart1Print("\n");
-                    uart1Print("BiCopter Left Servo Max:        ");
-                    itoa((uint16_t)eepromConfig.biLeftServoMax,  numberString, 10); uart1Print(numberString); uart1Print("\n");
-                    uart1Print("BiCopter Right Servo Min:       ");
-                    itoa((uint16_t)eepromConfig.biRightServoMin, numberString, 10); uart1Print(numberString); uart1Print("\n");
-                    uart1Print("BiCopter Right Servo Mid:       ");
-                    itoa((uint16_t)eepromConfig.biRightServoMid, numberString, 10); uart1Print(numberString); uart1Print("\n");
-                    uart1Print("BiCopter Right Servo Max:       ");
-                    itoa((uint16_t)eepromConfig.biRightServoMax, numberString, 10); uart1Print(numberString); uart1Print("\n");
+                    cliPrint("BiCopter Left Servo Min:        ");
+                    itoa((uint16_t)eepromConfig.biLeftServoMin,  numberString, 10); cliPrint(numberString); cliPrint("\n");
+                    cliPrint("BiCopter Left Servo Mid:        ");
+                    itoa((uint16_t)eepromConfig.biLeftServoMid,  numberString, 10); cliPrint(numberString); cliPrint("\n");
+                    cliPrint("BiCopter Left Servo Max:        ");
+                    itoa((uint16_t)eepromConfig.biLeftServoMax,  numberString, 10); cliPrint(numberString); cliPrint("\n");
+                    cliPrint("BiCopter Right Servo Min:       ");
+                    itoa((uint16_t)eepromConfig.biRightServoMin, numberString, 10); cliPrint(numberString); cliPrint("\n");
+                    cliPrint("BiCopter Right Servo Mid:       ");
+                    itoa((uint16_t)eepromConfig.biRightServoMid, numberString, 10); cliPrint(numberString); cliPrint("\n");
+                    cliPrint("BiCopter Right Servo Max:       ");
+                    itoa((uint16_t)eepromConfig.biRightServoMax, numberString, 10); cliPrint(numberString); cliPrint("\n");
                 }
 
                 if ( eepromConfig.mixerConfiguration == MIXERTYPE_FLYING_WING )
                 {
-                    uart1Print("Roll Direction Left:            ");
-                    itoa((uint16_t)eepromConfig.rollDirectionLeft,   numberString, 10); uart1Print(numberString); uart1Print("\n");
-                    uart1Print("Roll Direction Right:           ");
-                    itoa((uint16_t)eepromConfig.rollDirectionRight,  numberString, 10); uart1Print(numberString); uart1Print("\n");
-                    uart1Print("Pitch Direction Left:           ");
-                    itoa((uint16_t)eepromConfig.pitchDirectionLeft,  numberString, 10); uart1Print(numberString); uart1Print("\n");
-                    uart1Print("Pitch Direction Right:          ");
-                    itoa((uint16_t)eepromConfig.pitchDirectionRight, numberString, 10); uart1Print(numberString); uart1Print("\n");
-                    uart1Print("Wing Left Minimum:              ");
-                    itoa((uint16_t)eepromConfig.wingLeftMinimum,     numberString, 10); uart1Print(numberString); uart1Print("\n");
-                    uart1Print("Wing Left Maximum:              ");
-                    itoa((uint16_t)eepromConfig.wingLeftMaximum,     numberString, 10); uart1Print(numberString); uart1Print("\n");
-                    uart1Print("Wing Right Minimum:             ");
-                    itoa((uint16_t)eepromConfig.wingRightMinimum,    numberString, 10); uart1Print(numberString); uart1Print("\n");
-                    uart1Print("Wing Right Maximum:             ");
-                    itoa((uint16_t)eepromConfig.wingRightMaximum,    numberString, 10); uart1Print(numberString); uart1Print("\n");
+                    cliPrint("Roll Direction Left:            ");
+                    itoa((uint16_t)eepromConfig.rollDirectionLeft,   numberString, 10); cliPrint(numberString); cliPrint("\n");
+                    cliPrint("Roll Direction Right:           ");
+                    itoa((uint16_t)eepromConfig.rollDirectionRight,  numberString, 10); cliPrint(numberString); cliPrint("\n");
+                    cliPrint("Pitch Direction Left:           ");
+                    itoa((uint16_t)eepromConfig.pitchDirectionLeft,  numberString, 10); cliPrint(numberString); cliPrint("\n");
+                    cliPrint("Pitch Direction Right:          ");
+                    itoa((uint16_t)eepromConfig.pitchDirectionRight, numberString, 10); cliPrint(numberString); cliPrint("\n");
+                    cliPrint("Wing Left Minimum:              ");
+                    itoa((uint16_t)eepromConfig.wingLeftMinimum,     numberString, 10); cliPrint(numberString); cliPrint("\n");
+                    cliPrint("Wing Left Maximum:              ");
+                    itoa((uint16_t)eepromConfig.wingLeftMaximum,     numberString, 10); cliPrint(numberString); cliPrint("\n");
+                    cliPrint("Wing Right Minimum:             ");
+                    itoa((uint16_t)eepromConfig.wingRightMinimum,    numberString, 10); cliPrint(numberString); cliPrint("\n");
+                    cliPrint("Wing Right Maximum:             ");
+                    itoa((uint16_t)eepromConfig.wingRightMaximum,    numberString, 10); cliPrint(numberString); cliPrint("\n");
                 }
 
                 if ( eepromConfig.mixerConfiguration == MIXERTYPE_GIMBAL )
                 {
-                    uart1Print("Gimbal Roll Servo Min:          ");
-                    itoa((uint16_t)eepromConfig.gimbalRollServoMin,  numberString, 10); uart1Print(numberString); uart1Print("\n");
-                    uart1Print("Gimbal Roll Servo Mid:          ");
-                    itoa((uint16_t)eepromConfig.gimbalRollServoMid,  numberString, 10); uart1Print(numberString); uart1Print("\n");
-                    uart1Print("Gimbal Roll Servo Max:          ");
-                    itoa((uint16_t)eepromConfig.gimbalRollServoMax,  numberString, 10); uart1Print(numberString); uart1Print("\n");
-                    uart1Print("Gimbal Roll Servo Gain:        ");
-                    ftoa(eepromConfig.gimbalRollServoGain, numberString);               uart1Print(numberString); uart1Print("\n");
-                    uart1Print("Gimbal Pitch Servo Min:         ");
-                    itoa((uint16_t)eepromConfig.gimbalPitchServoMin, numberString, 10); uart1Print(numberString); uart1Print("\n");
-                    uart1Print("Gimbal Pitch Servo Mid:         ");
-                    itoa((uint16_t)eepromConfig.gimbalPitchServoMid, numberString, 10); uart1Print(numberString); uart1Print("\n");
-                    uart1Print("Gimbal Pitch Servo Max:         ");
-                    itoa((uint16_t)eepromConfig.gimbalPitchServoMax, numberString, 10); uart1Print(numberString); uart1Print("\n");
-                    uart1Print("Gimbal Pitch Servo Gain:       ");
-                    ftoa(eepromConfig.gimbalPitchServoGain, numberString);              uart1Print(numberString); uart1Print("\n");
+                    cliPrint("Gimbal Roll Servo Min:          ");
+                    itoa((uint16_t)eepromConfig.gimbalRollServoMin,  numberString, 10); cliPrint(numberString); cliPrint("\n");
+                    cliPrint("Gimbal Roll Servo Mid:          ");
+                    itoa((uint16_t)eepromConfig.gimbalRollServoMid,  numberString, 10); cliPrint(numberString); cliPrint("\n");
+                    cliPrint("Gimbal Roll Servo Max:          ");
+                    itoa((uint16_t)eepromConfig.gimbalRollServoMax,  numberString, 10); cliPrint(numberString); cliPrint("\n");
+                    cliPrint("Gimbal Roll Servo Gain:        ");
+                    ftoa(eepromConfig.gimbalRollServoGain, numberString);               cliPrint(numberString); cliPrint("\n");
+                    cliPrint("Gimbal Pitch Servo Min:         ");
+                    itoa((uint16_t)eepromConfig.gimbalPitchServoMin, numberString, 10); cliPrint(numberString); cliPrint("\n");
+                    cliPrint("Gimbal Pitch Servo Mid:         ");
+                    itoa((uint16_t)eepromConfig.gimbalPitchServoMid, numberString, 10); cliPrint(numberString); cliPrint("\n");
+                    cliPrint("Gimbal Pitch Servo Max:         ");
+                    itoa((uint16_t)eepromConfig.gimbalPitchServoMax, numberString, 10); cliPrint(numberString); cliPrint("\n");
+                    cliPrint("Gimbal Pitch Servo Gain:       ");
+                    ftoa(eepromConfig.gimbalPitchServoGain, numberString);              cliPrint(numberString); cliPrint("\n");
                 }
 
                 if ( eepromConfig.mixerConfiguration == MIXERTYPE_TRI )
                 {
-                    uart1Print("TriCopter Yaw Servo Min:        ");
-                    itoa((uint16_t)eepromConfig.triYawServoMin, numberString, 10); uart1Print(numberString); uart1Print("\n");
-                    uart1Print("TriCopter Yaw Servo Mid:        ");
-                    itoa((uint16_t)eepromConfig.triYawServoMid, numberString, 10); uart1Print(numberString); uart1Print("\n");
-                    uart1Print("TriCopter Yaw Servo Max:        ");
-                    itoa((uint16_t)eepromConfig.triYawServoMax, numberString, 10); uart1Print(numberString); uart1Print("\n");
+                    cliPrint("TriCopter Yaw Servo Min:        ");
+                    itoa((uint16_t)eepromConfig.triYawServoMin, numberString, 10); cliPrint(numberString); cliPrint("\n");
+                    cliPrint("TriCopter Yaw Servo Mid:        ");
+                    itoa((uint16_t)eepromConfig.triYawServoMid, numberString, 10); cliPrint(numberString); cliPrint("\n");
+                    cliPrint("TriCopter Yaw Servo Max:        ");
+                    itoa((uint16_t)eepromConfig.triYawServoMax, numberString, 10); cliPrint(numberString); cliPrint("\n");
                 }
 
                 if (eepromConfig.mixerConfiguration == MIXERTYPE_VTAIL4_Y_COMP  ||
@@ -508,12 +508,12 @@ void mixerCLI()
                     eepromConfig.mixerConfiguration == MIXERTYPE_VTAIL4_RP_COMP ||
                     eepromConfig.mixerConfiguration == MIXERTYPE_VTAIL4_RPY_COMP)
                 {
-                    uart1Print("V Tail Angle                   ");
-                    ftoa(eepromConfig.vTailAngle, numberString); uart1Print(numberString); uart1Print("\n");
+                    cliPrint("V Tail Angle                   ");
+                    ftoa(eepromConfig.vTailAngle, numberString); cliPrint(numberString); cliPrint("\n");
     			}
 
-                uart1Print("Yaw Direction:                  ");
-                itoa((int8_t)eepromConfig.yawDirection,   numberString, 10); uart1Print(numberString); uart1Print("\n\n");
+                cliPrint("Yaw Direction:                  ");
+                itoa((int8_t)eepromConfig.yawDirection,   numberString, 10); cliPrint(numberString); cliPrint("\n\n");
 
                 validQuery = false;
                 break;
@@ -521,26 +521,26 @@ void mixerCLI()
             ///////////////////////////
 
             case 'b': // Free Mix Matrix
-        	    uart1Print("\nNumber of Free Mixer Motors:  ");
-        	    itoa( eepromConfig.freeMixMotors, numberString, 10 ); uart1Print( numberString ); uart1Print("\n\n");
-                uart1Print("         Roll    Pitch   Yaw\n");
+        	    cliPrint("\nNumber of Free Mixer Motors:  ");
+        	    itoa( eepromConfig.freeMixMotors, numberString, 10 ); cliPrint( numberString ); cliPrint("\n\n");
+                cliPrint("         Roll    Pitch   Yaw\n");
 
         	    for ( index = 0; index < eepromConfig.freeMixMotors; index++ )
         	    {
-        	    	uart1Print("Motor"); itoa(index, numberString, 10);       uart1Print(numberString); uart1Print("  ");
-        	    	ftoa(eepromConfig.freeMix[index][ROLL ], numberString); uart1Print(numberString); uart1Print("  ");
-        	    	ftoa(eepromConfig.freeMix[index][PITCH], numberString); uart1Print(numberString); uart1Print("  ");
-        	    	ftoa(eepromConfig.freeMix[index][YAW  ], numberString); uart1Print(numberString); uart1Print("\n");
+        	    	cliPrint("Motor"); itoa(index, numberString, 10);       cliPrint(numberString); cliPrint("  ");
+        	    	ftoa(eepromConfig.freeMix[index][ROLL ], numberString); cliPrint(numberString); cliPrint("  ");
+        	    	ftoa(eepromConfig.freeMix[index][PITCH], numberString); cliPrint(numberString); cliPrint("  ");
+        	    	ftoa(eepromConfig.freeMix[index][YAW  ], numberString); cliPrint(numberString); cliPrint("\n");
         	    }
 
-        	    uart1Print("\n");
+        	    cliPrint("\n");
         	    validQuery = false;
         	    break;
 
             ///////////////////////////
 
 			case 'x':
-			    uart1Print("\nExiting Mixer CLI....\n\n");
+			    cliPrint("\nExiting Mixer CLI....\n\n");
 			    cliBusy = false;
 			    return;
 			    break;
@@ -548,7 +548,7 @@ void mixerCLI()
             ///////////////////////////
 
             case 'A': // Read Mixer Configuration
-                eepromConfig.mixerConfiguration = (uint8_t)readFloatUart1();
+                eepromConfig.mixerConfiguration = (uint8_t)readFloatCLI();
                 initMixer();
 
         	    mixerQuery = 'a';
@@ -558,8 +558,8 @@ void mixerCLI()
             ///////////////////////////
 
             case 'B': // Read ESC and Servo PWM Update Rates
-                eepromConfig.escPwmRate   = (uint16_t)readFloatUart1();
-                eepromConfig.servoPwmRate = (uint16_t)readFloatUart1();
+                eepromConfig.escPwmRate   = (uint16_t)readFloatCLI();
+                eepromConfig.servoPwmRate = (uint16_t)readFloatCLI();
 
                 pwmEscInit(eepromConfig.escPwmRate);
                 pwmServoInit(eepromConfig.servoPwmRate);
@@ -571,9 +571,9 @@ void mixerCLI()
             ///////////////////////////
 
             case 'C': // Read BiCopter Left Servo Parameters
-           	    eepromConfig.biLeftServoMin = readFloatUart1();
-           	    eepromConfig.biLeftServoMid = readFloatUart1();
-           	    eepromConfig.biLeftServoMax = readFloatUart1();
+           	    eepromConfig.biLeftServoMin = readFloatCLI();
+           	    eepromConfig.biLeftServoMid = readFloatCLI();
+           	    eepromConfig.biLeftServoMax = readFloatCLI();
 
            	    mixerQuery = 'a';
                 validQuery = true;
@@ -582,9 +582,9 @@ void mixerCLI()
             ///////////////////////////
 
             case 'D': // Read BiCopter Right Servo Parameters
-           	    eepromConfig.biRightServoMin = readFloatUart1();
-           	    eepromConfig.biRightServoMid = readFloatUart1();
-           	    eepromConfig.biRightServoMax = readFloatUart1();
+           	    eepromConfig.biRightServoMin = readFloatCLI();
+           	    eepromConfig.biRightServoMid = readFloatCLI();
+           	    eepromConfig.biRightServoMax = readFloatCLI();
 
            	    mixerQuery = 'a';
                 validQuery = true;
@@ -593,10 +593,10 @@ void mixerCLI()
             ///////////////////////////
 
             case 'E': // Read Flying Wing Servo Directions
-                eepromConfig.rollDirectionLeft   = readFloatUart1();
-                eepromConfig.rollDirectionRight  = readFloatUart1();
-                eepromConfig.pitchDirectionLeft  = readFloatUart1();
-                eepromConfig.pitchDirectionRight = readFloatUart1();
+                eepromConfig.rollDirectionLeft   = readFloatCLI();
+                eepromConfig.rollDirectionRight  = readFloatCLI();
+                eepromConfig.pitchDirectionLeft  = readFloatCLI();
+                eepromConfig.pitchDirectionRight = readFloatCLI();
 
          	    mixerQuery = 'a';
                 validQuery = true;
@@ -605,10 +605,10 @@ void mixerCLI()
             ///////////////////////////
 
             case 'F': // Read Flying Wing Servo Limits
-           	    eepromConfig.wingLeftMinimum  = readFloatUart1();
-           	    eepromConfig.wingLeftMaximum  = readFloatUart1();
-           	    eepromConfig.wingRightMinimum = readFloatUart1();
-           	    eepromConfig.wingRightMaximum = readFloatUart1();
+           	    eepromConfig.wingLeftMinimum  = readFloatCLI();
+           	    eepromConfig.wingLeftMaximum  = readFloatCLI();
+           	    eepromConfig.wingRightMinimum = readFloatCLI();
+           	    eepromConfig.wingRightMaximum = readFloatCLI();
 
                 mixerQuery = 'a';
                 validQuery = true;
@@ -617,7 +617,7 @@ void mixerCLI()
             ///////////////////////////
 
             case 'G': // Read Free Mix Motor Number
-           	    eepromConfig.freeMixMotors = (uint8_t)readFloatUart1();
+           	    eepromConfig.freeMixMotors = (uint8_t)readFloatCLI();
            	    initMixer();
 
            	    mixerQuery = 'b';
@@ -627,9 +627,9 @@ void mixerCLI()
             ///////////////////////////
 
             case 'H': // Read Free Mix Matrix Element
-                rows    = (uint8_t)readFloatUart1();
-                columns = (uint8_t)readFloatUart1();
-                eepromConfig.freeMix[rows][columns] = readFloatUart1();
+                rows    = (uint8_t)readFloatCLI();
+                columns = (uint8_t)readFloatCLI();
+                eepromConfig.freeMix[rows][columns] = readFloatCLI();
 
                 mixerQuery = 'b';
                 validQuery = true;
@@ -638,10 +638,10 @@ void mixerCLI()
             ///////////////////////////
 
             case 'I': // Read Gimbal Roll Servo Parameters
-         	    eepromConfig.gimbalRollServoMin  = readFloatUart1();
-           	    eepromConfig.gimbalRollServoMid  = readFloatUart1();
-           	    eepromConfig.gimbalRollServoMax  = readFloatUart1();
-           	    eepromConfig.gimbalRollServoGain = readFloatUart1();
+         	    eepromConfig.gimbalRollServoMin  = readFloatCLI();
+           	    eepromConfig.gimbalRollServoMid  = readFloatCLI();
+           	    eepromConfig.gimbalRollServoMax  = readFloatCLI();
+           	    eepromConfig.gimbalRollServoGain = readFloatCLI();
 
            	    mixerQuery = 'a';
                 validQuery = true;
@@ -650,10 +650,10 @@ void mixerCLI()
             ///////////////////////////
 
             case 'J': // Read Gimbal Pitch Servo Parameters
-           	    eepromConfig.gimbalPitchServoMin  = readFloatUart1();
-           	    eepromConfig.gimbalPitchServoMid  = readFloatUart1();
-           	    eepromConfig.gimbalPitchServoMax  = readFloatUart1();
-           	    eepromConfig.gimbalPitchServoGain = readFloatUart1();
+           	    eepromConfig.gimbalPitchServoMin  = readFloatCLI();
+           	    eepromConfig.gimbalPitchServoMid  = readFloatCLI();
+           	    eepromConfig.gimbalPitchServoMax  = readFloatCLI();
+           	    eepromConfig.gimbalPitchServoGain = readFloatCLI();
 
            	    mixerQuery = 'a';
                 validQuery = true;
@@ -662,9 +662,9 @@ void mixerCLI()
             ///////////////////////////
 
             case 'K': // Read TriCopter YawServo Parameters
-        	    eepromConfig.triYawServoMin = readFloatUart1();
-           	    eepromConfig.triYawServoMid = readFloatUart1();
-           	    eepromConfig.triYawServoMax = readFloatUart1();
+        	    eepromConfig.triYawServoMin = readFloatCLI();
+           	    eepromConfig.triYawServoMid = readFloatCLI();
+           	    eepromConfig.triYawServoMax = readFloatCLI();
 
            	    mixerQuery = 'a';
                 validQuery = true;
@@ -673,7 +673,7 @@ void mixerCLI()
             ///////////////////////////
 
             case 'L': // Read V Tail Angle
-        	    eepromConfig.vTailAngle = readFloatUart1();
+        	    eepromConfig.vTailAngle = readFloatCLI();
 
         	    mixerQuery = 'a';
                 validQuery = true;
@@ -682,7 +682,7 @@ void mixerCLI()
             ///////////////////////////
 
             case 'M': // Read yaw direction
-                tempFloat = readFloatUart1();
+                tempFloat = readFloatCLI();
                 if (tempFloat >= 0.0)
                     tempFloat = 1.0;
                 else
@@ -697,30 +697,30 @@ void mixerCLI()
             ///////////////////////////
 
             case 'W': // Write EEPROM Parameters
-                uart1Print("\nWriting EEPROM Parameters....\n\n");
+                cliPrint("\nWriting EEPROM Parameters....\n\n");
                 writeEEPROM();
                 break;
 
 			///////////////////////////
 
 			case '?':
-			   	uart1Print("\n");
-			   	uart1Print("'a' Mixer Configuration Data               'A' Set Mixer Configuration              A1 thru 21, see aq32Plus.h\n");
-   		        uart1Print("'b' Free Mixer Configuration               'B' Set PWM Rates                        BESC;Servo\n");
-			   	uart1Print("                                           'C' Set BiCopter Left Servo Parameters   CMin;Mid;Max\n");
-			   	uart1Print("                                           'D' Set BiCopter Right Servo Parameters  DMin;Mid;Max\n");
-			   	uart1Print("                                           'E' Set Flying Wing Servo Directions     ERollLeft;RollRight;PitchLeft;PitchRight\n");
-			   	uart1Print("                                           'F' Set Flying Wing Servo Limits         FLeftMin;LeftMax;RightMin;RightMax\n");
-   		        uart1Print("                                           'G' Set Number of FreeMix Motors         GNumber\n");
-   		        uart1Print("                                           'H' Set FreeMix Matrix Element           HRow;Column;Element\n");
-   		        uart1Print("                                           'I' Set Gimbal Roll Servo Parameters     IMin;Mid;Max;Gain\n");
-   		        uart1Print("                                           'J' Set Gimbal Pitch Servo Parameters    JMin;Mid;Max;Gain\n");
-   		        uart1Print("                                           'K' Set TriCopter Servo Parameters       KMin;Mid;Max\n");
-   		        uart1Print("                                           'L' Set V Tail Angle                     LAngle\n");
-   		        uart1Print("                                           'M' Set Yaw Direction                    M1 or M-1\n");
-   		        uart1Print("                                           'W' Write EEPROM Parameters\n");
-   		        uart1Print("'x' Exit Sensor CLI                        '?' Command Summary\n");
-   		        uart1Print("\n");
+			   	cliPrint("\n");
+			   	cliPrint("'a' Mixer Configuration Data               'A' Set Mixer Configuration              A1 thru 21, see aq32Plus.h\n");
+   		        cliPrint("'b' Free Mixer Configuration               'B' Set PWM Rates                        BESC;Servo\n");
+			   	cliPrint("                                           'C' Set BiCopter Left Servo Parameters   CMin;Mid;Max\n");
+			   	cliPrint("                                           'D' Set BiCopter Right Servo Parameters  DMin;Mid;Max\n");
+			   	cliPrint("                                           'E' Set Flying Wing Servo Directions     ERollLeft;RollRight;PitchLeft;PitchRight\n");
+			   	cliPrint("                                           'F' Set Flying Wing Servo Limits         FLeftMin;LeftMax;RightMin;RightMax\n");
+   		        cliPrint("                                           'G' Set Number of FreeMix Motors         GNumber\n");
+   		        cliPrint("                                           'H' Set FreeMix Matrix Element           HRow;Column;Element\n");
+   		        cliPrint("                                           'I' Set Gimbal Roll Servo Parameters     IMin;Mid;Max;Gain\n");
+   		        cliPrint("                                           'J' Set Gimbal Pitch Servo Parameters    JMin;Mid;Max;Gain\n");
+   		        cliPrint("                                           'K' Set TriCopter Servo Parameters       KMin;Mid;Max\n");
+   		        cliPrint("                                           'L' Set V Tail Angle                     LAngle\n");
+   		        cliPrint("                                           'M' Set Yaw Direction                    M1 or M-1\n");
+   		        cliPrint("                                           'W' Write EEPROM Parameters\n");
+   		        cliPrint("'x' Exit Sensor CLI                        '?' Command Summary\n");
+   		        cliPrint("\n");
 	    	    break;
 
 	    	///////////////////////////
@@ -743,77 +743,77 @@ void receiverCLI()
 
     cliBusy = true;
 
-    uart1Print("\nEntering Receiver CLI....\n\n");
+    cliPrint("\nEntering Receiver CLI....\n\n");
 
     while(true)
     {
-        uart1Print("Receiver CLI -> ");
+        cliPrint("Receiver CLI -> ");
 
-		while ((uart1Available() == false) && (validQuery == false));
+		while ((cliAvailable() == false) && (validQuery == false));
 
 		if (validQuery == false)
-		    receiverQuery = uart1Read();
+		    receiverQuery = cliRead();
 
-		uart1Print("\n");
+		cliPrint("\n");
 
 		switch(receiverQuery)
 		{
             ///////////////////////////
 
             case 'a': // Receiver Configuration
-                uart1Print("\nReceiver Type:                  ");
+                cliPrint("\nReceiver Type:                  ");
                 switch(eepromConfig.receiverType)
                 {
                     case PARALLEL_PWM:
-                        uart1Print("Parallel\n");
+                        cliPrint("Parallel\n");
                         break;
                     case SERIAL_PWM:
-                        uart1Print("Serial\n");
+                        cliPrint("Serial\n");
                         break;
                     case SPEKTRUM:
-                        uart1Print("Spektrum\n");
+                        cliPrint("Spektrum\n");
                         break;
 		        }
 
-                uart1Print("Current RC Channel Assignment:  ");
+                cliPrint("Current RC Channel Assignment:  ");
                 for (index = 0; index < 8; index++)
                     rcOrderString[eepromConfig.rcMap[index]] = rcChannelLetters[index];
 
                 rcOrderString[index] = '\0';
 
-                uart1Print(rcOrderString);  uart1Print("\n");
+                cliPrint(rcOrderString);  cliPrint("\n");
 
-                uart1Print("Spektrum Resolution:            ");
+                cliPrint("Spektrum Resolution:            ");
                 if (eepromConfig.spektrumHires)
-				    uart1Print("11 Bit Mode\n");
+				    cliPrint("11 Bit Mode\n");
 				else
-				    uart1Print("10 Bit Mode\n");
+				    cliPrint("10 Bit Mode\n");
 
-				uart1Print("Number of Spektrum Channels:    ");
-				snprintf(numberString, 16, "%d\n", eepromConfig.spektrumChannels); uart1Print(numberString);
+				cliPrint("Number of Spektrum Channels:    ");
+				snprintf(numberString, 16, "%d\n", eepromConfig.spektrumChannels); cliPrint(numberString);
 
-                uart1Print("Mid Command:                    ");
-                snprintf(numberString, 16, "%d\n", (uint16_t)eepromConfig.midCommand); uart1Print(numberString);
+                cliPrint("Mid Command:                    ");
+                snprintf(numberString, 16, "%d\n", (uint16_t)eepromConfig.midCommand); cliPrint(numberString);
 
-				uart1Print("Min Check:                      ");
-                snprintf(numberString, 16, "%d\n", (uint16_t)eepromConfig.minCheck); uart1Print(numberString);
+				cliPrint("Min Check:                      ");
+                snprintf(numberString, 16, "%d\n", (uint16_t)eepromConfig.minCheck); cliPrint(numberString);
 
-				uart1Print("Max Check:                      ");
-                snprintf(numberString, 16, "%d\n", (uint16_t)eepromConfig.maxCheck); uart1Print(numberString);
+				cliPrint("Max Check:                      ");
+                snprintf(numberString, 16, "%d\n", (uint16_t)eepromConfig.maxCheck); cliPrint(numberString);
 
-				uart1Print("Min Throttle:                   ");
-                snprintf(numberString, 16, "%d\n", (uint16_t)eepromConfig.minThrottle); uart1Print(numberString);
+				cliPrint("Min Throttle:                   ");
+                snprintf(numberString, 16, "%d\n", (uint16_t)eepromConfig.minThrottle); cliPrint(numberString);
 
-				uart1Print("Max Thottle:                    ");
-                snprintf(numberString, 16, "%d\n\n", (uint16_t)eepromConfig.maxThrottle); uart1Print(numberString);
+				cliPrint("Max Thottle:                    ");
+                snprintf(numberString, 16, "%d\n\n", (uint16_t)eepromConfig.maxThrottle); cliPrint(numberString);
 
-				uart1Print("Max Rate Command:               ");
+				cliPrint("Max Rate Command:               ");
 				tempFloat = eepromConfig.rateScaling * 180000.0 / PI;
-				snprintf(numberString, 16, "%6.2f DPS\n", tempFloat); uart1Print(numberString);
+				snprintf(numberString, 16, "%6.2f DPS\n", tempFloat); cliPrint(numberString);
 
-				uart1Print("Max Attitude Command:           ");
+				cliPrint("Max Attitude Command:           ");
 				tempFloat = eepromConfig.attitudeScaling * 180000.0 / PI;
-				snprintf(numberString, 18, "%6.2f Degrees\n\n", tempFloat); uart1Print(numberString);
+				snprintf(numberString, 18, "%6.2f Degrees\n\n", tempFloat); cliPrint(numberString);
 
 				validQuery = false;
                 break;
@@ -821,7 +821,7 @@ void receiverCLI()
             ///////////////////////////
 
             case 'b': // Read Max Rate Value
-                eepromConfig.rateScaling = readFloatUart1() / 180000 * PI;
+                eepromConfig.rateScaling = readFloatCLI() / 180000 * PI;
 
                 receiverQuery = 'a';
                 validQuery = true;
@@ -830,7 +830,7 @@ void receiverCLI()
             ///////////////////////////
 
             case 'c': // Read Max Attitude Value
-                eepromConfig.attitudeScaling = readFloatUart1() / 180000 * PI;
+                eepromConfig.attitudeScaling = readFloatCLI() / 180000 * PI;
 
                 receiverQuery = 'a';
                 validQuery = true;
@@ -839,7 +839,7 @@ void receiverCLI()
             ///////////////////////////
 
 			case 'x':
-			    uart1Print("\nExiting Receiver CLI....\n\n");
+			    cliPrint("\nExiting Receiver CLI....\n\n");
 			    cliBusy = false;
 			    return;
 			    break;
@@ -847,10 +847,10 @@ void receiverCLI()
             ///////////////////////////
 
             case 'A': // Read RX Input Type
-                eepromConfig.receiverType = (uint8_t)readFloatUart1();
-			    uart1Print( "\nReceiver Type Changed....\n");
+                eepromConfig.receiverType = (uint8_t)readFloatCLI();
+			    cliPrint( "\nReceiver Type Changed....\n");
 
-			    uart1Print("\nSystem Resetting....\n");
+			    cliPrint("\nSystem Resetting....\n");
 			    delay(100);
 			    writeEEPROM();
 			    systemReset(false);
@@ -860,7 +860,7 @@ void receiverCLI()
             ///////////////////////////
 
             case 'B': // Read RC Control Order
-                readStringUart1( rcOrderString, 8 );
+                readStringCLI( rcOrderString, 8 );
                 parseRcChannels( rcOrderString );
 
           	    receiverQuery = 'a';
@@ -870,7 +870,7 @@ void receiverCLI()
             ///////////////////////////
 
             case 'C': // Read Spektrum Resolution
-                eepromConfig.spektrumHires = (uint8_t)readFloatUart1();
+                eepromConfig.spektrumHires = (uint8_t)readFloatCLI();
 
                 receiverQuery = 'a';
                 validQuery = true;
@@ -879,7 +879,7 @@ void receiverCLI()
             ///////////////////////////
 
             case 'D': // Read Number of Spektrum Channels
-                eepromConfig.spektrumChannels = (uint8_t)readFloatUart1();
+                eepromConfig.spektrumChannels = (uint8_t)readFloatCLI();
 
                 receiverQuery = 'a';
                 validQuery = true;
@@ -888,11 +888,11 @@ void receiverCLI()
             ///////////////////////////
 
             case 'E': // Read RC Control Points
-                eepromConfig.midCommand   = readFloatUart1();
-    	        eepromConfig.minCheck     = readFloatUart1();
-    		    eepromConfig.maxCheck     = readFloatUart1();
-    		    eepromConfig.minThrottle  = readFloatUart1();
-    		    eepromConfig.maxThrottle  = readFloatUart1();
+                eepromConfig.midCommand   = readFloatCLI();
+    	        eepromConfig.minCheck     = readFloatCLI();
+    		    eepromConfig.maxCheck     = readFloatCLI();
+    		    eepromConfig.minThrottle  = readFloatCLI();
+    		    eepromConfig.maxThrottle  = readFloatCLI();
 
                 receiverQuery = 'a';
                 validQuery = true;
@@ -901,22 +901,22 @@ void receiverCLI()
             ///////////////////////////
 
             case 'W': // Write EEPROM Parameters
-                uart1Print("\nWriting EEPROM Parameters....\n\n");
+                cliPrint("\nWriting EEPROM Parameters....\n\n");
                 writeEEPROM();
                 break;
 
 			///////////////////////////
 
 			case '?':
-			   	uart1Print("\n");
-			   	uart1Print("'a' Receiver Configuration Data            'A' Set RX Input Type                    AX, 1=Parallel, 2=Serial, 3=Spektrum\n");
-   		        uart1Print("'b' Set Maximum Rate Command               'B' Set RC Control Order                 BTAER1234\n");
-			   	uart1Print("'c' Set Maximum Attitude Command           'C' Set Spektrum Resolution              C0 or C1\n");
-			   	uart1Print("                                           'D' Set Number of Spektrum Channels      D6 thru D12\n");
-			   	uart1Print("                                           'E' Set RC Control Points                EmidCmd;minChk;maxChk;minThrot;maxThrot\n");
-			   	uart1Print("                                           'W' Write EEPROM Parameters\n");
-			   	uart1Print("'x' Exit Receiver CLI                      '?' Command Summary\n");
-			   	uart1Print("\n");
+			   	cliPrint("\n");
+			   	cliPrint("'a' Receiver Configuration Data            'A' Set RX Input Type                    AX, 1=Parallel, 2=Serial, 3=Spektrum\n");
+   		        cliPrint("'b' Set Maximum Rate Command               'B' Set RC Control Order                 BTAER1234\n");
+			   	cliPrint("'c' Set Maximum Attitude Command           'C' Set Spektrum Resolution              C0 or C1\n");
+			   	cliPrint("                                           'D' Set Number of Spektrum Channels      D6 thru D12\n");
+			   	cliPrint("                                           'E' Set RC Control Points                EmidCmd;minChk;maxChk;minThrot;maxThrot\n");
+			   	cliPrint("                                           'W' Write EEPROM Parameters\n");
+			   	cliPrint("'x' Exit Receiver CLI                      '?' Command Summary\n");
+			   	cliPrint("\n");
 	    	    break;
 
 	    	///////////////////////////
@@ -937,54 +937,54 @@ void sensorCLI()
 
     cliBusy = true;
 
-    uart1Print("\nEntering Sensor CLI....\n\n");
+    cliPrint("\nEntering Sensor CLI....\n\n");
 
     while(true)
     {
-        uart1Print("Sensor CLI -> ");
+        cliPrint("Sensor CLI -> ");
 
-		while ((uart1Available() == false) && (validQuery == false));
+		while ((cliAvailable() == false) && (validQuery == false));
 
 		if (validQuery == false)
-		    sensorQuery = uart1Read();
+		    sensorQuery = cliRead();
 
-		uart1Print("\n");
+		cliPrint("\n");
 
 		switch(sensorQuery)
 		{
             ///////////////////////////
 
             case 'a': // Sensor Data
-                uart1Print("\n");
+                cliPrint("\n");
 
-                uart1Print("Accel One G:               ");
-                snprintf(numberString, 16, "%9.4f\n", accelOneG); uart1Print(numberString);
+                cliPrint("Accel One G:               ");
+                snprintf(numberString, 16, "%9.4f\n", accelOneG); cliPrint(numberString);
 
-                uart1Print("Mag Bias:                  ");
-                snprintf(numberString, 16, "%9.4f, ", eepromConfig.magBias[XAXIS]); uart1Print(numberString);
-                snprintf(numberString, 16, "%9.4f, ", eepromConfig.magBias[YAXIS]); uart1Print(numberString);
-                snprintf(numberString, 16, "%9.4f\n", eepromConfig.magBias[ZAXIS]); uart1Print(numberString);
+                cliPrint("Mag Bias:                  ");
+                snprintf(numberString, 16, "%9.4f, ", eepromConfig.magBias[XAXIS]); cliPrint(numberString);
+                snprintf(numberString, 16, "%9.4f, ", eepromConfig.magBias[YAXIS]); cliPrint(numberString);
+                snprintf(numberString, 16, "%9.4f\n", eepromConfig.magBias[ZAXIS]); cliPrint(numberString);
 
-                uart1Print("Accel Cutoff:              ");
-                snprintf(numberString, 16, "%9.4f\n", eepromConfig.accelCutoff); uart1Print(numberString);
+                cliPrint("Accel Cutoff:              ");
+                snprintf(numberString, 16, "%9.4f\n", eepromConfig.accelCutoff); cliPrint(numberString);
 
-                uart1Print("KpAcc (MARG):              ");
-                snprintf(numberString, 16, "%9.4f\n", eepromConfig.KpAcc); uart1Print(numberString);
+                cliPrint("KpAcc (MARG):              ");
+                snprintf(numberString, 16, "%9.4f\n", eepromConfig.KpAcc); cliPrint(numberString);
 
-                uart1Print("KiAcc (MARG):              ");
-                snprintf(numberString, 16, "%9.4f\n", eepromConfig.KiAcc); uart1Print(numberString);
+                cliPrint("KiAcc (MARG):              ");
+                snprintf(numberString, 16, "%9.4f\n", eepromConfig.KiAcc); cliPrint(numberString);
 
-                uart1Print("KpMag (MARG):              ");
-                snprintf(numberString, 16, "%9.4f\n", eepromConfig.KpMag); uart1Print(numberString);
+                cliPrint("KpMag (MARG):              ");
+                snprintf(numberString, 16, "%9.4f\n", eepromConfig.KpMag); cliPrint(numberString);
 
-                uart1Print("KiMag (MARG):              ");
-                snprintf(numberString, 16, "%9.4f\n", eepromConfig.KiMag); uart1Print(numberString);
+                cliPrint("KiMag (MARG):              ");
+                snprintf(numberString, 16, "%9.4f\n", eepromConfig.KiMag); cliPrint(numberString);
 
-                uart1Print("hdot est/h est Comp Fil A: ");
-                snprintf(numberString, 16, "%9.4f\n", eepromConfig.compFilterA); uart1Print(numberString);
+                cliPrint("hdot est/h est Comp Fil A: ");
+                snprintf(numberString, 16, "%9.4f\n", eepromConfig.compFilterA); cliPrint(numberString);
 
-                uart1Print("hdot est/h est Comp Fil B: ");
-                snprintf(numberString, 16, "%9.4f\n\n", eepromConfig.compFilterB); uart1Print(numberString);
+                cliPrint("hdot est/h est Comp Fil B: ");
+                snprintf(numberString, 16, "%9.4f\n\n", eepromConfig.compFilterB); cliPrint(numberString);
 
                 validQuery = false;
                 break;
@@ -1010,7 +1010,7 @@ void sensorCLI()
 			///////////////////////////
 
 			case 'x':
-			    uart1Print("\nExiting Sensor CLI....\n\n");
+			    cliPrint("\nExiting Sensor CLI....\n\n");
 			    cliBusy = false;
 			    return;
 			    break;
@@ -1018,7 +1018,7 @@ void sensorCLI()
             ///////////////////////////
 
             case 'B': // Accel Cutoff
-                eepromConfig.accelCutoff = readFloatUart1();
+                eepromConfig.accelCutoff = readFloatCLI();
 
                 sensorQuery = 'a';
                 validQuery = true;
@@ -1027,8 +1027,8 @@ void sensorCLI()
             ///////////////////////////
 
             case 'C': // kpAcc, kiAcc
-                eepromConfig.KpAcc = readFloatUart1();
-                eepromConfig.KiAcc = readFloatUart1();
+                eepromConfig.KpAcc = readFloatCLI();
+                eepromConfig.KiAcc = readFloatCLI();
 
                 sensorQuery = 'a';
                 validQuery = true;
@@ -1037,8 +1037,8 @@ void sensorCLI()
             ///////////////////////////
 
             case 'D': // kpMag, kiMag
-                eepromConfig.KpMag = readFloatUart1();
-                eepromConfig.KiMag = readFloatUart1();
+                eepromConfig.KpMag = readFloatCLI();
+                eepromConfig.KiMag = readFloatCLI();
 
                 sensorQuery = 'a';
                 validQuery = true;
@@ -1047,8 +1047,8 @@ void sensorCLI()
             ///////////////////////////
 
             case 'E': // h dot est/h est Comp Filter A/B
-                eepromConfig.compFilterA = readFloatUart1();
-                eepromConfig.compFilterB = readFloatUart1();
+                eepromConfig.compFilterA = readFloatCLI();
+                eepromConfig.compFilterB = readFloatCLI();
 
                 sensorQuery = 'a';
                 validQuery = true;
@@ -1057,7 +1057,7 @@ void sensorCLI()
             ///////////////////////////
 
             case 'M': // Magnetic Variation
-                eepromConfig.magVar = readFloatUart1() * D2R;
+                eepromConfig.magVar = readFloatCLI() * D2R;
 
                 sensorQuery = 'a';
                 validQuery = true;
@@ -1066,22 +1066,22 @@ void sensorCLI()
             ///////////////////////////
 
             case 'W': // Write EEPROM Parameters
-                uart1Print("\nWriting EEPROM Parameters....\n\n");
+                cliPrint("\nWriting EEPROM Parameters....\n\n");
                 writeEEPROM();
                 break;
 
 			///////////////////////////
 
 			case '?':
-			   	uart1Print("\n");
-			   	uart1Print("'a' Display Sensor Data\n");
-			   	uart1Print("'b' Accel Calibration                      'B' Set Accel Cutoff                     BAccelCutoff\n");
-			   	uart1Print("'c' Magnetometer Calibration               'C' Set kpAcc/kiAcc                      CKpAcc;KiAcc\n");
-			   	uart1Print("                                           'D' Set kpMag/kiMag                      DKpMag;KiMag\n");
-			   	uart1Print("                                           'E' Set h dot est/h est Comp Filter A/B  EA;B\n");
-			   	uart1Print("                                           'W' Write EEPROM Parameters\n");
-			   	uart1Print("'x' Exit Sensor CLI                        '?' Command Summary\n");
-			    uart1Print("\n");
+			   	cliPrint("\n");
+			   	cliPrint("'a' Display Sensor Data\n");
+			   	cliPrint("'b' Accel Calibration                      'B' Set Accel Cutoff                     BAccelCutoff\n");
+			   	cliPrint("'c' Magnetometer Calibration               'C' Set kpAcc/kiAcc                      CKpAcc;KiAcc\n");
+			   	cliPrint("                                           'D' Set kpMag/kiMag                      DKpMag;KiMag\n");
+			   	cliPrint("                                           'E' Set h dot est/h est Comp Filter A/B  EA;B\n");
+			   	cliPrint("                                           'W' Write EEPROM Parameters\n");
+			   	cliPrint("'x' Exit Sensor CLI                        '?' Command Summary\n");
+			    cliPrint("\n");
 	    	    break;
 
 	    	///////////////////////////
@@ -1101,50 +1101,50 @@ void gpsCLI()
 
     cliBusy = true;
 
-    uart1Print("\nEntering GPS CLI....\n\n");
+    cliPrint("\nEntering GPS CLI....\n\n");
 
     while(true)
     {
-        uart1Print("GPS CLI -> ");
+        cliPrint("GPS CLI -> ");
 
-		while ((uart1Available() == false) && (validQuery == false));
+		while ((cliAvailable() == false) && (validQuery == false));
 
 		if (validQuery == false)
-		    gpsQuery = uart1Read();
+		    gpsQuery = cliRead();
 
-		uart1Print("\n");
+		cliPrint("\n");
 
 		switch(gpsQuery)
 		{
             ///////////////////////////
 
             case 'a': // GPS Installation Data
-                uart1Print("\n");
+                cliPrint("\n");
 
 				switch(eepromConfig.gpsType)
 				{
 					///////////////
 
 					case NO_GPS:
-					    uart1Print("No GPS Installed....\n\n");
+					    cliPrint("No GPS Installed....\n\n");
 					    break;
 
 					///////////////
 
 					case MEDIATEK_3329_BINARY:
-					    uart1Print("MediaTek 3329 GPS installed, Binary Mode....\n\n");
+					    cliPrint("MediaTek 3329 GPS installed, Binary Mode....\n\n");
 					    break;
 
 					///////////////
 
 					case MEDIATEK_3329_NMEA:
-					    uart1Print("MediaTek 3329 GPS Installed, NMEA Mode....\n\n");
+					    cliPrint("MediaTek 3329 GPS Installed, NMEA Mode....\n\n");
 					    break;
 
 					///////////////
 
 					case UBLOX:
-					    uart1Print("UBLOX GPS Installed, Binary Mode....\n\n");
+					    cliPrint("UBLOX GPS Installed, Binary Mode....\n\n");
 					    break;
 
 					///////////////
@@ -1156,7 +1156,7 @@ void gpsCLI()
             ///////////////////////////
 
 			case 'x':
-			    uart1Print("\nExiting GPS CLI....\n\n");
+			    cliPrint("\nExiting GPS CLI....\n\n");
 			    cliBusy = false;
 			    return;
 			    break;
@@ -1206,21 +1206,21 @@ void gpsCLI()
             ///////////////////////////
 
             case 'W': // Write EEPROM Parameters
-                uart1Print("\nWriting EEPROM Parameters....\n\n");
+                cliPrint("\nWriting EEPROM Parameters....\n\n");
                 writeEEPROM();
                 break;
 
 			///////////////////////////
 
 			case '?':
-			   	uart1Print("\n");
-			   	uart1Print("'a' Display GPS Installation Data          'A' Set GPS Type to No GPS\n");
-			   	uart1Print("                                           'B' Set GPS Type to MediaTek 3329 Binary\n");
-			   	uart1Print("                                           'C' Set GPS Type to MediaTek 3329 NMEA\n");
-			   	uart1Print("                                           'D' Set GPS Type to UBLOX\n");
-			   	uart1Print("                                           'W' Write EEPROM Parameters\n");
-			   	uart1Print("'x' Exit GPS CLI                           '?' Command Summary\n");
-			    uart1Print("\n");
+			   	cliPrint("\n");
+			   	cliPrint("'a' Display GPS Installation Data          'A' Set GPS Type to No GPS\n");
+			   	cliPrint("                                           'B' Set GPS Type to MediaTek 3329 Binary\n");
+			   	cliPrint("                                           'C' Set GPS Type to MediaTek 3329 NMEA\n");
+			   	cliPrint("                                           'D' Set GPS Type to UBLOX\n");
+			   	cliPrint("                                           'W' Write EEPROM Parameters\n");
+			   	cliPrint("'x' Exit GPS CLI                           '?' Command Summary\n");
+			    cliPrint("\n");
 	    	    break;
 
 	    	///////////////////////////

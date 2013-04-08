@@ -55,19 +55,19 @@ void magCalibration()
 
 	magCalibrating = true;
 
-	uart1Print("\n\nMagnetometer Calibration:\n\n");
+	cliPrint("\n\nMagnetometer Calibration:\n\n");
 
-    uart1Print("Rotate magnetometer around all axes multiple times\n");
-    uart1Print("Must complete within 60 seconds....\n\n");
-    uart1Print("  Send a character when ready to begin and another when complete\n\n");
+    cliPrint("Rotate magnetometer around all axes multiple times\n");
+    cliPrint("Must complete within 60 seconds....\n\n");
+    cliPrint("  Send a character when ready to begin and another when complete\n\n");
 
-    while (uart1Available() == false);
+    while (cliAvailable() == false);
 
-    uart1Print("  Start rotations.....\n\n");
+    cliPrint("  Start rotations.....\n\n");
 
-    uart1Read();
+    cliRead();
 
-    while ((uart1Available() == false) && (calibrationCounter <= 3000))
+    while ((cliAvailable() == false) && (calibrationCounter <= 3000))
 	{
 		if (readMag() == true)
 		{
@@ -82,7 +82,7 @@ void magCalibration()
 	}
 
 	itoa(calibrationCounter, numberString, 10);
-	uart1Print("\r\nMagnetometer Bias Calculation ("); uart1Print(numberString); uart1Print(" samples collected out of 3000 max)\n\n");
+	cliPrint("\r\nMagnetometer Bias Calculation ("); cliPrint(numberString); cliPrint(" samples collected out of 3000 max)\n\n");
 
 	sphereFit(d, calibrationCounter, 100, 0.0f, population, sphereOrigin, &sphereRadius);
 
@@ -90,12 +90,12 @@ void magCalibration()
 	eepromConfig.magBias[YAXIS] = sphereOrigin[YAXIS];
 	eepromConfig.magBias[ZAXIS] = sphereOrigin[ZAXIS];
 
-    uart1Print("Magnetometer Bias Values: ");
-    ftoa(eepromConfig.magBias[XAXIS], numberString); uart1Print(numberString); uart1Print(", ");
-    ftoa(eepromConfig.magBias[YAXIS], numberString); uart1Print(numberString); uart1Print(", ");
-    ftoa(eepromConfig.magBias[ZAXIS], numberString); uart1Print(numberString); uart1Print("\n");
+    cliPrint("Magnetometer Bias Values: ");
+    ftoa(eepromConfig.magBias[XAXIS], numberString); cliPrint(numberString); cliPrint(", ");
+    ftoa(eepromConfig.magBias[YAXIS], numberString); cliPrint(numberString); cliPrint(", ");
+    ftoa(eepromConfig.magBias[ZAXIS], numberString); cliPrint(numberString); cliPrint("\n");
 
-	uart1Print("\n\nMagnetometer Calibration Complete.\n\n");
+	cliPrint("\n\nMagnetometer Calibration Complete.\n\n");
 
 	magCalibrating = false;
 }

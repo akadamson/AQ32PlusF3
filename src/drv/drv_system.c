@@ -259,6 +259,7 @@ void systemInit(void)
 
     ledInit();
 
+    cliInit();
     gpsInit();
     i2cInit(I2C1);
     pwmEscInit(eepromConfig.escPwmRate);
@@ -268,7 +269,6 @@ void systemInit(void)
     spiInit(SPI1);
     telemetryInit();
     timingFunctionsInit();
-    uart1Init();
 
     initPID();
     setupFourthOrder500Hz();

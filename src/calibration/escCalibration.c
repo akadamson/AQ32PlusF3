@@ -52,52 +52,52 @@ void escCalibration(void)
 
     armed = false;
 
-    uart1Print("\nESC Calibration:\n\n");
-    uart1Print("!!!! CAUTION - Remove all propellers and disconnect !!!!\n");
-    uart1Print("!!!! flight battery before proceeding any further   !!!!\n\n");
-    uart1Print("Type 'Y' to continue, anything other character exits\n\n");
+    cliPrint("\nESC Calibration:\n\n");
+    cliPrint("!!!! CAUTION - Remove all propellers and disconnect !!!!\n");
+    cliPrint("!!!! flight battery before proceeding any further   !!!!\n\n");
+    cliPrint("Type 'Y' to continue, anything other character exits\n\n");
 
-    while (uart1Available() == false);
-    temp = uart1Read();
+    while (cliAvailable() == false);
+    temp = cliRead();
     if (temp != 'Y')
     {
-    	uart1Print("ESC Calibration Canceled!!\n\n");
+    	cliPrint("ESC Calibration Canceled!!\n\n");
     	escCalibrating = false;
     	return;
     }
 
     ///////////////////////////////////
 
-    uart1Print("Enter 'h' for Max Command....\n");
-    uart1Print("Enter 'm' for Mid Command....\n");
-    uart1Print("Enter 'l' for Min Command....\n");
-    uart1Print("Enter 'x' to exit....\n\n");
+    cliPrint("Enter 'h' for Max Command....\n");
+    cliPrint("Enter 'm' for Mid Command....\n");
+    cliPrint("Enter 'l' for Min Command....\n");
+    cliPrint("Enter 'x' to exit....\n\n");
 
     while(true)
     {
-		while (uart1Available() == false);
+		while (cliAvailable() == false);
 
-		temp = uart1Read();
+		temp = cliRead();
 
 		switch (temp)
 		{
 			case 'h':
-			    uart1Print("Applying Max Command....\n\n");
+			    cliPrint("Applying Max Command....\n\n");
 			    writeAllMotors(eepromConfig.maxThrottle);
 			    break;
 
 			case 'm':
-			    uart1Print("Applying Mid Command....\n\n");
+			    cliPrint("Applying Mid Command....\n\n");
 			    writeAllMotors(eepromConfig.midCommand);
 			    break;
 
 			case 'l':
-			    uart1Print("Applying Min Command....\n\n");
+			    cliPrint("Applying Min Command....\n\n");
 			    writeAllMotors(MINCOMMAND);
 			    break;
 
 			case 'x':
-			    uart1Print("Applying Min Command, Exiting Calibration....\n\n");
+			    cliPrint("Applying Min Command, Exiting Calibration....\n\n");
 			    writeAllMotors(MINCOMMAND);
 			    escCalibrating = false;
 			    return;

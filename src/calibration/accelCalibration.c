@@ -54,17 +54,17 @@ void accelCalibration(void)
 
     accelCalibrating = true;
 
-    uart1Print("\nAccelerometer Calibration:\n\n");
+    cliPrint("\nAccelerometer Calibration:\n\n");
 
     ///////////////////////////////////
 
-    uart1Print("Place accelerometer right side up\n");
-    uart1Print("  Send a character when ready to proceed\n\n");
+    cliPrint("Place accelerometer right side up\n");
+    cliPrint("  Send a character when ready to proceed\n\n");
 
-    while (uart1Available() == false);
-    uart1Read();
+    while (cliAvailable() == false);
+    cliRead();
 
-    uart1Print("  Gathering Data...\n\n");
+    cliPrint("  Gathering Data...\n\n");
 
     for (index = 0; index < 5000; index++) {
         readAccel();
@@ -75,16 +75,16 @@ void accelCalibration(void)
     rightSideUp /= 5000.0f;
 
     ftoa(rightSideUp, numberString);
-    uart1Print(numberString);
-    uart1Print("\n\n");
+    cliPrint(numberString);
+    cliPrint("\n\n");
 
-    uart1Print("Place accelerometer up side down\n");
-    uart1Print("  Send a character when ready to proceed\n\n");
+    cliPrint("Place accelerometer up side down\n");
+    cliPrint("  Send a character when ready to proceed\n\n");
 
-    while (uart1Available() == false);
-    uart1Read();
+    while (cliAvailable() == false);
+    cliRead();
 
-    uart1Print("  Gathering Data...\n\n");
+    cliPrint("  Gathering Data...\n\n");
 
     for (index = 0; index < 5000; index++) {
         readAccel();
@@ -95,8 +95,8 @@ void accelCalibration(void)
     upSideDown /= 5000.0f;
 
     ftoa(upSideDown, numberString);
-    uart1Print(numberString);
-    uart1Print("\n\n");
+    cliPrint(numberString);
+    cliPrint("\n\n");
 
     eepromConfig.accelBias[ZAXIS] = (rightSideUp + upSideDown) / 2.0f;
 
@@ -104,13 +104,13 @@ void accelCalibration(void)
 
     ///////////////////////////////////
 
-    uart1Print("Place accelerometer left edge down\n");
-    uart1Print("  Send a character when ready to proceed\n\n");
+    cliPrint("Place accelerometer left edge down\n");
+    cliPrint("  Send a character when ready to proceed\n\n");
 
-    while (uart1Available() == false);
-    uart1Read();
+    while (cliAvailable() == false);
+    cliRead();
 
-    uart1Print("  Gathering Data...\n\n");
+    cliPrint("  Gathering Data...\n\n");
 
     for (index = 0; index < 5000; index++) {
         readAccel();
@@ -121,16 +121,16 @@ void accelCalibration(void)
     leftWingDown /= 5000.0f;
 
     ftoa(leftWingDown, numberString);
-    uart1Print(numberString);
-    uart1Print("\n\n");
+    cliPrint(numberString);
+    cliPrint("\n\n");
 
-    uart1Print("Place accelerometer right edge down\n");
-    uart1Print("  Send a character when ready to proceed\n\n");
+    cliPrint("Place accelerometer right edge down\n");
+    cliPrint("  Send a character when ready to proceed\n\n");
 
-    while (uart1Available() == false);
-    uart1Read();
+    while (cliAvailable() == false);
+    cliRead();
 
-    uart1Print("  Gathering Data...\n\n");
+    cliPrint("  Gathering Data...\n\n");
 
     for (index = 0; index < 5000; index++) {
         readAccel();
@@ -141,8 +141,8 @@ void accelCalibration(void)
     rightWingDown /= 5000.0f;
 
     ftoa(rightWingDown, numberString);
-    uart1Print(numberString);
-    uart1Print("\n\n");
+    cliPrint(numberString);
+    cliPrint("\n\n");
 
     eepromConfig.accelBias[YAXIS] = (leftWingDown + rightWingDown) / 2.0f;
 
@@ -150,13 +150,13 @@ void accelCalibration(void)
 
     ///////////////////////////////////
 
-    uart1Print("Place accelerometer rear edge down\n");
-    uart1Print("  Send a character when ready to proceed\n\n");
+    cliPrint("Place accelerometer rear edge down\n");
+    cliPrint("  Send a character when ready to proceed\n\n");
 
-    while (uart1Available() == false);
-    uart1Read();
+    while (cliAvailable() == false);
+    cliRead();
 
-    uart1Print("  Gathering Data...\n\n");
+    cliPrint("  Gathering Data...\n\n");
 
     for (index = 0; index < 5000; index++) {
         readAccel();
@@ -167,16 +167,16 @@ void accelCalibration(void)
     noseUp /= 5000.0f;
 
     ftoa(noseUp, numberString);
-    uart1Print(numberString);
-    uart1Print("\n\n");
+    cliPrint(numberString);
+    cliPrint("\n\n");
 
-    uart1Print("Place accelerometer front edge down\n");
-    uart1Print("  Send a character when ready to proceed\n\n");
+    cliPrint("Place accelerometer front edge down\n");
+    cliPrint("  Send a character when ready to proceed\n\n");
 
-    while (uart1Available() == false);
-    uart1Read();
+    while (cliAvailable() == false);
+    cliRead();
 
-    uart1Print("  Gathering Data...\n\n");
+    cliPrint("  Gathering Data...\n\n");
 
     for (index = 0; index < 5000; index++) {
         readAccel();
@@ -187,8 +187,8 @@ void accelCalibration(void)
     noseDown /= 5000.0f;
 
     ftoa(noseDown, numberString);
-    uart1Print(numberString);
-    uart1Print("\n\n");
+    cliPrint(numberString);
+    cliPrint("\n\n");
 
     eepromConfig.accelBias[XAXIS] = (noseUp + noseDown) / 2.0f;
 
@@ -197,63 +197,63 @@ void accelCalibration(void)
     ///////////////////////////////////
 
     ftoa(noseUp, numberString);
-    uart1Print(numberString);
-    uart1Print(", ");
+    cliPrint(numberString);
+    cliPrint(", ");
     ftoa(noseDown, numberString);
-    uart1Print(numberString);
-    uart1Print(", ");
+    cliPrint(numberString);
+    cliPrint(", ");
     ftoa(eepromConfig.accelScaleFactor[XAXIS], numberString);
-    uart1Print(numberString);
-    uart1Print(", ");
+    cliPrint(numberString);
+    cliPrint(", ");
     ftoa(eepromConfig.accelBias[XAXIS], numberString);
-    uart1Print(numberString);
-    uart1Print(", ");
+    cliPrint(numberString);
+    cliPrint(", ");
     ftoa((noseUp - eepromConfig.accelBias[XAXIS]) * eepromConfig.accelScaleFactor[XAXIS], numberString);
-    uart1Print(numberString);
-    uart1Print(", ");
+    cliPrint(numberString);
+    cliPrint(", ");
     ftoa((noseDown - eepromConfig.accelBias[XAXIS]) * eepromConfig.accelScaleFactor[XAXIS], numberString);
-    uart1Print(numberString);
-    uart1Print("\n\n");
+    cliPrint(numberString);
+    cliPrint("\n\n");
 
     ftoa(leftWingDown, numberString);
-    uart1Print(numberString);
-    uart1Print(", ");
+    cliPrint(numberString);
+    cliPrint(", ");
     ftoa(rightWingDown, numberString);
-    uart1Print(numberString);
-    uart1Print(", ");
+    cliPrint(numberString);
+    cliPrint(", ");
     ftoa(eepromConfig.accelScaleFactor[YAXIS], numberString);
-    uart1Print(numberString);
-    uart1Print(", ");
+    cliPrint(numberString);
+    cliPrint(", ");
     ftoa(eepromConfig.accelBias[YAXIS], numberString);
-    uart1Print(numberString);
-    uart1Print(", ");
+    cliPrint(numberString);
+    cliPrint(", ");
     ftoa((leftWingDown - eepromConfig.accelBias[YAXIS]) * eepromConfig.accelScaleFactor[YAXIS], numberString);
-    uart1Print(numberString);
-    uart1Print(", ");
+    cliPrint(numberString);
+    cliPrint(", ");
     ftoa((rightWingDown - eepromConfig.accelBias[YAXIS]) * eepromConfig.accelScaleFactor[YAXIS], numberString);
-    uart1Print(numberString);
-    uart1Print("\n\n");
+    cliPrint(numberString);
+    cliPrint("\n\n");
 
     ftoa(upSideDown, numberString);
-    uart1Print(numberString);
-    uart1Print(", ");
+    cliPrint(numberString);
+    cliPrint(", ");
     ftoa(rightSideUp, numberString);
-    uart1Print(numberString);
-    uart1Print(", ");
+    cliPrint(numberString);
+    cliPrint(", ");
     ftoa(eepromConfig.accelScaleFactor[ZAXIS], numberString);
-    uart1Print(numberString);
-    uart1Print(", ");
+    cliPrint(numberString);
+    cliPrint(", ");
     ftoa(eepromConfig.accelBias[ZAXIS], numberString);
-    uart1Print(numberString);
-    uart1Print(", ");
+    cliPrint(numberString);
+    cliPrint(", ");
     ftoa((upSideDown - eepromConfig.accelBias[ZAXIS]) * eepromConfig.accelScaleFactor[ZAXIS], numberString);
-    uart1Print(numberString);
-    uart1Print(", ");
+    cliPrint(numberString);
+    cliPrint(", ");
     ftoa((rightSideUp - eepromConfig.accelBias[ZAXIS]) * eepromConfig.accelScaleFactor[ZAXIS], numberString);
-    uart1Print(numberString);
-    uart1Print("\n");
+    cliPrint(numberString);
+    cliPrint("\n");
 
-    uart1Print("\nAccel Calibration Complete.\n");
+    cliPrint("\nAccel Calibration Complete.\n");
 
     accelCalibrating = false;
 }

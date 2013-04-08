@@ -46,6 +46,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <errno.h>
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -59,6 +60,7 @@
 
 #include "aq32Plus.h"
 
+#include "drv_cli.h"
 #include "drv_gps.h"
 #include "drv_i2c.h"
 #include "drv_led.h"
@@ -70,7 +72,6 @@
 #include "drv_system.h"
 #include "drv_telemetry.h"
 #include "drv_timingFunctions.h"
-#include "drv_uart1.h"
 
 #include "l3gd20.h"
 #include "lsm303dlhc.h"
