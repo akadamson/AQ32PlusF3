@@ -427,79 +427,49 @@ void mixerCLI()
                     	break;
                 }
 
-                cliPrint("Number of Motors:               ");
-                itoa(numberMotor,                         numberString, 10); cliPrint(numberString); cliPrint("\n");
-
-                cliPrint("ESC PWM Rate:                   ");
-                itoa((uint16_t)eepromConfig.escPwmRate,   numberString, 10); cliPrint(numberString); cliPrint("\n");
-
-                cliPrint("Servo PWM Rate:                 ");
-                itoa((uint16_t)eepromConfig.servoPwmRate, numberString, 10); cliPrint(numberString); cliPrint("\n");
+                cliPrintF("Number of Motors:                  %1d\n",  numberMotor);
+                cliPrintF("ESC PWM Rate:                    %3ld\n", eepromConfig.escPwmRate);
+                cliPrintF("Servo PWM Rate:                  %3ld\n", eepromConfig.servoPwmRate);
 
                 if ( eepromConfig.mixerConfiguration == MIXERTYPE_BI )
                 {
-                    cliPrint("BiCopter Left Servo Min:        ");
-                    itoa((uint16_t)eepromConfig.biLeftServoMin,  numberString, 10); cliPrint(numberString); cliPrint("\n");
-                    cliPrint("BiCopter Left Servo Mid:        ");
-                    itoa((uint16_t)eepromConfig.biLeftServoMid,  numberString, 10); cliPrint(numberString); cliPrint("\n");
-                    cliPrint("BiCopter Left Servo Max:        ");
-                    itoa((uint16_t)eepromConfig.biLeftServoMax,  numberString, 10); cliPrint(numberString); cliPrint("\n");
-                    cliPrint("BiCopter Right Servo Min:       ");
-                    itoa((uint16_t)eepromConfig.biRightServoMin, numberString, 10); cliPrint(numberString); cliPrint("\n");
-                    cliPrint("BiCopter Right Servo Mid:       ");
-                    itoa((uint16_t)eepromConfig.biRightServoMid, numberString, 10); cliPrint(numberString); cliPrint("\n");
-                    cliPrint("BiCopter Right Servo Max:       ");
-                    itoa((uint16_t)eepromConfig.biRightServoMax, numberString, 10); cliPrint(numberString); cliPrint("\n");
+                    cliPrintF("BiCopter Left Servo Min:        %4ld\n", (uint16_t)eepromConfig.biLeftServoMin);
+                    cliPrintF("BiCopter Left Servo Mid:        %4ld\n", (uint16_t)eepromConfig.biLeftServoMid);
+                    cliPrintF("BiCopter Left Servo Max:        %4ld\n", (uint16_t)eepromConfig.biLeftServoMax);
+                    cliPrintF("BiCopter Right Servo Min:       %4ld\n", (uint16_t)eepromConfig.biRightServoMin);
+                    cliPrintF("BiCopter Right Servo Mid:       %4ld\n", (uint16_t)eepromConfig.biRightServoMid);
+                    cliPrintF("BiCopter Right Servo Max:       %4ld\n", (uint16_t)eepromConfig.biRightServoMax);
                 }
 
                 if ( eepromConfig.mixerConfiguration == MIXERTYPE_FLYING_WING )
                 {
-                    cliPrint("Roll Direction Left:            ");
-                    itoa((uint16_t)eepromConfig.rollDirectionLeft,   numberString, 10); cliPrint(numberString); cliPrint("\n");
-                    cliPrint("Roll Direction Right:           ");
-                    itoa((uint16_t)eepromConfig.rollDirectionRight,  numberString, 10); cliPrint(numberString); cliPrint("\n");
-                    cliPrint("Pitch Direction Left:           ");
-                    itoa((uint16_t)eepromConfig.pitchDirectionLeft,  numberString, 10); cliPrint(numberString); cliPrint("\n");
-                    cliPrint("Pitch Direction Right:          ");
-                    itoa((uint16_t)eepromConfig.pitchDirectionRight, numberString, 10); cliPrint(numberString); cliPrint("\n");
-                    cliPrint("Wing Left Minimum:              ");
-                    itoa((uint16_t)eepromConfig.wingLeftMinimum,     numberString, 10); cliPrint(numberString); cliPrint("\n");
-                    cliPrint("Wing Left Maximum:              ");
-                    itoa((uint16_t)eepromConfig.wingLeftMaximum,     numberString, 10); cliPrint(numberString); cliPrint("\n");
-                    cliPrint("Wing Right Minimum:             ");
-                    itoa((uint16_t)eepromConfig.wingRightMinimum,    numberString, 10); cliPrint(numberString); cliPrint("\n");
-                    cliPrint("Wing Right Maximum:             ");
-                    itoa((uint16_t)eepromConfig.wingRightMaximum,    numberString, 10); cliPrint(numberString); cliPrint("\n");
+                    cliPrintF("Roll Direction Left:            %4ld\n", (uint16_t)eepromConfig.rollDirectionLeft);
+                    cliPrintF("Roll Direction Right:           %4ld\n", (uint16_t)eepromConfig.rollDirectionRight);
+                    cliPrintF("Pitch Direction Left:           %4ld\n", (uint16_t)eepromConfig.pitchDirectionLeft);
+                    cliPrintF("Pitch Direction Right:          %4ld\n", (uint16_t)eepromConfig.pitchDirectionRight);
+                    cliPrintF("Wing Left Minimum:              %4ld\n", (uint16_t)eepromConfig.wingLeftMinimum);
+                    cliPrintF("Wing Left Maximum:              %4ld\n", (uint16_t)eepromConfig.wingLeftMaximum);
+                    cliPrintF("Wing Right Minimum:             %4ld\n", (uint16_t)eepromConfig.wingRightMinimum);
+                    cliPrintF("Wing Right Maximum:             %4ld\n", (uint16_t)eepromConfig.wingRightMaximum);
                 }
 
                 if ( eepromConfig.mixerConfiguration == MIXERTYPE_GIMBAL )
                 {
-                    cliPrint("Gimbal Roll Servo Min:          ");
-                    itoa((uint16_t)eepromConfig.gimbalRollServoMin,  numberString, 10); cliPrint(numberString); cliPrint("\n");
-                    cliPrint("Gimbal Roll Servo Mid:          ");
-                    itoa((uint16_t)eepromConfig.gimbalRollServoMid,  numberString, 10); cliPrint(numberString); cliPrint("\n");
-                    cliPrint("Gimbal Roll Servo Max:          ");
-                    itoa((uint16_t)eepromConfig.gimbalRollServoMax,  numberString, 10); cliPrint(numberString); cliPrint("\n");
-                    cliPrint("Gimbal Roll Servo Gain:        ");
-                    ftoa(eepromConfig.gimbalRollServoGain, numberString);               cliPrint(numberString); cliPrint("\n");
-                    cliPrint("Gimbal Pitch Servo Min:         ");
-                    itoa((uint16_t)eepromConfig.gimbalPitchServoMin, numberString, 10); cliPrint(numberString); cliPrint("\n");
-                    cliPrint("Gimbal Pitch Servo Mid:         ");
-                    itoa((uint16_t)eepromConfig.gimbalPitchServoMid, numberString, 10); cliPrint(numberString); cliPrint("\n");
-                    cliPrint("Gimbal Pitch Servo Max:         ");
-                    itoa((uint16_t)eepromConfig.gimbalPitchServoMax, numberString, 10); cliPrint(numberString); cliPrint("\n");
-                    cliPrint("Gimbal Pitch Servo Gain:       ");
-                    ftoa(eepromConfig.gimbalPitchServoGain, numberString);              cliPrint(numberString); cliPrint("\n");
-                }
+                    cliPrintF("Gimbal Roll Servo Min:          %4ld\n",   (uint16_t)eepromConfig.gimbalRollServoMin);
+                    cliPrintF("Gimbal Roll Servo Mid:          %4ld\n",   (uint16_t)eepromConfig.gimbalRollServoMid);
+                    cliPrintF("Gimbal Roll Servo Max:          %4ld\n",   (uint16_t)eepromConfig.gimbalRollServoMax);
+                    cliPrintF("Gimbal Roll Servo Gain:          %7.3f\n", eepromConfig.gimbalRollServoGain);
+                    cliPrintF("Gimbal Pitch Servo Min:         %4ld\n",   (uint16_t)eepromConfig.gimbalPitchServoMin);
+                    cliPrintF("Gimbal Pitch Servo Mid:         %4ld\n",   (uint16_t)eepromConfig.gimbalPitchServoMid);
+                    cliPrintF("Gimbal Pitch Servo Max:         %4ld\n",   (uint16_t)eepromConfig.gimbalPitchServoMax);
+                    cliPrintF("Gimbal Pitch Servo Gain:         %7.3f\n", eepromConfig.gimbalPitchServoGain);
+                 }
 
                 if ( eepromConfig.mixerConfiguration == MIXERTYPE_TRI )
                 {
-                    cliPrint("TriCopter Yaw Servo Min:        ");
-                    itoa((uint16_t)eepromConfig.triYawServoMin, numberString, 10); cliPrint(numberString); cliPrint("\n");
-                    cliPrint("TriCopter Yaw Servo Mid:        ");
-                    itoa((uint16_t)eepromConfig.triYawServoMid, numberString, 10); cliPrint(numberString); cliPrint("\n");
-                    cliPrint("TriCopter Yaw Servo Max:        ");
-                    itoa((uint16_t)eepromConfig.triYawServoMax, numberString, 10); cliPrint(numberString); cliPrint("\n");
+                    cliPrintF("TriCopter Yaw Servo Min:        %4ld\n", (uint16_t)eepromConfig.triYawServoMin);
+                    cliPrintF("TriCopter Yaw Servo Mid:        %4ld\n", (uint16_t)eepromConfig.triYawServoMid);
+                    cliPrintF("TriCopter Yaw Servo Max:        %4ld\n", (uint16_t)eepromConfig.triYawServoMax);
                 }
 
                 if (eepromConfig.mixerConfiguration == MIXERTYPE_VTAIL4_Y_COMP  ||
@@ -508,12 +478,10 @@ void mixerCLI()
                     eepromConfig.mixerConfiguration == MIXERTYPE_VTAIL4_RP_COMP ||
                     eepromConfig.mixerConfiguration == MIXERTYPE_VTAIL4_RPY_COMP)
                 {
-                    cliPrint("V Tail Angle                   ");
-                    ftoa(eepromConfig.vTailAngle, numberString); cliPrint(numberString); cliPrint("\n");
-    			}
+                    cliPrintF("V Tail Angle                     %6.2f\n", eepromConfig.vTailAngle);
+                 }
 
-                cliPrint("Yaw Direction:                  ");
-                itoa((int8_t)eepromConfig.yawDirection,   numberString, 10); cliPrint(numberString); cliPrint("\n\n");
+                cliPrintF("Yaw Direction:                    %2d\n\n", (uint16_t)eepromConfig.yawDirection);
 
                 validQuery = false;
                 break;
@@ -521,16 +489,14 @@ void mixerCLI()
             ///////////////////////////
 
             case 'b': // Free Mix Matrix
-        	    cliPrint("\nNumber of Free Mixer Motors:  ");
-        	    itoa( eepromConfig.freeMixMotors, numberString, 10 ); cliPrint( numberString ); cliPrint("\n\n");
-                cliPrint("         Roll    Pitch   Yaw\n");
+        	    cliPrintF("\nNumber of Free Mixer Motors:  %1d\n         Roll    Pitch   Yaw\n", eepromConfig.freeMixMotors);
 
         	    for ( index = 0; index < eepromConfig.freeMixMotors; index++ )
         	    {
-        	    	cliPrint("Motor"); itoa(index, numberString, 10);       cliPrint(numberString); cliPrint("  ");
-        	    	ftoa(eepromConfig.freeMix[index][ROLL ], numberString); cliPrint(numberString); cliPrint("  ");
-        	    	ftoa(eepromConfig.freeMix[index][PITCH], numberString); cliPrint(numberString); cliPrint("  ");
-        	    	ftoa(eepromConfig.freeMix[index][YAW  ], numberString); cliPrint(numberString); cliPrint("\n");
+        	    	cliPrintF("Motor%1d  %6.3f  %6.3f  %6.3f\n", index,
+        	    			                                     eepromConfig.freeMix[index][ROLL ],
+        	    			                                     eepromConfig.freeMix[index][PITCH],
+        	    			                                     eepromConfig.freeMix[index][YAW  ]);
         	    }
 
         	    cliPrint("\n");
@@ -783,40 +749,22 @@ void receiverCLI()
 
                 cliPrint(rcOrderString);  cliPrint("\n");
 
-                cliPrint("Spektrum Resolution:            ");
-                if (eepromConfig.spektrumHires)
-				    cliPrint("11 Bit Mode\n");
-				else
-				    cliPrint("10 Bit Mode\n");
+                cliPrintF("Spektrum Resolution:            %s\n",     eepromConfig.spektrumHires ? "11 Bit Mode" : "10 Bit Mode");
+                cliPrintF("Number of Spektrum Channels:    %2d\n",    eepromConfig.spektrumChannels);
+                cliPrintF("Mid Command:                    %4ld\n",   (uint16_t)eepromConfig.midCommand);
+				cliPrintF("Min Check:                      %4ld\n",   (uint16_t)eepromConfig.minCheck);
+				cliPrintF("Max Check:                      %4ld\n",   (uint16_t)eepromConfig.maxCheck);
+				cliPrintF("Min Throttle:                   %4ld\n",   (uint16_t)eepromConfig.minThrottle);
+				cliPrintF("Max Thottle:                    %4ld\n\n", (uint16_t)eepromConfig.maxThrottle);
 
-				cliPrint("Number of Spektrum Channels:    ");
-				snprintf(numberString, 16, "%d\n", eepromConfig.spektrumChannels); cliPrint(numberString);
-
-                cliPrint("Mid Command:                    ");
-                snprintf(numberString, 16, "%d\n", (uint16_t)eepromConfig.midCommand); cliPrint(numberString);
-
-				cliPrint("Min Check:                      ");
-                snprintf(numberString, 16, "%d\n", (uint16_t)eepromConfig.minCheck); cliPrint(numberString);
-
-				cliPrint("Max Check:                      ");
-                snprintf(numberString, 16, "%d\n", (uint16_t)eepromConfig.maxCheck); cliPrint(numberString);
-
-				cliPrint("Min Throttle:                   ");
-                snprintf(numberString, 16, "%d\n", (uint16_t)eepromConfig.minThrottle); cliPrint(numberString);
-
-				cliPrint("Max Thottle:                    ");
-                snprintf(numberString, 16, "%d\n\n", (uint16_t)eepromConfig.maxThrottle); cliPrint(numberString);
-
-				cliPrint("Max Rate Command:               ");
 				tempFloat = eepromConfig.rateScaling * 180000.0 / PI;
-				snprintf(numberString, 16, "%6.2f DPS\n", tempFloat); cliPrint(numberString);
+				cliPrintF("Max Rate Command:               %6.2f DPS\n", tempFloat);
 
-				cliPrint("Max Attitude Command:           ");
 				tempFloat = eepromConfig.attitudeScaling * 180000.0 / PI;
-				snprintf(numberString, 18, "%6.2f Degrees\n\n", tempFloat); cliPrint(numberString);
+                cliPrintF("Max Attitude Command:           %6.2f Degrees\n\n", tempFloat);
 
 				validQuery = false;
-                break;
+				break;
 
             ///////////////////////////
 
@@ -957,34 +905,29 @@ void sensorCLI()
             case 'a': // Sensor Data
                 cliPrint("\n");
 
-                cliPrint("Accel One G:               ");
-                snprintf(numberString, 16, "%9.4f\n", accelOneG); cliPrint(numberString);
-
-                cliPrint("Mag Bias:                  ");
-                snprintf(numberString, 16, "%9.4f, ", eepromConfig.magBias[XAXIS]); cliPrint(numberString);
-                snprintf(numberString, 16, "%9.4f, ", eepromConfig.magBias[YAXIS]); cliPrint(numberString);
-                snprintf(numberString, 16, "%9.4f\n", eepromConfig.magBias[ZAXIS]); cliPrint(numberString);
-
-                cliPrint("Accel Cutoff:              ");
-                snprintf(numberString, 16, "%9.4f\n", eepromConfig.accelCutoff); cliPrint(numberString);
-
-                cliPrint("KpAcc (MARG):              ");
-                snprintf(numberString, 16, "%9.4f\n", eepromConfig.KpAcc); cliPrint(numberString);
-
-                cliPrint("KiAcc (MARG):              ");
-                snprintf(numberString, 16, "%9.4f\n", eepromConfig.KiAcc); cliPrint(numberString);
-
-                cliPrint("KpMag (MARG):              ");
-                snprintf(numberString, 16, "%9.4f\n", eepromConfig.KpMag); cliPrint(numberString);
-
-                cliPrint("KiMag (MARG):              ");
-                snprintf(numberString, 16, "%9.4f\n", eepromConfig.KiMag); cliPrint(numberString);
-
-                cliPrint("hdot est/h est Comp Fil A: ");
-                snprintf(numberString, 16, "%9.4f\n", eepromConfig.compFilterA); cliPrint(numberString);
-
-                cliPrint("hdot est/h est Comp Fil B: ");
-                snprintf(numberString, 16, "%9.4f\n\n", eepromConfig.compFilterB); cliPrint(numberString);
+                cliPrintF("\nAccel Scale Factor:        %9.4f, %9.4f, %9.4f\n", eepromConfig.accelScaleFactor[XAXIS],
+                                                		                        eepromConfig.accelScaleFactor[YAXIS],
+                                                		                        eepromConfig.accelScaleFactor[ZAXIS]);
+                cliPrintF("Accel Bias:                %9.4f, %9.4f, %9.4f\n",   eepromConfig.accelBias[XAXIS],
+                                                		                        eepromConfig.accelBias[YAXIS],
+                                                		                        eepromConfig.accelBias[ZAXIS]);
+                cliPrintF("Gyro TC Bias Slope:        %9.4f, %9.4f, %9.4f\n",   eepromConfig.gyroTCBiasSlope[ROLL ],
+                                                                		        eepromConfig.gyroTCBiasSlope[PITCH],
+                                                                		        eepromConfig.gyroTCBiasSlope[YAW  ]);
+                cliPrintF("Gyro TC Bias Intercept:    %9.4f, %9.4f, %9.4f\n",   eepromConfig.gyroTCBiasIntercept[ROLL ],
+                		                                                        eepromConfig.gyroTCBiasIntercept[PITCH],
+                		                                                        eepromConfig.gyroTCBiasIntercept[YAW  ]);
+                cliPrintF("Mag Bias:                  %9.4f, %9.4f, %9.4f\n",   eepromConfig.magBias[XAXIS],
+                                                		                        eepromConfig.magBias[YAXIS],
+                                                		                        eepromConfig.magBias[ZAXIS]);
+                cliPrintF("Accel One G:               %9.4f\n",   accelOneG);
+                cliPrintF("Accel Cutoff:              %9.4f\n",   eepromConfig.accelCutoff);
+                cliPrintF("KpAcc (MARG):              %9.4f\n",   eepromConfig.KpAcc);
+                cliPrintF("KiAcc (MARG):              %9.4f\n",   eepromConfig.KiAcc);
+                cliPrintF("KpMag (MARG):              %9.4f\n",   eepromConfig.KpMag);
+                cliPrintF("KiMag (MARG):              %9.4f\n",   eepromConfig.KiMag);
+                cliPrintF("hdot est/h est Comp Fil A: %9.4f\n",   eepromConfig.compFilterA);
+                cliPrintF("hdot est/h est Comp Fil B: %9.4f\n\n", eepromConfig.compFilterB);
 
                 validQuery = false;
                 break;

@@ -168,41 +168,26 @@ void cliCom(void)
         ///////////////////////////////
 
         case 'a': // Rate PIDs
-            cliPrint("\n");
+            cliPrintF("\nRoll Rate PID:  %8.4f, %8.4f, %8.4f, %8.4f, %8.4f, %s\n", eepromConfig.PID[ROLL_RATE_PID].B,
+                            		                                               eepromConfig.PID[ROLL_RATE_PID].P,
+                		                                                           eepromConfig.PID[ROLL_RATE_PID].I,
+                		                                                           eepromConfig.PID[ROLL_RATE_PID].D,
+                		                                                           eepromConfig.PID[ROLL_RATE_PID].windupGuard,
+                		                                                           eepromConfig.PID[ROLL_RATE_PID].dErrorCalc ? "Error" : "State");
 
-            cliPrint("Roll Rate PID:  ");
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[ROLL_RATE_PID].B);           cliPrint(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[ROLL_RATE_PID].P);           cliPrint(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[ROLL_RATE_PID].I);           cliPrint(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[ROLL_RATE_PID].D);           cliPrint(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[ROLL_RATE_PID].windupGuard); cliPrint(numberString);
-            if  (eepromConfig.PID[ROLL_RATE_PID].dErrorCalc)
-                cliPrint("Error\n");
-            else
-                cliPrint("State\n");
+            cliPrintF("Pitch Rate PID: %8.4f, %8.4f, %8.4f, %8.4f, %8.4f, %s\n",   eepromConfig.PID[PITCH_RATE_PID].B,
+                            		                                               eepromConfig.PID[PITCH_RATE_PID].P,
+                		                                                           eepromConfig.PID[PITCH_RATE_PID].I,
+                		                                                           eepromConfig.PID[PITCH_RATE_PID].D,
+                		                                                           eepromConfig.PID[PITCH_RATE_PID].windupGuard,
+                		                                                           eepromConfig.PID[PITCH_RATE_PID].dErrorCalc ? "Error" : "State");
 
-            cliPrint("Pitch Rate PID: ");
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[PITCH_RATE_PID].B);           cliPrint(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[PITCH_RATE_PID].P);           cliPrint(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[PITCH_RATE_PID].I);           cliPrint(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[PITCH_RATE_PID].D);           cliPrint(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[PITCH_RATE_PID].windupGuard); cliPrint(numberString);
-            if  (eepromConfig.PID[PITCH_RATE_PID].dErrorCalc)
-                cliPrint("Error\n");
-            else
-                cliPrint("State\n");
-
-            cliPrint("Yaw Rate PID:   ");
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[YAW_RATE_PID].B);           cliPrint(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[YAW_RATE_PID].P);           cliPrint(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[YAW_RATE_PID].I);           cliPrint(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[YAW_RATE_PID].D);           cliPrint(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[YAW_RATE_PID].windupGuard); cliPrint(numberString);
-            if  (eepromConfig.PID[YAW_RATE_PID].dErrorCalc)
-                cliPrint("Error\n");
-            else
-                cliPrint("State\n");
-
+            cliPrintF("Yaw Rate PID:   %8.4f, %8.4f, %8.4f, %8.4f, %8.4f, %s\n",   eepromConfig.PID[YAW_RATE_PID].B,
+                             		                                               eepromConfig.PID[YAW_RATE_PID].P,
+                		                                                           eepromConfig.PID[YAW_RATE_PID].I,
+                		                                                           eepromConfig.PID[YAW_RATE_PID].D,
+                		                                                           eepromConfig.PID[YAW_RATE_PID].windupGuard,
+                		                                                           eepromConfig.PID[YAW_RATE_PID].dErrorCalc ? "Error" : "State");
             cliQuery = 'x';
             validCliCommand = false;
             break;
@@ -210,41 +195,26 @@ void cliCom(void)
         ///////////////////////////////
 
         case 'b': // Attitude PIDs
-            cliPrint("\n");
+            cliPrintF("\nRoll Attitude PID:  %8.4f, %8.4f, %8.4f, %8.4f, %8.4f, %s\n", eepromConfig.PID[ROLL_ATT_PID].B,
+              		                                                                   eepromConfig.PID[ROLL_ATT_PID].P,
+               		                                                                   eepromConfig.PID[ROLL_ATT_PID].I,
+               		                                                                   eepromConfig.PID[ROLL_ATT_PID].D,
+               		                                                                   eepromConfig.PID[ROLL_ATT_PID].windupGuard,
+               		                                                                   eepromConfig.PID[ROLL_ATT_PID].dErrorCalc ? "Error" : "State");
 
-            cliPrint("Roll Attitude PID:  ");
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[ROLL_ATT_PID].B);           cliPrint(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[ROLL_ATT_PID].P);           cliPrint(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[ROLL_ATT_PID].I);           cliPrint(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[ROLL_ATT_PID].D);           cliPrint(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[ROLL_ATT_PID].windupGuard); cliPrint(numberString);
-            if  (eepromConfig.PID[ROLL_ATT_PID].dErrorCalc)
-                cliPrint("Error\n");
-            else
-                cliPrint("State\n");
+            cliPrintF("Pitch Attitude PID: %8.4f, %8.4f, %8.4f, %8.4f, %8.4f, %s\n",   eepromConfig.PID[PITCH_ATT_PID].B,
+               		                                                                   eepromConfig.PID[PITCH_ATT_PID].P,
+               		                                                                   eepromConfig.PID[PITCH_ATT_PID].I,
+               		                                                                   eepromConfig.PID[PITCH_ATT_PID].D,
+               		                                                                   eepromConfig.PID[PITCH_ATT_PID].windupGuard,
+               		                                                                   eepromConfig.PID[PITCH_ATT_PID].dErrorCalc ? "Error" : "State");
 
-            cliPrint("Pitch Attitude PID: ");
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[PITCH_ATT_PID].B);           cliPrint(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[PITCH_ATT_PID].P);           cliPrint(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[PITCH_ATT_PID].I);           cliPrint(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[PITCH_ATT_PID].D);           cliPrint(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[PITCH_ATT_PID].windupGuard); cliPrint(numberString);
-            if  (eepromConfig.PID[PITCH_ATT_PID].dErrorCalc)
-                cliPrint("Error\n");
-            else
-                cliPrint("State\n");
-
-            cliPrint("Heading PID:        ");
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[HEADING_PID].B);           cliPrint(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[HEADING_PID].P);           cliPrint(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[HEADING_PID].I);           cliPrint(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[HEADING_PID].D);           cliPrint(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[HEADING_PID].windupGuard); cliPrint(numberString);
-            if  (eepromConfig.PID[HEADING_PID].dErrorCalc)
-                cliPrint("Error\n");
-            else
-                cliPrint("State\n");
-
+            cliPrintF("Heading PID:        %8.4f, %8.4f, %8.4f, %8.4f, %8.4f, %s\n",   eepromConfig.PID[HEADING_PID].B,
+               		                                                                   eepromConfig.PID[HEADING_PID].P,
+               		                                                                   eepromConfig.PID[HEADING_PID].I,
+               		                                                                   eepromConfig.PID[HEADING_PID].D,
+               		                                                                   eepromConfig.PID[HEADING_PID].windupGuard,
+               		                                                                   eepromConfig.PID[HEADING_PID].dErrorCalc ? "Error" : "State");
             cliQuery = 'x';
             validCliCommand = false;
             break;
@@ -252,209 +222,167 @@ void cliCom(void)
         ///////////////////////////////
 
         case 'c': // Velocity PIDs
-            cliPrint("\n");
+            cliPrintF("\nnDot PID:  %8.4f, %8.4f, %8.4f, %8.4f, %8.4f, %s\n", eepromConfig.PID[NDOT_PID].B,
+               		                                                          eepromConfig.PID[NDOT_PID].P,
+               		                                                          eepromConfig.PID[NDOT_PID].I,
+               		                                                          eepromConfig.PID[NDOT_PID].D,
+               		                                                          eepromConfig.PID[NDOT_PID].windupGuard,
+               		                                                          eepromConfig.PID[NDOT_PID].dErrorCalc ? "Error" : "State");
 
-            cliPrint("nDot PID:  ");
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[NDOT_PID].B);           cliPrint(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[NDOT_PID].P);           cliPrint(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[NDOT_PID].I);           cliPrint(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[NDOT_PID].D);           cliPrint(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[NDOT_PID].windupGuard); cliPrint(numberString);
-            if  (eepromConfig.PID[NDOT_PID].dErrorCalc)
-                cliPrint("Error\n");
-            else
-                cliPrint("State\n");
+            cliPrintF("eDot PID:  %8.4f, %8.4f, %8.4f, %8.4f, %8.4f, %s\n",   eepromConfig.PID[EDOT_PID].B,
+               		                                                          eepromConfig.PID[EDOT_PID].P,
+               		                                                          eepromConfig.PID[EDOT_PID].I,
+               		                                                          eepromConfig.PID[EDOT_PID].D,
+               		                                                          eepromConfig.PID[EDOT_PID].windupGuard,
+               		                                                          eepromConfig.PID[EDOT_PID].dErrorCalc ? "Error" : "State");
 
-            cliPrint("eDot PID:  ");
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[EDOT_PID].B);           cliPrint(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[EDOT_PID].P);           cliPrint(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[EDOT_PID].I);           cliPrint(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[EDOT_PID].D);           cliPrint(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[EDOT_PID].windupGuard); cliPrint(numberString);
-            if  (eepromConfig.PID[EDOT_PID].dErrorCalc)
-                cliPrint("Error\n");
-            else
-                cliPrint("State\n");
-
-            cliPrint("hDot PID:  ");
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[HDOT_PID].B);           cliPrint(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[HDOT_PID].P);           cliPrint(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[HDOT_PID].I);           cliPrint(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[HDOT_PID].D);           cliPrint(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[HDOT_PID].windupGuard); cliPrint(numberString);
-            if  (eepromConfig.PID[HDOT_PID].dErrorCalc)
-                cliPrint("Error\n");
-            else
-                cliPrint("State\n");
-
+            cliPrintF("hDot PID:  %8.4f, %8.4f, %8.4f, %8.4f, %8.4f, %s\n",   eepromConfig.PID[HDOT_PID].B,
+               		                                                          eepromConfig.PID[HDOT_PID].P,
+               		                                                          eepromConfig.PID[HDOT_PID].I,
+               		                                                          eepromConfig.PID[HDOT_PID].D,
+               		                                                          eepromConfig.PID[HDOT_PID].windupGuard,
+               		                                                          eepromConfig.PID[HDOT_PID].dErrorCalc ? "Error" : "State");
             cliQuery = 'x';
             validCliCommand = false;
-        	break;
+            break;
 
         ///////////////////////////////
 
         case 'd': // Position PIDs
-            cliPrint("\n");
+            cliPrintF("\nN PID:  %8.4f, %8.4f, %8.4f, %8.4f, %8.4f, %s\n", eepromConfig.PID[N_PID].B,
+               		                                                       eepromConfig.PID[N_PID].P,
+               		                                                       eepromConfig.PID[N_PID].I,
+               		                                                       eepromConfig.PID[N_PID].D,
+               		                                                       eepromConfig.PID[N_PID].windupGuard,
+               		                                                       eepromConfig.PID[N_PID].dErrorCalc ? "Error" : "State");
 
-            cliPrint("n PID:  ");
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[N_PID].B);           cliPrint(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[N_PID].P);           cliPrint(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[N_PID].I);           cliPrint(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[N_PID].D);           cliPrint(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[N_PID].windupGuard); cliPrint(numberString);
-            if  (eepromConfig.PID[N_PID].dErrorCalc)
-                cliPrint("Error\n");
-            else
-                cliPrint("State\n");
+            cliPrintF("E PID:  %8.4f, %8.4f, %8.4f, %8.4f, %8.4f, %s\n",   eepromConfig.PID[E_PID].B,
+               		                                                       eepromConfig.PID[E_PID].P,
+               		                                                       eepromConfig.PID[E_PID].I,
+               		                                                       eepromConfig.PID[E_PID].D,
+               		                                                       eepromConfig.PID[E_PID].windupGuard,
+               		                                                       eepromConfig.PID[E_PID].dErrorCalc ? "Error" : "State");
 
-            cliPrint("e PID:  ");
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[E_PID].B);           cliPrint(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[E_PID].P);           cliPrint(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[E_PID].I);           cliPrint(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[E_PID].D);           cliPrint(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[E_PID].windupGuard); cliPrint(numberString);
-            if  (eepromConfig.PID[E_PID].dErrorCalc)
-                cliPrint("Error\n");
-            else
-                cliPrint("State\n");
-
-            cliPrint("h PID:  ");
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[H_PID].B);           cliPrint(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[H_PID].P);           cliPrint(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[H_PID].I);           cliPrint(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[H_PID].D);           cliPrint(numberString);
-            snprintf(numberString, 16, "%8.4f, ", eepromConfig.PID[H_PID].windupGuard); cliPrint(numberString);
-            if  (eepromConfig.PID[H_PID].dErrorCalc)
-                cliPrint("Error\n");
-            else
-                cliPrint("State\n");
-
+            cliPrintF("h PID:  %8.4f, %8.4f, %8.4f, %8.4f, %8.4f, %s\n",   eepromConfig.PID[H_PID].B,
+               		                                                       eepromConfig.PID[H_PID].P,
+               		                                                       eepromConfig.PID[H_PID].I,
+               		                                                       eepromConfig.PID[H_PID].D,
+               		                                                       eepromConfig.PID[H_PID].windupGuard,
+               		                                                       eepromConfig.PID[H_PID].dErrorCalc ? "Error" : "State");
             cliQuery = 'x';
             validCliCommand = false;
-        	break;
+          	break;
 
          ///////////////////////////////
 
         case 'e': // Loop Delta Times
-        	snprintf(numberString, 16, "%7ld, ", deltaTime1000Hz); cliPrint(numberString);
-        	snprintf(numberString, 16, "%7ld, ", deltaTime500Hz ); cliPrint(numberString);
-        	snprintf(numberString, 16, "%7ld, ", deltaTime100Hz ); cliPrint(numberString);
-        	snprintf(numberString, 16, "%7ld, ", deltaTime50Hz  ); cliPrint(numberString);
-        	snprintf(numberString, 16, "%7ld, ", deltaTime10Hz  ); cliPrint(numberString);
-        	snprintf(numberString, 16, "%7ld, ", deltaTime5Hz   ); cliPrint(numberString);
-        	snprintf(numberString, 16, "%7ld\n", deltaTime1Hz   ); cliPrint(numberString);
-
+           	cliPrintF("%7ld, %7ld, %7ld, %7ld, %7ld, %7ld, %7ld\n", deltaTime1000Hz,
+               		                                                deltaTime500Hz,
+               		                                                deltaTime100Hz,
+               		                                                deltaTime50Hz,
+               		                                                deltaTime10Hz,
+               		                                                deltaTime5Hz,
+               		                                                deltaTime1Hz);
         	validCliCommand = false;
         	break;
 
         ///////////////////////////////
 
         case 'f': // Loop Execution Times
-        	snprintf(numberString, 16, "%7ld, ", executionTime1000Hz); cliPrint(numberString);
-        	snprintf(numberString, 16, "%7ld, ", executionTime500Hz ); cliPrint(numberString);
-        	snprintf(numberString, 16, "%7ld, ", executionTime100Hz ); cliPrint(numberString);
-        	snprintf(numberString, 16, "%7ld, ", executionTime50Hz  ); cliPrint(numberString);
-        	snprintf(numberString, 16, "%7ld, ", executionTime10Hz  ); cliPrint(numberString);
-        	snprintf(numberString, 16, "%7ld, ", executionTime5Hz   ); cliPrint(numberString);
-        	snprintf(numberString, 16, "%7ld\n", executionTime1Hz   ); cliPrint(numberString);
-
+           	cliPrintF("%7ld, %7ld, %7ld, %7ld, %7ld, %7ld, %7ld\n", executionTime1000Hz,
+           	        			                                    executionTime500Hz,
+           	        			                                    executionTime100Hz,
+           	        			                                    executionTime50Hz,
+           	        			                                    executionTime10Hz,
+           	        			                                    executionTime5Hz,
+           	        			                                    executionTime1Hz);
         	validCliCommand = false;
         	break;
 
         ///////////////////////////////
 
         case 'g': // 500 Hz Accels
-        	ftoa(sensors.accel500Hz[XAXIS], numberString); cliPrint(numberString); cliPrint(", ");
-        	ftoa(sensors.accel500Hz[YAXIS], numberString); cliPrint(numberString); cliPrint(", ");
-        	ftoa(sensors.accel500Hz[ZAXIS], numberString); cliPrint(numberString); cliPrint("\n");
-
+        	cliPrintF("%9.4f, %9.4f, %9.4f\n", sensors.accel500Hz[XAXIS],
+        			                           sensors.accel500Hz[YAXIS],
+        			                           sensors.accel500Hz[ZAXIS]);
         	validCliCommand = false;
         	break;
 
         ///////////////////////////////
 
         case 'h': // 100 hz Earth Axis Accels
-        	ftoa(earthAxisAccels[XAXIS], numberString); cliPrint(numberString); cliPrint(", ");
-        	ftoa(earthAxisAccels[YAXIS], numberString); cliPrint(numberString); cliPrint(", ");
-        	ftoa(earthAxisAccels[ZAXIS], numberString); cliPrint(numberString); cliPrint("\n");
-
+        	cliPrintF("%9.4f, %9.4f, %9.4f\n", earthAxisAccels[XAXIS],
+        			                           earthAxisAccels[YAXIS],
+        			                           earthAxisAccels[ZAXIS]);
         	validCliCommand = false;
         	break;
 
         ///////////////////////////////
 
         case 'i': // 500 Hz Gyros
-        	ftoa(sensors.gyro500Hz[ROLL ] * R2D, numberString); cliPrint(numberString); cliPrint(", ");
-        	ftoa(sensors.gyro500Hz[PITCH] * R2D, numberString); cliPrint(numberString); cliPrint(", ");
-        	ftoa(sensors.gyro500Hz[YAW  ] * R2D, numberString); cliPrint(numberString); cliPrint(", ");
-        	// HJI ftoa(mpu6000Temperature,             numberString); cliPrint(numberString); cliPrint("\n");
-
+        	cliPrintF("%9.4f, %9.4f, %9.4f\n", sensors.gyro500Hz[ROLL ] * R2D,
+        			                           sensors.gyro500Hz[PITCH] * R2D,
+        					                   sensors.gyro500Hz[YAW  ] * R2D);
         	validCliCommand = false;
         	break;
 
         ///////////////////////////////
 
         case 'j': // 10 Hz Mag Data
-        	ftoa(sensors.mag10Hz[XAXIS], numberString); cliPrint(numberString); cliPrint(", ");
-        	ftoa(sensors.mag10Hz[YAXIS], numberString); cliPrint(numberString); cliPrint(", ");
-        	ftoa(sensors.mag10Hz[ZAXIS], numberString); cliPrint(numberString); cliPrint("\n");
-
+        	cliPrintF("%9.4f, %9.4f, %9.4f\n", sensors.mag10Hz[XAXIS],
+        			                           sensors.mag10Hz[YAXIS],
+        			                           sensors.mag10Hz[ZAXIS]);
         	validCliCommand = false;
         	break;
 
         ///////////////////////////////
 
         case 'k': // Vertical Axis Variables
-        	ftoa(earthAxisAccels[ZAXIS],  numberString); cliPrint(numberString); cliPrint(", ");
-        	ftoa(sensors.pressureAlt10Hz, numberString); cliPrint(numberString); cliPrint(", ");
-        	ftoa(hDotEstimate,            numberString); cliPrint(numberString); cliPrint(", ");
-        	ftoa(hEstimate,               numberString); cliPrint(numberString); cliPrint("\n");
-
+        	cliPrintF("%9.4f, %9.4f, %9.4f, %9.4f\n", earthAxisAccels[ZAXIS],
+        			                                  sensors.pressureAlt10Hz,
+        					                          hDotEstimate,
+        					                          hEstimate);
         	validCliCommand = false;
         	break;
 
         ///////////////////////////////
 
         case 'l': // Attitudes
-        	snprintf(numberString, 16, "%9.4f, ", sensors.attitude500Hz[ROLL ] * R2D); cliPrint(numberString);
-        	snprintf(numberString, 16, "%9.4f, ", sensors.attitude500Hz[PITCH] * R2D); cliPrint(numberString);
-        	snprintf(numberString, 16, "%9.4f, ", heading.mag * R2D);                  cliPrint(numberString);
-        	snprintf(numberString, 16, "%9.4f\n", heading.tru * R2D);                  cliPrint(numberString);
-
+        	cliPrintF("%9.4f, %9.4f, %9.4f\n", sensors.attitude500Hz[ROLL ] * R2D,
+        			                           sensors.attitude500Hz[PITCH] * R2D,
+        			                           sensors.attitude500Hz[YAW  ] * R2D);
         	validCliCommand = false;
         	break;
 
        ///////////////////////////////
 
         case 'm': // GPS Data
-        	snprintf(numberString, 16, "%12.7f, ", sensors.gpsLatitude  * R2D); cliPrint(numberString);
-        	snprintf(numberString, 16, "%12.7f, ", sensors.gpsLongitude * R2D); cliPrint(numberString);
-
-        	ftoa(sensors.gpsAltitude,          numberString); cliPrint(numberString); cliPrint(", ");
-        	ftoa(sensors.gpsGroundSpeed,       numberString); cliPrint(numberString); cliPrint(", ");
-        	ftoa(sensors.gpsGroundTrack * R2D, numberString); cliPrint(numberString); cliPrint("\n");
-
-            validCliCommand = false;
+        	cliPrintF("%12.7f, %12.7f, %7.2f, %6.2g, %6.2f\n", sensors.gpsLatitude  * R2D,
+        			                                           sensors.gpsLongitude * R2D,
+        			                                           sensors.gpsAltitude,
+        			                                           sensors.gpsGroundSpeed,
+        			                                           sensors.gpsGroundTrack * R2D);
+        	validCliCommand = false;
             break;
 
         ///////////////////////////////
 
         case 'n': // GPS Stats
             if (sensors.gpsFix == FIX_2D)
-                cliPrint("2D Fix,  ");
+                cliPrint(" 2D Fix,  ");
             else if (sensors.gpsFix == FIX_3D)
-                cliPrint("3D Fix,  ");
+                cliPrint(" 3D Fix,  ");
             else if (sensors.gpsFix == FIX_2D_SBAS)
             	cliPrint("2D SBAS, ");
             else if (sensors.gpsFix == FIX_3D_SBAS)
             	cliPrint("3D SBAS, ");
             else
-                cliPrint("No Fix, ");
+                cliPrint(" No Fix, ");
 
-            itoa(sensors.gpsNumSats, numberString, 10); cliPrint(numberString); cliPrint(", ");
-        	itoa(sensors.gpsDate,    numberString, 10); cliPrint(numberString); cliPrint(" ");
-        	ftoa(sensors.gpsTime,    numberString);     cliPrint(numberString); cliPrint(", ");
-            ftoa(sensors.gpsHdop,    numberString);     cliPrint(numberString); cliPrint("\n");
+            cliPrintF("%2ld, %8ld, %9.2f, $5.2f\n", sensors.gpsNumSats,
+            		                                sensors.gpsDate,
+            		                                sensors.gpsTime,
+            		                                sensors.gpsHdop);
             validCliCommand = false;
         	break;
 
@@ -510,25 +438,17 @@ void cliCom(void)
             if (eepromConfig.receiverType == SPEKTRUM)
             {
 				for (index = 0; index < eepromConfig.spektrumChannels - 1; index++)
-                {
-    		    	itoa(spektrumChannelData[index], numberString, 10);
-    		    	cliPrint(numberString); cliPrint(", ");
-    		    }
+                     cliPrintF("%4ld, ", spektrumChannelData[index]);
 
-                itoa(spektrumChannelData[eepromConfig.spektrumChannels - 1], numberString, 10);
-                cliPrint(numberString); cliPrint("\n");
-		    }
+                cliPrintF("%4ld\n", spektrumChannelData[eepromConfig.spektrumChannels - 1]);
+            }
 		    else
 		    {
 				for (index = 0; index < 7; index++)
-                {
-    		    	itoa(rxRead(index), numberString, 10);
-    		    	cliPrint(numberString); cliPrint(", ");
-    		    }
+                    cliPrintF("%4i, ", rxRead(index));
 
-                itoa(rxRead(7), numberString, 10);
-                cliPrint(numberString); cliPrint("\n");
-			}
+                cliPrintF("%4i\n", rxRead(7));
+            }
 
         	validCliCommand = false;
         	break;
@@ -537,13 +457,9 @@ void cliCom(void)
 
         case 't': // Processed Receiver Commands
             for (index = 0; index < 7; index++)
-            {
-    			ftoa( rxCommand[index], numberString );
-    			cliPrint( numberString ); cliPrint( ", " );
-    		}
+                cliPrintF("%8.2f, ", rxCommand[index]);
 
-            ftoa( rxCommand[7], numberString );
-            cliPrint( numberString ); cliPrint( "\n" );
+            cliPrintF("%8.2f\n", rxCommand[7]);
 
             validCliCommand = false;
             break;
@@ -551,47 +467,32 @@ void cliCom(void)
         ///////////////////////////////
 
         case 'u': // Command in Detent Discretes
-            if ( commandInDetent[ROLL] == true )
-                cliPrint( "true" );
-            else
-                cliPrint( "false" );
-            cliPrint(", ");
-
-            if ( commandInDetent[PITCH] == true )
-                cliPrint( "true" );
-            else
-                cliPrint( "false" );
-            cliPrint(", ");
-
-            if ( commandInDetent[YAW] == true )
-                cliPrint( "true" );
-            else
-                cliPrint( "false" );
-            cliPrint("\n");
+        	cliPrintF("%s, ", commandInDetent[ROLL ] ? " true" : "false");
+        	cliPrintF("%s, ", commandInDetent[PITCH] ? " true" : "false");
+        	cliPrintF("%s\n", commandInDetent[YAW  ] ? " true" : "false");
 
             validCliCommand = false;
             break;
-
         ///////////////////////////////
 
         case 'v': // ESC PWM Outputs
-            itoa(TIM17->CCR1, numberString, 10); cliPrint(numberString); cliPrint(", ");
-            itoa(TIM4->CCR1,  numberString, 10); cliPrint(numberString); cliPrint(", ");
-            itoa(TIM4->CCR2,  numberString, 10); cliPrint(numberString); cliPrint(", ");
-            itoa(TIM4->CCR3,  numberString, 10); cliPrint(numberString); cliPrint(", ");
-            itoa(TIM4->CCR4,  numberString, 10); cliPrint(numberString); cliPrint(", ");
-            itoa(TIM8->CCR1,  numberString, 10); cliPrint(numberString); cliPrint(", ");
-            itoa(TIM8->CCR2,  numberString, 10); cliPrint(numberString); cliPrint(", ");
-            itoa(TIM8->CCR3,  numberString, 10); cliPrint(numberString); cliPrint("\n");
+        	cliPrintF("%4ld, ", TIM17->CCR1);
+        	cliPrintF("%4ld, ", TIM4->CCR1 );
+        	cliPrintF("%4ld, ", TIM4->CCR2 );
+        	cliPrintF("%4ld, ", TIM4->CCR3 );
+        	cliPrintF("%4ld, ", TIM4->CCR4 );
+        	cliPrintF("%4ld, ", TIM8->CCR1 );
+        	cliPrintF("%4ld, ", TIM8->CCR2 );
+        	cliPrintF("%4ld\n", TIM8->CCR3 );
 
-            validCliCommand = false;
+        	validCliCommand = false;
             break;
 
         ///////////////////////////////
 
         case 'w': // Servo PWM Outputs
-            itoa(TIM15->CCR1, numberString, 10); cliPrint(numberString); cliPrint(", ");
-            itoa(TIM15->CCR2, numberString, 10); cliPrint(numberString); cliPrint(", ");
+        	cliPrintF("%4ld, ", TIM15->CCR1);
+        	cliPrintF("%4ld\n", TIM15->CCR2);
 
             validCliCommand = false;
             break;

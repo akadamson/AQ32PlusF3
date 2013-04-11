@@ -48,10 +48,11 @@
 // UART1 Defines and Variables
 ///////////////////////////////////////////////////////////////////////////////
 
-#define UART1_TX_PIN        GPIO_Pin_4
+#define UART1_TX_PIN        GPIO_Pin_9
 #define UART1_RX_PIN        GPIO_Pin_5
-#define UART1_GPIO          GPIOC
-#define UART1_TX_PINSOURCE  GPIO_PinSource4
+#define UART1_TX_GPIO       GPIOA
+#define UART1_RX_GPIO       GPIOC
+#define UART1_TX_PINSOURCE  GPIO_PinSource9
 #define UART1_RX_PINSOURCE  GPIO_PinSource5
 
 #define UART1_BUFFER_SIZE 2048
@@ -109,20 +110,26 @@ void cliInit(void)
     DMA_InitTypeDef   DMA_InitStructure;
     NVIC_InitTypeDef  NVIC_InitStructure;
 
+    RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOA,    ENABLE);
     RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOC,    ENABLE);
     RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1,     ENABLE);
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);
 
-    GPIO_InitStructure.GPIO_Pin   = UART1_TX_PIN | UART1_RX_PIN;
+    GPIO_InitStructure.GPIO_Pin   = UART1_TX_PIN;
     GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_AF;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
     GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_UP;
 
-    GPIO_PinAFConfig(UART1_GPIO, UART1_TX_PINSOURCE, GPIO_AF_7);
-    GPIO_PinAFConfig(UART1_GPIO, UART1_RX_PINSOURCE, GPIO_AF_7);
+    GPIO_PinAFConfig(UART1_TX_GPIO, UART1_TX_PINSOURCE, GPIO_AF_7);
 
-    GPIO_Init(UART1_GPIO, &GPIO_InitStructure);
+    GPIO_Init(UART1_TX_GPIO, &GPIO_InitStructure);
+
+    GPIO_InitStructure.GPIO_Pin   = UART1_RX_PIN;
+
+    GPIO_PinAFConfig(UART1_RX_GPIO, UART1_RX_PINSOURCE, GPIO_AF_7);
+
+    GPIO_Init(UART1_RX_GPIO, &GPIO_InitStructure);
 
     // DMA TX Interrupt
     NVIC_InitStructure.NVIC_IRQChannel                   = DMA1_Channel4_IRQn;

@@ -48,11 +48,11 @@
 // UART2 Defines and Variables
 ///////////////////////////////////////////////////////////////////////////////
 
-#define UART2_TX_PIN        GPIO_Pin_2
-#define UART2_RX_PIN        GPIO_Pin_3
-#define UART2_GPIO          GPIOA
-#define UART2_TX_PINSOURCE  GPIO_PinSource2
-#define UART2_RX_PINSOURCE  GPIO_PinSource3
+#define UART2_TX_PIN        GPIO_Pin_5
+#define UART2_RX_PIN        GPIO_Pin_6
+#define UART2_GPIO          GPIOD
+#define UART2_TX_PINSOURCE  GPIO_PinSource5
+#define UART2_RX_PINSOURCE  GPIO_PinSource6
 
 #define UART2_BUFFER_SIZE    2048
 
@@ -109,7 +109,7 @@ void gpsInit(void)
     DMA_InitTypeDef   DMA_InitStructure;
     NVIC_InitTypeDef  NVIC_InitStructure;
 
-    RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOA,    ENABLE);
+    RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOD,    ENABLE);
     RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1,     ENABLE);
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART2, ENABLE);
 

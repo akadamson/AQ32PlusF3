@@ -81,8 +81,7 @@ void magCalibration()
 		delay(20);
 	}
 
-	itoa(calibrationCounter, numberString, 10);
-	cliPrint("\r\nMagnetometer Bias Calculation ("); cliPrint(numberString); cliPrint(" samples collected out of 3000 max)\n\n");
+    cliPrintF("\n\nMagnetometer Bias Calculation, %3ld samples collected out of 600 max)\n", calibrationCounter);
 
 	sphereFit(d, calibrationCounter, 100, 0.0f, population, sphereOrigin, &sphereRadius);
 
@@ -90,12 +89,5 @@ void magCalibration()
 	eepromConfig.magBias[YAXIS] = sphereOrigin[YAXIS];
 	eepromConfig.magBias[ZAXIS] = sphereOrigin[ZAXIS];
 
-    cliPrint("Magnetometer Bias Values: ");
-    ftoa(eepromConfig.magBias[XAXIS], numberString); cliPrint(numberString); cliPrint(", ");
-    ftoa(eepromConfig.magBias[YAXIS], numberString); cliPrint(numberString); cliPrint(", ");
-    ftoa(eepromConfig.magBias[ZAXIS], numberString); cliPrint(numberString); cliPrint("\n");
-
-	cliPrint("\n\nMagnetometer Calibration Complete.\n\n");
-
-	magCalibrating = false;
+    magCalibrating = false;
 }

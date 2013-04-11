@@ -1,30 +1,33 @@
-/* ----------------------------------------------------------------------
- * Copyright (C) 2010-2011 ARM Limited. All rights reserved.
- *
- * $Date:        15. July 2011
- * $Revision: 	V1.0.10
- *
- * Project: 	    CMSIS DSP Library
- * Title:	     arm_math.h
- *
+/* ----------------------------------------------------------------------   
+ * Copyright (C) 2010-2011 ARM Limited. All rights reserved.   
+ *   
+ * $Date:        15. February 2012  
+ * $Revision: 	V1.1.0  
+ *   
+ * Project: 	    CMSIS DSP Library   
+ * Title:	     	arm_math.h
+ *   
  * Description:	 Public header file for CMSIS DSP Library
- *
+ *   
  * Target Processor: Cortex-M4/Cortex-M3/Cortex-M0
- *
- * Version 1.0.10 2011/7/15
- *    Big Endian support added and Merged M0 and M3/M4 Source code.
- *
- * Version 1.0.3 2010/11/29
- *    Re-organized the CMSIS folders and updated documentation.
- *
- * Version 1.0.2 2010/11/11
- *    Documentation updated.
- *
- * Version 1.0.1 2010/10/05
- *    Production release and review comments incorporated.
- *
- * Version 1.0.0 2010/09/20
- *    Production release and review comments incorporated.
+ *  
+ * Version 1.1.0 2012/02/15 
+ *    Updated with more optimizations, bug fixes and minor API changes.  
+ *  
+ * Version 1.0.10 2011/7/15 
+ *    Big Endian support added and Merged M0 and M3/M4 Source code.  
+ *   
+ * Version 1.0.3 2010/11/29  
+ *    Re-organized the CMSIS folders and updated documentation.   
+ *    
+ * Version 1.0.2 2010/11/11   
+ *    Documentation updated.    
+ *   
+ * Version 1.0.1 2010/10/05    
+ *    Production release and review comments incorporated.   
+ *   
+ * Version 1.0.0 2010/09/20    
+ *    Production release and review comments incorporated.   
  * -------------------------------------------------------------------- */
 
 /**
@@ -32,10 +35,10 @@
    *
    * <b>Introduction</b>
    *
-   * This user manual describes the CMSIS DSP software library,
+   * This user manual describes the CMSIS DSP software library, 
    * a suite of common signal processing functions for use on Cortex-M processor based devices.
    *
-   * The library is divided into a number of modules each covering a specific category:
+   * The library is divided into a number of functions each covering a specific category:  
    * - Basic math functions
    * - Fast math functions
    * - Complex math functions
@@ -48,20 +51,40 @@
    * - Interpolation functions
    *
    * The library has separate functions for operating on 8-bit integers, 16-bit integers,
-   * 32-bit integer and 32-bit floating-point values.
+   * 32-bit integer and 32-bit floating-point values. 
    *
-   * <b>Processor Support</b>
+   * <b>Pre-processor Macros</b> 
+   * 
+   * Each library project have differant pre-processor macros. 
+   * 
+   * - UNALIGNED_SUPPORT_DISABLE: 
+   * 
+   * Define macro UNALIGNED_SUPPORT_DISABLE, If the silicon does not support unaligned memory access    
+   * 
+   * - ARM_MATH_BIG_ENDIAN: 
+   * 
+   * Define macro ARM_MATH_BIG_ENDIAN to build the library for big endian targets. By default library builds for little endian targets. 
+   * 
+   * - ARM_MATH_MATRIX_CHECK: 
+   * 
+   * Define macro ARM_MATH_MATRIX_CHECK for checking on the input and output sizes of matrices 
+   * 
+   * - ARM_MATH_ROUNDING: 
+   * 
+   * Define macro ARM_MATH_ROUNDING for rounding on support functions
    *
-   * The library is completely written in C and is fully CMSIS compliant.
-   * High performance is achieved through maximum use of Cortex-M4 intrinsics.
+   * - ARM_MATH_CMx:
    *
-   * The supplied library source code also builds and runs on the Cortex-M3 and Cortex-M0 processor,
-   * with the DSP intrinsics being emulated through software.
+   * Define macro ARM_MATH_CM4 for building the library on Cortex-M4 target, ARM_MATH_CM3 for building library on Cortex-M3 target
+   * and ARM_MATH_CM0 for building library on cortex-M0 target.
+   * 
+   * - __FPU_PRESENT:
    *
+   * Initialize macro __FPU_PRESENT = 1 when building on FPU supported Targets. Enable this macro for M4bf and M4lf libraries 
    *
    * <b>Toolchain Support</b>
    *
-   * The library has been developed and tested with MDK-ARM version 4.21.
+   * The library has been developed and tested with MDK-ARM version 4.23. 
    * The library is being tested in GCC and IAR toolchains and updates on this activity will be made available shortly.
    *
    * <b>Using the Library</b>
@@ -77,9 +100,9 @@
    * - arm_cortexM0b_math.lib (Big endian on Cortex-M3)
    *
    * The library functions are declared in the public file <code>arm_math.h</code> which is placed in the <code>Include</code> folder.
-   * Simply include this file and link the appropriate library in the application and begin calling the library functions. The Library supports single
-   * public header file <code>arm_math.h</code> for Cortex-M4/M3/M0 with little endian and big endian. Same header file will be used for floating point unit(FPU) variants.
-   * Define the appropriate pre processor MACRO ARM_MATH_CM4 or  ARM_MATH_CM3 or
+   * Simply include this file and link the appropriate library in the application and begin calling the library functions. The Library supports single 
+   * public header file <code> arm_math.h</code> for Cortex-M4/M3/M0 with little endian and big endian. Same header file will be used for floating point unit(FPU) variants. 
+   * Define the appropriate pre processor MACRO ARM_MATH_CM4 or  ARM_MATH_CM3 or 
    * ARM_MATH_CM0 depending on the target processor in the application.
    *
    * <b>Examples</b>
@@ -92,32 +115,14 @@
    * - arm_cortexM0b_math.uvproj
    * - arm_cortexM0l_math.uvproj
    * - arm_cortexM3b_math.uvproj
-   * - arm_cortexM3l_math.uvproj
+   * - arm_cortexM3l_math.uvproj  
    * - arm_cortexM4b_math.uvproj
    * - arm_cortexM4l_math.uvproj
    * - arm_cortexM4bf_math.uvproj
    * - arm_cortexM4lf_math.uvproj
    *
-   * Each library project have differant pre-processor macros.
    *
-   * <b>ARM_MATH_CMx:</b>
-   * Define macro ARM_MATH_CM4 for building the library on Cortex-M4 target, ARM_MATH_CM3 for building library on Cortex-M3 target
-   * and ARM_MATH_CM0 for building library on cortex-M0 target.
-   *
-   * <b>ARM_MATH_BIG_ENDIAN:</b>
-   * Define macro ARM_MATH_BIG_ENDIAN to build the library for big endian targets. By default library builds for little endian targets.
-   *
-   * <b>ARM_MATH_MATRIX_CHECK:</b>
-   * Define macro for checking on the input and output sizes of matrices
-   *
-   * <b>ARM_MATH_ROUNDING:</b>
-   * Define macro for rounding on support functions
-   *
-   * <b>__FPU_PRESENT:</b>
-   * Initialize macro __FPU_PRESENT = 1 when building on FPU supported Targets. Enable this macro for M4bf and M4lf libraries
-   *
-   *
-   * The project can be built by opening the appropriate project in MDK-ARM 4.21 chain and defining the optional pre processor MACROs detailed above.
+   * The project can be built by opening the appropriate project in MDK-ARM 4.23 chain and defining the optional pre processor MACROs detailed above.
    *
    * <b>Copyright Notice</b>
    *
@@ -251,22 +256,22 @@
 #ifndef _ARM_MATH_H
 #define _ARM_MATH_H
 
-#define __CMSIS_GENERIC              /* disable NVIC and Systick functions */
+#define __CMSIS_GENERIC         /* disable NVIC and Systick functions */
 
 #if defined (ARM_MATH_CM4)
-  #include "core_cm4.h"
+#include "core_cm4.h"
 #elif defined (ARM_MATH_CM3)
-  #include "core_cm3.h"
+#include "core_cm3.h"
 #elif defined (ARM_MATH_CM0)
-  #include "core_cm0.h"
+#include "core_cm0.h"
 #else
 #include "ARMCM4.h"
 #warning "Define either ARM_MATH_CM4 OR ARM_MATH_CM3...By Default building on ARM_MATH_CM4....."
 #endif
 
-#undef  __CMSIS_GENERIC              /* enable NVIC and Systick functions */
+#undef  __CMSIS_GENERIC         /* enable NVIC and Systick functions */
 #include "string.h"
-    #include "math.h"
+#include "math.h"
 #ifdef	__cplusplus
 extern "C"
 {
@@ -280,7 +285,9 @@ extern "C"
 #define DELTA_Q31 			(0x100)
 #define DELTA_Q15 			0x5
 #define INDEX_MASK 			0x0000003F
+#ifndef PI
 #define PI					3.14159265358979f
+#endif
 
   /**
    * @brief Macros required for SINE and COSINE Fast math approximations
@@ -297,21 +304,33 @@ extern "C"
   /* -1 to +1 is divided into 360 values so total spacing is (2/360) */
 #define INPUT_SPACING			0xB60B61
 
+  /**
+   * @brief Macro for Unaligned Support
+   */
+#ifndef UNALIGNED_SUPPORT_DISABLE
+    #define ALIGN4
+#else
+  #if defined  (__GNUC__)
+    #define ALIGN4 __attribute__((aligned(4)))
+  #else
+    #define ALIGN4 __align(4)
+  #endif
+#endif	/*	#ifndef UNALIGNED_SUPPORT_DISABLE	*/
 
   /**
    * @brief Error status returned by some functions in the library.
    */
 
   typedef enum
-    {
-      ARM_MATH_SUCCESS = 0,              /**< No error */
-      ARM_MATH_ARGUMENT_ERROR = -1,      /**< One or more arguments are incorrect */
-      ARM_MATH_LENGTH_ERROR = -2,        /**< Length of data buffer is incorrect */
-      ARM_MATH_SIZE_MISMATCH = -3,       /**< Size of matrices is not compatible with the operation. */
-      ARM_MATH_NANINF = -4,              /**< Not-a-number (NaN) or infinity is generated */
-      ARM_MATH_SINGULAR = -5,            /**< Generated by matrix inversion if the input matrix is singular and cannot be inverted. */
-      ARM_MATH_TEST_FAILURE = -6         /**< Test Failed  */
-    } arm_status;
+  {
+    ARM_MATH_SUCCESS = 0,                /**< No error */
+    ARM_MATH_ARGUMENT_ERROR = -1,        /**< One or more arguments are incorrect */
+    ARM_MATH_LENGTH_ERROR = -2,          /**< Length of data buffer is incorrect */
+    ARM_MATH_SIZE_MISMATCH = -3,         /**< Size of matrices is not compatible with the operation. */
+    ARM_MATH_NANINF = -4,                /**< Not-a-number (NaN) or infinity is generated */
+    ARM_MATH_SINGULAR = -5,              /**< Generated by matrix inversion if the input matrix is singular and cannot be inverted. */
+    ARM_MATH_TEST_FAILURE = -6           /**< Test Failed  */
+  } arm_status;
 
   /**
    * @brief 8-bit fractional data type in 1.7 format.
@@ -346,7 +365,15 @@ extern "C"
   /**
    * @brief definition to read/write two 16 bit values.
    */
-#define __SIMD32(addr)  (*(int32_t **) & (addr))
+#if defined  (__GNUC__)
+  #define __SIMD32(addr)         (*( int32_t **) & (addr))
+  #define  _SIMD32_OFFSET(addr)  (*( int32_t * )   (addr))
+#else
+  #define __SIMD32(addr)         (*(__packed                    int32_t **) & (addr))
+  #define  _SIMD32_OFFSET(addr)  (*(__packed                    int32_t * )   (addr))
+#endif 
+
+  #define __SIMD64(addr)  (*(int64_t **) & (addr))
 
 #if defined (ARM_MATH_CM3) || defined (ARM_MATH_CM0)
   /**
@@ -354,6 +381,8 @@ extern "C"
    */
 #define __PKHBT(ARG1, ARG2, ARG3)      ( (((int32_t)(ARG1) <<  0) & (int32_t)0x0000FFFF) | \
                                          (((int32_t)(ARG2) << ARG3) & (int32_t)0xFFFF0000)  )
+#define __PKHTB(ARG1, ARG2, ARG3)      ( (((int32_t)(ARG1) <<  0) & (int32_t)0xFFFF0000) | \
+                                         (((int32_t)(ARG2) >> ARG3) & (int32_t)0x0000FFFF)  )
 
 #endif
 
@@ -381,7 +410,7 @@ extern "C"
    * @brief Clips Q63 to Q31 values.
    */
   __STATIC_INLINE q31_t clip_q63_to_q31(
-					q63_t x)
+  q63_t x)
   {
     return ((q31_t) (x >> 32) != ((q31_t) x >> 31)) ?
       ((0x7FFFFFFF ^ ((q31_t) (x >> 63)))) : (q31_t) x;
@@ -391,7 +420,7 @@ extern "C"
    * @brief Clips Q63 to Q15 values.
    */
   __STATIC_INLINE q15_t clip_q63_to_q15(
-					q63_t x)
+  q63_t x)
   {
     return ((q31_t) (x >> 32) != ((q31_t) x >> 31)) ?
       ((0x7FFF ^ ((q15_t) (x >> 63)))) : (q15_t) (x >> 15);
@@ -401,7 +430,7 @@ extern "C"
    * @brief Clips Q31 to Q7 values.
    */
   __STATIC_INLINE q7_t clip_q31_to_q7(
-				      q31_t x)
+  q31_t x)
   {
     return ((q31_t) (x >> 24) != ((q31_t) x >> 23)) ?
       ((0x7F ^ ((q7_t) (x >> 31)))) : (q7_t) x;
@@ -411,7 +440,7 @@ extern "C"
    * @brief Clips Q31 to Q15 values.
    */
   __STATIC_INLINE q15_t clip_q31_to_q15(
-					q31_t x)
+  q31_t x)
   {
     return ((q31_t) (x >> 16) != ((q31_t) x >> 15)) ?
       ((0x7FFF ^ ((q15_t) (x >> 31)))) : (q15_t) x;
@@ -422,8 +451,8 @@ extern "C"
    */
 
   __STATIC_INLINE q63_t mult32x64(
-				  q63_t x,
-				  q31_t y)
+  q63_t x,
+  q31_t y)
   {
     return ((((q63_t) (x & 0x00000000FFFFFFFF) * y) >> 32) +
             (((q63_t) (x >> 32) * y)));
@@ -445,16 +474,16 @@ extern "C"
 
   __STATIC_INLINE uint32_t __CLZ(q31_t data)
   {
-	  uint32_t count = 0;
-	  uint32_t mask = 0x80000000;
+    uint32_t count = 0;
+    uint32_t mask = 0x80000000;
 
-	  while((data & mask) ==  0)
-	  {
-		  count += 1u;
-		  mask = mask >> 1u;
-	  }
+    while((data & mask) == 0)
+    {
+      count += 1u;
+      mask = mask >> 1u;
+    }
 
-	  return(count);
+    return (count);
 
   }
 
@@ -465,9 +494,9 @@ extern "C"
    */
 
   __STATIC_INLINE uint32_t arm_recip_q31(
-					 q31_t in,
-					 q31_t * dst,
-					 q31_t * pRecipTable)
+  q31_t in,
+  q31_t * dst,
+  q31_t * pRecipTable)
   {
 
     uint32_t out, tempVal;
@@ -475,13 +504,13 @@ extern "C"
     uint32_t signBits;
 
     if(in > 0)
-      {
-	signBits = __CLZ(in) - 1;
-      }
+    {
+      signBits = __CLZ(in) - 1;
+    }
     else
-      {
-	signBits = __CLZ(-in) - 1;
-      }
+    {
+      signBits = __CLZ(-in) - 1;
+    }
 
     /* Convert input sample to 1.31 format */
     in = in << signBits;
@@ -496,13 +525,13 @@ extern "C"
     /* calculation of reciprocal value */
     /* running approximation for two iterations */
     for (i = 0u; i < 2u; i++)
-      {
-	tempVal = (q31_t) (((q63_t) in * out) >> 31u);
-	tempVal = 0x7FFFFFFF - tempVal;
-	/*      1.31 with exp 1 */
-	//out = (q31_t) (((q63_t) out * tempVal) >> 30u);
-	out = (q31_t) clip_q63_to_q31(((q63_t) out * tempVal) >> 30u);
-      }
+    {
+      tempVal = (q31_t) (((q63_t) in * out) >> 31u);
+      tempVal = 0x7FFFFFFF - tempVal;
+      /*      1.31 with exp 1 */
+      //out = (q31_t) (((q63_t) out * tempVal) >> 30u);
+      out = (q31_t) clip_q63_to_q31(((q63_t) out * tempVal) >> 30u);
+    }
 
     /* write output */
     *dst = out;
@@ -516,9 +545,9 @@ extern "C"
    * @brief Function to Calculates 1/in(reciprocal) value of Q15 Data type.
    */
   __STATIC_INLINE uint32_t arm_recip_q15(
-					 q15_t in,
-					 q15_t * dst,
-					 q15_t * pRecipTable)
+  q15_t in,
+  q15_t * dst,
+  q15_t * pRecipTable)
   {
 
     uint32_t out = 0, tempVal = 0;
@@ -526,13 +555,13 @@ extern "C"
     uint32_t signBits = 0;
 
     if(in > 0)
-      {
-	signBits = __CLZ(in) - 17;
-      }
+    {
+      signBits = __CLZ(in) - 17;
+    }
     else
-      {
-	signBits = __CLZ(-in) - 17;
-      }
+    {
+      signBits = __CLZ(-in) - 17;
+    }
 
     /* Convert input sample to 1.15 format */
     in = in << signBits;
@@ -547,12 +576,12 @@ extern "C"
     /* calculation of reciprocal value */
     /* running approximation for two iterations */
     for (i = 0; i < 2; i++)
-      {
-	tempVal = (q15_t) (((q31_t) in * out) >> 15);
-	tempVal = 0x7FFF - tempVal;
-	/*      1.15 with exp 1 */
-	out = (q15_t) (((q31_t) out * tempVal) >> 14);
-      }
+    {
+      tempVal = (q15_t) (((q31_t) in * out) >> 15);
+      tempVal = 0x7FFF - tempVal;
+      /*      1.15 with exp 1 */
+      out = (q15_t) (((q31_t) out * tempVal) >> 14);
+    }
 
     /* write output */
     *dst = out;
@@ -569,36 +598,36 @@ extern "C"
 #if defined(ARM_MATH_CM0)
 
   __STATIC_INLINE q31_t __SSAT(
-			       q31_t x,
-			       uint32_t y)
+  q31_t x,
+  uint32_t y)
   {
     int32_t posMax, negMin;
     uint32_t i;
 
     posMax = 1;
     for (i = 0; i < (y - 1); i++)
-      {
-	posMax = posMax * 2;
-      }
+    {
+      posMax = posMax * 2;
+    }
 
     if(x > 0)
-      {
-	posMax = (posMax - 1);
+    {
+      posMax = (posMax - 1);
 
-	if(x > posMax)
-	  {
-	    x = posMax;
-	  }
+      if(x > posMax)
+      {
+        x = posMax;
       }
+    }
     else
-      {
-	negMin = -posMax;
+    {
+      negMin = -posMax;
 
-	if(x < negMin)
-	  {
-	    x = negMin;
-	  }
+      if(x < negMin)
+      {
+        x = negMin;
       }
+    }
     return (x);
 
 
@@ -617,22 +646,23 @@ extern "C"
    * @brief C custom defined QADD8 for M3 and M0 processors
    */
   __STATIC_INLINE q31_t __QADD8(
-				q31_t x,
-				q31_t y)
+  q31_t x,
+  q31_t y)
   {
 
     q31_t sum;
     q7_t r, s, t, u;
 
-    r = (char) x;
-    s = (char) y;
+    r = (q7_t) x;
+    s = (q7_t) y;
 
     r = __SSAT((q31_t) (r + s), 8);
     s = __SSAT(((q31_t) (((x << 16) >> 24) + ((y << 16) >> 24))), 8);
     t = __SSAT(((q31_t) (((x << 8) >> 24) + ((y << 8) >> 24))), 8);
     u = __SSAT(((q31_t) ((x >> 24) + (y >> 24))), 8);
 
-    sum = (((q31_t) u << 24) & 0xFF000000) | (((q31_t) t << 16) & 0x00FF0000) |
+    sum =
+      (((q31_t) u << 24) & 0xFF000000) | (((q31_t) t << 16) & 0x00FF0000) |
       (((q31_t) s << 8) & 0x0000FF00) | (r & 0x000000FF);
 
     return sum;
@@ -643,15 +673,15 @@ extern "C"
    * @brief C custom defined QSUB8 for M3 and M0 processors
    */
   __STATIC_INLINE q31_t __QSUB8(
-				q31_t x,
-				q31_t y)
+  q31_t x,
+  q31_t y)
   {
 
     q31_t sum;
     q31_t r, s, t, u;
 
-    r = (char) x;
-    s = (char) y;
+    r = (q7_t) x;
+    s = (q7_t) y;
 
     r = __SSAT((r - s), 8);
     s = __SSAT(((q31_t) (((x << 16) >> 24) - ((y << 16) >> 24))), 8) << 8;
@@ -659,7 +689,8 @@ extern "C"
     u = __SSAT(((q31_t) ((x >> 24) - (y >> 24))), 8) << 24;
 
     sum =
-      (u & 0xFF000000) | (t & 0x00FF0000) | (s & 0x0000FF00) | (r & 0x000000FF);
+      (u & 0xFF000000) | (t & 0x00FF0000) | (s & 0x0000FF00) | (r &
+                                                                0x000000FF);
 
     return sum;
   }
@@ -672,8 +703,8 @@ extern "C"
    * @brief C custom defined QADD16 for M3 and M0 processors
    */
   __STATIC_INLINE q31_t __QADD16(
-				 q31_t x,
-				 q31_t y)
+  q31_t x,
+  q31_t y)
   {
 
     q31_t sum;
@@ -695,8 +726,8 @@ extern "C"
    * @brief C custom defined SHADD16 for M3 and M0 processors
    */
   __STATIC_INLINE q31_t __SHADD16(
-				  q31_t x,
-				  q31_t y)
+  q31_t x,
+  q31_t y)
   {
 
     q31_t sum;
@@ -718,8 +749,8 @@ extern "C"
    * @brief C custom defined QSUB16 for M3 and M0 processors
    */
   __STATIC_INLINE q31_t __QSUB16(
-				 q31_t x,
-				 q31_t y)
+  q31_t x,
+  q31_t y)
   {
 
     q31_t sum;
@@ -740,8 +771,8 @@ extern "C"
    * @brief C custom defined SHSUB16 for M3 and M0 processors
    */
   __STATIC_INLINE q31_t __SHSUB16(
-				  q31_t x,
-				  q31_t y)
+  q31_t x,
+  q31_t y)
   {
 
     q31_t diff;
@@ -762,13 +793,15 @@ extern "C"
    * @brief C custom defined QASX for M3 and M0 processors
    */
   __STATIC_INLINE q31_t __QASX(
-			       q31_t x,
-			       q31_t y)
+  q31_t x,
+  q31_t y)
   {
 
     q31_t sum = 0;
 
-    sum = ((sum + clip_q31_to_q15((q31_t) ((short) (x >> 16) + (short) y))) << 16) +
+    sum =
+      ((sum +
+        clip_q31_to_q15((q31_t) ((short) (x >> 16) + (short) y))) << 16) +
       clip_q31_to_q15((q31_t) ((short) x - (short) (y >> 16)));
 
     return sum;
@@ -778,8 +811,8 @@ extern "C"
    * @brief C custom defined SHASX for M3 and M0 processors
    */
   __STATIC_INLINE q31_t __SHASX(
-				q31_t x,
-				q31_t y)
+  q31_t x,
+  q31_t y)
   {
 
     q31_t sum;
@@ -801,13 +834,15 @@ extern "C"
    * @brief C custom defined QSAX for M3 and M0 processors
    */
   __STATIC_INLINE q31_t __QSAX(
-			       q31_t x,
-			       q31_t y)
+  q31_t x,
+  q31_t y)
   {
 
     q31_t sum = 0;
 
-    sum = ((sum + clip_q31_to_q15((q31_t) ((short) (x >> 16) - (short) y))) << 16) +
+    sum =
+      ((sum +
+        clip_q31_to_q15((q31_t) ((short) (x >> 16) - (short) y))) << 16) +
       clip_q31_to_q15((q31_t) ((short) x + (short) (y >> 16)));
 
     return sum;
@@ -817,8 +852,8 @@ extern "C"
    * @brief C custom defined SHSAX for M3 and M0 processors
    */
   __STATIC_INLINE q31_t __SHSAX(
-				q31_t x,
-				q31_t y)
+  q31_t x,
+  q31_t y)
   {
 
     q31_t sum;
@@ -839,32 +874,32 @@ extern "C"
    * @brief C custom defined SMUSDX for M3 and M0 processors
    */
   __STATIC_INLINE q31_t __SMUSDX(
-				 q31_t x,
-				 q31_t y)
+  q31_t x,
+  q31_t y)
   {
 
-    return ((q31_t)(((short) x * (short) (y >> 16)) -
-		    ((short) (x >> 16) * (short) y)));
+    return ((q31_t) (((short) x * (short) (y >> 16)) -
+                     ((short) (x >> 16) * (short) y)));
   }
 
   /*
    * @brief C custom defined SMUADX for M3 and M0 processors
    */
   __STATIC_INLINE q31_t __SMUADX(
-				 q31_t x,
-				 q31_t y)
+  q31_t x,
+  q31_t y)
   {
 
-    return ((q31_t)(((short) x * (short) (y >> 16)) +
-		    ((short) (x >> 16) * (short) y)));
+    return ((q31_t) (((short) x * (short) (y >> 16)) +
+                     ((short) (x >> 16) * (short) y)));
   }
 
   /*
    * @brief C custom defined QADD for M3 and M0 processors
    */
   __STATIC_INLINE q31_t __QADD(
-			       q31_t x,
-			       q31_t y)
+  q31_t x,
+  q31_t y)
   {
     return clip_q63_to_q31((q63_t) x + y);
   }
@@ -873,8 +908,8 @@ extern "C"
    * @brief C custom defined QSUB for M3 and M0 processors
    */
   __STATIC_INLINE q31_t __QSUB(
-			       q31_t x,
-			       q31_t y)
+  q31_t x,
+  q31_t y)
   {
     return clip_q63_to_q31((q63_t) x - y);
   }
@@ -883,9 +918,9 @@ extern "C"
    * @brief C custom defined SMLAD for M3 and M0 processors
    */
   __STATIC_INLINE q31_t __SMLAD(
-				q31_t x,
-				q31_t y,
-				q31_t sum)
+  q31_t x,
+  q31_t y,
+  q31_t sum)
   {
 
     return (sum + ((short) (x >> 16) * (short) (y >> 16)) +
@@ -896,9 +931,9 @@ extern "C"
    * @brief C custom defined SMLADX for M3 and M0 processors
    */
   __STATIC_INLINE q31_t __SMLADX(
-				 q31_t x,
-				 q31_t y,
-				 q31_t sum)
+  q31_t x,
+  q31_t y,
+  q31_t sum)
   {
 
     return (sum + ((short) (x >> 16) * (short) (y)) +
@@ -909,9 +944,9 @@ extern "C"
    * @brief C custom defined SMLSDX for M3 and M0 processors
    */
   __STATIC_INLINE q31_t __SMLSDX(
-				 q31_t x,
-				 q31_t y,
-				 q31_t sum)
+  q31_t x,
+  q31_t y,
+  q31_t sum)
   {
 
     return (sum - ((short) (x >> 16) * (short) (y)) +
@@ -922,9 +957,9 @@ extern "C"
    * @brief C custom defined SMLALD for M3 and M0 processors
    */
   __STATIC_INLINE q63_t __SMLALD(
-				 q31_t x,
-				 q31_t y,
-				 q63_t sum)
+  q31_t x,
+  q31_t y,
+  q63_t sum)
   {
 
     return (sum + ((short) (x >> 16) * (short) (y >> 16)) +
@@ -935,9 +970,9 @@ extern "C"
    * @brief C custom defined SMLALDX for M3 and M0 processors
    */
   __STATIC_INLINE q63_t __SMLALDX(
-				  q31_t x,
-				  q31_t y,
-				  q63_t sum)
+  q31_t x,
+  q31_t y,
+  q63_t sum)
   {
 
     return (sum + ((short) (x >> 16) * (short) y)) +
@@ -948,8 +983,8 @@ extern "C"
    * @brief C custom defined SMUAD for M3 and M0 processors
    */
   __STATIC_INLINE q31_t __SMUAD(
-				q31_t x,
-				q31_t y)
+  q31_t x,
+  q31_t y)
   {
 
     return (((x >> 16) * (y >> 16)) +
@@ -960,8 +995,8 @@ extern "C"
    * @brief C custom defined SMUSD for M3 and M0 processors
    */
   __STATIC_INLINE q31_t __SMUSD(
-				q31_t x,
-				q31_t y)
+  q31_t x,
+  q31_t y)
   {
 
     return (-((x >> 16) * (y >> 16)) +
@@ -969,9 +1004,19 @@ extern "C"
   }
 
 
+  /*
+   * @brief C custom defined SXTB16 for M3 and M0 processors
+   */
+  __STATIC_INLINE q31_t __SXTB16(
+  q31_t x)
+  {
+
+    return ((((x << 24) >> 24) & 0x0000FFFF) |
+            (((x << 8) >> 8) & 0xFFFF0000));
+  }
 
 
-#endif /* (ARM_MATH_CM3) || defined (ARM_MATH_CM0) */
+#endif /* defined (ARM_MATH_CM3) || defined (ARM_MATH_CM0) */
 
 
   /**
@@ -1024,10 +1069,10 @@ extern "C"
    * @return none.
    */
   void arm_fir_q7(
-		  const arm_fir_instance_q7 * S,
-		   q7_t * pSrc,
-		  q7_t * pDst,
-		  uint32_t blockSize);
+  const arm_fir_instance_q7 * S,
+  q7_t * pSrc,
+  q7_t * pDst,
+  uint32_t blockSize);
 
 
   /**
@@ -1040,11 +1085,11 @@ extern "C"
    * @return none
    */
   void arm_fir_init_q7(
-		       arm_fir_instance_q7 * S,
-		       uint16_t numTaps,
-		       q7_t * pCoeffs,
-		       q7_t * pState,
-		       uint32_t blockSize);
+  arm_fir_instance_q7 * S,
+  uint16_t numTaps,
+  q7_t * pCoeffs,
+  q7_t * pState,
+  uint32_t blockSize);
 
 
   /**
@@ -1056,10 +1101,10 @@ extern "C"
    * @return none.
    */
   void arm_fir_q15(
-		   const arm_fir_instance_q15 * S,
-		    q15_t * pSrc,
-		   q15_t * pDst,
-		   uint32_t blockSize);
+  const arm_fir_instance_q15 * S,
+  q15_t * pSrc,
+  q15_t * pDst,
+  uint32_t blockSize);
 
   /**
    * @brief Processing function for the fast Q15 FIR filter for Cortex-M3 and Cortex-M4.
@@ -1070,10 +1115,10 @@ extern "C"
    * @return none.
    */
   void arm_fir_fast_q15(
-			const arm_fir_instance_q15 * S,
-			 q15_t * pSrc,
-			q15_t * pDst,
-			uint32_t blockSize);
+  const arm_fir_instance_q15 * S,
+  q15_t * pSrc,
+  q15_t * pDst,
+  uint32_t blockSize);
 
   /**
    * @brief  Initialization function for the Q15 FIR filter.
@@ -1086,12 +1131,12 @@ extern "C"
    * <code>numTaps</code> is not a supported value.
    */
 
-       arm_status arm_fir_init_q15(
-			      arm_fir_instance_q15 * S,
-			      uint16_t numTaps,
-			      q15_t * pCoeffs,
-			      q15_t * pState,
-			      uint32_t blockSize);
+  arm_status arm_fir_init_q15(
+  arm_fir_instance_q15 * S,
+  uint16_t numTaps,
+  q15_t * pCoeffs,
+  q15_t * pState,
+  uint32_t blockSize);
 
   /**
    * @brief Processing function for the Q31 FIR filter.
@@ -1102,10 +1147,10 @@ extern "C"
    * @return none.
    */
   void arm_fir_q31(
-		   const arm_fir_instance_q31 * S,
-		    q31_t * pSrc,
-		   q31_t * pDst,
-		   uint32_t blockSize);
+  const arm_fir_instance_q31 * S,
+  q31_t * pSrc,
+  q31_t * pDst,
+  uint32_t blockSize);
 
   /**
    * @brief Processing function for the fast Q31 FIR filter for Cortex-M3 and Cortex-M4.
@@ -1116,10 +1161,10 @@ extern "C"
    * @return none.
    */
   void arm_fir_fast_q31(
-			const arm_fir_instance_q31 * S,
-			 q31_t * pSrc,
-			q31_t * pDst,
-			uint32_t blockSize);
+  const arm_fir_instance_q31 * S,
+  q31_t * pSrc,
+  q31_t * pDst,
+  uint32_t blockSize);
 
   /**
    * @brief  Initialization function for the Q31 FIR filter.
@@ -1131,11 +1176,11 @@ extern "C"
    * @return 		none.
    */
   void arm_fir_init_q31(
-			arm_fir_instance_q31 * S,
-			uint16_t numTaps,
-			q31_t * pCoeffs,
-			q31_t * pState,
-			uint32_t blockSize);
+  arm_fir_instance_q31 * S,
+  uint16_t numTaps,
+  q31_t * pCoeffs,
+  q31_t * pState,
+  uint32_t blockSize);
 
   /**
    * @brief Processing function for the floating-point FIR filter.
@@ -1146,10 +1191,10 @@ extern "C"
    * @return none.
    */
   void arm_fir_f32(
-		   const arm_fir_instance_f32 * S,
-		    float32_t * pSrc,
-		   float32_t * pDst,
-		   uint32_t blockSize);
+  const arm_fir_instance_f32 * S,
+  float32_t * pSrc,
+  float32_t * pDst,
+  uint32_t blockSize);
 
   /**
    * @brief  Initialization function for the floating-point FIR filter.
@@ -1161,11 +1206,11 @@ extern "C"
    * @return    	none.
    */
   void arm_fir_init_f32(
-			arm_fir_instance_f32 * S,
-			uint16_t numTaps,
-			float32_t * pCoeffs,
-			float32_t * pState,
-			uint32_t blockSize);
+  arm_fir_instance_f32 * S,
+  uint16_t numTaps,
+  float32_t * pCoeffs,
+  float32_t * pState,
+  uint32_t blockSize);
 
 
   /**
@@ -1217,10 +1262,10 @@ extern "C"
    */
 
   void arm_biquad_cascade_df1_q15(
-				  const arm_biquad_casd_df1_inst_q15 * S,
-				   q15_t * pSrc,
-				  q15_t * pDst,
-				  uint32_t blockSize);
+  const arm_biquad_casd_df1_inst_q15 * S,
+  q15_t * pSrc,
+  q15_t * pDst,
+  uint32_t blockSize);
 
   /**
    * @brief  Initialization function for the Q15 Biquad cascade filter.
@@ -1233,11 +1278,11 @@ extern "C"
    */
 
   void arm_biquad_cascade_df1_init_q15(
-				       arm_biquad_casd_df1_inst_q15 * S,
-				       uint8_t numStages,
-				       q15_t * pCoeffs,
-				       q15_t * pState,
-				       int8_t postShift);
+  arm_biquad_casd_df1_inst_q15 * S,
+  uint8_t numStages,
+  q15_t * pCoeffs,
+  q15_t * pState,
+  int8_t postShift);
 
 
   /**
@@ -1250,10 +1295,10 @@ extern "C"
    */
 
   void arm_biquad_cascade_df1_fast_q15(
-				       const arm_biquad_casd_df1_inst_q15 * S,
-				        q15_t * pSrc,
-				       q15_t * pDst,
-				       uint32_t blockSize);
+  const arm_biquad_casd_df1_inst_q15 * S,
+  q15_t * pSrc,
+  q15_t * pDst,
+  uint32_t blockSize);
 
 
   /**
@@ -1266,10 +1311,10 @@ extern "C"
    */
 
   void arm_biquad_cascade_df1_q31(
-				  const arm_biquad_casd_df1_inst_q31 * S,
-				   q31_t * pSrc,
-				  q31_t * pDst,
-				  uint32_t blockSize);
+  const arm_biquad_casd_df1_inst_q31 * S,
+  q31_t * pSrc,
+  q31_t * pDst,
+  uint32_t blockSize);
 
   /**
    * @brief Fast but less precise processing function for the Q31 Biquad cascade filter for Cortex-M3 and Cortex-M4.
@@ -1281,10 +1326,10 @@ extern "C"
    */
 
   void arm_biquad_cascade_df1_fast_q31(
-				       const arm_biquad_casd_df1_inst_q31 * S,
-				        q31_t * pSrc,
-				       q31_t * pDst,
-				       uint32_t blockSize);
+  const arm_biquad_casd_df1_inst_q31 * S,
+  q31_t * pSrc,
+  q31_t * pDst,
+  uint32_t blockSize);
 
   /**
    * @brief  Initialization function for the Q31 Biquad cascade filter.
@@ -1297,11 +1342,11 @@ extern "C"
    */
 
   void arm_biquad_cascade_df1_init_q31(
-				       arm_biquad_casd_df1_inst_q31 * S,
-				       uint8_t numStages,
-				       q31_t * pCoeffs,
-				       q31_t * pState,
-				       int8_t postShift);
+  arm_biquad_casd_df1_inst_q31 * S,
+  uint8_t numStages,
+  q31_t * pCoeffs,
+  q31_t * pState,
+  int8_t postShift);
 
   /**
    * @brief Processing function for the floating-point Biquad cascade filter.
@@ -1313,10 +1358,10 @@ extern "C"
    */
 
   void arm_biquad_cascade_df1_f32(
-				  const arm_biquad_casd_df1_inst_f32 * S,
-				   float32_t * pSrc,
-				  float32_t * pDst,
-				  uint32_t blockSize);
+  const arm_biquad_casd_df1_inst_f32 * S,
+  float32_t * pSrc,
+  float32_t * pDst,
+  uint32_t blockSize);
 
   /**
    * @brief  Initialization function for the floating-point Biquad cascade filter.
@@ -1328,10 +1373,10 @@ extern "C"
    */
 
   void arm_biquad_cascade_df1_init_f32(
-				       arm_biquad_casd_df1_inst_f32 * S,
-				       uint8_t numStages,
-				       float32_t * pCoeffs,
-				       float32_t * pState);
+  arm_biquad_casd_df1_inst_f32 * S,
+  uint8_t numStages,
+  float32_t * pCoeffs,
+  float32_t * pState);
 
 
   /**
@@ -1381,9 +1426,9 @@ extern "C"
    */
 
   arm_status arm_mat_add_f32(
-			     const arm_matrix_instance_f32 * pSrcA,
-			     const arm_matrix_instance_f32 * pSrcB,
-			     arm_matrix_instance_f32 * pDst);
+  const arm_matrix_instance_f32 * pSrcA,
+  const arm_matrix_instance_f32 * pSrcB,
+  arm_matrix_instance_f32 * pDst);
 
   /**
    * @brief Q15 matrix addition.
@@ -1395,9 +1440,9 @@ extern "C"
    */
 
   arm_status arm_mat_add_q15(
-			     const arm_matrix_instance_q15 * pSrcA,
-			     const arm_matrix_instance_q15 * pSrcB,
-			     arm_matrix_instance_q15 * pDst);
+  const arm_matrix_instance_q15 * pSrcA,
+  const arm_matrix_instance_q15 * pSrcB,
+  arm_matrix_instance_q15 * pDst);
 
   /**
    * @brief Q31 matrix addition.
@@ -1409,9 +1454,9 @@ extern "C"
    */
 
   arm_status arm_mat_add_q31(
-			     const arm_matrix_instance_q31 * pSrcA,
-			     const arm_matrix_instance_q31 * pSrcB,
-			     arm_matrix_instance_q31 * pDst);
+  const arm_matrix_instance_q31 * pSrcA,
+  const arm_matrix_instance_q31 * pSrcB,
+  arm_matrix_instance_q31 * pDst);
 
 
   /**
@@ -1423,8 +1468,8 @@ extern "C"
    */
 
   arm_status arm_mat_trans_f32(
-			       const arm_matrix_instance_f32 * pSrc,
-			       arm_matrix_instance_f32 * pDst);
+  const arm_matrix_instance_f32 * pSrc,
+  arm_matrix_instance_f32 * pDst);
 
 
   /**
@@ -1436,8 +1481,8 @@ extern "C"
    */
 
   arm_status arm_mat_trans_q15(
-			       const arm_matrix_instance_q15 * pSrc,
-			       arm_matrix_instance_q15 * pDst);
+  const arm_matrix_instance_q15 * pSrc,
+  arm_matrix_instance_q15 * pDst);
 
   /**
    * @brief Q31 matrix transpose.
@@ -1448,8 +1493,8 @@ extern "C"
    */
 
   arm_status arm_mat_trans_q31(
-			       const arm_matrix_instance_q31 * pSrc,
-			       arm_matrix_instance_q31 * pDst);
+  const arm_matrix_instance_q31 * pSrc,
+  arm_matrix_instance_q31 * pDst);
 
 
   /**
@@ -1462,9 +1507,9 @@ extern "C"
    */
 
   arm_status arm_mat_mult_f32(
-			      const arm_matrix_instance_f32 * pSrcA,
-			      const arm_matrix_instance_f32 * pSrcB,
-			      arm_matrix_instance_f32 * pDst);
+  const arm_matrix_instance_f32 * pSrcA,
+  const arm_matrix_instance_f32 * pSrcB,
+  arm_matrix_instance_f32 * pDst);
 
   /**
    * @brief Q15 matrix multiplication
@@ -1476,26 +1521,26 @@ extern "C"
    */
 
   arm_status arm_mat_mult_q15(
-			      const arm_matrix_instance_q15 * pSrcA,
-			      const arm_matrix_instance_q15 * pSrcB,
-			      arm_matrix_instance_q15 * pDst,
-			      q15_t * pState);
+  const arm_matrix_instance_q15 * pSrcA,
+  const arm_matrix_instance_q15 * pSrcB,
+  arm_matrix_instance_q15 * pDst,
+  q15_t * pState);
 
   /**
    * @brief Q15 matrix multiplication (fast variant) for Cortex-M3 and Cortex-M4
    * @param[in]       *pSrcA  points to the first input matrix structure
    * @param[in]       *pSrcB  points to the second input matrix structure
    * @param[out]      *pDst   points to output matrix structure
-   * @param[in]		  *pState points to the array for storing intermediate results
+   * @param[in]		  *pState points to the array for storing intermediate results  
    * @return     The function returns either
    * <code>ARM_MATH_SIZE_MISMATCH</code> or <code>ARM_MATH_SUCCESS</code> based on the outcome of size checking.
    */
 
   arm_status arm_mat_mult_fast_q15(
-				   const arm_matrix_instance_q15 * pSrcA,
-				   const arm_matrix_instance_q15 * pSrcB,
-				   arm_matrix_instance_q15 * pDst,
-				   q15_t * pState);
+  const arm_matrix_instance_q15 * pSrcA,
+  const arm_matrix_instance_q15 * pSrcB,
+  arm_matrix_instance_q15 * pDst,
+  q15_t * pState);
 
   /**
    * @brief Q31 matrix multiplication
@@ -1507,9 +1552,9 @@ extern "C"
    */
 
   arm_status arm_mat_mult_q31(
-			      const arm_matrix_instance_q31 * pSrcA,
-			      const arm_matrix_instance_q31 * pSrcB,
-			      arm_matrix_instance_q31 * pDst);
+  const arm_matrix_instance_q31 * pSrcA,
+  const arm_matrix_instance_q31 * pSrcB,
+  arm_matrix_instance_q31 * pDst);
 
   /**
    * @brief Q31 matrix multiplication (fast variant) for Cortex-M3 and Cortex-M4
@@ -1521,9 +1566,9 @@ extern "C"
    */
 
   arm_status arm_mat_mult_fast_q31(
-				   const arm_matrix_instance_q31 * pSrcA,
-				   const arm_matrix_instance_q31 * pSrcB,
-				   arm_matrix_instance_q31 * pDst);
+  const arm_matrix_instance_q31 * pSrcA,
+  const arm_matrix_instance_q31 * pSrcB,
+  arm_matrix_instance_q31 * pDst);
 
 
   /**
@@ -1536,9 +1581,9 @@ extern "C"
    */
 
   arm_status arm_mat_sub_f32(
-			     const arm_matrix_instance_f32 * pSrcA,
-			     const arm_matrix_instance_f32 * pSrcB,
-			     arm_matrix_instance_f32 * pDst);
+  const arm_matrix_instance_f32 * pSrcA,
+  const arm_matrix_instance_f32 * pSrcB,
+  arm_matrix_instance_f32 * pDst);
 
   /**
    * @brief Q15 matrix subtraction
@@ -1550,9 +1595,9 @@ extern "C"
    */
 
   arm_status arm_mat_sub_q15(
-			     const arm_matrix_instance_q15 * pSrcA,
-			     const arm_matrix_instance_q15 * pSrcB,
-			     arm_matrix_instance_q15 * pDst);
+  const arm_matrix_instance_q15 * pSrcA,
+  const arm_matrix_instance_q15 * pSrcB,
+  arm_matrix_instance_q15 * pDst);
 
   /**
    * @brief Q31 matrix subtraction
@@ -1564,9 +1609,9 @@ extern "C"
    */
 
   arm_status arm_mat_sub_q31(
-			     const arm_matrix_instance_q31 * pSrcA,
-			     const arm_matrix_instance_q31 * pSrcB,
-			     arm_matrix_instance_q31 * pDst);
+  const arm_matrix_instance_q31 * pSrcA,
+  const arm_matrix_instance_q31 * pSrcB,
+  arm_matrix_instance_q31 * pDst);
 
   /**
    * @brief Floating-point matrix scaling.
@@ -1578,9 +1623,9 @@ extern "C"
    */
 
   arm_status arm_mat_scale_f32(
-			       const arm_matrix_instance_f32 * pSrc,
-			       float32_t scale,
-			       arm_matrix_instance_f32 * pDst);
+  const arm_matrix_instance_f32 * pSrc,
+  float32_t scale,
+  arm_matrix_instance_f32 * pDst);
 
   /**
    * @brief Q15 matrix scaling.
@@ -1593,10 +1638,10 @@ extern "C"
    */
 
   arm_status arm_mat_scale_q15(
-			       const arm_matrix_instance_q15 * pSrc,
-			       q15_t scaleFract,
-			       int32_t shift,
-			       arm_matrix_instance_q15 * pDst);
+  const arm_matrix_instance_q15 * pSrc,
+  q15_t scaleFract,
+  int32_t shift,
+  arm_matrix_instance_q15 * pDst);
 
   /**
    * @brief Q31 matrix scaling.
@@ -1609,10 +1654,10 @@ extern "C"
    */
 
   arm_status arm_mat_scale_q31(
-			       const arm_matrix_instance_q31 * pSrc,
-			       q31_t scaleFract,
-			       int32_t shift,
-			       arm_matrix_instance_q31 * pDst);
+  const arm_matrix_instance_q31 * pSrc,
+  q31_t scaleFract,
+  int32_t shift,
+  arm_matrix_instance_q31 * pDst);
 
 
   /**
@@ -1625,10 +1670,10 @@ extern "C"
    */
 
   void arm_mat_init_q31(
-			arm_matrix_instance_q31 * S,
-			uint16_t nRows,
-			uint16_t nColumns,
-			q31_t   *pData);
+  arm_matrix_instance_q31 * S,
+  uint16_t nRows,
+  uint16_t nColumns,
+  q31_t * pData);
 
   /**
    * @brief  Q15 matrix initialization.
@@ -1640,10 +1685,10 @@ extern "C"
    */
 
   void arm_mat_init_q15(
-			arm_matrix_instance_q15 * S,
-			uint16_t nRows,
-			uint16_t nColumns,
-			q15_t    *pData);
+  arm_matrix_instance_q15 * S,
+  uint16_t nRows,
+  uint16_t nColumns,
+  q15_t * pData);
 
   /**
    * @brief  Floating-point matrix initialization.
@@ -1655,10 +1700,10 @@ extern "C"
    */
 
   void arm_mat_init_f32(
-			arm_matrix_instance_f32 * S,
-			uint16_t nRows,
-			uint16_t nColumns,
-			float32_t   *pData);
+  arm_matrix_instance_f32 * S,
+  uint16_t nRows,
+  uint16_t nColumns,
+  float32_t * pData);
 
 
 
@@ -1667,13 +1712,13 @@ extern "C"
    */
   typedef struct
   {
-    q15_t A0; 	 /**< The derived gain, A0 = Kp + Ki + Kd . */
-	#ifdef ARM_MATH_CM0
-	q15_t A1;
-	q15_t A2;
-	#else
+    q15_t A0;    /**< The derived gain, A0 = Kp + Ki + Kd . */
+#ifdef ARM_MATH_CM0
+    q15_t A1;
+    q15_t A2;
+#else
     q31_t A1;           /**< The derived gain A1 = -Kp - 2Kd | Kd.*/
-	#endif
+#endif
     q15_t state[3];       /**< The state array of length 3. */
     q15_t Kp;           /**< The proportional gain. */
     q15_t Ki;           /**< The integral gain. */
@@ -1718,8 +1763,8 @@ extern "C"
    * @return none.
    */
   void arm_pid_init_f32(
-			arm_pid_instance_f32 * S,
-			int32_t resetStateFlag);
+  arm_pid_instance_f32 * S,
+  int32_t resetStateFlag);
 
   /**
    * @brief  Reset function for the floating-point PID Control.
@@ -1727,7 +1772,7 @@ extern "C"
    * @return none
    */
   void arm_pid_reset_f32(
-			 arm_pid_instance_f32 * S);
+  arm_pid_instance_f32 * S);
 
 
   /**
@@ -1737,8 +1782,8 @@ extern "C"
    * @return none.
    */
   void arm_pid_init_q31(
-			arm_pid_instance_q31 * S,
-			int32_t resetStateFlag);
+  arm_pid_instance_q31 * S,
+  int32_t resetStateFlag);
 
 
   /**
@@ -1748,7 +1793,7 @@ extern "C"
    */
 
   void arm_pid_reset_q31(
-			 arm_pid_instance_q31 * S);
+  arm_pid_instance_q31 * S);
 
   /**
    * @brief  Initialization function for the Q15 PID Control.
@@ -1757,8 +1802,8 @@ extern "C"
    * @return none.
    */
   void arm_pid_init_q15(
-			arm_pid_instance_q15 * S,
-			int32_t resetStateFlag);
+  arm_pid_instance_q15 * S,
+  int32_t resetStateFlag);
 
   /**
    * @brief  Reset function for the Q15 PID Control.
@@ -1766,7 +1811,7 @@ extern "C"
    * @return none
    */
   void arm_pid_reset_q15(
-			 arm_pid_instance_q15 * S);
+  arm_pid_instance_q15 * S);
 
 
   /**
@@ -1786,9 +1831,9 @@ extern "C"
 
   typedef struct
   {
-    uint16_t numRows;	/**< number of rows in the data table. */
-    uint16_t numCols;	/**< number of columns in the data table. */
-    float32_t *pData;	/**< points to the data table. */
+    uint16_t numRows;   /**< number of rows in the data table. */
+    uint16_t numCols;   /**< number of columns in the data table. */
+    float32_t *pData;   /**< points to the data table. */
   } arm_bilinear_interp_instance_f32;
 
    /**
@@ -1797,9 +1842,9 @@ extern "C"
 
   typedef struct
   {
-    uint16_t numRows;	/**< number of rows in the data table. */
-    uint16_t numCols;	/**< number of columns in the data table. */
-    q31_t *pData;	/**< points to the data table. */
+    uint16_t numRows;   /**< number of rows in the data table. */
+    uint16_t numCols;   /**< number of columns in the data table. */
+    q31_t *pData;       /**< points to the data table. */
   } arm_bilinear_interp_instance_q31;
 
    /**
@@ -1808,9 +1853,9 @@ extern "C"
 
   typedef struct
   {
-    uint16_t numRows;	/**< number of rows in the data table. */
-    uint16_t numCols;	/**< number of columns in the data table. */
-    q15_t *pData;	/**< points to the data table. */
+    uint16_t numRows;   /**< number of rows in the data table. */
+    uint16_t numCols;   /**< number of columns in the data table. */
+    q15_t *pData;       /**< points to the data table. */
   } arm_bilinear_interp_instance_q15;
 
    /**
@@ -1819,9 +1864,9 @@ extern "C"
 
   typedef struct
   {
-    uint16_t numRows; 	/**< number of rows in the data table. */
-    uint16_t numCols;	/**< number of columns in the data table. */
-    q7_t *pData;		/**< points to the data table. */
+    uint16_t numRows;   /**< number of rows in the data table. */
+    uint16_t numCols;   /**< number of columns in the data table. */
+    q7_t *pData;                /**< points to the data table. */
   } arm_bilinear_interp_instance_q7;
 
 
@@ -1835,10 +1880,10 @@ extern "C"
    */
 
   void arm_mult_q7(
-		    q7_t * pSrcA,
-		    q7_t * pSrcB,
-		   q7_t * pDst,
-		   uint32_t blockSize);
+  q7_t * pSrcA,
+  q7_t * pSrcB,
+  q7_t * pDst,
+  uint32_t blockSize);
 
   /**
    * @brief Q15 vector multiplication.
@@ -1850,10 +1895,10 @@ extern "C"
    */
 
   void arm_mult_q15(
-		     q15_t * pSrcA,
-		     q15_t * pSrcB,
-		    q15_t * pDst,
-		    uint32_t blockSize);
+  q15_t * pSrcA,
+  q15_t * pSrcB,
+  q15_t * pDst,
+  uint32_t blockSize);
 
   /**
    * @brief Q31 vector multiplication.
@@ -1865,10 +1910,10 @@ extern "C"
    */
 
   void arm_mult_q31(
-		     q31_t * pSrcA,
-		     q31_t * pSrcB,
-		    q31_t * pDst,
-		    uint32_t blockSize);
+  q31_t * pSrcA,
+  q31_t * pSrcB,
+  q31_t * pDst,
+  uint32_t blockSize);
 
   /**
    * @brief Floating-point vector multiplication.
@@ -1880,10 +1925,10 @@ extern "C"
    */
 
   void arm_mult_f32(
-		     float32_t * pSrcA,
-		     float32_t * pSrcB,
-		    float32_t * pDst,
-		    uint32_t blockSize);
+  float32_t * pSrcA,
+  float32_t * pSrcB,
+  float32_t * pDst,
+  uint32_t blockSize);
 
 
   /**
@@ -1892,13 +1937,13 @@ extern "C"
 
   typedef struct
   {
-    uint16_t  fftLen;                /**< length of the FFT. */
-    uint8_t   ifftFlag;              /**< flag that selects forward (ifftFlag=0) or inverse (ifftFlag=1) transform. */
-    uint8_t   bitReverseFlag;        /**< flag that enables (bitReverseFlag=1) or disables (bitReverseFlag=0) bit reversal of output. */
-    q15_t     *pTwiddle;             /**< points to the twiddle factor table. */
-    uint16_t  *pBitRevTable;         /**< points to the bit reversal table. */
-    uint16_t  twidCoefModifier;      /**< twiddle coefficient modifier that supports different size FFTs with the same twiddle factor table. */
-    uint16_t  bitRevFactor;          /**< bit reversal modifier that supports different size FFTs with the same bit reversal table. */
+    uint16_t fftLen;                 /**< length of the FFT. */
+    uint8_t ifftFlag;                /**< flag that selects forward (ifftFlag=0) or inverse (ifftFlag=1) transform. */
+    uint8_t bitReverseFlag;          /**< flag that enables (bitReverseFlag=1) or disables (bitReverseFlag=0) bit reversal of output. */
+    q15_t *pTwiddle;                 /**< points to the twiddle factor table. */
+    uint16_t *pBitRevTable;          /**< points to the bit reversal table. */
+    uint16_t twidCoefModifier;       /**< twiddle coefficient modifier that supports different size FFTs with the same twiddle factor table. */
+    uint16_t bitRevFactor;           /**< bit reversal modifier that supports different size FFTs with the same bit reversal table. */
   } arm_cfft_radix4_instance_q15;
 
   /**
@@ -1907,14 +1952,15 @@ extern "C"
 
   typedef struct
   {
-    uint16_t    fftLen;              /**< length of the FFT. */
-    uint8_t     ifftFlag;            /**< flag that selects forward (ifftFlag=0) or inverse (ifftFlag=1) transform. */
-    uint8_t     bitReverseFlag;      /**< flag that enables (bitReverseFlag=1) or disables (bitReverseFlag=0) bit reversal of output. */
-    q31_t       *pTwiddle;           /**< points to the twiddle factor table. */
-    uint16_t    *pBitRevTable;       /**< points to the bit reversal table. */
-    uint16_t    twidCoefModifier;    /**< twiddle coefficient modifier that supports different size FFTs with the same twiddle factor table. */
-    uint16_t    bitRevFactor;        /**< bit reversal modifier that supports different size FFTs with the same bit reversal table. */
+    uint16_t fftLen;                 /**< length of the FFT. */
+    uint8_t ifftFlag;                /**< flag that selects forward (ifftFlag=0) or inverse (ifftFlag=1) transform. */
+    uint8_t bitReverseFlag;          /**< flag that enables (bitReverseFlag=1) or disables (bitReverseFlag=0) bit reversal of output. */
+    q31_t *pTwiddle;                 /**< points to the twiddle factor table. */
+    uint16_t *pBitRevTable;          /**< points to the bit reversal table. */
+    uint16_t twidCoefModifier;       /**< twiddle coefficient modifier that supports different size FFTs with the same twiddle factor table. */
+    uint16_t bitRevFactor;           /**< bit reversal modifier that supports different size FFTs with the same bit reversal table. */
   } arm_cfft_radix4_instance_q31;
+
 
   /**
    * @brief Instance structure for the floating-point CFFT/CIFFT function.
@@ -1922,15 +1968,63 @@ extern "C"
 
   typedef struct
   {
-    uint16_t     fftLen;               /**< length of the FFT. */
-    uint8_t      ifftFlag;             /**< flag that selects forward (ifftFlag=0) or inverse (ifftFlag=1) transform. */
-    uint8_t      bitReverseFlag;       /**< flag that enables (bitReverseFlag=1) or disables (bitReverseFlag=0) bit reversal of output. */
-    float32_t    *pTwiddle;            /**< points to the twiddle factor table. */
-    uint16_t     *pBitRevTable;        /**< points to the bit reversal table. */
-    uint16_t     twidCoefModifier;     /**< twiddle coefficient modifier that supports different size FFTs with the same twiddle factor table. */
-    uint16_t     bitRevFactor;         /**< bit reversal modifier that supports different size FFTs with the same bit reversal table. */
-	float32_t    onebyfftLen;          /**< value of 1/fftLen. */
+    uint16_t fftLen;                   /**< length of the FFT. */
+    uint8_t ifftFlag;                  /**< flag that selects forward (ifftFlag=0) or inverse (ifftFlag=1) transform. */
+    uint8_t bitReverseFlag;            /**< flag that enables (bitReverseFlag=1) or disables (bitReverseFlag=0) bit reversal of output. */
+    float32_t *pTwiddle;               /**< points to the twiddle factor table. */
+    uint16_t *pBitRevTable;            /**< points to the bit reversal table. */
+    uint16_t twidCoefModifier;         /**< twiddle coefficient modifier that supports different size FFTs with the same twiddle factor table. */
+    uint16_t bitRevFactor;             /**< bit reversal modifier that supports different size FFTs with the same bit reversal table. */
+    float32_t onebyfftLen;                 /**< value of 1/fftLen. */
   } arm_cfft_radix4_instance_f32;
+
+
+  /**
+   * @brief Instance structure for the Q15 CFFT/CIFFT function.
+   */
+
+  typedef struct
+  {
+    uint16_t fftLen;                 /**< length of the FFT. */
+    uint8_t ifftFlag;                /**< flag that selects forward (ifftFlag=0) or inverse (ifftFlag=1) transform. */
+    uint8_t bitReverseFlag;          /**< flag that enables (bitReverseFlag=1) or disables (bitReverseFlag=0) bit reversal of output. */
+    q15_t *pTwiddle;                     /**< points to the Sin twiddle factor table. */
+    uint16_t *pBitRevTable;          /**< points to the bit reversal table. */
+    uint16_t twidCoefModifier;       /**< twiddle coefficient modifier that supports different size FFTs with the same twiddle factor table. */
+    uint16_t bitRevFactor;           /**< bit reversal modifier that supports different size FFTs with the same bit reversal table. */
+  } arm_cfft_radix2_instance_q15;
+
+  /**
+   * @brief Instance structure for the Radix-2 Q31 CFFT/CIFFT function.
+   */
+
+  typedef struct
+  {
+    uint16_t fftLen;                 /**< length of the FFT. */
+    uint8_t ifftFlag;                /**< flag that selects forward (ifftFlag=0) or inverse (ifftFlag=1) transform. */
+    uint8_t bitReverseFlag;          /**< flag that enables (bitReverseFlag=1) or disables (bitReverseFlag=0) bit reversal of output. */
+    q31_t *pTwiddle;                     /**< points to the Twiddle factor table. */
+    uint16_t *pBitRevTable;          /**< points to the bit reversal table. */
+    uint16_t twidCoefModifier;       /**< twiddle coefficient modifier that supports different size FFTs with the same twiddle factor table. */
+    uint16_t bitRevFactor;           /**< bit reversal modifier that supports different size FFTs with the same bit reversal table. */
+  } arm_cfft_radix2_instance_q31;
+
+  /**
+   * @brief Instance structure for the floating-point CFFT/CIFFT function.
+   */
+
+  typedef struct
+  {
+    uint16_t fftLen;                   /**< length of the FFT. */
+    uint8_t ifftFlag;                  /**< flag that selects forward (ifftFlag=0) or inverse (ifftFlag=1) transform. */
+    uint8_t bitReverseFlag;            /**< flag that enables (bitReverseFlag=1) or disables (bitReverseFlag=0) bit reversal of output. */
+    float32_t *pTwiddle;               /**< points to the Twiddle factor table. */
+    uint16_t *pBitRevTable;            /**< points to the bit reversal table. */
+    uint16_t twidCoefModifier;         /**< twiddle coefficient modifier that supports different size FFTs with the same twiddle factor table. */
+    uint16_t bitRevFactor;             /**< bit reversal modifier that supports different size FFTs with the same bit reversal table. */
+    float32_t onebyfftLen;                 /**< value of 1/fftLen. */
+  } arm_cfft_radix2_instance_f32;
+
 
   /**
    * @brief Processing function for the Q15 CFFT/CIFFT.
@@ -1940,8 +2034,19 @@ extern "C"
    */
 
   void arm_cfft_radix4_q15(
-			   const arm_cfft_radix4_instance_q15 * S,
-			   q15_t * pSrc);
+  const arm_cfft_radix4_instance_q15 * S,
+  q15_t * pSrc);
+
+  /**
+   * @brief Processing function for the Q15 CFFT/CIFFT.
+   * @param[in]      *S    points to an instance of the Q15 CFFT/CIFFT structure.
+   * @param[in, out] *pSrc points to the complex data buffer. Processing occurs in-place.
+   * @return none.
+   */
+
+  void arm_cfft_radix2_q15(
+  const arm_cfft_radix2_instance_q15 * S,
+  q15_t * pSrc);
 
   /**
    * @brief Initialization function for the Q15 CFFT/CIFFT.
@@ -1953,10 +2058,25 @@ extern "C"
    */
 
   arm_status arm_cfft_radix4_init_q15(
-				      arm_cfft_radix4_instance_q15 * S,
-				      uint16_t fftLen,
-				      uint8_t ifftFlag,
-				      uint8_t bitReverseFlag);
+  arm_cfft_radix4_instance_q15 * S,
+  uint16_t fftLen,
+  uint8_t ifftFlag,
+  uint8_t bitReverseFlag);
+
+  /**
+   * @brief Initialization function for the Q15 CFFT/CIFFT.
+   * @param[in,out] *S             points to an instance of the Q15 CFFT/CIFFT structure.
+   * @param[in]     fftLen         length of the FFT.
+   * @param[in]     ifftFlag       flag that selects forward (ifftFlag=0) or inverse (ifftFlag=1) transform.
+   * @param[in]     bitReverseFlag flag that enables (bitReverseFlag=1) or disables (bitReverseFlag=0) bit reversal of output.
+   * @return        arm_status     function returns ARM_MATH_SUCCESS if initialization is successful or ARM_MATH_ARGUMENT_ERROR if <code>fftLen</code> is not a supported value.
+   */
+
+  arm_status arm_cfft_radix2_init_q15(
+  arm_cfft_radix2_instance_q15 * S,
+  uint16_t fftLen,
+  uint8_t ifftFlag,
+  uint8_t bitReverseFlag);
 
   /**
    * @brief Processing function for the Q31 CFFT/CIFFT.
@@ -1966,8 +2086,8 @@ extern "C"
    */
 
   void arm_cfft_radix4_q31(
-			   const arm_cfft_radix4_instance_q31 * S,
-			   q31_t * pSrc);
+  const arm_cfft_radix4_instance_q31 * S,
+  q31_t * pSrc);
 
   /**
    * @brief  Initialization function for the Q31 CFFT/CIFFT.
@@ -1979,10 +2099,64 @@ extern "C"
    */
 
   arm_status arm_cfft_radix4_init_q31(
-				      arm_cfft_radix4_instance_q31 * S,
-				      uint16_t fftLen,
-				      uint8_t ifftFlag,
-				      uint8_t bitReverseFlag);
+  arm_cfft_radix4_instance_q31 * S,
+  uint16_t fftLen,
+  uint8_t ifftFlag,
+  uint8_t bitReverseFlag);
+
+  /**
+   * @brief Processing function for the Radix-2 Q31 CFFT/CIFFT.
+   * @param[in]      *S    points to an instance of the Radix-2 Q31 CFFT/CIFFT structure.
+   * @param[in, out] *pSrc points to the complex data buffer. Processing occurs in-place.
+   * @return none.
+   */
+
+  void arm_cfft_radix2_q31(
+  const arm_cfft_radix2_instance_q31 * S,
+  q31_t * pSrc);
+
+  /**
+   * @brief  Initialization function for the Radix-2 Q31 CFFT/CIFFT.
+   * @param[in,out] *S             points to an instance of the Radix-2 Q31 CFFT/CIFFT structure.
+   * @param[in]     fftLen         length of the FFT.
+   * @param[in]     ifftFlag       flag that selects forward (ifftFlag=0) or inverse (ifftFlag=1) transform.
+   * @param[in]     bitReverseFlag flag that enables (bitReverseFlag=1) or disables (bitReverseFlag=0) bit reversal of output.
+   * @return        arm_status     function returns ARM_MATH_SUCCESS if initialization is successful or ARM_MATH_ARGUMENT_ERROR if <code>fftLen</code> is not a supported value.
+   */
+
+  arm_status arm_cfft_radix2_init_q31(
+  arm_cfft_radix2_instance_q31 * S,
+  uint16_t fftLen,
+  uint8_t ifftFlag,
+  uint8_t bitReverseFlag);
+
+
+
+  /**
+   * @brief Processing function for the floating-point CFFT/CIFFT.
+   * @param[in]      *S    points to an instance of the floating-point CFFT/CIFFT structure.
+   * @param[in, out] *pSrc points to the complex data buffer. Processing occurs in-place.
+   * @return none.
+   */
+
+  void arm_cfft_radix2_f32(
+  const arm_cfft_radix2_instance_f32 * S,
+  float32_t * pSrc);
+
+  /**
+   * @brief  Initialization function for the floating-point CFFT/CIFFT.
+   * @param[in,out] *S             points to an instance of the floating-point CFFT/CIFFT structure.
+   * @param[in]     fftLen         length of the FFT.
+   * @param[in]     ifftFlag       flag that selects forward (ifftFlag=0) or inverse (ifftFlag=1) transform.
+   * @param[in]     bitReverseFlag flag that enables (bitReverseFlag=1) or disables (bitReverseFlag=0) bit reversal of output.
+   * @return        The function returns ARM_MATH_SUCCESS if initialization is successful or ARM_MATH_ARGUMENT_ERROR if <code>fftLen</code> is not a supported value.
+   */
+
+  arm_status arm_cfft_radix2_init_f32(
+  arm_cfft_radix2_instance_f32 * S,
+  uint16_t fftLen,
+  uint8_t ifftFlag,
+  uint8_t bitReverseFlag);
 
   /**
    * @brief Processing function for the floating-point CFFT/CIFFT.
@@ -1992,8 +2166,8 @@ extern "C"
    */
 
   void arm_cfft_radix4_f32(
-			   const arm_cfft_radix4_instance_f32 * S,
-			   float32_t * pSrc);
+  const arm_cfft_radix4_instance_f32 * S,
+  float32_t * pSrc);
 
   /**
    * @brief  Initialization function for the floating-point CFFT/CIFFT.
@@ -2005,10 +2179,10 @@ extern "C"
    */
 
   arm_status arm_cfft_radix4_init_f32(
-				      arm_cfft_radix4_instance_f32 * S,
-				      uint16_t fftLen,
-				      uint8_t ifftFlag,
-				      uint8_t bitReverseFlag);
+  arm_cfft_radix4_instance_f32 * S,
+  uint16_t fftLen,
+  uint8_t ifftFlag,
+  uint8_t bitReverseFlag);
 
 
 
@@ -2026,10 +2200,10 @@ extern "C"
    */
 
   void arm_radix4_butterfly_f32(
-				float32_t * pSrc,
-				uint16_t fftLen,
-				float32_t * pCoef,
-				uint16_t twidCoefModifier);
+  float32_t * pSrc,
+  uint16_t fftLen,
+  float32_t * pCoef,
+  uint16_t twidCoefModifier);
 
   /**
    * @brief  Core function for the floating-point CIFFT butterfly process.
@@ -2042,11 +2216,11 @@ extern "C"
    */
 
   void arm_radix4_butterfly_inverse_f32(
-					float32_t * pSrc,
-					uint16_t fftLen,
-					float32_t * pCoef,
-					uint16_t twidCoefModifier,
-					float32_t onebyfftLen);
+  float32_t * pSrc,
+  uint16_t fftLen,
+  float32_t * pCoef,
+  uint16_t twidCoefModifier,
+  float32_t onebyfftLen);
 
   /**
    * @brief  In-place bit reversal function.
@@ -2058,27 +2232,119 @@ extern "C"
    */
 
   void arm_bitreversal_f32(
-			   float32_t *pSrc,
-			   uint16_t fftSize,
-			   uint16_t bitRevFactor,
-			   uint16_t *pBitRevTab);
+  float32_t * pSrc,
+  uint16_t fftSize,
+  uint16_t bitRevFactor,
+  uint16_t * pBitRevTab);
 
   /**
    * @brief  Core function for the Q31 CFFT butterfly process.
    * @param[in, out] *pSrc            points to the in-place buffer of Q31 data type.
    * @param[in]      fftLen           length of the FFT.
-   * @param[in]      *pCoef           points to twiddle coefficient buffer.
+   * @param[in]      *pCoef           points to Twiddle coefficient buffer.
    * @param[in]      twidCoefModifier twiddle coefficient modifier that supports different size FFTs with the same twiddle factor table.
    * @return none.
    */
 
   void arm_radix4_butterfly_q31(
-				q31_t *pSrc,
-				uint32_t fftLen,
-				q31_t *pCoef,
-				uint32_t twidCoefModifier);
+  q31_t * pSrc,
+  uint32_t fftLen,
+  q31_t * pCoef,
+  uint32_t twidCoefModifier);
 
   /**
+   * @brief  Core function for the f32 FFT butterfly process.
+   * @param[in, out] *pSrc            points to the in-place buffer of f32 data type.
+   * @param[in]      fftLen           length of the FFT.
+   * @param[in]      *pCoef        	  points to Twiddle coefficient buffer.
+   * @param[in]      twidCoefModifier twiddle coefficient modifier that supports different size FFTs with the same twiddle factor table.
+   * @return none.
+   */
+
+  void arm_radix2_butterfly_f32(
+  float32_t * pSrc,
+  uint32_t fftLen,
+  float32_t * pCoef,
+  uint16_t twidCoefModifier);
+
+        /**  
+	 * @brief  Core function for the Radix-2 Q31 CFFT butterfly process. 
+	 * @param[in, out] *pSrc            points to the in-place buffer of Q31 data type. 
+	 * @param[in]      fftLen           length of the FFT. 
+	 * @param[in]      *pCoef         	points to Twiddle coefficient buffer.
+	 * @param[in]      twidCoefModifier twiddle coefficient modifier that supports different size FFTs with the same twiddle factor table. 
+	 * @return none. 
+	 */
+
+  void arm_radix2_butterfly_q31(
+  q31_t * pSrc,
+  uint32_t fftLen,
+  q31_t * pCoef,
+  uint16_t twidCoefModifier);
+
+        /**  
+	 * @brief  Core function for the Radix-2 Q15 CFFT butterfly process. 
+	 * @param[in, out] *pSrc            points to the in-place buffer of Q15 data type. 
+	 * @param[in]      fftLen           length of the FFT. 
+	 * @param[in]      *pCoef           points to Twiddle coefficient buffer.
+	 * @param[in]      twidCoefModifier twiddle coefficient modifier that supports different size FFTs with the same twiddle factor table. 
+	 * @return none. 
+	 */
+
+  void arm_radix2_butterfly_q15(
+  q15_t * pSrc,
+  uint32_t fftLen,
+  q15_t * pCoef,
+  uint16_t twidCoefModifier);
+
+        /**  
+	 * @brief  Core function for the Radix-2 Q15 CFFT Inverse butterfly process. 
+	 * @param[in, out] *pSrc            points to the in-place buffer of Q15 data type. 
+	 * @param[in]      fftLen           length of the FFT. 
+	 * @param[in]      *pCoef       	points to Twiddle coefficient buffer.
+	 * @param[in]      twidCoefModifier twiddle coefficient modifier that supports different size FFTs with the same twiddle factor table. 
+	 * @return none. 
+	 */
+
+  void arm_radix2_butterfly_inverse_q15(
+  q15_t * pSrc,
+  uint32_t fftLen,
+  q15_t * pCoef,
+  uint16_t twidCoefModifier);
+
+        /**  
+	 * @brief  Core function for the Radix-2 Q31 CFFT Inverse butterfly process. 
+	 * @param[in, out] *pSrc            points to the in-place buffer of Q31 data type. 
+	 * @param[in]      fftLen           length of the FFT. 
+	 * @param[in]      *pCoef         	points to Twiddle coefficient buffer.
+	 * @param[in]      twidCoefModifier twiddle coefficient modifier that supports different size FFTs with the same twiddle factor table. 
+	 * @return none. 
+	 */
+
+  void arm_radix2_butterfly_inverse_q31(
+  q31_t * pSrc,
+  uint32_t fftLen,
+  q31_t * pCoef,
+  uint16_t twidCoefModifier);
+
+  /**
+   * @brief  Core function for the f32 IFFT butterfly process.
+   * @param[in, out] *pSrc            points to the in-place buffer of f32 data type.
+   * @param[in]      fftLen           length of the FFT.
+   * @param[in]      *pCoef        	  points to Twiddle coefficient buffer.
+   * @param[in]      twidCoefModifier twiddle coefficient modifier that supports different size FFTs with the same twiddle factor table.
+   * @param[in]		 onebyfftLen	  1/fftLenfth
+   * @return none.
+   */
+
+  void arm_radix2_butterfly_inverse_f32(
+  float32_t * pSrc,
+  uint32_t fftLen,
+  float32_t * pCoef,
+  uint16_t twidCoefModifier,
+  float32_t onebyfftLen);
+
+                                                                /**
    * @brief  Core function for the Q31 CIFFT butterfly process.
    * @param[in, out] *pSrc            points to the in-place buffer of Q31 data type.
    * @param[in]      fftLen           length of the FFT.
@@ -2088,10 +2354,10 @@ extern "C"
    */
 
   void arm_radix4_butterfly_inverse_q31(
-					q31_t * pSrc,
-					uint32_t fftLen,
-					q31_t * pCoef,
-					uint32_t twidCoefModifier);
+  q31_t * pSrc,
+  uint32_t fftLen,
+  q31_t * pCoef,
+  uint32_t twidCoefModifier);
 
   /**
    * @brief  In-place bit reversal function.
@@ -2103,10 +2369,10 @@ extern "C"
    */
 
   void arm_bitreversal_q31(
-			   q31_t * pSrc,
-			   uint32_t fftLen,
-			   uint16_t bitRevFactor,
-			   uint16_t *pBitRevTab);
+  q31_t * pSrc,
+  uint32_t fftLen,
+  uint16_t bitRevFactor,
+  uint16_t * pBitRevTab);
 
   /**
    * @brief  Core function for the Q15 CFFT butterfly process.
@@ -2118,10 +2384,11 @@ extern "C"
    */
 
   void arm_radix4_butterfly_q15(
-				q15_t *pSrc16,
-				uint32_t fftLen,
-				q15_t *pCoef16,
-				uint32_t twidCoefModifier);
+  q15_t * pSrc16,
+  uint32_t fftLen,
+  q15_t * pCoef16,
+  uint32_t twidCoefModifier);
+
 
   /**
    * @brief  Core function for the Q15 CIFFT butterfly process.
@@ -2133,10 +2400,10 @@ extern "C"
    */
 
   void arm_radix4_butterfly_inverse_q15(
-					q15_t *pSrc16,
-					uint32_t fftLen,
-					q15_t *pCoef16,
-					uint32_t twidCoefModifier);
+  q15_t * pSrc16,
+  uint32_t fftLen,
+  q15_t * pCoef16,
+  uint32_t twidCoefModifier);
 
   /**
    * @brief  In-place bit reversal function.
@@ -2148,10 +2415,11 @@ extern "C"
    */
 
   void arm_bitreversal_q15(
-			   q15_t * pSrc,
-			   uint32_t fftLen,
-			   uint16_t bitRevFactor,
-			   uint16_t *pBitRevTab);
+  q15_t * pSrc,
+  uint32_t fftLen,
+  uint16_t bitRevFactor,
+  uint16_t * pBitRevTab);
+
 
   /**
    * @brief Instance structure for the Q15 RFFT/RIFFT function.
@@ -2161,12 +2429,12 @@ extern "C"
   {
     uint32_t fftLenReal;                      /**< length of the real FFT. */
     uint32_t fftLenBy2;                       /**< length of the complex FFT. */
-    uint8_t  ifftFlagR;                       /**< flag that selects forward (ifftFlagR=0) or inverse (ifftFlagR=1) transform. */
-	uint8_t  bitReverseFlagR;                 /**< flag that enables (bitReverseFlagR=1) or disables (bitReverseFlagR=0) bit reversal of output. */
+    uint8_t ifftFlagR;                        /**< flag that selects forward (ifftFlagR=0) or inverse (ifftFlagR=1) transform. */
+    uint8_t bitReverseFlagR;                      /**< flag that enables (bitReverseFlagR=1) or disables (bitReverseFlagR=0) bit reversal of output. */
     uint32_t twidCoefRModifier;               /**< twiddle coefficient modifier that supports different size FFTs with the same twiddle factor table. */
-    q15_t    *pTwiddleAReal;                  /**< points to the real twiddle factor table. */
-    q15_t    *pTwiddleBReal;                  /**< points to the imag twiddle factor table. */
-    arm_cfft_radix4_instance_q15 *pCfft;	  /**< points to the complex FFT instance. */
+    q15_t *pTwiddleAReal;                     /**< points to the real twiddle factor table. */
+    q15_t *pTwiddleBReal;                     /**< points to the imag twiddle factor table. */
+    arm_cfft_radix4_instance_q15 *pCfft;          /**< points to the complex FFT instance. */
   } arm_rfft_instance_q15;
 
   /**
@@ -2177,11 +2445,11 @@ extern "C"
   {
     uint32_t fftLenReal;                        /**< length of the real FFT. */
     uint32_t fftLenBy2;                         /**< length of the complex FFT. */
-    uint8_t  ifftFlagR;                         /**< flag that selects forward (ifftFlagR=0) or inverse (ifftFlagR=1) transform. */
-	uint8_t  bitReverseFlagR;                   /**< flag that enables (bitReverseFlagR=1) or disables (bitReverseFlagR=0) bit reversal of output. */
+    uint8_t ifftFlagR;                          /**< flag that selects forward (ifftFlagR=0) or inverse (ifftFlagR=1) transform. */
+    uint8_t bitReverseFlagR;                        /**< flag that enables (bitReverseFlagR=1) or disables (bitReverseFlagR=0) bit reversal of output. */
     uint32_t twidCoefRModifier;                 /**< twiddle coefficient modifier that supports different size FFTs with the same twiddle factor table. */
-    q31_t    *pTwiddleAReal;                    /**< points to the real twiddle factor table. */
-    q31_t    *pTwiddleBReal;                    /**< points to the imag twiddle factor table. */
+    q31_t *pTwiddleAReal;                       /**< points to the real twiddle factor table. */
+    q31_t *pTwiddleBReal;                       /**< points to the imag twiddle factor table. */
     arm_cfft_radix4_instance_q31 *pCfft;        /**< points to the complex FFT instance. */
   } arm_rfft_instance_q31;
 
@@ -2191,11 +2459,11 @@ extern "C"
 
   typedef struct
   {
-    uint32_t  fftLenReal;                       /**< length of the real FFT. */
-    uint16_t  fftLenBy2;                        /**< length of the complex FFT. */
-    uint8_t   ifftFlagR;                        /**< flag that selects forward (ifftFlagR=0) or inverse (ifftFlagR=1) transform. */
-    uint8_t   bitReverseFlagR;                  /**< flag that enables (bitReverseFlagR=1) or disables (bitReverseFlagR=0) bit reversal of output. */
-	uint32_t  twidCoefRModifier;                /**< twiddle coefficient modifier that supports different size FFTs with the same twiddle factor table. */
+    uint32_t fftLenReal;                        /**< length of the real FFT. */
+    uint16_t fftLenBy2;                         /**< length of the complex FFT. */
+    uint8_t ifftFlagR;                          /**< flag that selects forward (ifftFlagR=0) or inverse (ifftFlagR=1) transform. */
+    uint8_t bitReverseFlagR;                    /**< flag that enables (bitReverseFlagR=1) or disables (bitReverseFlagR=0) bit reversal of output. */
+    uint32_t twidCoefRModifier;                     /**< twiddle coefficient modifier that supports different size FFTs with the same twiddle factor table. */
     float32_t *pTwiddleAReal;                   /**< points to the real twiddle factor table. */
     float32_t *pTwiddleBReal;                   /**< points to the imag twiddle factor table. */
     arm_cfft_radix4_instance_f32 *pCfft;        /**< points to the complex FFT instance. */
@@ -2210,9 +2478,9 @@ extern "C"
    */
 
   void arm_rfft_q15(
-		    const arm_rfft_instance_q15 * S,
-		    q15_t * pSrc,
-		    q15_t * pDst);
+  const arm_rfft_instance_q15 * S,
+  q15_t * pSrc,
+  q15_t * pDst);
 
   /**
    * @brief  Initialization function for the Q15 RFFT/RIFFT.
@@ -2225,11 +2493,11 @@ extern "C"
    */
 
   arm_status arm_rfft_init_q15(
-			       arm_rfft_instance_q15 * S,
-			       arm_cfft_radix4_instance_q15 * S_CFFT,
-			       uint32_t fftLenReal,
-			       uint32_t ifftFlagR,
-			       uint32_t bitReverseFlag);
+  arm_rfft_instance_q15 * S,
+  arm_cfft_radix4_instance_q15 * S_CFFT,
+  uint32_t fftLenReal,
+  uint32_t ifftFlagR,
+  uint32_t bitReverseFlag);
 
   /**
    * @brief Processing function for the Q31 RFFT/RIFFT.
@@ -2240,9 +2508,9 @@ extern "C"
    */
 
   void arm_rfft_q31(
-		    const arm_rfft_instance_q31 * S,
-		    q31_t * pSrc,
-		    q31_t * pDst);
+  const arm_rfft_instance_q31 * S,
+  q31_t * pSrc,
+  q31_t * pDst);
 
   /**
    * @brief  Initialization function for the Q31 RFFT/RIFFT.
@@ -2255,11 +2523,11 @@ extern "C"
    */
 
   arm_status arm_rfft_init_q31(
-			       arm_rfft_instance_q31 * S,
-			       arm_cfft_radix4_instance_q31 * S_CFFT,
-			       uint32_t fftLenReal,
-			       uint32_t ifftFlagR,
-			       uint32_t bitReverseFlag);
+  arm_rfft_instance_q31 * S,
+  arm_cfft_radix4_instance_q31 * S_CFFT,
+  uint32_t fftLenReal,
+  uint32_t ifftFlagR,
+  uint32_t bitReverseFlag);
 
   /**
    * @brief  Initialization function for the floating-point RFFT/RIFFT.
@@ -2272,11 +2540,11 @@ extern "C"
    */
 
   arm_status arm_rfft_init_f32(
-			       arm_rfft_instance_f32 * S,
-			       arm_cfft_radix4_instance_f32 * S_CFFT,
-			       uint32_t fftLenReal,
-			       uint32_t ifftFlagR,
-			       uint32_t bitReverseFlag);
+  arm_rfft_instance_f32 * S,
+  arm_cfft_radix4_instance_f32 * S_CFFT,
+  uint32_t fftLenReal,
+  uint32_t ifftFlagR,
+  uint32_t bitReverseFlag);
 
   /**
    * @brief Processing function for the floating-point RFFT/RIFFT.
@@ -2287,9 +2555,9 @@ extern "C"
    */
 
   void arm_rfft_f32(
-		    const arm_rfft_instance_f32 * S,
-		    float32_t * pSrc,
-		    float32_t * pDst);
+  const arm_rfft_instance_f32 * S,
+  float32_t * pSrc,
+  float32_t * pDst);
 
   /**
    * @brief Instance structure for the floating-point DCT4/IDCT4 function.
@@ -2318,12 +2586,12 @@ extern "C"
    */
 
   arm_status arm_dct4_init_f32(
-			       arm_dct4_instance_f32 * S,
-			       arm_rfft_instance_f32 * S_RFFT,
-			       arm_cfft_radix4_instance_f32 * S_CFFT,
-			       uint16_t N,
-			       uint16_t Nby2,
-			       float32_t normalize);
+  arm_dct4_instance_f32 * S,
+  arm_rfft_instance_f32 * S_RFFT,
+  arm_cfft_radix4_instance_f32 * S_CFFT,
+  uint16_t N,
+  uint16_t Nby2,
+  float32_t normalize);
 
   /**
    * @brief Processing function for the floating-point DCT4/IDCT4.
@@ -2334,9 +2602,9 @@ extern "C"
    */
 
   void arm_dct4_f32(
-		    const arm_dct4_instance_f32 * S,
-		    float32_t * pState,
-		    float32_t * pInlineBuffer);
+  const arm_dct4_instance_f32 * S,
+  float32_t * pState,
+  float32_t * pInlineBuffer);
 
   /**
    * @brief Instance structure for the Q31 DCT4/IDCT4 function.
@@ -2365,12 +2633,12 @@ extern "C"
    */
 
   arm_status arm_dct4_init_q31(
-			       arm_dct4_instance_q31 * S,
-			       arm_rfft_instance_q31 * S_RFFT,
-			       arm_cfft_radix4_instance_q31 * S_CFFT,
-			       uint16_t N,
-			       uint16_t Nby2,
-			       q31_t normalize);
+  arm_dct4_instance_q31 * S,
+  arm_rfft_instance_q31 * S_RFFT,
+  arm_cfft_radix4_instance_q31 * S_CFFT,
+  uint16_t N,
+  uint16_t Nby2,
+  q31_t normalize);
 
   /**
    * @brief Processing function for the Q31 DCT4/IDCT4.
@@ -2381,9 +2649,9 @@ extern "C"
    */
 
   void arm_dct4_q31(
-		    const arm_dct4_instance_q31 * S,
-		    q31_t * pState,
-		    q31_t * pInlineBuffer);
+  const arm_dct4_instance_q31 * S,
+  q31_t * pState,
+  q31_t * pInlineBuffer);
 
   /**
    * @brief Instance structure for the Q15 DCT4/IDCT4 function.
@@ -2412,12 +2680,12 @@ extern "C"
    */
 
   arm_status arm_dct4_init_q15(
-			       arm_dct4_instance_q15 * S,
-			       arm_rfft_instance_q15 * S_RFFT,
-			       arm_cfft_radix4_instance_q15 * S_CFFT,
-			       uint16_t N,
-			       uint16_t Nby2,
-			       q15_t normalize);
+  arm_dct4_instance_q15 * S,
+  arm_rfft_instance_q15 * S_RFFT,
+  arm_cfft_radix4_instance_q15 * S_CFFT,
+  uint16_t N,
+  uint16_t Nby2,
+  q15_t normalize);
 
   /**
    * @brief Processing function for the Q15 DCT4/IDCT4.
@@ -2428,9 +2696,9 @@ extern "C"
    */
 
   void arm_dct4_q15(
-		    const arm_dct4_instance_q15 * S,
-		    q15_t * pState,
-		    q15_t * pInlineBuffer);
+  const arm_dct4_instance_q15 * S,
+  q15_t * pState,
+  q15_t * pInlineBuffer);
 
   /**
    * @brief Floating-point vector addition.
@@ -2442,10 +2710,10 @@ extern "C"
    */
 
   void arm_add_f32(
-		   float32_t * pSrcA,
-		   float32_t * pSrcB,
-		   float32_t * pDst,
-		   uint32_t blockSize);
+  float32_t * pSrcA,
+  float32_t * pSrcB,
+  float32_t * pDst,
+  uint32_t blockSize);
 
   /**
    * @brief Q7 vector addition.
@@ -2457,10 +2725,10 @@ extern "C"
    */
 
   void arm_add_q7(
-		  q7_t * pSrcA,
-		  q7_t * pSrcB,
-		  q7_t * pDst,
-		  uint32_t blockSize);
+  q7_t * pSrcA,
+  q7_t * pSrcB,
+  q7_t * pDst,
+  uint32_t blockSize);
 
   /**
    * @brief Q15 vector addition.
@@ -2472,10 +2740,10 @@ extern "C"
    */
 
   void arm_add_q15(
-		    q15_t * pSrcA,
-		    q15_t * pSrcB,
-		   q15_t * pDst,
-		   uint32_t blockSize);
+  q15_t * pSrcA,
+  q15_t * pSrcB,
+  q15_t * pDst,
+  uint32_t blockSize);
 
   /**
    * @brief Q31 vector addition.
@@ -2487,10 +2755,10 @@ extern "C"
    */
 
   void arm_add_q31(
-		    q31_t * pSrcA,
-		    q31_t * pSrcB,
-		   q31_t * pDst,
-		   uint32_t blockSize);
+  q31_t * pSrcA,
+  q31_t * pSrcB,
+  q31_t * pDst,
+  uint32_t blockSize);
 
   /**
    * @brief Floating-point vector subtraction.
@@ -2502,10 +2770,10 @@ extern "C"
    */
 
   void arm_sub_f32(
-		    float32_t * pSrcA,
-		    float32_t * pSrcB,
-		   float32_t * pDst,
-		   uint32_t blockSize);
+  float32_t * pSrcA,
+  float32_t * pSrcB,
+  float32_t * pDst,
+  uint32_t blockSize);
 
   /**
    * @brief Q7 vector subtraction.
@@ -2517,10 +2785,10 @@ extern "C"
    */
 
   void arm_sub_q7(
-		   q7_t * pSrcA,
-		   q7_t * pSrcB,
-		  q7_t * pDst,
-		  uint32_t blockSize);
+  q7_t * pSrcA,
+  q7_t * pSrcB,
+  q7_t * pDst,
+  uint32_t blockSize);
 
   /**
    * @brief Q15 vector subtraction.
@@ -2532,10 +2800,10 @@ extern "C"
    */
 
   void arm_sub_q15(
-		    q15_t * pSrcA,
-		    q15_t * pSrcB,
-		   q15_t * pDst,
-		   uint32_t blockSize);
+  q15_t * pSrcA,
+  q15_t * pSrcB,
+  q15_t * pDst,
+  uint32_t blockSize);
 
   /**
    * @brief Q31 vector subtraction.
@@ -2547,10 +2815,10 @@ extern "C"
    */
 
   void arm_sub_q31(
-		    q31_t * pSrcA,
-		    q31_t * pSrcB,
-		   q31_t * pDst,
-		   uint32_t blockSize);
+  q31_t * pSrcA,
+  q31_t * pSrcB,
+  q31_t * pDst,
+  uint32_t blockSize);
 
   /**
    * @brief Multiplies a floating-point vector by a scalar.
@@ -2562,10 +2830,10 @@ extern "C"
    */
 
   void arm_scale_f32(
-		      float32_t * pSrc,
-		     float32_t scale,
-		     float32_t * pDst,
-		     uint32_t blockSize);
+  float32_t * pSrc,
+  float32_t scale,
+  float32_t * pDst,
+  uint32_t blockSize);
 
   /**
    * @brief Multiplies a Q7 vector by a scalar.
@@ -2578,11 +2846,11 @@ extern "C"
    */
 
   void arm_scale_q7(
-		     q7_t * pSrc,
-		    q7_t scaleFract,
-		    int8_t shift,
-		    q7_t * pDst,
-		    uint32_t blockSize);
+  q7_t * pSrc,
+  q7_t scaleFract,
+  int8_t shift,
+  q7_t * pDst,
+  uint32_t blockSize);
 
   /**
    * @brief Multiplies a Q15 vector by a scalar.
@@ -2595,11 +2863,11 @@ extern "C"
    */
 
   void arm_scale_q15(
-		      q15_t * pSrc,
-		     q15_t scaleFract,
-		     int8_t shift,
-		     q15_t * pDst,
-		     uint32_t blockSize);
+  q15_t * pSrc,
+  q15_t scaleFract,
+  int8_t shift,
+  q15_t * pDst,
+  uint32_t blockSize);
 
   /**
    * @brief Multiplies a Q31 vector by a scalar.
@@ -2612,11 +2880,11 @@ extern "C"
    */
 
   void arm_scale_q31(
-		      q31_t * pSrc,
-		     q31_t scaleFract,
-		     int8_t shift,
-		     q31_t * pDst,
-		     uint32_t blockSize);
+  q31_t * pSrc,
+  q31_t scaleFract,
+  int8_t shift,
+  q31_t * pDst,
+  uint32_t blockSize);
 
   /**
    * @brief Q7 vector absolute value.
@@ -2627,9 +2895,9 @@ extern "C"
    */
 
   void arm_abs_q7(
-		   q7_t * pSrc,
-		  q7_t * pDst,
-		  uint32_t blockSize);
+  q7_t * pSrc,
+  q7_t * pDst,
+  uint32_t blockSize);
 
   /**
    * @brief Floating-point vector absolute value.
@@ -2640,9 +2908,9 @@ extern "C"
    */
 
   void arm_abs_f32(
-		    float32_t * pSrc,
-		   float32_t * pDst,
-		   uint32_t blockSize);
+  float32_t * pSrc,
+  float32_t * pDst,
+  uint32_t blockSize);
 
   /**
    * @brief Q15 vector absolute value.
@@ -2653,9 +2921,9 @@ extern "C"
    */
 
   void arm_abs_q15(
-		    q15_t * pSrc,
-		   q15_t * pDst,
-		   uint32_t blockSize);
+  q15_t * pSrc,
+  q15_t * pDst,
+  uint32_t blockSize);
 
   /**
    * @brief Q31 vector absolute value.
@@ -2666,9 +2934,9 @@ extern "C"
    */
 
   void arm_abs_q31(
-		    q31_t * pSrc,
-		   q31_t * pDst,
-		   uint32_t blockSize);
+  q31_t * pSrc,
+  q31_t * pDst,
+  uint32_t blockSize);
 
   /**
    * @brief Dot product of floating-point vectors.
@@ -2680,10 +2948,10 @@ extern "C"
    */
 
   void arm_dot_prod_f32(
-			 float32_t * pSrcA,
-			 float32_t * pSrcB,
-			uint32_t blockSize,
-			float32_t * result);
+  float32_t * pSrcA,
+  float32_t * pSrcB,
+  uint32_t blockSize,
+  float32_t * result);
 
   /**
    * @brief Dot product of Q7 vectors.
@@ -2695,10 +2963,10 @@ extern "C"
    */
 
   void arm_dot_prod_q7(
-		        q7_t * pSrcA,
-		        q7_t * pSrcB,
-		       uint32_t blockSize,
-		       q31_t * result);
+  q7_t * pSrcA,
+  q7_t * pSrcB,
+  uint32_t blockSize,
+  q31_t * result);
 
   /**
    * @brief Dot product of Q15 vectors.
@@ -2710,10 +2978,10 @@ extern "C"
    */
 
   void arm_dot_prod_q15(
-			 q15_t * pSrcA,
-			 q15_t * pSrcB,
-			uint32_t blockSize,
-			q63_t * result);
+  q15_t * pSrcA,
+  q15_t * pSrcB,
+  uint32_t blockSize,
+  q63_t * result);
 
   /**
    * @brief Dot product of Q31 vectors.
@@ -2725,10 +2993,10 @@ extern "C"
    */
 
   void arm_dot_prod_q31(
-			 q31_t * pSrcA,
-			 q31_t * pSrcB,
-			uint32_t blockSize,
-			q63_t * result);
+  q31_t * pSrcA,
+  q31_t * pSrcB,
+  uint32_t blockSize,
+  q63_t * result);
 
   /**
    * @brief  Shifts the elements of a Q7 vector a specified number of bits.
@@ -2740,10 +3008,10 @@ extern "C"
    */
 
   void arm_shift_q7(
-		     q7_t * pSrc,
-		    int8_t shiftBits,
-		    q7_t * pDst,
-		    uint32_t blockSize);
+  q7_t * pSrc,
+  int8_t shiftBits,
+  q7_t * pDst,
+  uint32_t blockSize);
 
   /**
    * @brief  Shifts the elements of a Q15 vector a specified number of bits.
@@ -2755,10 +3023,10 @@ extern "C"
    */
 
   void arm_shift_q15(
-		      q15_t * pSrc,
-		     int8_t shiftBits,
-		     q15_t * pDst,
-		     uint32_t blockSize);
+  q15_t * pSrc,
+  int8_t shiftBits,
+  q15_t * pDst,
+  uint32_t blockSize);
 
   /**
    * @brief  Shifts the elements of a Q31 vector a specified number of bits.
@@ -2770,10 +3038,10 @@ extern "C"
    */
 
   void arm_shift_q31(
-		      q31_t * pSrc,
-		     int8_t shiftBits,
-		     q31_t * pDst,
-		     uint32_t blockSize);
+  q31_t * pSrc,
+  int8_t shiftBits,
+  q31_t * pDst,
+  uint32_t blockSize);
 
   /**
    * @brief  Adds a constant offset to a floating-point vector.
@@ -2785,10 +3053,10 @@ extern "C"
    */
 
   void arm_offset_f32(
-		       float32_t * pSrc,
-		      float32_t offset,
-		      float32_t * pDst,
-		      uint32_t blockSize);
+  float32_t * pSrc,
+  float32_t offset,
+  float32_t * pDst,
+  uint32_t blockSize);
 
   /**
    * @brief  Adds a constant offset to a Q7 vector.
@@ -2800,10 +3068,10 @@ extern "C"
    */
 
   void arm_offset_q7(
-		      q7_t * pSrc,
-		     q7_t offset,
-		     q7_t * pDst,
-		     uint32_t blockSize);
+  q7_t * pSrc,
+  q7_t offset,
+  q7_t * pDst,
+  uint32_t blockSize);
 
   /**
    * @brief  Adds a constant offset to a Q15 vector.
@@ -2815,10 +3083,10 @@ extern "C"
    */
 
   void arm_offset_q15(
-		       q15_t * pSrc,
-		      q15_t offset,
-		      q15_t * pDst,
-		      uint32_t blockSize);
+  q15_t * pSrc,
+  q15_t offset,
+  q15_t * pDst,
+  uint32_t blockSize);
 
   /**
    * @brief  Adds a constant offset to a Q31 vector.
@@ -2830,10 +3098,10 @@ extern "C"
    */
 
   void arm_offset_q31(
-		       q31_t * pSrc,
-		      q31_t offset,
-		      q31_t * pDst,
-		      uint32_t blockSize);
+  q31_t * pSrc,
+  q31_t offset,
+  q31_t * pDst,
+  uint32_t blockSize);
 
   /**
    * @brief  Negates the elements of a floating-point vector.
@@ -2844,9 +3112,9 @@ extern "C"
    */
 
   void arm_negate_f32(
-		       float32_t * pSrc,
-		      float32_t * pDst,
-		      uint32_t blockSize);
+  float32_t * pSrc,
+  float32_t * pDst,
+  uint32_t blockSize);
 
   /**
    * @brief  Negates the elements of a Q7 vector.
@@ -2857,9 +3125,9 @@ extern "C"
    */
 
   void arm_negate_q7(
-		      q7_t * pSrc,
-		     q7_t * pDst,
-		     uint32_t blockSize);
+  q7_t * pSrc,
+  q7_t * pDst,
+  uint32_t blockSize);
 
   /**
    * @brief  Negates the elements of a Q15 vector.
@@ -2870,9 +3138,9 @@ extern "C"
    */
 
   void arm_negate_q15(
-		       q15_t * pSrc,
-		      q15_t * pDst,
-		      uint32_t blockSize);
+  q15_t * pSrc,
+  q15_t * pDst,
+  uint32_t blockSize);
 
   /**
    * @brief  Negates the elements of a Q31 vector.
@@ -2883,137 +3151,161 @@ extern "C"
    */
 
   void arm_negate_q31(
-		       q31_t * pSrc,
-		      q31_t * pDst,
-		      uint32_t blockSize);
+  q31_t * pSrc,
+  q31_t * pDst,
+  uint32_t blockSize);
   /**
-   * @brief  Copies the elements of a floating-point vector.
+   * @brief  Copies the elements of a floating-point vector. 
    * @param[in]  *pSrc input pointer
    * @param[out]  *pDst output pointer
    * @param[in]  blockSize number of samples to process
    * @return none.
    */
   void arm_copy_f32(
-		     float32_t * pSrc,
-		    float32_t * pDst,
-		    uint32_t blockSize);
+  float32_t * pSrc,
+  float32_t * pDst,
+  uint32_t blockSize);
 
   /**
-   * @brief  Copies the elements of a Q7 vector.
+   * @brief  Copies the elements of a Q7 vector. 
    * @param[in]  *pSrc input pointer
    * @param[out]  *pDst output pointer
    * @param[in]  blockSize number of samples to process
    * @return none.
    */
   void arm_copy_q7(
-		    q7_t * pSrc,
-		   q7_t * pDst,
-		   uint32_t blockSize);
+  q7_t * pSrc,
+  q7_t * pDst,
+  uint32_t blockSize);
 
   /**
-   * @brief  Copies the elements of a Q15 vector.
+   * @brief  Copies the elements of a Q15 vector. 
    * @param[in]  *pSrc input pointer
    * @param[out]  *pDst output pointer
    * @param[in]  blockSize number of samples to process
    * @return none.
    */
   void arm_copy_q15(
-		     q15_t * pSrc,
-		    q15_t * pDst,
-		    uint32_t blockSize);
+  q15_t * pSrc,
+  q15_t * pDst,
+  uint32_t blockSize);
 
   /**
-   * @brief  Copies the elements of a Q31 vector.
+   * @brief  Copies the elements of a Q31 vector. 
    * @param[in]  *pSrc input pointer
    * @param[out]  *pDst output pointer
    * @param[in]  blockSize number of samples to process
    * @return none.
    */
   void arm_copy_q31(
-		     q31_t * pSrc,
-		    q31_t * pDst,
-		    uint32_t blockSize);
+  q31_t * pSrc,
+  q31_t * pDst,
+  uint32_t blockSize);
   /**
-   * @brief  Fills a constant value into a floating-point vector.
+   * @brief  Fills a constant value into a floating-point vector. 
    * @param[in]  value input value to be filled
    * @param[out]  *pDst output pointer
    * @param[in]  blockSize number of samples to process
    * @return none.
    */
   void arm_fill_f32(
-		     float32_t value,
-		    float32_t * pDst,
-		    uint32_t blockSize);
+  float32_t value,
+  float32_t * pDst,
+  uint32_t blockSize);
 
   /**
-   * @brief  Fills a constant value into a Q7 vector.
+   * @brief  Fills a constant value into a Q7 vector. 
    * @param[in]  value input value to be filled
    * @param[out]  *pDst output pointer
    * @param[in]  blockSize number of samples to process
    * @return none.
    */
   void arm_fill_q7(
-		    q7_t value,
-		   q7_t * pDst,
-		   uint32_t blockSize);
+  q7_t value,
+  q7_t * pDst,
+  uint32_t blockSize);
 
   /**
-   * @brief  Fills a constant value into a Q15 vector.
+   * @brief  Fills a constant value into a Q15 vector. 
    * @param[in]  value input value to be filled
    * @param[out]  *pDst output pointer
    * @param[in]  blockSize number of samples to process
    * @return none.
    */
   void arm_fill_q15(
-		     q15_t value,
-		    q15_t * pDst,
-		    uint32_t blockSize);
+  q15_t value,
+  q15_t * pDst,
+  uint32_t blockSize);
 
   /**
-   * @brief  Fills a constant value into a Q31 vector.
+   * @brief  Fills a constant value into a Q31 vector. 
    * @param[in]  value input value to be filled
    * @param[out]  *pDst output pointer
    * @param[in]  blockSize number of samples to process
    * @return none.
    */
   void arm_fill_q31(
-		     q31_t value,
-		    q31_t * pDst,
-		    uint32_t blockSize);
+  q31_t value,
+  q31_t * pDst,
+  uint32_t blockSize);
 
-/**
- * @brief Convolution of floating-point sequences.
- * @param[in] *pSrcA points to the first input sequence.
- * @param[in] srcALen length of the first input sequence.
- * @param[in] *pSrcB points to the second input sequence.
- * @param[in] srcBLen length of the second input sequence.
- * @param[out] *pDst points to the location where the output result is written.  Length srcALen+srcBLen-1.
- * @return none.
+/**  
+ * @brief Convolution of floating-point sequences.  
+ * @param[in] *pSrcA points to the first input sequence.  
+ * @param[in] srcALen length of the first input sequence.  
+ * @param[in] *pSrcB points to the second input sequence.  
+ * @param[in] srcBLen length of the second input sequence.  
+ * @param[out] *pDst points to the location where the output result is written.  Length srcALen+srcBLen-1.  
+ * @return none.  
  */
 
   void arm_conv_f32(
-		     float32_t * pSrcA,
-		    uint32_t srcALen,
-		     float32_t * pSrcB,
-		    uint32_t srcBLen,
-		    float32_t * pDst);
+  float32_t * pSrcA,
+  uint32_t srcALen,
+  float32_t * pSrcB,
+  uint32_t srcBLen,
+  float32_t * pDst);
 
-/**
- * @brief Convolution of Q15 sequences.
- * @param[in] *pSrcA points to the first input sequence.
- * @param[in] srcALen length of the first input sequence.
- * @param[in] *pSrcB points to the second input sequence.
- * @param[in] srcBLen length of the second input sequence.
- * @param[out] *pDst points to the location where the output result is written.  Length srcALen+srcBLen-1.
- * @return none.
+  
+  /**   
+   * @brief Convolution of Q15 sequences.   
+   * @param[in] *pSrcA points to the first input sequence.   
+   * @param[in] srcALen length of the first input sequence.   
+   * @param[in] *pSrcB points to the second input sequence.   
+   * @param[in] srcBLen length of the second input sequence.   
+   * @param[out] *pDst points to the block of output data  Length srcALen+srcBLen-1.   
+   * @param[in]  *pScratch1 points to scratch buffer of size max(srcALen, srcBLen) + 2*min(srcALen, srcBLen) - 2.   
+   * @param[in]  *pScratch2 points to scratch buffer of size min(srcALen, srcBLen).   
+   * @return none.   
+   */
+
+
+  void arm_conv_opt_q15(
+  q15_t * pSrcA,
+  uint32_t srcALen,
+  q15_t * pSrcB,
+  uint32_t srcBLen,
+  q15_t * pDst,
+  q15_t * pScratch1,
+  q15_t * pScratch2);
+
+
+/**  
+ * @brief Convolution of Q15 sequences.  
+ * @param[in] *pSrcA points to the first input sequence.  
+ * @param[in] srcALen length of the first input sequence.  
+ * @param[in] *pSrcB points to the second input sequence.  
+ * @param[in] srcBLen length of the second input sequence.  
+ * @param[out] *pDst points to the location where the output result is written.  Length srcALen+srcBLen-1.  
+ * @return none.  
  */
 
   void arm_conv_q15(
-		     q15_t * pSrcA,
-		    uint32_t srcALen,
-		     q15_t * pSrcB,
-		    uint32_t srcBLen,
-		    q15_t * pDst);
+  q15_t * pSrcA,
+  uint32_t srcALen,
+  q15_t * pSrcB,
+  uint32_t srcBLen,
+  q15_t * pDst);
 
   /**
    * @brief Convolution of Q15 sequences (fast version) for Cortex-M3 and Cortex-M4
@@ -3033,6 +3325,29 @@ extern "C"
 			 q15_t * pDst);
 
   /**
+   * @brief Convolution of Q15 sequences (fast version) for Cortex-M3 and Cortex-M4
+   * @param[in] *pSrcA points to the first input sequence.
+   * @param[in] srcALen length of the first input sequence.
+   * @param[in] *pSrcB points to the second input sequence.
+   * @param[in] srcBLen length of the second input sequence.
+   * @param[out] *pDst points to the block of output data  Length srcALen+srcBLen-1.
+   * @param[in]  *pScratch1 points to scratch buffer of size max(srcALen, srcBLen) + 2*min(srcALen, srcBLen) - 2.   
+   * @param[in]  *pScratch2 points to scratch buffer of size min(srcALen, srcBLen).   
+   * @return none.   
+   */
+
+  void arm_conv_fast_opt_q15(
+  q15_t * pSrcA,
+  uint32_t srcALen,
+  q15_t * pSrcB,
+  uint32_t srcBLen,
+  q15_t * pDst,
+  q15_t * pScratch1,
+  q15_t * pScratch2);
+
+
+
+  /**
    * @brief Convolution of Q31 sequences.
    * @param[in] *pSrcA points to the first input sequence.
    * @param[in] srcALen length of the first input sequence.
@@ -3043,11 +3358,11 @@ extern "C"
    */
 
   void arm_conv_q31(
-		     q31_t * pSrcA,
-		    uint32_t srcALen,
-		     q31_t * pSrcB,
-		    uint32_t srcBLen,
-		    q31_t * pDst);
+  q31_t * pSrcA,
+  uint32_t srcALen,
+  q31_t * pSrcB,
+  uint32_t srcBLen,
+  q31_t * pDst);
 
   /**
    * @brief Convolution of Q31 sequences (fast version) for Cortex-M3 and Cortex-M4
@@ -3060,11 +3375,35 @@ extern "C"
    */
 
   void arm_conv_fast_q31(
-			  q31_t * pSrcA,
-			 uint32_t srcALen,
-			  q31_t * pSrcB,
-			 uint32_t srcBLen,
-			 q31_t * pDst);
+  q31_t * pSrcA,
+  uint32_t srcALen,
+  q31_t * pSrcB,
+  uint32_t srcBLen,
+  q31_t * pDst);
+
+
+    /**   
+   * @brief Convolution of Q7 sequences.   
+   * @param[in] *pSrcA points to the first input sequence.   
+   * @param[in] srcALen length of the first input sequence.   
+   * @param[in] *pSrcB points to the second input sequence.   
+   * @param[in] srcBLen length of the second input sequence.   
+   * @param[out] *pDst points to the block of output data  Length srcALen+srcBLen-1.   
+   * @param[in]  *pScratch1 points to scratch buffer(of type q15_t) of size max(srcALen, srcBLen) + 2*min(srcALen, srcBLen) - 2.   
+   * @param[in]  *pScratch2 points to scratch buffer (of type q15_t) of size min(srcALen, srcBLen).   
+   * @return none.   
+   */
+
+  void arm_conv_opt_q7(
+  q7_t * pSrcA,
+  uint32_t srcALen,
+  q7_t * pSrcB,
+  uint32_t srcBLen,
+  q7_t * pDst,
+  q15_t * pScratch1,
+  q15_t * pScratch2);
+
+
 
   /**
    * @brief Convolution of Q7 sequences.
@@ -3077,11 +3416,12 @@ extern "C"
    */
 
   void arm_conv_q7(
-		    q7_t * pSrcA,
-		   uint32_t srcALen,
-		    q7_t * pSrcB,
-		   uint32_t srcBLen,
-		   q7_t * pDst);
+  q7_t * pSrcA,
+  uint32_t srcALen,
+  q7_t * pSrcB,
+  uint32_t srcBLen,
+  q7_t * pDst);
+
 
   /**
    * @brief Partial convolution of floating-point sequences.
@@ -3096,15 +3436,41 @@ extern "C"
    */
 
   arm_status arm_conv_partial_f32(
-				   float32_t * pSrcA,
-				  uint32_t srcALen,
-				   float32_t * pSrcB,
-				  uint32_t srcBLen,
-				  float32_t * pDst,
-				  uint32_t firstIndex,
-				  uint32_t numPoints);
+  float32_t * pSrcA,
+  uint32_t srcALen,
+  float32_t * pSrcB,
+  uint32_t srcBLen,
+  float32_t * pDst,
+  uint32_t firstIndex,
+  uint32_t numPoints);
 
-  /**
+    /**   
+   * @brief Partial convolution of Q15 sequences.   
+   * @param[in]       *pSrcA points to the first input sequence.   
+   * @param[in]       srcALen length of the first input sequence.   
+   * @param[in]       *pSrcB points to the second input sequence.   
+   * @param[in]       srcBLen length of the second input sequence.   
+   * @param[out]      *pDst points to the block of output data   
+   * @param[in]       firstIndex is the first output sample to start with.   
+   * @param[in]       numPoints is the number of output points to be computed.   
+   * @param[in]       * pScratch1 points to scratch buffer of size max(srcALen, srcBLen) + 2*min(srcALen, srcBLen) - 2.   
+   * @param[in]       * pScratch2 points to scratch buffer of size min(srcALen, srcBLen).   
+   * @return  Returns either ARM_MATH_SUCCESS if the function completed correctly or ARM_MATH_ARGUMENT_ERROR if the requested subset is not in the range [0 srcALen+srcBLen-2].   
+   */
+
+  arm_status arm_conv_partial_opt_q15(
+  q15_t * pSrcA,
+  uint32_t srcALen,
+  q15_t * pSrcB,
+  uint32_t srcBLen,
+  q15_t * pDst,
+  uint32_t firstIndex,
+  uint32_t numPoints,
+  q15_t * pScratch1,
+  q15_t * pScratch2);
+
+
+/**
    * @brief Partial convolution of Q15 sequences.
    * @param[in]       *pSrcA points to the first input sequence.
    * @param[in]       srcALen length of the first input sequence.
@@ -3117,13 +3483,13 @@ extern "C"
    */
 
   arm_status arm_conv_partial_q15(
-				   q15_t * pSrcA,
-				  uint32_t srcALen,
-				   q15_t * pSrcB,
-				  uint32_t srcBLen,
-				  q15_t * pDst,
-				  uint32_t firstIndex,
-				  uint32_t numPoints);
+  q15_t * pSrcA,
+  uint32_t srcALen,
+  q15_t * pSrcB,
+  uint32_t srcBLen,
+  q15_t * pDst,
+  uint32_t firstIndex,
+  uint32_t numPoints);
 
   /**
    * @brief Partial convolution of Q15 sequences (fast version) for Cortex-M3 and Cortex-M4
@@ -3146,6 +3512,33 @@ extern "C"
 				       uint32_t firstIndex,
 				       uint32_t numPoints);
 
+
+  /**
+   * @brief Partial convolution of Q15 sequences (fast version) for Cortex-M3 and Cortex-M4
+   * @param[in]       *pSrcA points to the first input sequence.
+   * @param[in]       srcALen length of the first input sequence.
+   * @param[in]       *pSrcB points to the second input sequence.
+   * @param[in]       srcBLen length of the second input sequence.
+   * @param[out]      *pDst points to the block of output data
+   * @param[in]       firstIndex is the first output sample to start with.
+   * @param[in]       numPoints is the number of output points to be computed.
+   * @param[in]       * pScratch1 points to scratch buffer of size max(srcALen, srcBLen) + 2*min(srcALen, srcBLen) - 2.   
+   * @param[in]       * pScratch2 points to scratch buffer of size min(srcALen, srcBLen).   
+   * @return  Returns either ARM_MATH_SUCCESS if the function completed correctly or ARM_MATH_ARGUMENT_ERROR if the requested subset is not in the range [0 srcALen+srcBLen-2].   
+   */
+
+  arm_status arm_conv_partial_fast_opt_q15(
+  q15_t * pSrcA,
+  uint32_t srcALen,
+  q15_t * pSrcB,
+  uint32_t srcBLen,
+  q15_t * pDst,
+  uint32_t firstIndex,
+  uint32_t numPoints,
+  q15_t * pScratch1,
+  q15_t * pScratch2);
+
+
   /**
    * @brief Partial convolution of Q31 sequences.
    * @param[in]       *pSrcA points to the first input sequence.
@@ -3159,13 +3552,13 @@ extern "C"
    */
 
   arm_status arm_conv_partial_q31(
-				   q31_t * pSrcA,
-				  uint32_t srcALen,
-				   q31_t * pSrcB,
-				  uint32_t srcBLen,
-				  q31_t * pDst,
-				  uint32_t firstIndex,
-				  uint32_t numPoints);
+  q31_t * pSrcA,
+  uint32_t srcALen,
+  q31_t * pSrcB,
+  uint32_t srcBLen,
+  q31_t * pDst,
+  uint32_t firstIndex,
+  uint32_t numPoints);
 
 
   /**
@@ -3181,15 +3574,42 @@ extern "C"
    */
 
   arm_status arm_conv_partial_fast_q31(
-				        q31_t * pSrcA,
-				       uint32_t srcALen,
-				        q31_t * pSrcB,
-				       uint32_t srcBLen,
-				       q31_t * pDst,
-				       uint32_t firstIndex,
-				       uint32_t numPoints);
+  q31_t * pSrcA,
+  uint32_t srcALen,
+  q31_t * pSrcB,
+  uint32_t srcBLen,
+  q31_t * pDst,
+  uint32_t firstIndex,
+  uint32_t numPoints);
 
-  /**
+
+  /**   
+   * @brief Partial convolution of Q7 sequences   
+   * @param[in]       *pSrcA points to the first input sequence.   
+   * @param[in]       srcALen length of the first input sequence.   
+   * @param[in]       *pSrcB points to the second input sequence.   
+   * @param[in]       srcBLen length of the second input sequence.   
+   * @param[out]      *pDst points to the block of output data   
+   * @param[in]       firstIndex is the first output sample to start with.   
+   * @param[in]       numPoints is the number of output points to be computed.   
+   * @param[in]  *pScratch1 points to scratch buffer(of type q15_t) of size max(srcALen, srcBLen) + 2*min(srcALen, srcBLen) - 2.   
+   * @param[in]  *pScratch2 points to scratch buffer (of type q15_t) of size min(srcALen, srcBLen).   
+   * @return  Returns either ARM_MATH_SUCCESS if the function completed correctly or ARM_MATH_ARGUMENT_ERROR if the requested subset is not in the range [0 srcALen+srcBLen-2].   
+   */
+
+  arm_status arm_conv_partial_opt_q7(
+  q7_t * pSrcA,
+  uint32_t srcALen,
+  q7_t * pSrcB,
+  uint32_t srcBLen,
+  q7_t * pDst,
+  uint32_t firstIndex,
+  uint32_t numPoints,
+  q15_t * pScratch1,
+  q15_t * pScratch2);
+
+
+/**
    * @brief Partial convolution of Q7 sequences.
    * @param[in]       *pSrcA points to the first input sequence.
    * @param[in]       srcALen length of the first input sequence.
@@ -3202,13 +3622,14 @@ extern "C"
    */
 
   arm_status arm_conv_partial_q7(
-				  q7_t * pSrcA,
-				 uint32_t srcALen,
-				  q7_t * pSrcB,
-				 uint32_t srcBLen,
-				 q7_t * pDst,
-				 uint32_t firstIndex,
-				 uint32_t numPoints);
+  q7_t * pSrcA,
+  uint32_t srcALen,
+  q7_t * pSrcB,
+  uint32_t srcBLen,
+  q7_t * pDst,
+  uint32_t firstIndex,
+  uint32_t numPoints);
+
 
 
   /**
@@ -3261,10 +3682,10 @@ extern "C"
    */
 
   void arm_fir_decimate_f32(
-			    const arm_fir_decimate_instance_f32 * S,
-			     float32_t * pSrc,
-			    float32_t * pDst,
-			    uint32_t blockSize);
+  const arm_fir_decimate_instance_f32 * S,
+  float32_t * pSrc,
+  float32_t * pDst,
+  uint32_t blockSize);
 
 
   /**
@@ -3280,12 +3701,12 @@ extern "C"
    */
 
   arm_status arm_fir_decimate_init_f32(
-				       arm_fir_decimate_instance_f32 * S,
-				       uint16_t numTaps,
-				       uint8_t M,
-				       float32_t * pCoeffs,
-				       float32_t * pState,
-				       uint32_t blockSize);
+  arm_fir_decimate_instance_f32 * S,
+  uint16_t numTaps,
+  uint8_t M,
+  float32_t * pCoeffs,
+  float32_t * pState,
+  uint32_t blockSize);
 
   /**
    * @brief Processing function for the Q15 FIR decimator.
@@ -3297,10 +3718,10 @@ extern "C"
    */
 
   void arm_fir_decimate_q15(
-			    const arm_fir_decimate_instance_q15 * S,
-			     q15_t * pSrc,
-			    q15_t * pDst,
-			    uint32_t blockSize);
+  const arm_fir_decimate_instance_q15 * S,
+  q15_t * pSrc,
+  q15_t * pDst,
+  uint32_t blockSize);
 
   /**
    * @brief Processing function for the Q15 FIR decimator (fast variant) for Cortex-M3 and Cortex-M4.
@@ -3312,10 +3733,10 @@ extern "C"
    */
 
   void arm_fir_decimate_fast_q15(
-				 const arm_fir_decimate_instance_q15 * S,
-				  q15_t * pSrc,
-				 q15_t * pDst,
-				 uint32_t blockSize);
+  const arm_fir_decimate_instance_q15 * S,
+  q15_t * pSrc,
+  q15_t * pDst,
+  uint32_t blockSize);
 
 
 
@@ -3332,12 +3753,12 @@ extern "C"
    */
 
   arm_status arm_fir_decimate_init_q15(
-				       arm_fir_decimate_instance_q15 * S,
-				       uint16_t numTaps,
-				       uint8_t M,
-				       q15_t * pCoeffs,
-				       q15_t * pState,
-				       uint32_t blockSize);
+  arm_fir_decimate_instance_q15 * S,
+  uint16_t numTaps,
+  uint8_t M,
+  q15_t * pCoeffs,
+  q15_t * pState,
+  uint32_t blockSize);
 
   /**
    * @brief Processing function for the Q31 FIR decimator.
@@ -3349,10 +3770,10 @@ extern "C"
    */
 
   void arm_fir_decimate_q31(
-			    const arm_fir_decimate_instance_q31 * S,
-			     q31_t * pSrc,
-			    q31_t * pDst,
-			    uint32_t blockSize);
+  const arm_fir_decimate_instance_q31 * S,
+  q31_t * pSrc,
+  q31_t * pDst,
+  uint32_t blockSize);
 
   /**
    * @brief Processing function for the Q31 FIR decimator (fast variant) for Cortex-M3 and Cortex-M4.
@@ -3364,10 +3785,10 @@ extern "C"
    */
 
   void arm_fir_decimate_fast_q31(
-				 arm_fir_decimate_instance_q31 * S,
-				  q31_t * pSrc,
-				 q31_t * pDst,
-				 uint32_t blockSize);
+  arm_fir_decimate_instance_q31 * S,
+  q31_t * pSrc,
+  q31_t * pDst,
+  uint32_t blockSize);
 
 
   /**
@@ -3383,12 +3804,12 @@ extern "C"
    */
 
   arm_status arm_fir_decimate_init_q31(
-				       arm_fir_decimate_instance_q31 * S,
-				       uint16_t numTaps,
-				       uint8_t M,
-				       q31_t * pCoeffs,
-				       q31_t * pState,
-				       uint32_t blockSize);
+  arm_fir_decimate_instance_q31 * S,
+  uint16_t numTaps,
+  uint8_t M,
+  q31_t * pCoeffs,
+  q31_t * pState,
+  uint32_t blockSize);
 
 
 
@@ -3439,10 +3860,10 @@ extern "C"
    */
 
   void arm_fir_interpolate_q15(
-			       const arm_fir_interpolate_instance_q15 * S,
-			        q15_t * pSrc,
-			       q15_t * pDst,
-			       uint32_t blockSize);
+  const arm_fir_interpolate_instance_q15 * S,
+  q15_t * pSrc,
+  q15_t * pDst,
+  uint32_t blockSize);
 
 
   /**
@@ -3458,12 +3879,12 @@ extern "C"
    */
 
   arm_status arm_fir_interpolate_init_q15(
-					  arm_fir_interpolate_instance_q15 * S,
-					  uint8_t L,
-					  uint16_t numTaps,
-					  q15_t * pCoeffs,
-					  q15_t * pState,
-					  uint32_t blockSize);
+  arm_fir_interpolate_instance_q15 * S,
+  uint8_t L,
+  uint16_t numTaps,
+  q15_t * pCoeffs,
+  q15_t * pState,
+  uint32_t blockSize);
 
   /**
    * @brief Processing function for the Q31 FIR interpolator.
@@ -3475,10 +3896,10 @@ extern "C"
    */
 
   void arm_fir_interpolate_q31(
-			       const arm_fir_interpolate_instance_q31 * S,
-			        q31_t * pSrc,
-			       q31_t * pDst,
-			       uint32_t blockSize);
+  const arm_fir_interpolate_instance_q31 * S,
+  q31_t * pSrc,
+  q31_t * pDst,
+  uint32_t blockSize);
 
   /**
    * @brief  Initialization function for the Q31 FIR interpolator.
@@ -3493,12 +3914,12 @@ extern "C"
    */
 
   arm_status arm_fir_interpolate_init_q31(
-					  arm_fir_interpolate_instance_q31 * S,
-					  uint8_t L,
-					  uint16_t numTaps,
-					  q31_t * pCoeffs,
-					  q31_t * pState,
-					  uint32_t blockSize);
+  arm_fir_interpolate_instance_q31 * S,
+  uint8_t L,
+  uint16_t numTaps,
+  q31_t * pCoeffs,
+  q31_t * pState,
+  uint32_t blockSize);
 
 
   /**
@@ -3511,10 +3932,10 @@ extern "C"
    */
 
   void arm_fir_interpolate_f32(
-			       const arm_fir_interpolate_instance_f32 * S,
-			        float32_t * pSrc,
-			       float32_t * pDst,
-			       uint32_t blockSize);
+  const arm_fir_interpolate_instance_f32 * S,
+  float32_t * pSrc,
+  float32_t * pDst,
+  uint32_t blockSize);
 
   /**
    * @brief  Initialization function for the floating-point FIR interpolator.
@@ -3529,12 +3950,12 @@ extern "C"
    */
 
   arm_status arm_fir_interpolate_init_f32(
-					  arm_fir_interpolate_instance_f32 * S,
-					  uint8_t L,
-					  uint16_t numTaps,
-					  float32_t * pCoeffs,
-					  float32_t * pState,
-					  uint32_t blockSize);
+  arm_fir_interpolate_instance_f32 * S,
+  uint8_t L,
+  uint16_t numTaps,
+  float32_t * pCoeffs,
+  float32_t * pState,
+  uint32_t blockSize);
 
   /**
    * @brief Instance structure for the high precision Q31 Biquad cascade filter.
@@ -3559,10 +3980,10 @@ extern "C"
    */
 
   void arm_biquad_cas_df1_32x64_q31(
-				    const arm_biquad_cas_df1_32x64_ins_q31 * S,
-				     q31_t * pSrc,
-				    q31_t * pDst,
-				    uint32_t blockSize);
+  const arm_biquad_cas_df1_32x64_ins_q31 * S,
+  q31_t * pSrc,
+  q31_t * pDst,
+  uint32_t blockSize);
 
 
   /**
@@ -3575,11 +3996,11 @@ extern "C"
    */
 
   void arm_biquad_cas_df1_32x64_init_q31(
-					 arm_biquad_cas_df1_32x64_ins_q31 * S,
-					 uint8_t numStages,
-					 q31_t * pCoeffs,
-					 q63_t * pState,
-					 uint8_t postShift);
+  arm_biquad_cas_df1_32x64_ins_q31 * S,
+  uint8_t numStages,
+  q31_t * pCoeffs,
+  q63_t * pState,
+  uint8_t postShift);
 
 
 
@@ -3589,7 +4010,7 @@ extern "C"
 
   typedef struct
   {
-    uint8_t   numStages;       /**< number of 2nd order stages in the filter.  Overall order is 2*numStages. */
+    uint8_t numStages;         /**< number of 2nd order stages in the filter.  Overall order is 2*numStages. */
     float32_t *pState;         /**< points to the array of state coefficients.  The array is of length 2*numStages. */
     float32_t *pCoeffs;        /**< points to the array of coefficients.  The array is of length 5*numStages. */
   } arm_biquad_cascade_df2T_instance_f32;
@@ -3605,10 +4026,10 @@ extern "C"
    */
 
   void arm_biquad_cascade_df2T_f32(
-				   const arm_biquad_cascade_df2T_instance_f32 * S,
-				    float32_t * pSrc,
-				   float32_t * pDst,
-				   uint32_t blockSize);
+  const arm_biquad_cascade_df2T_instance_f32 * S,
+  float32_t * pSrc,
+  float32_t * pDst,
+  uint32_t blockSize);
 
 
   /**
@@ -3621,10 +4042,10 @@ extern "C"
    */
 
   void arm_biquad_cascade_df2T_init_f32(
-					arm_biquad_cascade_df2T_instance_f32 * S,
-					uint8_t numStages,
-					float32_t * pCoeffs,
-					float32_t * pState);
+  arm_biquad_cascade_df2T_instance_f32 * S,
+  uint8_t numStages,
+  float32_t * pCoeffs,
+  float32_t * pState);
 
 
 
@@ -3665,16 +4086,16 @@ extern "C"
    * @brief Initialization function for the Q15 FIR lattice filter.
    * @param[in] *S points to an instance of the Q15 FIR lattice structure.
    * @param[in] numStages  number of filter stages.
-   * @param[in] *pCoeffs points to the coefficient buffer.  The array is of length numStages.
-   * @param[in] *pState points to the state buffer.  The array is of length numStages.
+   * @param[in] *pCoeffs points to the coefficient buffer.  The array is of length numStages. 
+   * @param[in] *pState points to the state buffer.  The array is of length numStages. 
    * @return none.
    */
 
   void arm_fir_lattice_init_q15(
-				arm_fir_lattice_instance_q15 * S,
-				uint16_t numStages,
-				q15_t * pCoeffs,
-				q15_t * pState);
+  arm_fir_lattice_instance_q15 * S,
+  uint16_t numStages,
+  q15_t * pCoeffs,
+  q15_t * pState);
 
 
   /**
@@ -3686,10 +4107,10 @@ extern "C"
    * @return none.
    */
   void arm_fir_lattice_q15(
-			   const arm_fir_lattice_instance_q15 * S,
-			    q15_t * pSrc,
-			   q15_t * pDst,
-			   uint32_t blockSize);
+  const arm_fir_lattice_instance_q15 * S,
+  q15_t * pSrc,
+  q15_t * pDst,
+  uint32_t blockSize);
 
   /**
    * @brief Initialization function for the Q31 FIR lattice filter.
@@ -3701,10 +4122,10 @@ extern "C"
    */
 
   void arm_fir_lattice_init_q31(
-				arm_fir_lattice_instance_q31 * S,
-				uint16_t numStages,
-				q31_t * pCoeffs,
-				q31_t * pState);
+  arm_fir_lattice_instance_q31 * S,
+  uint16_t numStages,
+  q31_t * pCoeffs,
+  q31_t * pState);
 
 
   /**
@@ -3717,10 +4138,10 @@ extern "C"
    */
 
   void arm_fir_lattice_q31(
-			   const arm_fir_lattice_instance_q31 * S,
-			    q31_t * pSrc,
-			   q31_t * pDst,
-			   uint32_t blockSize);
+  const arm_fir_lattice_instance_q31 * S,
+  q31_t * pSrc,
+  q31_t * pDst,
+  uint32_t blockSize);
 
 /**
  * @brief Initialization function for the floating-point FIR lattice filter.
@@ -3732,10 +4153,10 @@ extern "C"
  */
 
   void arm_fir_lattice_init_f32(
-				arm_fir_lattice_instance_f32 * S,
-				uint16_t numStages,
-				float32_t * pCoeffs,
-				float32_t * pState);
+  arm_fir_lattice_instance_f32 * S,
+  uint16_t numStages,
+  float32_t * pCoeffs,
+  float32_t * pState);
 
   /**
    * @brief Processing function for the floating-point FIR lattice filter.
@@ -3747,10 +4168,10 @@ extern "C"
    */
 
   void arm_fir_lattice_f32(
-			   const arm_fir_lattice_instance_f32 * S,
-			    float32_t * pSrc,
-			   float32_t * pDst,
-			   uint32_t blockSize);
+  const arm_fir_lattice_instance_f32 * S,
+  float32_t * pSrc,
+  float32_t * pDst,
+  uint32_t blockSize);
 
   /**
    * @brief Instance structure for the Q15 IIR lattice filter.
@@ -3795,10 +4216,10 @@ extern "C"
    */
 
   void arm_iir_lattice_f32(
-			   const arm_iir_lattice_instance_f32 * S,
-			    float32_t * pSrc,
-			   float32_t * pDst,
-			   uint32_t blockSize);
+  const arm_iir_lattice_instance_f32 * S,
+  float32_t * pSrc,
+  float32_t * pDst,
+  uint32_t blockSize);
 
   /**
    * @brief Initialization function for the floating-point IIR lattice filter.
@@ -3812,12 +4233,12 @@ extern "C"
    */
 
   void arm_iir_lattice_init_f32(
-				arm_iir_lattice_instance_f32 * S,
-				uint16_t numStages,
-				float32_t *pkCoeffs,
-				float32_t *pvCoeffs,
-				float32_t *pState,
-				uint32_t blockSize);
+  arm_iir_lattice_instance_f32 * S,
+  uint16_t numStages,
+  float32_t * pkCoeffs,
+  float32_t * pvCoeffs,
+  float32_t * pState,
+  uint32_t blockSize);
 
 
   /**
@@ -3830,10 +4251,10 @@ extern "C"
    */
 
   void arm_iir_lattice_q31(
-			   const arm_iir_lattice_instance_q31 * S,
-			    q31_t * pSrc,
-			   q31_t * pDst,
-			   uint32_t blockSize);
+  const arm_iir_lattice_instance_q31 * S,
+  q31_t * pSrc,
+  q31_t * pDst,
+  uint32_t blockSize);
 
 
   /**
@@ -3848,12 +4269,12 @@ extern "C"
    */
 
   void arm_iir_lattice_init_q31(
-				arm_iir_lattice_instance_q31 * S,
-				uint16_t numStages,
-				q31_t *pkCoeffs,
-				q31_t *pvCoeffs,
-				q31_t *pState,
-				uint32_t blockSize);
+  arm_iir_lattice_instance_q31 * S,
+  uint16_t numStages,
+  q31_t * pkCoeffs,
+  q31_t * pvCoeffs,
+  q31_t * pState,
+  uint32_t blockSize);
 
 
   /**
@@ -3866,10 +4287,10 @@ extern "C"
    */
 
   void arm_iir_lattice_q15(
-			   const arm_iir_lattice_instance_q15 * S,
-			    q15_t * pSrc,
-			   q15_t * pDst,
-			   uint32_t blockSize);
+  const arm_iir_lattice_instance_q15 * S,
+  q15_t * pSrc,
+  q15_t * pDst,
+  uint32_t blockSize);
 
 
 /**
@@ -3884,12 +4305,12 @@ extern "C"
  */
 
   void arm_iir_lattice_init_q15(
-				arm_iir_lattice_instance_q15 * S,
-				uint16_t numStages,
-				q15_t *pkCoeffs,
-				q15_t *pvCoeffs,
-				q15_t *pState,
-				uint32_t blockSize);
+  arm_iir_lattice_instance_q15 * S,
+  uint16_t numStages,
+  q15_t * pkCoeffs,
+  q15_t * pvCoeffs,
+  q15_t * pState,
+  uint32_t blockSize);
 
   /**
    * @brief Instance structure for the floating-point LMS filter.
@@ -3915,12 +4336,12 @@ extern "C"
    */
 
   void arm_lms_f32(
-		   const arm_lms_instance_f32 * S,
-		    float32_t * pSrc,
-		    float32_t * pRef,
-		   float32_t * pOut,
-		   float32_t * pErr,
-		   uint32_t blockSize);
+  const arm_lms_instance_f32 * S,
+  float32_t * pSrc,
+  float32_t * pRef,
+  float32_t * pOut,
+  float32_t * pErr,
+  uint32_t blockSize);
 
   /**
    * @brief Initialization function for floating-point LMS filter.
@@ -3934,12 +4355,12 @@ extern "C"
    */
 
   void arm_lms_init_f32(
-			arm_lms_instance_f32 * S,
-			uint16_t numTaps,
-			float32_t * pCoeffs,
-			float32_t * pState,
-			float32_t mu,
-			uint32_t blockSize);
+  arm_lms_instance_f32 * S,
+  uint16_t numTaps,
+  float32_t * pCoeffs,
+  float32_t * pState,
+  float32_t mu,
+  uint32_t blockSize);
 
   /**
    * @brief Instance structure for the Q15 LMS filter.
@@ -3968,13 +4389,13 @@ extern "C"
    */
 
   void arm_lms_init_q15(
-			arm_lms_instance_q15 * S,
-			uint16_t numTaps,
-			q15_t * pCoeffs,
-			q15_t * pState,
-			q15_t mu,
-			uint32_t blockSize,
-			uint32_t postShift);
+  arm_lms_instance_q15 * S,
+  uint16_t numTaps,
+  q15_t * pCoeffs,
+  q15_t * pState,
+  q15_t mu,
+  uint32_t blockSize,
+  uint32_t postShift);
 
   /**
    * @brief Processing function for Q15 LMS filter.
@@ -3988,12 +4409,12 @@ extern "C"
    */
 
   void arm_lms_q15(
-		   const arm_lms_instance_q15 * S,
-		    q15_t * pSrc,
-		    q15_t * pRef,
-		   q15_t * pOut,
-		   q15_t * pErr,
-		   uint32_t blockSize);
+  const arm_lms_instance_q15 * S,
+  q15_t * pSrc,
+  q15_t * pRef,
+  q15_t * pOut,
+  q15_t * pErr,
+  uint32_t blockSize);
 
 
   /**
@@ -4022,12 +4443,12 @@ extern "C"
    */
 
   void arm_lms_q31(
-		   const arm_lms_instance_q31 * S,
-		    q31_t * pSrc,
-		    q31_t * pRef,
-		   q31_t * pOut,
-		   q31_t * pErr,
-		   uint32_t blockSize);
+  const arm_lms_instance_q31 * S,
+  q31_t * pSrc,
+  q31_t * pRef,
+  q31_t * pOut,
+  q31_t * pErr,
+  uint32_t blockSize);
 
   /**
    * @brief Initialization function for Q31 LMS filter.
@@ -4042,13 +4463,13 @@ extern "C"
    */
 
   void arm_lms_init_q31(
-			arm_lms_instance_q31 * S,
-			uint16_t numTaps,
-			q31_t *pCoeffs,
-			q31_t *pState,
-			q31_t mu,
-			uint32_t blockSize,
-			uint32_t postShift);
+  arm_lms_instance_q31 * S,
+  uint16_t numTaps,
+  q31_t * pCoeffs,
+  q31_t * pState,
+  q31_t mu,
+  uint32_t blockSize,
+  uint32_t postShift);
 
   /**
    * @brief Instance structure for the floating-point normalized LMS filter.
@@ -4056,7 +4477,7 @@ extern "C"
 
   typedef struct
   {
-    uint16_t  numTaps;    /**< number of coefficients in the filter. */
+    uint16_t numTaps;     /**< number of coefficients in the filter. */
     float32_t *pState;    /**< points to the state variable array. The array is of length numTaps+blockSize-1. */
     float32_t *pCoeffs;   /**< points to the coefficient array. The array is of length numTaps. */
     float32_t mu;        /**< step size that control filter coefficient updates. */
@@ -4076,12 +4497,12 @@ extern "C"
    */
 
   void arm_lms_norm_f32(
-			arm_lms_norm_instance_f32 * S,
-			 float32_t * pSrc,
-			 float32_t * pRef,
-			float32_t * pOut,
-			float32_t * pErr,
-			uint32_t blockSize);
+  arm_lms_norm_instance_f32 * S,
+  float32_t * pSrc,
+  float32_t * pRef,
+  float32_t * pOut,
+  float32_t * pErr,
+  uint32_t blockSize);
 
   /**
    * @brief Initialization function for floating-point normalized LMS filter.
@@ -4095,12 +4516,12 @@ extern "C"
    */
 
   void arm_lms_norm_init_f32(
-			     arm_lms_norm_instance_f32 * S,
-			     uint16_t numTaps,
-			     float32_t * pCoeffs,
-			     float32_t * pState,
-			     float32_t mu,
-			     uint32_t blockSize);
+  arm_lms_norm_instance_f32 * S,
+  uint16_t numTaps,
+  float32_t * pCoeffs,
+  float32_t * pState,
+  float32_t mu,
+  uint32_t blockSize);
 
 
   /**
@@ -4130,12 +4551,12 @@ extern "C"
    */
 
   void arm_lms_norm_q31(
-			arm_lms_norm_instance_q31 * S,
-			 q31_t * pSrc,
-			 q31_t * pRef,
-			q31_t * pOut,
-			q31_t * pErr,
-			uint32_t blockSize);
+  arm_lms_norm_instance_q31 * S,
+  q31_t * pSrc,
+  q31_t * pRef,
+  q31_t * pOut,
+  q31_t * pErr,
+  uint32_t blockSize);
 
   /**
    * @brief Initialization function for Q31 normalized LMS filter.
@@ -4150,13 +4571,13 @@ extern "C"
    */
 
   void arm_lms_norm_init_q31(
-			     arm_lms_norm_instance_q31 * S,
-			     uint16_t numTaps,
-			     q31_t * pCoeffs,
-			     q31_t * pState,
-			     q31_t mu,
-			     uint32_t blockSize,
-			     uint8_t postShift);
+  arm_lms_norm_instance_q31 * S,
+  uint16_t numTaps,
+  q31_t * pCoeffs,
+  q31_t * pState,
+  q31_t mu,
+  uint32_t blockSize,
+  uint8_t postShift);
 
   /**
    * @brief Instance structure for the Q15 normalized LMS filter.
@@ -4186,12 +4607,12 @@ extern "C"
    */
 
   void arm_lms_norm_q15(
-			arm_lms_norm_instance_q15 * S,
-			 q15_t * pSrc,
-			 q15_t * pRef,
-			q15_t * pOut,
-			q15_t * pErr,
-			uint32_t blockSize);
+  arm_lms_norm_instance_q15 * S,
+  q15_t * pSrc,
+  q15_t * pRef,
+  q15_t * pOut,
+  q15_t * pErr,
+  uint32_t blockSize);
 
 
   /**
@@ -4207,13 +4628,13 @@ extern "C"
    */
 
   void arm_lms_norm_init_q15(
-			     arm_lms_norm_instance_q15 * S,
-			     uint16_t numTaps,
-			     q15_t * pCoeffs,
-			     q15_t * pState,
-			     q15_t mu,
-			     uint32_t blockSize,
-			     uint8_t postShift);
+  arm_lms_norm_instance_q15 * S,
+  uint16_t numTaps,
+  q15_t * pCoeffs,
+  q15_t * pState,
+  q15_t mu,
+  uint32_t blockSize,
+  uint8_t postShift);
 
   /**
    * @brief Correlation of floating-point sequences.
@@ -4226,11 +4647,31 @@ extern "C"
    */
 
   void arm_correlate_f32(
-			  float32_t * pSrcA,
-			 uint32_t srcALen,
-			  float32_t * pSrcB,
-			 uint32_t srcBLen,
-			 float32_t * pDst);
+  float32_t * pSrcA,
+  uint32_t srcALen,
+  float32_t * pSrcB,
+  uint32_t srcBLen,
+  float32_t * pDst);
+
+
+   /**   
+   * @brief Correlation of Q15 sequences   
+   * @param[in] *pSrcA points to the first input sequence.   
+   * @param[in] srcALen length of the first input sequence.   
+   * @param[in] *pSrcB points to the second input sequence.   
+   * @param[in] srcBLen length of the second input sequence.   
+   * @param[out] *pDst points to the block of output data  Length 2 * max(srcALen, srcBLen) - 1.   
+   * @param[in]  *pScratch points to scratch buffer of size max(srcALen, srcBLen) + 2*min(srcALen, srcBLen) - 2.   
+   * @return none.   
+   */
+  void arm_correlate_opt_q15(
+  q15_t * pSrcA,
+  uint32_t srcALen,
+  q15_t * pSrcB,
+  uint32_t srcBLen,
+  q15_t * pDst,
+  q15_t * pScratch);
+
 
   /**
    * @brief Correlation of Q15 sequences.
@@ -4243,11 +4684,11 @@ extern "C"
    */
 
   void arm_correlate_q15(
-			  q15_t * pSrcA,
-			 uint32_t srcALen,
-			  q15_t * pSrcB,
-			 uint32_t srcBLen,
-			 q15_t * pDst);
+  q15_t * pSrcA,
+  uint32_t srcALen,
+  q15_t * pSrcB,
+  uint32_t srcBLen,
+  q15_t * pDst);
 
   /**
    * @brief Correlation of Q15 sequences (fast version) for Cortex-M3 and Cortex-M4.
@@ -4266,6 +4707,27 @@ extern "C"
 			      uint32_t srcBLen,
 			      q15_t * pDst);
 
+
+
+  /**
+   * @brief Correlation of Q15 sequences (fast version) for Cortex-M3 and Cortex-M4.
+   * @param[in] *pSrcA points to the first input sequence.
+   * @param[in] srcALen length of the first input sequence.
+   * @param[in] *pSrcB points to the second input sequence.
+   * @param[in] srcBLen length of the second input sequence.
+   * @param[out] *pDst points to the block of output data  Length 2 * max(srcALen, srcBLen) - 1.
+   * @param[in]  *pScratch points to scratch buffer of size max(srcALen, srcBLen) + 2*min(srcALen, srcBLen) - 2.   
+   * @return none.
+   */
+
+  void arm_correlate_fast_opt_q15(
+  q15_t * pSrcA,
+  uint32_t srcALen,
+  q15_t * pSrcB,
+  uint32_t srcBLen,
+  q15_t * pDst,
+  q15_t * pScratch);
+
   /**
    * @brief Correlation of Q31 sequences.
    * @param[in] *pSrcA points to the first input sequence.
@@ -4277,11 +4739,11 @@ extern "C"
    */
 
   void arm_correlate_q31(
-			  q31_t * pSrcA,
-			 uint32_t srcALen,
-			  q31_t * pSrcB,
-			 uint32_t srcBLen,
-			 q31_t * pDst);
+  q31_t * pSrcA,
+  uint32_t srcALen,
+  q31_t * pSrcB,
+  uint32_t srcBLen,
+  q31_t * pDst);
 
   /**
    * @brief Correlation of Q31 sequences (fast version) for Cortex-M3 and Cortex-M4
@@ -4294,11 +4756,35 @@ extern "C"
    */
 
   void arm_correlate_fast_q31(
-			       q31_t * pSrcA,
-			      uint32_t srcALen,
-			       q31_t * pSrcB,
-			      uint32_t srcBLen,
-			      q31_t * pDst);
+  q31_t * pSrcA,
+  uint32_t srcALen,
+  q31_t * pSrcB,
+  uint32_t srcBLen,
+  q31_t * pDst);
+
+
+
+ /**   
+   * @brief Correlation of Q7 sequences.   
+   * @param[in] *pSrcA points to the first input sequence.   
+   * @param[in] srcALen length of the first input sequence.   
+   * @param[in] *pSrcB points to the second input sequence.   
+   * @param[in] srcBLen length of the second input sequence.   
+   * @param[out] *pDst points to the block of output data  Length 2 * max(srcALen, srcBLen) - 1.   
+   * @param[in]  *pScratch1 points to scratch buffer(of type q15_t) of size max(srcALen, srcBLen) + 2*min(srcALen, srcBLen) - 2.   
+   * @param[in]  *pScratch2 points to scratch buffer (of type q15_t) of size min(srcALen, srcBLen).   
+   * @return none.   
+   */
+
+  void arm_correlate_opt_q7(
+  q7_t * pSrcA,
+  uint32_t srcALen,
+  q7_t * pSrcB,
+  uint32_t srcBLen,
+  q7_t * pDst,
+  q15_t * pScratch1,
+  q15_t * pScratch2);
+
 
   /**
    * @brief Correlation of Q7 sequences.
@@ -4311,11 +4797,12 @@ extern "C"
    */
 
   void arm_correlate_q7(
-			 q7_t * pSrcA,
-			uint32_t srcALen,
-			 q7_t * pSrcB,
-			uint32_t srcBLen,
-			q7_t * pDst);
+  q7_t * pSrcA,
+  uint32_t srcALen,
+  q7_t * pSrcB,
+  uint32_t srcBLen,
+  q7_t * pDst);
+
 
   /**
    * @brief Instance structure for the floating-point sparse FIR filter.
@@ -4383,11 +4870,11 @@ extern "C"
    */
 
   void arm_fir_sparse_f32(
-			  arm_fir_sparse_instance_f32 * S,
-			   float32_t * pSrc,
-			  float32_t * pDst,
-			  float32_t * pScratchIn,
-			  uint32_t blockSize);
+  arm_fir_sparse_instance_f32 * S,
+  float32_t * pSrc,
+  float32_t * pDst,
+  float32_t * pScratchIn,
+  uint32_t blockSize);
 
   /**
    * @brief  Initialization function for the floating-point sparse FIR filter.
@@ -4402,13 +4889,13 @@ extern "C"
    */
 
   void arm_fir_sparse_init_f32(
-			       arm_fir_sparse_instance_f32 * S,
-			       uint16_t numTaps,
-			       float32_t * pCoeffs,
-			       float32_t * pState,
-			       int32_t * pTapDelay,
-			       uint16_t maxDelay,
-			       uint32_t blockSize);
+  arm_fir_sparse_instance_f32 * S,
+  uint16_t numTaps,
+  float32_t * pCoeffs,
+  float32_t * pState,
+  int32_t * pTapDelay,
+  uint16_t maxDelay,
+  uint32_t blockSize);
 
   /**
    * @brief Processing function for the Q31 sparse FIR filter.
@@ -4421,11 +4908,11 @@ extern "C"
    */
 
   void arm_fir_sparse_q31(
-			  arm_fir_sparse_instance_q31 * S,
-			   q31_t * pSrc,
-			  q31_t * pDst,
-			  q31_t * pScratchIn,
-			  uint32_t blockSize);
+  arm_fir_sparse_instance_q31 * S,
+  q31_t * pSrc,
+  q31_t * pDst,
+  q31_t * pScratchIn,
+  uint32_t blockSize);
 
   /**
    * @brief  Initialization function for the Q31 sparse FIR filter.
@@ -4440,13 +4927,13 @@ extern "C"
    */
 
   void arm_fir_sparse_init_q31(
-			       arm_fir_sparse_instance_q31 * S,
-			       uint16_t numTaps,
-			       q31_t * pCoeffs,
-			       q31_t * pState,
-			       int32_t * pTapDelay,
-			       uint16_t maxDelay,
-			       uint32_t blockSize);
+  arm_fir_sparse_instance_q31 * S,
+  uint16_t numTaps,
+  q31_t * pCoeffs,
+  q31_t * pState,
+  int32_t * pTapDelay,
+  uint16_t maxDelay,
+  uint32_t blockSize);
 
   /**
    * @brief Processing function for the Q15 sparse FIR filter.
@@ -4460,12 +4947,12 @@ extern "C"
    */
 
   void arm_fir_sparse_q15(
-			  arm_fir_sparse_instance_q15 * S,
-			   q15_t * pSrc,
-			  q15_t * pDst,
-			  q15_t * pScratchIn,
-			  q31_t * pScratchOut,
-			  uint32_t blockSize);
+  arm_fir_sparse_instance_q15 * S,
+  q15_t * pSrc,
+  q15_t * pDst,
+  q15_t * pScratchIn,
+  q31_t * pScratchOut,
+  uint32_t blockSize);
 
 
   /**
@@ -4481,13 +4968,13 @@ extern "C"
    */
 
   void arm_fir_sparse_init_q15(
-			       arm_fir_sparse_instance_q15 * S,
-			       uint16_t numTaps,
-			       q15_t * pCoeffs,
-			       q15_t * pState,
-			       int32_t * pTapDelay,
-			       uint16_t maxDelay,
-			       uint32_t blockSize);
+  arm_fir_sparse_instance_q15 * S,
+  uint16_t numTaps,
+  q15_t * pCoeffs,
+  q15_t * pState,
+  int32_t * pTapDelay,
+  uint16_t maxDelay,
+  uint32_t blockSize);
 
   /**
    * @brief Processing function for the Q7 sparse FIR filter.
@@ -4501,12 +4988,12 @@ extern "C"
    */
 
   void arm_fir_sparse_q7(
-			 arm_fir_sparse_instance_q7 * S,
-			  q7_t * pSrc,
-			 q7_t * pDst,
-			 q7_t * pScratchIn,
-			 q31_t * pScratchOut,
-			 uint32_t blockSize);
+  arm_fir_sparse_instance_q7 * S,
+  q7_t * pSrc,
+  q7_t * pDst,
+  q7_t * pScratchIn,
+  q31_t * pScratchOut,
+  uint32_t blockSize);
 
   /**
    * @brief  Initialization function for the Q7 sparse FIR filter.
@@ -4521,40 +5008,40 @@ extern "C"
    */
 
   void arm_fir_sparse_init_q7(
-			      arm_fir_sparse_instance_q7 * S,
-			      uint16_t numTaps,
-			      q7_t * pCoeffs,
-			      q7_t * pState,
-			      int32_t *pTapDelay,
-			      uint16_t maxDelay,
-			      uint32_t blockSize);
+  arm_fir_sparse_instance_q7 * S,
+  uint16_t numTaps,
+  q7_t * pCoeffs,
+  q7_t * pState,
+  int32_t * pTapDelay,
+  uint16_t maxDelay,
+  uint32_t blockSize);
 
 
   /*
    * @brief  Floating-point sin_cos function.
-   * @param[in]  theta    input value in degrees
-   * @param[out] *pSinVal points to the processed sine output.
-   * @param[out] *pCosVal points to the processed cos output.
+   * @param[in]  theta    input value in degrees 
+   * @param[out] *pSinVal points to the processed sine output. 
+   * @param[out] *pCosVal points to the processed cos output. 
    * @return none.
    */
 
   void arm_sin_cos_f32(
-		       float32_t theta,
-		       float32_t *pSinVal,
-		       float32_t *pCcosVal);
+  float32_t theta,
+  float32_t * pSinVal,
+  float32_t * pCcosVal);
 
   /*
    * @brief  Q31 sin_cos function.
-   * @param[in]  theta    scaled input value in degrees
-   * @param[out] *pSinVal points to the processed sine output.
-   * @param[out] *pCosVal points to the processed cosine output.
+   * @param[in]  theta    scaled input value in degrees 
+   * @param[out] *pSinVal points to the processed sine output. 
+   * @param[out] *pCosVal points to the processed cosine output. 
    * @return none.
    */
 
   void arm_sin_cos_q31(
-		       q31_t theta,
-		       q31_t *pSinVal,
-		       q31_t *pCosVal);
+  q31_t theta,
+  q31_t * pSinVal,
+  q31_t * pCosVal);
 
 
   /**
@@ -4566,9 +5053,9 @@ extern "C"
    */
 
   void arm_cmplx_conj_f32(
-			   float32_t * pSrc,
-			  float32_t * pDst,
-			  uint32_t numSamples);
+  float32_t * pSrc,
+  float32_t * pDst,
+  uint32_t numSamples);
 
   /**
    * @brief  Q31 complex conjugate.
@@ -4579,9 +5066,9 @@ extern "C"
    */
 
   void arm_cmplx_conj_q31(
-			   q31_t * pSrc,
-			  q31_t * pDst,
-			  uint32_t numSamples);
+  q31_t * pSrc,
+  q31_t * pDst,
+  uint32_t numSamples);
 
   /**
    * @brief  Q15 complex conjugate.
@@ -4592,9 +5079,9 @@ extern "C"
    */
 
   void arm_cmplx_conj_q15(
-			   q15_t * pSrc,
-			  q15_t * pDst,
-			  uint32_t numSamples);
+  q15_t * pSrc,
+  q15_t * pDst,
+  uint32_t numSamples);
 
 
 
@@ -4607,9 +5094,9 @@ extern "C"
    */
 
   void arm_cmplx_mag_squared_f32(
-				  float32_t * pSrc,
-				 float32_t * pDst,
-				 uint32_t numSamples);
+  float32_t * pSrc,
+  float32_t * pDst,
+  uint32_t numSamples);
 
   /**
    * @brief  Q31 complex magnitude squared
@@ -4620,9 +5107,9 @@ extern "C"
    */
 
   void arm_cmplx_mag_squared_q31(
-				  q31_t * pSrc,
-				 q31_t * pDst,
-				 uint32_t numSamples);
+  q31_t * pSrc,
+  q31_t * pDst,
+  uint32_t numSamples);
 
   /**
    * @brief  Q15 complex magnitude squared
@@ -4633,9 +5120,9 @@ extern "C"
    */
 
   void arm_cmplx_mag_squared_q15(
-				  q15_t * pSrc,
-				 q15_t * pDst,
-				 uint32_t numSamples);
+  q15_t * pSrc,
+  q15_t * pDst,
+  uint32_t numSamples);
 
 
  /**
@@ -4645,7 +5132,7 @@ extern "C"
   /**
    * @defgroup PID PID Motor Control
    *
-   * A Proportional Integral Derivative (PID) controller is a generic feedback control
+   * A Proportional Integral Derivative (PID) controller is a generic feedback control 
    * loop mechanism widely used in industrial control systems.
    * A PID controller is the most commonly used type of feedback controller.
    *
@@ -4664,39 +5151,39 @@ extern "C"
    *
    * \par
    * where \c Kp is proportional constant, \c Ki is Integral constant and \c Kd is Derivative constant
-   *
-   * \par
-   * \image html PID.gif "Proportional Integral Derivative Controller"
+   * 
+   * \par 
+   * \image html PID.gif "Proportional Integral Derivative Controller" 
    *
    * \par
    * The PID controller calculates an "error" value as the difference between
    * the measured output and the reference input.
-   * The controller attempts to minimize the error by adjusting the process control inputs.
-   * The proportional value determines the reaction to the current error,
-   * the integral value determines the reaction based on the sum of recent errors,
+   * The controller attempts to minimize the error by adjusting the process control inputs.  
+   * The proportional value determines the reaction to the current error, 
+   * the integral value determines the reaction based on the sum of recent errors, 
    * and the derivative value determines the reaction based on the rate at which the error has been changing.
    *
-   * \par Instance Structure
-   * The Gains A0, A1, A2 and state variables for a PID controller are stored together in an instance data structure.
-   * A separate instance structure must be defined for each PID Controller.
-   * There are separate instance structure declarations for each of the 3 supported data types.
+   * \par Instance Structure 
+   * The Gains A0, A1, A2 and state variables for a PID controller are stored together in an instance data structure. 
+   * A separate instance structure must be defined for each PID Controller. 
+   * There are separate instance structure declarations for each of the 3 supported data types. 
+   * 
+   * \par Reset Functions 
+   * There is also an associated reset function for each data type which clears the state array. 
    *
-   * \par Reset Functions
-   * There is also an associated reset function for each data type which clears the state array.
-   *
-   * \par Initialization Functions
-   * There is also an associated initialization function for each data type.
-   * The initialization function performs the following operations:
+   * \par Initialization Functions 
+   * There is also an associated initialization function for each data type. 
+   * The initialization function performs the following operations: 
    * - Initializes the Gains A0, A1, A2 from Kp,Ki, Kd gains.
-   * - Zeros out the values in the state buffer.
+   * - Zeros out the values in the state buffer.   
+   * 
+   * \par 
+   * Instance structure cannot be placed into a const data section and it is recommended to use the initialization function. 
    *
-   * \par
-   * Instance structure cannot be placed into a const data section and it is recommended to use the initialization function.
-   *
-   * \par Fixed-Point Behavior
-   * Care must be taken when using the fixed-point versions of the PID Controller functions.
-   * In particular, the overflow and saturation behavior of the accumulator used in each function must be considered.
-   * Refer to the function specific documentation below for usage guidelines.
+   * \par Fixed-Point Behavior 
+   * Care must be taken when using the fixed-point versions of the PID Controller functions. 
+   * In particular, the overflow and saturation behavior of the accumulator used in each function must be considered. 
+   * Refer to the function specific documentation below for usage guidelines. 
    */
 
   /**
@@ -4713,8 +5200,8 @@ extern "C"
 
 
   __STATIC_INLINE float32_t arm_pid_f32(
-					arm_pid_instance_f32 * S,
-					float32_t in)
+  arm_pid_instance_f32 * S,
+  float32_t in)
   {
     float32_t out;
 
@@ -4738,21 +5225,21 @@ extern "C"
    * @param[in] in input sample to process
    * @return out processed output sample.
    *
-   * <b>Scaling and Overflow Behavior:</b>
-   * \par
-   * The function is implemented using an internal 64-bit accumulator.
-   * The accumulator has a 2.62 format and maintains full precision of the intermediate multiplication results but provides only a single guard bit.
-   * Thus, if the accumulator result overflows it wraps around rather than clip.
-   * In order to avoid overflows completely the input signal must be scaled down by 2 bits as there are four additions.
-   * After all multiply-accumulates are performed, the 2.62 accumulator is truncated to 1.32 format and then saturated to 1.31 format.
+   * <b>Scaling and Overflow Behavior:</b> 
+   * \par 
+   * The function is implemented using an internal 64-bit accumulator. 
+   * The accumulator has a 2.62 format and maintains full precision of the intermediate multiplication results but provides only a single guard bit. 
+   * Thus, if the accumulator result overflows it wraps around rather than clip. 
+   * In order to avoid overflows completely the input signal must be scaled down by 2 bits as there are four additions. 
+   * After all multiply-accumulates are performed, the 2.62 accumulator is truncated to 1.32 format and then saturated to 1.31 format. 
    */
 
   __STATIC_INLINE q31_t arm_pid_q31(
-				    arm_pid_instance_q31 * S,
-				    q31_t in)
+  arm_pid_instance_q31 * S,
+  q31_t in)
   {
     q63_t acc;
-	q31_t out;
+    q31_t out;
 
     /* acc = A0 * x[n]  */
     acc = (q63_t) S->A0 * in;
@@ -4785,49 +5272,49 @@ extern "C"
    * @param[in] in input sample to process
    * @return out processed output sample.
    *
-   * <b>Scaling and Overflow Behavior:</b>
-   * \par
-   * The function is implemented using a 64-bit internal accumulator.
-   * Both Gains and state variables are represented in 1.15 format and multiplications yield a 2.30 result.
-   * The 2.30 intermediate results are accumulated in a 64-bit accumulator in 34.30 format.
-   * There is no risk of internal overflow with this approach and the full precision of intermediate multiplications is preserved.
-   * After all additions have been performed, the accumulator is truncated to 34.15 format by discarding low 15 bits.
+   * <b>Scaling and Overflow Behavior:</b> 
+   * \par 
+   * The function is implemented using a 64-bit internal accumulator. 
+   * Both Gains and state variables are represented in 1.15 format and multiplications yield a 2.30 result. 
+   * The 2.30 intermediate results are accumulated in a 64-bit accumulator in 34.30 format. 
+   * There is no risk of internal overflow with this approach and the full precision of intermediate multiplications is preserved. 
+   * After all additions have been performed, the accumulator is truncated to 34.15 format by discarding low 15 bits. 
    * Lastly, the accumulator is saturated to yield a result in 1.15 format.
    */
 
   __STATIC_INLINE q15_t arm_pid_q15(
-				    arm_pid_instance_q15 * S,
-				    q15_t in)
+  arm_pid_instance_q15 * S,
+  q15_t in)
   {
     q63_t acc;
     q15_t out;
 
     /* Implementation of PID controller */
 
-	#ifdef ARM_MATH_CM0
+#ifdef ARM_MATH_CM0
 
- 	/* acc = A0 * x[n]  */
-	acc = ((q31_t) S->A0 )* in ;
+    /* acc = A0 * x[n]  */
+    acc = ((q31_t) S->A0) * in;
 
-    #else
+#else
 
     /* acc = A0 * x[n]  */
     acc = (q31_t) __SMUAD(S->A0, in);
 
-	#endif
+#endif
 
-	#ifdef ARM_MATH_CM0
-
-	/* acc += A1 * x[n-1] + A2 * x[n-2]  */
-	acc += (q31_t) S->A1  *  S->state[0] ;
-	acc += (q31_t) S->A2  *  S->state[1] ;
-
-	#else
+#ifdef ARM_MATH_CM0
 
     /* acc += A1 * x[n-1] + A2 * x[n-2]  */
-    acc = __SMLALD(S->A1, (q31_t)__SIMD32(S->state), acc);
+    acc += (q31_t) S->A1 * S->state[0];
+    acc += (q31_t) S->A2 * S->state[1];
 
-	#endif
+#else
+
+    /* acc += A1 * x[n-1] + A2 * x[n-2]  */
+    acc = __SMLALD(S->A1, (q31_t) __SIMD32(S->state), acc);
+
+#endif
 
     /* acc += y[n-1] */
     acc += (q31_t) S->state[2] << 15;
@@ -4859,8 +5346,8 @@ extern "C"
    */
 
   arm_status arm_mat_inverse_f32(
-				 const arm_matrix_instance_f32 * src,
-				 arm_matrix_instance_f32 * dst);
+  const arm_matrix_instance_f32 * src,
+  arm_matrix_instance_f32 * dst);
 
 
 
@@ -4879,7 +5366,7 @@ extern "C"
    * and <code>Ia + Ib + Ic = 0</code>, in this condition <code>Ialpha</code> and <code>Ibeta</code>
    * can be calculated using only <code>Ia</code> and <code>Ib</code>.
    *
-   * The function operates on a single sample of data and each call to the function returns the processed output.
+   * The function operates on a single sample of data and each call to the function returns the processed output. 
    * The library provides separate functions for Q31 and floating-point data types.
    * \par Algorithm
    * \image html clarkeFormula.gif
@@ -4907,16 +5394,17 @@ extern "C"
    */
 
   __STATIC_INLINE void arm_clarke_f32(
-				      float32_t Ia,
-				      float32_t Ib,
-				      float32_t * pIalpha,
-				      float32_t * pIbeta)
+  float32_t Ia,
+  float32_t Ib,
+  float32_t * pIalpha,
+  float32_t * pIbeta)
   {
     /* Calculate pIalpha using the equation, pIalpha = Ia */
     *pIalpha = Ia;
 
     /* Calculate pIbeta using the equation, pIbeta = (1/sqrt(3)) * Ia + (2/sqrt(3)) * Ib */
-    *pIbeta = ((float32_t) 0.57735026919 * Ia + (float32_t) 1.15470053838 * Ib);
+    *pIbeta =
+      ((float32_t) 0.57735026919 * Ia + (float32_t) 1.15470053838 * Ib);
 
   }
 
@@ -4936,10 +5424,10 @@ extern "C"
    */
 
   __STATIC_INLINE void arm_clarke_q31(
-				      q31_t Ia,
-				      q31_t Ib,
-				      q31_t * pIalpha,
-				      q31_t * pIbeta)
+  q31_t Ia,
+  q31_t Ib,
+  q31_t * pIalpha,
+  q31_t * pIbeta)
   {
     q31_t product1, product2;                    /* Temporary variables used to store intermediate results */
 
@@ -4968,9 +5456,9 @@ extern "C"
    * @return none.
    */
   void arm_q7_to_q31(
-		     q7_t * pSrc,
-		     q31_t * pDst,
-		     uint32_t blockSize);
+  q7_t * pSrc,
+  q31_t * pDst,
+  uint32_t blockSize);
 
 
 
@@ -4982,8 +5470,8 @@ extern "C"
   /**
    * @defgroup inv_clarke Vector Inverse Clarke Transform
    * Inverse Clarke transform converts the two-coordinate time invariant vector into instantaneous stator phases.
-   *
-   * The function operates on a single sample of data and each call to the function returns the processed output.
+   * 
+   * The function operates on a single sample of data and each call to the function returns the processed output. 
    * The library provides separate functions for Q31 and floating-point data types.
    * \par Algorithm
    * \image html clarkeInvFormula.gif
@@ -5011,10 +5499,10 @@ extern "C"
 
 
   __STATIC_INLINE void arm_inv_clarke_f32(
-					  float32_t Ialpha,
-					  float32_t Ibeta,
-					  float32_t * pIa,
-					  float32_t * pIb)
+  float32_t Ialpha,
+  float32_t Ibeta,
+  float32_t * pIa,
+  float32_t * pIb)
   {
     /* Calculating pIa from Ialpha by equation pIa = Ialpha */
     *pIa = Ialpha;
@@ -5025,7 +5513,7 @@ extern "C"
   }
 
   /**
-   * @brief  Inverse Clarke transform for Q31 version
+   * @brief  Inverse Clarke transform for Q31 version 
    * @param[in]       Ialpha  input two-phase orthogonal vector axis alpha
    * @param[in]       Ibeta   input two-phase orthogonal vector axis beta
    * @param[out]      *pIa    points to output three-phase coordinate <code>a</code>
@@ -5040,10 +5528,10 @@ extern "C"
    */
 
   __STATIC_INLINE void arm_inv_clarke_q31(
-					  q31_t Ialpha,
-					  q31_t Ibeta,
-					  q31_t * pIa,
-					  q31_t * pIb)
+  q31_t Ialpha,
+  q31_t Ibeta,
+  q31_t * pIa,
+  q31_t * pIb)
   {
     q31_t product1, product2;                    /* Temporary variables used to store intermediate results */
 
@@ -5073,9 +5561,9 @@ extern "C"
    * @return none.
    */
   void arm_q7_to_q15(
-		      q7_t * pSrc,
-		     q15_t * pDst,
-		     uint32_t blockSize);
+  q7_t * pSrc,
+  q15_t * pDst,
+  uint32_t blockSize);
 
 
 
@@ -5087,19 +5575,19 @@ extern "C"
    * @defgroup park Vector Park Transform
    *
    * Forward Park transform converts the input two-coordinate vector to flux and torque components.
-   * The Park transform can be used to realize the transformation of the <code>Ialpha</code> and the <code>Ibeta</code> currents
-   * from the stationary to the moving reference frame and control the spatial relationship between
+   * The Park transform can be used to realize the transformation of the <code>Ialpha</code> and the <code>Ibeta</code> currents 
+   * from the stationary to the moving reference frame and control the spatial relationship between 
    * the stator vector current and rotor flux vector.
-   * If we consider the d axis aligned with the rotor flux, the diagram below shows the
+   * If we consider the d axis aligned with the rotor flux, the diagram below shows the 
    * current vector and the relationship from the two reference frames:
    * \image html park.gif "Stator current space vector and its component in (a,b) and in the d,q rotating reference frame"
    *
-   * The function operates on a single sample of data and each call to the function returns the processed output.
+   * The function operates on a single sample of data and each call to the function returns the processed output. 
    * The library provides separate functions for Q31 and floating-point data types.
    * \par Algorithm
    * \image html parkFormula.gif
-   * where <code>Ialpha</code> and <code>Ibeta</code> are the stator vector components,
-   * <code>pId</code> and <code>pIq</code> are rotor vector components and <code>cosVal</code> and <code>sinVal</code> are the
+   * where <code>Ialpha</code> and <code>Ibeta</code> are the stator vector components,  
+   * <code>pId</code> and <code>pIq</code> are rotor vector components and <code>cosVal</code> and <code>sinVal</code> are the 
    * cosine and sine values of theta (rotor flux position).
    * \par Fixed-Point Behavior
    * Care must be taken when using the Q31 version of the Park transform.
@@ -5127,12 +5615,12 @@ extern "C"
    */
 
   __STATIC_INLINE void arm_park_f32(
-				    float32_t Ialpha,
-				    float32_t Ibeta,
-				    float32_t * pId,
-				    float32_t * pIq,
-				    float32_t sinVal,
-				    float32_t cosVal)
+  float32_t Ialpha,
+  float32_t Ibeta,
+  float32_t * pId,
+  float32_t * pIq,
+  float32_t sinVal,
+  float32_t cosVal)
   {
     /* Calculate pId using the equation, pId = Ialpha * cosVal + Ibeta * sinVal */
     *pId = Ialpha * cosVal + Ibeta * sinVal;
@@ -5143,7 +5631,7 @@ extern "C"
   }
 
   /**
-   * @brief  Park transform for Q31 version
+   * @brief  Park transform for Q31 version 
    * @param[in]       Ialpha input two-phase vector coordinate alpha
    * @param[in]       Ibeta  input two-phase vector coordinate beta
    * @param[out]      *pId   points to output rotor reference frame d
@@ -5161,12 +5649,12 @@ extern "C"
 
 
   __STATIC_INLINE void arm_park_q31(
-				    q31_t Ialpha,
-				    q31_t Ibeta,
-				    q31_t * pId,
-				    q31_t * pIq,
-				    q31_t sinVal,
-				    q31_t cosVal)
+  q31_t Ialpha,
+  q31_t Ibeta,
+  q31_t * pId,
+  q31_t * pIq,
+  q31_t sinVal,
+  q31_t cosVal)
   {
     q31_t product1, product2;                    /* Temporary variables used to store intermediate results */
     q31_t product3, product4;                    /* Temporary variables used to store intermediate results */
@@ -5203,9 +5691,9 @@ extern "C"
    * @return none.
    */
   void arm_q7_to_float(
-		        q7_t * pSrc,
-		       float32_t * pDst,
-		       uint32_t blockSize);
+  q7_t * pSrc,
+  float32_t * pDst,
+  uint32_t blockSize);
 
 
   /**
@@ -5216,12 +5704,12 @@ extern "C"
    * @defgroup inv_park Vector Inverse Park transform
    * Inverse Park transform converts the input flux and torque components to two-coordinate vector.
    *
-   * The function operates on a single sample of data and each call to the function returns the processed output.
+   * The function operates on a single sample of data and each call to the function returns the processed output. 
    * The library provides separate functions for Q31 and floating-point data types.
    * \par Algorithm
    * \image html parkInvFormula.gif
-   * where <code>pIalpha</code> and <code>pIbeta</code> are the stator vector components,
-   * <code>Id</code> and <code>Iq</code> are rotor vector components and <code>cosVal</code> and <code>sinVal</code> are the
+   * where <code>pIalpha</code> and <code>pIbeta</code> are the stator vector components,  
+   * <code>Id</code> and <code>Iq</code> are rotor vector components and <code>cosVal</code> and <code>sinVal</code> are the 
    * cosine and sine values of theta (rotor flux position).
    * \par Fixed-Point Behavior
    * Care must be taken when using the Q31 version of the Park transform.
@@ -5246,12 +5734,12 @@ extern "C"
    */
 
   __STATIC_INLINE void arm_inv_park_f32(
-					float32_t Id,
-					float32_t Iq,
-					float32_t * pIalpha,
-					float32_t * pIbeta,
-					float32_t sinVal,
-					float32_t cosVal)
+  float32_t Id,
+  float32_t Iq,
+  float32_t * pIalpha,
+  float32_t * pIbeta,
+  float32_t sinVal,
+  float32_t cosVal)
   {
     /* Calculate pIalpha using the equation, pIalpha = Id * cosVal - Iq * sinVal */
     *pIalpha = Id * cosVal - Iq * sinVal;
@@ -5263,7 +5751,7 @@ extern "C"
 
 
   /**
-   * @brief  Inverse Park transform for	Q31 version
+   * @brief  Inverse Park transform for	Q31 version 
    * @param[in]       Id        input coordinate of rotor reference frame d
    * @param[in]       Iq        input coordinate of rotor reference frame q
    * @param[out]      *pIalpha  points to output two-phase orthogonal vector axis alpha
@@ -5281,12 +5769,12 @@ extern "C"
 
 
   __STATIC_INLINE void arm_inv_park_q31(
-					q31_t Id,
-					q31_t Iq,
-					q31_t * pIalpha,
-					q31_t * pIbeta,
-					q31_t sinVal,
-					q31_t cosVal)
+  q31_t Id,
+  q31_t Iq,
+  q31_t * pIalpha,
+  q31_t * pIbeta,
+  q31_t sinVal,
+  q31_t cosVal)
   {
     q31_t product1, product2;                    /* Temporary variables used to store intermediate results */
     q31_t product3, product4;                    /* Temporary variables used to store intermediate results */
@@ -5325,9 +5813,9 @@ extern "C"
    * @return none.
    */
   void arm_q31_to_float(
-			 q31_t * pSrc,
-			float32_t * pDst,
-			uint32_t blockSize);
+  q31_t * pSrc,
+  float32_t * pDst,
+  uint32_t blockSize);
 
   /**
    * @ingroup groupInterpolation
@@ -5339,7 +5827,7 @@ extern "C"
    * Linear interpolation is a method of curve fitting using linear polynomials.
    * Linear interpolation works by effectively drawing a straight line between two neighboring samples and returning the appropriate point along that line
    *
-   * \par
+   * \par 
    * \image html LinearInterp.gif "Linear interpolation"
    *
    * \par
@@ -5359,10 +5847,10 @@ extern "C"
    * sample of data and each call to the function returns a single processed value.
    * <code>S</code> points to an instance of the Linear Interpolate function data structure.
    * <code>x</code> is the input sample value. The functions returns the output value.
-   *
+   * 
    * \par
-   * if x is outside of the table boundary, Linear interpolation returns first value of the table
-   * if x is below input range and returns last value of table if x is above range.
+   * if x is outside of the table boundary, Linear interpolation returns first value of the table 
+   * if x is below input range and returns last value of table if x is above range.  
    */
 
   /**
@@ -5379,47 +5867,47 @@ extern "C"
    */
 
   __STATIC_INLINE float32_t arm_linear_interp_f32(
-						  arm_linear_interp_instance_f32 * S,
-						  float32_t x)
+  arm_linear_interp_instance_f32 * S,
+  float32_t x)
   {
 
-	  float32_t y;
-	  float32_t x0, x1;						/* Nearest input values */
-	  float32_t y0, y1;	  					/* Nearest output values */
-	  float32_t xSpacing = S->xSpacing;		/* spacing between input values */
-	  int32_t i;  							/* Index variable */
-	  float32_t *pYData = S->pYData;	    /* pointer to output table */
+    float32_t y;
+    float32_t x0, x1;                            /* Nearest input values */
+    float32_t y0, y1;                            /* Nearest output values */
+    float32_t xSpacing = S->xSpacing;            /* spacing between input values */
+    int32_t i;                                   /* Index variable */
+    float32_t *pYData = S->pYData;               /* pointer to output table */
 
-	  /* Calculation of index */
-	  i =   (x - S->x1) / xSpacing;
+    /* Calculation of index */
+    i = (x - S->x1) / xSpacing;
 
-	  if(i < 0)
-	  {
-	     /* Iniatilize output for below specified range as least output value of table */
-		 y = pYData[0];
-	  }
-	  else if(i >= S->nValues)
-	  {
-	  	  /* Iniatilize output for above specified range as last output value of table */
-	  	  y = pYData[S->nValues-1];
-	  }
-	  else
-	  {
-	  	  /* Calculation of nearest input values */
-		  x0 = S->x1 + i * xSpacing;
-		  x1 = S->x1 + (i +1) * xSpacing;
+    if(i < 0)
+    {
+      /* Iniatilize output for below specified range as least output value of table */
+      y = pYData[0];
+    }
+    else if(i >= S->nValues)
+    {
+      /* Iniatilize output for above specified range as last output value of table */
+      y = pYData[S->nValues - 1];
+    }
+    else
+    {
+      /* Calculation of nearest input values */
+      x0 = S->x1 + i * xSpacing;
+      x1 = S->x1 + (i + 1) * xSpacing;
 
-		 /* Read of nearest output values */
-		  y0 = pYData[i];
-		  y1 = pYData[i + 1];
+      /* Read of nearest output values */
+      y0 = pYData[i];
+      y1 = pYData[i + 1];
 
-		  /* Calculation of output */
-		  y = y0 + (x - x0) * ((y1 - y0)/(x1-x0));
+      /* Calculation of output */
+      y = y0 + (x - x0) * ((y1 - y0) / (x1 - x0));
 
-	  }
+    }
 
-      /* returns output value */
-	  return (y);
+    /* returns output value */
+    return (y);
   }
 
    /**
@@ -5437,48 +5925,50 @@ extern "C"
    */
 
 
-  __STATIC_INLINE q31_t arm_linear_interp_q31(q31_t *pYData,
-					      q31_t x, uint32_t nValues)
+  __STATIC_INLINE q31_t arm_linear_interp_q31(
+  q31_t * pYData,
+  q31_t x,
+  uint32_t nValues)
   {
-    q31_t y;                                   /* output */
+    q31_t y;                                     /* output */
     q31_t y0, y1;                                /* Nearest output values */
     q31_t fract;                                 /* fractional part */
-    int32_t index;                              /* Index to read nearest output values */
+    int32_t index;                               /* Index to read nearest output values */
 
     /* Input is in 12.20 format */
     /* 12 bits for the table index */
     /* Index value calculation */
     index = ((x & 0xFFF00000) >> 20);
 
-	if(index >= (nValues - 1))
-	{
-		return(pYData[nValues - 1]);
-	}
-	else if(index < 0)
-	{
-		return(pYData[0]);
-	}
-	else
-	{
+    if(index >= (nValues - 1))
+    {
+      return (pYData[nValues - 1]);
+    }
+    else if(index < 0)
+    {
+      return (pYData[0]);
+    }
+    else
+    {
 
-	    /* 20 bits for the fractional part */
-	    /* shift left by 11 to keep fract in 1.31 format */
-	    fract = (x & 0x000FFFFF) << 11;
+      /* 20 bits for the fractional part */
+      /* shift left by 11 to keep fract in 1.31 format */
+      fract = (x & 0x000FFFFF) << 11;
 
-	    /* Read two nearest output values from the index in 1.31(q31) format */
-	    y0 = pYData[index];
-	    y1 = pYData[index + 1u];
+      /* Read two nearest output values from the index in 1.31(q31) format */
+      y0 = pYData[index];
+      y1 = pYData[index + 1u];
 
-	    /* Calculation of y0 * (1-fract) and y is in 2.30 format */
-	    y = ((q31_t) ((q63_t) y0 * (0x7FFFFFFF - fract) >> 32));
+      /* Calculation of y0 * (1-fract) and y is in 2.30 format */
+      y = ((q31_t) ((q63_t) y0 * (0x7FFFFFFF - fract) >> 32));
 
-	    /* Calculation of y0 * (1-fract) + y1 *fract and y is in 2.30 format */
-	    y += ((q31_t) (((q63_t) y1 * fract) >> 32));
+      /* Calculation of y0 * (1-fract) + y1 *fract and y is in 2.30 format */
+      y += ((q31_t) (((q63_t) y1 * fract) >> 32));
 
-	    /* Convert y to 1.31 format */
-	    return (y << 1u);
+      /* Convert y to 1.31 format */
+      return (y << 1u);
 
-	}
+    }
 
   }
 
@@ -5492,50 +5982,53 @@ extern "C"
    *
    * \par
    * Input sample <code>x</code> is in 12.20 format which contains 12 bits for table index and 20 bits for fractional part.
-   * This function can support maximum of table size 2^12.
+   * This function can support maximum of table size 2^12. 
    *
    */
 
 
-  __STATIC_INLINE q15_t arm_linear_interp_q15(q15_t *pYData, q31_t x, uint32_t nValues)
+  __STATIC_INLINE q15_t arm_linear_interp_q15(
+  q15_t * pYData,
+  q31_t x,
+  uint32_t nValues)
   {
-    q63_t y;                                   /* output */
-    q15_t y0, y1;                              /* Nearest output values */
-    q31_t fract;                               /* fractional part */
-    int32_t index;                            /* Index to read nearest output values */
+    q63_t y;                                     /* output */
+    q15_t y0, y1;                                /* Nearest output values */
+    q31_t fract;                                 /* fractional part */
+    int32_t index;                               /* Index to read nearest output values */
 
     /* Input is in 12.20 format */
     /* 12 bits for the table index */
     /* Index value calculation */
     index = ((x & 0xFFF00000) >> 20u);
 
-	if(index >= (nValues - 1))
-	{
-		return(pYData[nValues - 1]);
-	}
-	else if(index < 0)
-	{
-		return(pYData[0]);
-	}
-	else
-	{
-	    /* 20 bits for the fractional part */
-	    /* fract is in 12.20 format */
-	    fract = (x & 0x000FFFFF);
+    if(index >= (nValues - 1))
+    {
+      return (pYData[nValues - 1]);
+    }
+    else if(index < 0)
+    {
+      return (pYData[0]);
+    }
+    else
+    {
+      /* 20 bits for the fractional part */
+      /* fract is in 12.20 format */
+      fract = (x & 0x000FFFFF);
 
-	    /* Read two nearest output values from the index */
-	    y0 = pYData[index];
-	    y1 = pYData[index + 1u];
+      /* Read two nearest output values from the index */
+      y0 = pYData[index];
+      y1 = pYData[index + 1u];
 
-	    /* Calculation of y0 * (1-fract) and y is in 13.35 format */
-	    y = ((q63_t) y0 * (0xFFFFF - fract));
+      /* Calculation of y0 * (1-fract) and y is in 13.35 format */
+      y = ((q63_t) y0 * (0xFFFFF - fract));
 
-	    /* Calculation of (y0 * (1-fract) + y1 * fract) and y is in 13.35 format */
-	    y += ((q63_t) y1 * (fract));
+      /* Calculation of (y0 * (1-fract) + y1 * fract) and y is in 13.35 format */
+      y += ((q63_t) y1 * (fract));
 
-	    /* convert y to 1.15 format */
-	    return (y >> 20);
-	}
+      /* convert y to 1.15 format */
+      return (y >> 20);
+    }
 
 
   }
@@ -5554,12 +6047,15 @@ extern "C"
    */
 
 
-  __STATIC_INLINE q7_t arm_linear_interp_q7(q7_t *pYData, q31_t x,  uint32_t nValues)
+  __STATIC_INLINE q7_t arm_linear_interp_q7(
+  q7_t * pYData,
+  q31_t x,
+  uint32_t nValues)
   {
-    q31_t y;                                   /* output */
+    q31_t y;                                     /* output */
     q7_t y0, y1;                                 /* Nearest output values */
     q31_t fract;                                 /* fractional part */
-    int32_t index;                              /* Index to read nearest output values */
+    int32_t index;                               /* Index to read nearest output values */
 
     /* Input is in 12.20 format */
     /* 12 bits for the table index */
@@ -5568,34 +6064,34 @@ extern "C"
 
 
     if(index >= (nValues - 1))
-	{
-		return(pYData[nValues - 1]);
-	}
-	else if(index < 0)
-	{
-		return(pYData[0]);
-	}
-	else
-	{
+    {
+      return (pYData[nValues - 1]);
+    }
+    else if(index < 0)
+    {
+      return (pYData[0]);
+    }
+    else
+    {
 
-	    /* 20 bits for the fractional part */
-	    /* fract is in 12.20 format */
-	    fract = (x & 0x000FFFFF);
+      /* 20 bits for the fractional part */
+      /* fract is in 12.20 format */
+      fract = (x & 0x000FFFFF);
 
-	    /* Read two nearest output values from the index and are in 1.7(q7) format */
-	    y0 = pYData[index];
-	    y1 = pYData[index + 1u];
+      /* Read two nearest output values from the index and are in 1.7(q7) format */
+      y0 = pYData[index];
+      y1 = pYData[index + 1u];
 
-	    /* Calculation of y0 * (1-fract ) and y is in 13.27(q27) format */
-	    y = ((y0 * (0xFFFFF - fract)));
+      /* Calculation of y0 * (1-fract ) and y is in 13.27(q27) format */
+      y = ((y0 * (0xFFFFF - fract)));
 
-	    /* Calculation of y1 * fract + y0 * (1-fract) and y is in 13.27(q27) format */
-	    y += (y1 * fract);
+      /* Calculation of y1 * fract + y0 * (1-fract) and y is in 13.27(q27) format */
+      y += (y1 * fract);
 
-	    /* convert y to 1.7(q7) format */
-	    return (y >> 20u);
+      /* convert y to 1.7(q7) format */
+      return (y >> 20u);
 
-	}
+    }
 
   }
   /**
@@ -5609,7 +6105,7 @@ extern "C"
    */
 
   float32_t arm_sin_f32(
-			 float32_t x);
+  float32_t x);
 
   /**
    * @brief  Fast approximation to the trigonometric sine function for Q31 data.
@@ -5618,7 +6114,7 @@ extern "C"
    */
 
   q31_t arm_sin_q31(
-		     q31_t x);
+  q31_t x);
 
   /**
    * @brief  Fast approximation to the trigonometric sine function for Q15 data.
@@ -5627,7 +6123,7 @@ extern "C"
    */
 
   q15_t arm_sin_q15(
-		     q15_t x);
+  q15_t x);
 
   /**
    * @brief  Fast approximation to the trigonometric cosine function for floating-point data.
@@ -5636,7 +6132,7 @@ extern "C"
    */
 
   float32_t arm_cos_f32(
-			 float32_t x);
+  float32_t x);
 
   /**
    * @brief Fast approximation to the trigonometric cosine function for Q31 data.
@@ -5645,7 +6141,7 @@ extern "C"
    */
 
   q31_t arm_cos_q31(
-		     q31_t x);
+  q31_t x);
 
   /**
    * @brief  Fast approximation to the trigonometric cosine function for Q15 data.
@@ -5654,7 +6150,7 @@ extern "C"
    */
 
   q15_t arm_cos_q15(
-		     q15_t x);
+  q15_t x);
 
 
   /**
@@ -5666,7 +6162,7 @@ extern "C"
    * @defgroup SQRT Square Root
    *
    * Computes the square root of a number.
-   * There are separate functions for Q15, Q31, and floating-point data types.
+   * There are separate functions for Q15, Q31, and floating-point data types.  
    * The square root function is computed using the Newton-Raphson algorithm.
    * This is an iterative algorithm of the form:
    * <pre>
@@ -5696,8 +6192,9 @@ extern "C"
    * <code>in</code> is negative value and returns zero output for negative values.
    */
 
-  __STATIC_INLINE arm_status  arm_sqrt_f32(
-                      float32_t in, float32_t *pOut)
+  __STATIC_INLINE arm_status arm_sqrt_f32(
+  float32_t in,
+  float32_t * pOut)
   {
     if(in > 0)
     {
@@ -5711,12 +6208,12 @@ extern "C"
         *pOut = sqrtf(in);
     #endif
 
-        return (ARM_MATH_SUCCESS);
+      return (ARM_MATH_SUCCESS);
     }
     else
     {
-        *pOut = 0.0f;
-        return (ARM_MATH_ARGUMENT_ERROR);
+      *pOut = 0.0f;
+      return (ARM_MATH_ARGUMENT_ERROR);
     }
 
   }
@@ -5730,7 +6227,8 @@ extern "C"
    * <code>in</code> is negative value and returns zero output for negative values.
    */
   arm_status arm_sqrt_q31(
-		      q31_t in, q31_t *pOut);
+  q31_t in,
+  q31_t * pOut);
 
   /**
    * @brief  Q15 square root function.
@@ -5740,7 +6238,8 @@ extern "C"
    * <code>in</code> is negative value and returns zero output for negative values.
    */
   arm_status arm_sqrt_q15(
-		      q15_t in, q15_t *pOut);
+  q15_t in,
+  q15_t * pOut);
 
   /**
    * @} end of SQRT group
@@ -5756,13 +6255,13 @@ extern "C"
    */
 
   __STATIC_INLINE void arm_circularWrite_f32(
-					     int32_t * circBuffer,
-					     int32_t L,
-					     uint16_t * writeOffset,
-					     int32_t bufferInc,
-					     const int32_t * src,
-					     int32_t srcInc,
-					     uint32_t blockSize)
+  int32_t * circBuffer,
+  int32_t L,
+  uint16_t * writeOffset,
+  int32_t bufferInc,
+  const int32_t * src,
+  int32_t srcInc,
+  uint32_t blockSize)
   {
     uint32_t i = 0u;
     int32_t wOffset;
@@ -5775,21 +6274,21 @@ extern "C"
     i = blockSize;
 
     while(i > 0u)
-      {
-	/* copy the input sample to the circular buffer */
-	circBuffer[wOffset] = *src;
+    {
+      /* copy the input sample to the circular buffer */
+      circBuffer[wOffset] = *src;
 
-	/* Update the input pointer */
-	src += srcInc;
+      /* Update the input pointer */
+      src += srcInc;
 
-	/* Circularly update wOffset.  Watch out for positive and negative value */
-	wOffset += bufferInc;
-	if(wOffset >= L)
-	  wOffset -= L;
+      /* Circularly update wOffset.  Watch out for positive and negative value */
+      wOffset += bufferInc;
+      if(wOffset >= L)
+        wOffset -= L;
 
-	/* Decrement the loop counter */
-	i--;
-      }
+      /* Decrement the loop counter */
+      i--;
+    }
 
     /* Update the index pointer */
     *writeOffset = wOffset;
@@ -5801,15 +6300,15 @@ extern "C"
    * @brief floating-point Circular Read function.
    */
   __STATIC_INLINE void arm_circularRead_f32(
-					    int32_t * circBuffer,
-					    int32_t L,
-					    int32_t * readOffset,
-					    int32_t bufferInc,
-					    int32_t * dst,
-					    int32_t * dst_base,
-					    int32_t dst_length,
-					    int32_t dstInc,
-					    uint32_t blockSize)
+  int32_t * circBuffer,
+  int32_t L,
+  int32_t * readOffset,
+  int32_t bufferInc,
+  int32_t * dst,
+  int32_t * dst_base,
+  int32_t dst_length,
+  int32_t dstInc,
+  uint32_t blockSize)
   {
     uint32_t i = 0u;
     int32_t rOffset, dst_end;
@@ -5823,29 +6322,29 @@ extern "C"
     i = blockSize;
 
     while(i > 0u)
+    {
+      /* copy the sample from the circular buffer to the destination buffer */
+      *dst = circBuffer[rOffset];
+
+      /* Update the input pointer */
+      dst += dstInc;
+
+      if(dst == (int32_t *) dst_end)
       {
-	/* copy the sample from the circular buffer to the destination buffer */
-	*dst = circBuffer[rOffset];
-
-	/* Update the input pointer */
-	dst += dstInc;
-
-	if(dst == (int32_t *) dst_end)
-	  {
-	    dst = dst_base;
-	  }
-
-	/* Circularly update rOffset.  Watch out for positive and negative value  */
-	rOffset += bufferInc;
-
-	if(rOffset >= L)
-	  {
-	    rOffset -= L;
-	  }
-
-	/* Decrement the loop counter */
-	i--;
+        dst = dst_base;
       }
+
+      /* Circularly update rOffset.  Watch out for positive and negative value  */
+      rOffset += bufferInc;
+
+      if(rOffset >= L)
+      {
+        rOffset -= L;
+      }
+
+      /* Decrement the loop counter */
+      i--;
+    }
 
     /* Update the index pointer */
     *readOffset = rOffset;
@@ -5856,13 +6355,13 @@ extern "C"
    */
 
   __STATIC_INLINE void arm_circularWrite_q15(
-					     q15_t * circBuffer,
-					     int32_t L,
-					     uint16_t * writeOffset,
-					     int32_t bufferInc,
-					     const q15_t * src,
-					     int32_t srcInc,
-					     uint32_t blockSize)
+  q15_t * circBuffer,
+  int32_t L,
+  uint16_t * writeOffset,
+  int32_t bufferInc,
+  const q15_t * src,
+  int32_t srcInc,
+  uint32_t blockSize)
   {
     uint32_t i = 0u;
     int32_t wOffset;
@@ -5875,21 +6374,21 @@ extern "C"
     i = blockSize;
 
     while(i > 0u)
-      {
-	/* copy the input sample to the circular buffer */
-	circBuffer[wOffset] = *src;
+    {
+      /* copy the input sample to the circular buffer */
+      circBuffer[wOffset] = *src;
 
-	/* Update the input pointer */
-	src += srcInc;
+      /* Update the input pointer */
+      src += srcInc;
 
-	/* Circularly update wOffset.  Watch out for positive and negative value */
-	wOffset += bufferInc;
-	if(wOffset >= L)
-	  wOffset -= L;
+      /* Circularly update wOffset.  Watch out for positive and negative value */
+      wOffset += bufferInc;
+      if(wOffset >= L)
+        wOffset -= L;
 
-	/* Decrement the loop counter */
-	i--;
-      }
+      /* Decrement the loop counter */
+      i--;
+    }
 
     /* Update the index pointer */
     *writeOffset = wOffset;
@@ -5901,15 +6400,15 @@ extern "C"
    * @brief Q15 Circular Read function.
    */
   __STATIC_INLINE void arm_circularRead_q15(
-					    q15_t * circBuffer,
-					    int32_t L,
-					    int32_t * readOffset,
-					    int32_t bufferInc,
-					    q15_t * dst,
-					    q15_t * dst_base,
-					    int32_t dst_length,
-					    int32_t dstInc,
-					    uint32_t blockSize)
+  q15_t * circBuffer,
+  int32_t L,
+  int32_t * readOffset,
+  int32_t bufferInc,
+  q15_t * dst,
+  q15_t * dst_base,
+  int32_t dst_length,
+  int32_t dstInc,
+  uint32_t blockSize)
   {
     uint32_t i = 0;
     int32_t rOffset, dst_end;
@@ -5924,29 +6423,29 @@ extern "C"
     i = blockSize;
 
     while(i > 0u)
+    {
+      /* copy the sample from the circular buffer to the destination buffer */
+      *dst = circBuffer[rOffset];
+
+      /* Update the input pointer */
+      dst += dstInc;
+
+      if(dst == (q15_t *) dst_end)
       {
-	/* copy the sample from the circular buffer to the destination buffer */
-	*dst = circBuffer[rOffset];
-
-	/* Update the input pointer */
-	dst += dstInc;
-
-	if(dst == (q15_t *) dst_end)
-	  {
-	    dst = dst_base;
-	  }
-
-	/* Circularly update wOffset.  Watch out for positive and negative value */
-	rOffset += bufferInc;
-
-	if(rOffset >= L)
-	  {
-	    rOffset -= L;
-	  }
-
-	/* Decrement the loop counter */
-	i--;
+        dst = dst_base;
       }
+
+      /* Circularly update wOffset.  Watch out for positive and negative value */
+      rOffset += bufferInc;
+
+      if(rOffset >= L)
+      {
+        rOffset -= L;
+      }
+
+      /* Decrement the loop counter */
+      i--;
+    }
 
     /* Update the index pointer */
     *readOffset = rOffset;
@@ -5958,13 +6457,13 @@ extern "C"
    */
 
   __STATIC_INLINE void arm_circularWrite_q7(
-					    q7_t * circBuffer,
-					    int32_t L,
-					    uint16_t * writeOffset,
-					    int32_t bufferInc,
-					    const q7_t * src,
-					    int32_t srcInc,
-					    uint32_t blockSize)
+  q7_t * circBuffer,
+  int32_t L,
+  uint16_t * writeOffset,
+  int32_t bufferInc,
+  const q7_t * src,
+  int32_t srcInc,
+  uint32_t blockSize)
   {
     uint32_t i = 0u;
     int32_t wOffset;
@@ -5977,21 +6476,21 @@ extern "C"
     i = blockSize;
 
     while(i > 0u)
-      {
-	/* copy the input sample to the circular buffer */
-	circBuffer[wOffset] = *src;
+    {
+      /* copy the input sample to the circular buffer */
+      circBuffer[wOffset] = *src;
 
-	/* Update the input pointer */
-	src += srcInc;
+      /* Update the input pointer */
+      src += srcInc;
 
-	/* Circularly update wOffset.  Watch out for positive and negative value */
-	wOffset += bufferInc;
-	if(wOffset >= L)
-	  wOffset -= L;
+      /* Circularly update wOffset.  Watch out for positive and negative value */
+      wOffset += bufferInc;
+      if(wOffset >= L)
+        wOffset -= L;
 
-	/* Decrement the loop counter */
-	i--;
-      }
+      /* Decrement the loop counter */
+      i--;
+    }
 
     /* Update the index pointer */
     *writeOffset = wOffset;
@@ -6003,15 +6502,15 @@ extern "C"
    * @brief Q7 Circular Read function.
    */
   __STATIC_INLINE void arm_circularRead_q7(
-					   q7_t * circBuffer,
-					   int32_t L,
-					   int32_t * readOffset,
-					   int32_t bufferInc,
-					   q7_t * dst,
-					   q7_t * dst_base,
-					   int32_t dst_length,
-					   int32_t dstInc,
-					   uint32_t blockSize)
+  q7_t * circBuffer,
+  int32_t L,
+  int32_t * readOffset,
+  int32_t bufferInc,
+  q7_t * dst,
+  q7_t * dst_base,
+  int32_t dst_length,
+  int32_t dstInc,
+  uint32_t blockSize)
   {
     uint32_t i = 0;
     int32_t rOffset, dst_end;
@@ -6026,29 +6525,29 @@ extern "C"
     i = blockSize;
 
     while(i > 0u)
+    {
+      /* copy the sample from the circular buffer to the destination buffer */
+      *dst = circBuffer[rOffset];
+
+      /* Update the input pointer */
+      dst += dstInc;
+
+      if(dst == (q7_t *) dst_end)
       {
-	/* copy the sample from the circular buffer to the destination buffer */
-	*dst = circBuffer[rOffset];
-
-	/* Update the input pointer */
-	dst += dstInc;
-
-	if(dst == (q7_t *) dst_end)
-	  {
-	    dst = dst_base;
-	  }
-
-	/* Circularly update rOffset.  Watch out for positive and negative value */
-	rOffset += bufferInc;
-
-	if(rOffset >= L)
-	  {
-	    rOffset -= L;
-	  }
-
-	/* Decrement the loop counter */
-	i--;
+        dst = dst_base;
       }
+
+      /* Circularly update rOffset.  Watch out for positive and negative value */
+      rOffset += bufferInc;
+
+      if(rOffset >= L)
+      {
+        rOffset -= L;
+      }
+
+      /* Decrement the loop counter */
+      i--;
+    }
 
     /* Update the index pointer */
     *readOffset = rOffset;
@@ -6064,9 +6563,9 @@ extern "C"
    */
 
   void arm_power_q31(
-		      q31_t * pSrc,
-		     uint32_t blockSize,
-		     q63_t * pResult);
+  q31_t * pSrc,
+  uint32_t blockSize,
+  q63_t * pResult);
 
   /**
    * @brief  Sum of the squares of the elements of a floating-point vector.
@@ -6077,9 +6576,9 @@ extern "C"
    */
 
   void arm_power_f32(
-		      float32_t * pSrc,
-		     uint32_t blockSize,
-		     float32_t * pResult);
+  float32_t * pSrc,
+  uint32_t blockSize,
+  float32_t * pResult);
 
   /**
    * @brief  Sum of the squares of the elements of a Q15 vector.
@@ -6090,9 +6589,9 @@ extern "C"
    */
 
   void arm_power_q15(
-		      q15_t * pSrc,
-		     uint32_t blockSize,
-		     q63_t * pResult);
+  q15_t * pSrc,
+  uint32_t blockSize,
+  q63_t * pResult);
 
   /**
    * @brief  Sum of the squares of the elements of a Q7 vector.
@@ -6103,9 +6602,9 @@ extern "C"
    */
 
   void arm_power_q7(
-		     q7_t * pSrc,
-		    uint32_t blockSize,
-		    q31_t * pResult);
+  q7_t * pSrc,
+  uint32_t blockSize,
+  q31_t * pResult);
 
   /**
    * @brief  Mean value of a Q7 vector.
@@ -6116,9 +6615,9 @@ extern "C"
    */
 
   void arm_mean_q7(
-		    q7_t * pSrc,
-		   uint32_t blockSize,
-		   q7_t * pResult);
+  q7_t * pSrc,
+  uint32_t blockSize,
+  q7_t * pResult);
 
   /**
    * @brief  Mean value of a Q15 vector.
@@ -6128,9 +6627,9 @@ extern "C"
    * @return none.
    */
   void arm_mean_q15(
-		     q15_t * pSrc,
-		    uint32_t blockSize,
-		    q15_t * pResult);
+  q15_t * pSrc,
+  uint32_t blockSize,
+  q15_t * pResult);
 
   /**
    * @brief  Mean value of a Q31 vector.
@@ -6140,9 +6639,9 @@ extern "C"
    * @return none.
    */
   void arm_mean_q31(
-		     q31_t * pSrc,
-		    uint32_t blockSize,
-		    q31_t * pResult);
+  q31_t * pSrc,
+  uint32_t blockSize,
+  q31_t * pResult);
 
   /**
    * @brief  Mean value of a floating-point vector.
@@ -6152,9 +6651,9 @@ extern "C"
    * @return none.
    */
   void arm_mean_f32(
-		     float32_t * pSrc,
-		    uint32_t blockSize,
-		    float32_t * pResult);
+  float32_t * pSrc,
+  uint32_t blockSize,
+  float32_t * pResult);
 
   /**
    * @brief  Variance of the elements of a floating-point vector.
@@ -6165,9 +6664,9 @@ extern "C"
    */
 
   void arm_var_f32(
-		    float32_t * pSrc,
-		   uint32_t blockSize,
-		   float32_t * pResult);
+  float32_t * pSrc,
+  uint32_t blockSize,
+  float32_t * pResult);
 
   /**
    * @brief  Variance of the elements of a Q31 vector.
@@ -6178,9 +6677,9 @@ extern "C"
    */
 
   void arm_var_q31(
-		    q31_t * pSrc,
-		   uint32_t blockSize,
-		   q63_t * pResult);
+  q31_t * pSrc,
+  uint32_t blockSize,
+  q63_t * pResult);
 
   /**
    * @brief  Variance of the elements of a Q15 vector.
@@ -6191,9 +6690,9 @@ extern "C"
    */
 
   void arm_var_q15(
-		    q15_t * pSrc,
-		   uint32_t blockSize,
-		   q31_t * pResult);
+  q15_t * pSrc,
+  uint32_t blockSize,
+  q31_t * pResult);
 
   /**
    * @brief  Root Mean Square of the elements of a floating-point vector.
@@ -6204,9 +6703,9 @@ extern "C"
    */
 
   void arm_rms_f32(
-		    float32_t * pSrc,
-		   uint32_t blockSize,
-		   float32_t * pResult);
+  float32_t * pSrc,
+  uint32_t blockSize,
+  float32_t * pResult);
 
   /**
    * @brief  Root Mean Square of the elements of a Q31 vector.
@@ -6217,9 +6716,9 @@ extern "C"
    */
 
   void arm_rms_q31(
-		    q31_t * pSrc,
-		   uint32_t blockSize,
-		   q31_t * pResult);
+  q31_t * pSrc,
+  uint32_t blockSize,
+  q31_t * pResult);
 
   /**
    * @brief  Root Mean Square of the elements of a Q15 vector.
@@ -6230,9 +6729,9 @@ extern "C"
    */
 
   void arm_rms_q15(
-		    q15_t * pSrc,
-		   uint32_t blockSize,
-		   q15_t * pResult);
+  q15_t * pSrc,
+  uint32_t blockSize,
+  q15_t * pResult);
 
   /**
    * @brief  Standard deviation of the elements of a floating-point vector.
@@ -6243,9 +6742,9 @@ extern "C"
    */
 
   void arm_std_f32(
-		    float32_t * pSrc,
-		   uint32_t blockSize,
-		   float32_t * pResult);
+  float32_t * pSrc,
+  uint32_t blockSize,
+  float32_t * pResult);
 
   /**
    * @brief  Standard deviation of the elements of a Q31 vector.
@@ -6256,9 +6755,9 @@ extern "C"
    */
 
   void arm_std_q31(
-		    q31_t * pSrc,
-		   uint32_t blockSize,
-		   q31_t * pResult);
+  q31_t * pSrc,
+  uint32_t blockSize,
+  q31_t * pResult);
 
   /**
    * @brief  Standard deviation of the elements of a Q15 vector.
@@ -6269,9 +6768,9 @@ extern "C"
    */
 
   void arm_std_q15(
-		    q15_t * pSrc,
-		   uint32_t blockSize,
-		   q15_t * pResult);
+  q15_t * pSrc,
+  uint32_t blockSize,
+  q15_t * pResult);
 
   /**
    * @brief  Floating-point complex magnitude
@@ -6282,9 +6781,9 @@ extern "C"
    */
 
   void arm_cmplx_mag_f32(
-			  float32_t * pSrc,
-			 float32_t * pDst,
-			 uint32_t numSamples);
+  float32_t * pSrc,
+  float32_t * pDst,
+  uint32_t numSamples);
 
   /**
    * @brief  Q31 complex magnitude
@@ -6295,9 +6794,9 @@ extern "C"
    */
 
   void arm_cmplx_mag_q31(
-			  q31_t * pSrc,
-			 q31_t * pDst,
-			 uint32_t numSamples);
+  q31_t * pSrc,
+  q31_t * pDst,
+  uint32_t numSamples);
 
   /**
    * @brief  Q15 complex magnitude
@@ -6308,9 +6807,9 @@ extern "C"
    */
 
   void arm_cmplx_mag_q15(
-			  q15_t * pSrc,
-			 q15_t * pDst,
-			 uint32_t numSamples);
+  q15_t * pSrc,
+  q15_t * pDst,
+  uint32_t numSamples);
 
   /**
    * @brief  Q15 complex dot product
@@ -6323,11 +6822,11 @@ extern "C"
    */
 
   void arm_cmplx_dot_prod_q15(
-			       q15_t * pSrcA,
-			       q15_t * pSrcB,
-			      uint32_t numSamples,
-			      q31_t * realResult,
-			      q31_t * imagResult);
+  q15_t * pSrcA,
+  q15_t * pSrcB,
+  uint32_t numSamples,
+  q31_t * realResult,
+  q31_t * imagResult);
 
   /**
    * @brief  Q31 complex dot product
@@ -6340,11 +6839,11 @@ extern "C"
    */
 
   void arm_cmplx_dot_prod_q31(
-			       q31_t * pSrcA,
-			       q31_t * pSrcB,
-			      uint32_t numSamples,
-			      q63_t * realResult,
-			      q63_t * imagResult);
+  q31_t * pSrcA,
+  q31_t * pSrcB,
+  uint32_t numSamples,
+  q63_t * realResult,
+  q63_t * imagResult);
 
   /**
    * @brief  Floating-point complex dot product
@@ -6357,11 +6856,11 @@ extern "C"
    */
 
   void arm_cmplx_dot_prod_f32(
-			       float32_t * pSrcA,
-			       float32_t * pSrcB,
-			      uint32_t numSamples,
-			      float32_t * realResult,
-			      float32_t * imagResult);
+  float32_t * pSrcA,
+  float32_t * pSrcB,
+  uint32_t numSamples,
+  float32_t * realResult,
+  float32_t * imagResult);
 
   /**
    * @brief  Q15 complex-by-real multiplication
@@ -6373,10 +6872,10 @@ extern "C"
    */
 
   void arm_cmplx_mult_real_q15(
-			        q15_t * pSrcCmplx,
-			        q15_t * pSrcReal,
-			       q15_t * pCmplxDst,
-			       uint32_t numSamples);
+  q15_t * pSrcCmplx,
+  q15_t * pSrcReal,
+  q15_t * pCmplxDst,
+  uint32_t numSamples);
 
   /**
    * @brief  Q31 complex-by-real multiplication
@@ -6388,10 +6887,10 @@ extern "C"
    */
 
   void arm_cmplx_mult_real_q31(
-			        q31_t * pSrcCmplx,
-			        q31_t * pSrcReal,
-			       q31_t * pCmplxDst,
-			       uint32_t numSamples);
+  q31_t * pSrcCmplx,
+  q31_t * pSrcReal,
+  q31_t * pCmplxDst,
+  uint32_t numSamples);
 
   /**
    * @brief  Floating-point complex-by-real multiplication
@@ -6403,10 +6902,10 @@ extern "C"
    */
 
   void arm_cmplx_mult_real_f32(
-			        float32_t * pSrcCmplx,
-			        float32_t * pSrcReal,
-			       float32_t * pCmplxDst,
-			       uint32_t numSamples);
+  float32_t * pSrcCmplx,
+  float32_t * pSrcReal,
+  float32_t * pCmplxDst,
+  uint32_t numSamples);
 
   /**
    * @brief  Minimum value of a Q7 vector.
@@ -6418,10 +6917,10 @@ extern "C"
    */
 
   void arm_min_q7(
-		   q7_t * pSrc,
-		  uint32_t blockSize,
-		  q7_t * result,
-		  uint32_t * index);
+  q7_t * pSrc,
+  uint32_t blockSize,
+  q7_t * result,
+  uint32_t * index);
 
   /**
    * @brief  Minimum value of a Q15 vector.
@@ -6433,10 +6932,10 @@ extern "C"
    */
 
   void arm_min_q15(
-		    q15_t * pSrc,
-		   uint32_t blockSize,
-		   q15_t * pResult,
-		   uint32_t * pIndex);
+  q15_t * pSrc,
+  uint32_t blockSize,
+  q15_t * pResult,
+  uint32_t * pIndex);
 
   /**
    * @brief  Minimum value of a Q31 vector.
@@ -6447,10 +6946,10 @@ extern "C"
    * @return none.
    */
   void arm_min_q31(
-		    q31_t * pSrc,
-		   uint32_t blockSize,
-		   q31_t * pResult,
-		   uint32_t * pIndex);
+  q31_t * pSrc,
+  uint32_t blockSize,
+  q31_t * pResult,
+  uint32_t * pIndex);
 
   /**
    * @brief  Minimum value of a floating-point vector.
@@ -6462,10 +6961,10 @@ extern "C"
    */
 
   void arm_min_f32(
-		    float32_t * pSrc,
-		   uint32_t blockSize,
-		   float32_t * pResult,
-		   uint32_t * pIndex);
+  float32_t * pSrc,
+  uint32_t blockSize,
+  float32_t * pResult,
+  uint32_t * pIndex);
 
 /**
  * @brief Maximum value of a Q7 vector.
@@ -6477,10 +6976,10 @@ extern "C"
  */
 
   void arm_max_q7(
-		   q7_t * pSrc,
-		  uint32_t blockSize,
-		  q7_t * pResult,
-		  uint32_t * pIndex);
+  q7_t * pSrc,
+  uint32_t blockSize,
+  q7_t * pResult,
+  uint32_t * pIndex);
 
 /**
  * @brief Maximum value of a Q15 vector.
@@ -6492,10 +6991,10 @@ extern "C"
  */
 
   void arm_max_q15(
-		    q15_t * pSrc,
-		   uint32_t blockSize,
-		   q15_t * pResult,
-		   uint32_t * pIndex);
+  q15_t * pSrc,
+  uint32_t blockSize,
+  q15_t * pResult,
+  uint32_t * pIndex);
 
 /**
  * @brief Maximum value of a Q31 vector.
@@ -6507,10 +7006,10 @@ extern "C"
  */
 
   void arm_max_q31(
-		    q31_t * pSrc,
-		   uint32_t blockSize,
-		   q31_t * pResult,
-		   uint32_t * pIndex);
+  q31_t * pSrc,
+  uint32_t blockSize,
+  q31_t * pResult,
+  uint32_t * pIndex);
 
 /**
  * @brief Maximum value of a floating-point vector.
@@ -6522,10 +7021,10 @@ extern "C"
  */
 
   void arm_max_f32(
-		    float32_t * pSrc,
-		   uint32_t blockSize,
-		   float32_t * pResult,
-		   uint32_t * pIndex);
+  float32_t * pSrc,
+  uint32_t blockSize,
+  float32_t * pResult,
+  uint32_t * pIndex);
 
   /**
    * @brief  Q15 complex-by-complex multiplication
@@ -6537,10 +7036,10 @@ extern "C"
    */
 
   void arm_cmplx_mult_cmplx_q15(
-			        q15_t * pSrcA,
-			        q15_t * pSrcB,
-			       q15_t * pDst,
-			       uint32_t numSamples);
+  q15_t * pSrcA,
+  q15_t * pSrcB,
+  q15_t * pDst,
+  uint32_t numSamples);
 
   /**
    * @brief  Q31 complex-by-complex multiplication
@@ -6552,10 +7051,10 @@ extern "C"
    */
 
   void arm_cmplx_mult_cmplx_q31(
-			        q31_t * pSrcA,
-			        q31_t * pSrcB,
-			       q31_t * pDst,
-			       uint32_t numSamples);
+  q31_t * pSrcA,
+  q31_t * pSrcB,
+  q31_t * pDst,
+  uint32_t numSamples);
 
   /**
    * @brief  Floating-point complex-by-complex multiplication
@@ -6567,46 +7066,46 @@ extern "C"
    */
 
   void arm_cmplx_mult_cmplx_f32(
-			        float32_t * pSrcA,
-			        float32_t * pSrcB,
-			       float32_t * pDst,
-			       uint32_t numSamples);
+  float32_t * pSrcA,
+  float32_t * pSrcB,
+  float32_t * pDst,
+  uint32_t numSamples);
 
   /**
-   * @brief Converts the elements of the floating-point vector to Q31 vector.
-   * @param[in]       *pSrc points to the floating-point input vector
+   * @brief Converts the elements of the floating-point vector to Q31 vector. 
+   * @param[in]       *pSrc points to the floating-point input vector 
    * @param[out]      *pDst points to the Q31 output vector
-   * @param[in]       blockSize length of the input vector
-   * @return none.
+   * @param[in]       blockSize length of the input vector 
+   * @return none. 
    */
   void arm_float_to_q31(
-			       float32_t * pSrc,
-			      q31_t * pDst,
-			      uint32_t blockSize);
+  float32_t * pSrc,
+  q31_t * pDst,
+  uint32_t blockSize);
 
   /**
-   * @brief Converts the elements of the floating-point vector to Q15 vector.
-   * @param[in]       *pSrc points to the floating-point input vector
+   * @brief Converts the elements of the floating-point vector to Q15 vector. 
+   * @param[in]       *pSrc points to the floating-point input vector 
    * @param[out]      *pDst points to the Q15 output vector
-   * @param[in]       blockSize length of the input vector
+   * @param[in]       blockSize length of the input vector 
    * @return          none
    */
   void arm_float_to_q15(
-			       float32_t * pSrc,
-			      q15_t * pDst,
-			      uint32_t blockSize);
+  float32_t * pSrc,
+  q15_t * pDst,
+  uint32_t blockSize);
 
   /**
-   * @brief Converts the elements of the floating-point vector to Q7 vector.
-   * @param[in]       *pSrc points to the floating-point input vector
+   * @brief Converts the elements of the floating-point vector to Q7 vector. 
+   * @param[in]       *pSrc points to the floating-point input vector 
    * @param[out]      *pDst points to the Q7 output vector
-   * @param[in]       blockSize length of the input vector
+   * @param[in]       blockSize length of the input vector 
    * @return          none
    */
   void arm_float_to_q7(
-			      float32_t * pSrc,
-			     q7_t * pDst,
-			     uint32_t blockSize);
+  float32_t * pSrc,
+  q7_t * pDst,
+  uint32_t blockSize);
 
 
   /**
@@ -6617,9 +7116,9 @@ extern "C"
    * @return none.
    */
   void arm_q31_to_q15(
-		       q31_t * pSrc,
-		      q15_t * pDst,
-		      uint32_t blockSize);
+  q31_t * pSrc,
+  q15_t * pDst,
+  uint32_t blockSize);
 
   /**
    * @brief  Converts the elements of the Q31 vector to Q7 vector.
@@ -6629,9 +7128,9 @@ extern "C"
    * @return none.
    */
   void arm_q31_to_q7(
-		      q31_t * pSrc,
-		     q7_t * pDst,
-		     uint32_t blockSize);
+  q31_t * pSrc,
+  q7_t * pDst,
+  uint32_t blockSize);
 
   /**
    * @brief  Converts the elements of the Q15 vector to floating-point vector.
@@ -6641,9 +7140,9 @@ extern "C"
    * @return none.
    */
   void arm_q15_to_float(
-			 q15_t * pSrc,
-			float32_t * pDst,
-			uint32_t blockSize);
+  q15_t * pSrc,
+  float32_t * pDst,
+  uint32_t blockSize);
 
 
   /**
@@ -6654,9 +7153,9 @@ extern "C"
    * @return none.
    */
   void arm_q15_to_q31(
-		       q15_t * pSrc,
-		      q31_t * pDst,
-		      uint32_t blockSize);
+  q15_t * pSrc,
+  q31_t * pDst,
+  uint32_t blockSize);
 
 
   /**
@@ -6667,9 +7166,9 @@ extern "C"
    * @return none.
    */
   void arm_q15_to_q7(
-		      q15_t * pSrc,
-		     q7_t * pDst,
-		     uint32_t blockSize);
+  q15_t * pSrc,
+  q7_t * pDst,
+  uint32_t blockSize);
 
 
   /**
@@ -6720,12 +7219,12 @@ extern "C"
    *           + f(XF, YF+1) * (1-(x-XF))*(y-YF)
    *           + f(XF+1, YF+1) * (x-XF)*(y-YF)
    * </pre>
-   * Note that the coordinates (x, y) contain integer and fractional components.
+   * Note that the coordinates (x, y) contain integer and fractional components.  
    * The integer components specify which portion of the table to use while the
    * fractional components control the interpolation processor.
    *
    * \par
-   * if (x,y) are outside of the table boundary, Bilinear interpolation returns zero output.
+   * if (x,y) are outside of the table boundary, Bilinear interpolation returns zero output. 
    */
 
   /**
@@ -6744,9 +7243,9 @@ extern "C"
 
 
   __STATIC_INLINE float32_t arm_bilinear_interp_f32(
-						    const arm_bilinear_interp_instance_f32 * S,
-						    float32_t X,
-						    float32_t Y)
+  const arm_bilinear_interp_instance_f32 * S,
+  float32_t X,
+  float32_t Y)
   {
     float32_t out;
     float32_t f00, f01, f10, f11;
@@ -6758,15 +7257,16 @@ extern "C"
     xIndex = (int32_t) X;
     yIndex = (int32_t) Y;
 
-	/* Care taken for table outside boundary */
-	/* Returns zero output when values are outside table boundary */
-	if(xIndex < 0 || xIndex > (S->numRows-1) || yIndex < 0  || yIndex > ( S->numCols-1))
-	{
-		return(0);
-	}
+    /* Care taken for table outside boundary */
+    /* Returns zero output when values are outside table boundary */
+    if(xIndex < 0 || xIndex > (S->numRows - 1) || yIndex < 0
+       || yIndex > (S->numCols - 1))
+    {
+      return (0);
+    }
 
     /* Calculation of index for two nearest points in X-direction */
-    index = (xIndex - 1) + (yIndex-1) *  S->numCols ;
+    index = (xIndex - 1) + (yIndex - 1) * S->numCols;
 
 
     /* Read two nearest points in X-direction */
@@ -6774,7 +7274,7 @@ extern "C"
     f01 = pData[index + 1];
 
     /* Calculation of index for two nearest points in Y-direction */
-    index = (xIndex-1) + (yIndex) * S->numCols;
+    index = (xIndex - 1) + (yIndex) * S->numCols;
 
 
     /* Read two nearest points in Y-direction */
@@ -6794,9 +7294,9 @@ extern "C"
     ydiff = Y - yIndex;
 
     /* Calculation of bi-linear interpolated output */
-     out = b1 + b2 * xdiff + b3 * ydiff + b4 * xdiff * ydiff;
+    out = b1 + b2 * xdiff + b3 * ydiff + b4 * xdiff * ydiff;
 
-   /* return to application */
+    /* return to application */
     return (out);
 
   }
@@ -6811,15 +7311,15 @@ extern "C"
   */
 
   __STATIC_INLINE q31_t arm_bilinear_interp_q31(
-						arm_bilinear_interp_instance_q31 * S,
-						q31_t X,
-						q31_t Y)
+  arm_bilinear_interp_instance_q31 * S,
+  q31_t X,
+  q31_t Y)
   {
     q31_t out;                                   /* Temporary output */
     q31_t acc = 0;                               /* output */
     q31_t xfract, yfract;                        /* X, Y fractional parts */
     q31_t x1, x2, y1, y2;                        /* Nearest output values */
-    int32_t rI, cI;                             /* Row and column indices */
+    int32_t rI, cI;                              /* Row and column indices */
     q31_t *pYData = S->pData;                    /* pointer to output table values */
     uint32_t nCols = S->numCols;                 /* num of rows */
 
@@ -6834,12 +7334,12 @@ extern "C"
     /* Index value calculation */
     cI = ((Y & 0xFFF00000) >> 20u);
 
-	/* Care taken for table outside boundary */
-	/* Returns zero output when values are outside table boundary */
-	if(rI < 0 || rI > (S->numRows-1) || cI < 0  || cI > ( S->numCols-1))
-	{
-		return(0);
-	}
+    /* Care taken for table outside boundary */
+    /* Returns zero output when values are outside table boundary */
+    if(rI < 0 || rI > (S->numRows - 1) || cI < 0 || cI > (S->numCols - 1))
+    {
+      return (0);
+    }
 
     /* 20 bits for the fractional part */
     /* shift left xfract by 11 to keep 1.31 format */
@@ -6887,15 +7387,15 @@ extern "C"
   */
 
   __STATIC_INLINE q15_t arm_bilinear_interp_q15(
-						arm_bilinear_interp_instance_q15 * S,
-						q31_t X,
-						q31_t Y)
+  arm_bilinear_interp_instance_q15 * S,
+  q31_t X,
+  q31_t Y)
   {
     q63_t acc = 0;                               /* output */
     q31_t out;                                   /* Temporary output */
     q15_t x1, x2, y1, y2;                        /* Nearest output values */
     q31_t xfract, yfract;                        /* X, Y fractional parts */
-    int32_t rI, cI;                             /* Row and column indices */
+    int32_t rI, cI;                              /* Row and column indices */
     q15_t *pYData = S->pData;                    /* pointer to output table values */
     uint32_t nCols = S->numCols;                 /* num of rows */
 
@@ -6909,12 +7409,12 @@ extern "C"
     /* Index value calculation */
     cI = ((Y & 0xFFF00000) >> 20);
 
-	/* Care taken for table outside boundary */
-	/* Returns zero output when values are outside table boundary */
-	if(rI < 0 || rI > (S->numRows-1) || cI < 0  || cI > ( S->numCols-1))
-	{
-		return(0);
-	}
+    /* Care taken for table outside boundary */
+    /* Returns zero output when values are outside table boundary */
+    if(rI < 0 || rI > (S->numRows - 1) || cI < 0 || cI > (S->numCols - 1))
+    {
+      return (0);
+    }
 
     /* 20 bits for the fractional part */
     /* xfract should be in 12.20 format */
@@ -6967,15 +7467,15 @@ extern "C"
   */
 
   __STATIC_INLINE q7_t arm_bilinear_interp_q7(
-					      arm_bilinear_interp_instance_q7 * S,
-					      q31_t X,
-					      q31_t Y)
+  arm_bilinear_interp_instance_q7 * S,
+  q31_t X,
+  q31_t Y)
   {
     q63_t acc = 0;                               /* output */
     q31_t out;                                   /* Temporary output */
     q31_t xfract, yfract;                        /* X, Y fractional parts */
     q7_t x1, x2, y1, y2;                         /* Nearest output values */
-    int32_t rI, cI;                             /* Row and column indices */
+    int32_t rI, cI;                              /* Row and column indices */
     q7_t *pYData = S->pData;                     /* pointer to output table values */
     uint32_t nCols = S->numCols;                 /* num of rows */
 
@@ -6989,12 +7489,12 @@ extern "C"
     /* Index value calculation */
     cI = ((Y & 0xFFF00000) >> 20);
 
-	/* Care taken for table outside boundary */
-	/* Returns zero output when values are outside table boundary */
-	if(rI < 0 || rI > (S->numRows-1) || cI < 0  || cI > ( S->numCols-1))
-	{
-		return(0);
-	}
+    /* Care taken for table outside boundary */
+    /* Returns zero output when values are outside table boundary */
+    if(rI < 0 || rI > (S->numRows - 1) || cI < 0 || cI > (S->numCols - 1))
+    {
+      return (0);
+    }
 
     /* 20 bits for the fractional part */
     /* xfract should be in 12.20 format */

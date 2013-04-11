@@ -74,10 +74,6 @@ void accelCalibration(void)
 
     rightSideUp /= 5000.0f;
 
-    ftoa(rightSideUp, numberString);
-    cliPrint(numberString);
-    cliPrint("\n\n");
-
     cliPrint("Place accelerometer up side down\n");
     cliPrint("  Send a character when ready to proceed\n\n");
 
@@ -93,10 +89,6 @@ void accelCalibration(void)
     }
 
     upSideDown /= 5000.0f;
-
-    ftoa(upSideDown, numberString);
-    cliPrint(numberString);
-    cliPrint("\n\n");
 
     eepromConfig.accelBias[ZAXIS] = (rightSideUp + upSideDown) / 2.0f;
 
@@ -120,10 +112,6 @@ void accelCalibration(void)
 
     leftWingDown /= 5000.0f;
 
-    ftoa(leftWingDown, numberString);
-    cliPrint(numberString);
-    cliPrint("\n\n");
-
     cliPrint("Place accelerometer right edge down\n");
     cliPrint("  Send a character when ready to proceed\n\n");
 
@@ -139,10 +127,6 @@ void accelCalibration(void)
     }
 
     rightWingDown /= 5000.0f;
-
-    ftoa(rightWingDown, numberString);
-    cliPrint(numberString);
-    cliPrint("\n\n");
 
     eepromConfig.accelBias[YAXIS] = (leftWingDown + rightWingDown) / 2.0f;
 
@@ -166,10 +150,6 @@ void accelCalibration(void)
 
     noseUp /= 5000.0f;
 
-    ftoa(noseUp, numberString);
-    cliPrint(numberString);
-    cliPrint("\n\n");
-
     cliPrint("Place accelerometer front edge down\n");
     cliPrint("  Send a character when ready to proceed\n\n");
 
@@ -186,74 +166,9 @@ void accelCalibration(void)
 
     noseDown /= 5000.0f;
 
-    ftoa(noseDown, numberString);
-    cliPrint(numberString);
-    cliPrint("\n\n");
-
     eepromConfig.accelBias[XAXIS] = (noseUp + noseDown) / 2.0f;
 
     eepromConfig.accelScaleFactor[XAXIS] = (2.0f * 9.8065f) / (fabs(noseUp) + fabs(noseDown));
-
-    ///////////////////////////////////
-
-    ftoa(noseUp, numberString);
-    cliPrint(numberString);
-    cliPrint(", ");
-    ftoa(noseDown, numberString);
-    cliPrint(numberString);
-    cliPrint(", ");
-    ftoa(eepromConfig.accelScaleFactor[XAXIS], numberString);
-    cliPrint(numberString);
-    cliPrint(", ");
-    ftoa(eepromConfig.accelBias[XAXIS], numberString);
-    cliPrint(numberString);
-    cliPrint(", ");
-    ftoa((noseUp - eepromConfig.accelBias[XAXIS]) * eepromConfig.accelScaleFactor[XAXIS], numberString);
-    cliPrint(numberString);
-    cliPrint(", ");
-    ftoa((noseDown - eepromConfig.accelBias[XAXIS]) * eepromConfig.accelScaleFactor[XAXIS], numberString);
-    cliPrint(numberString);
-    cliPrint("\n\n");
-
-    ftoa(leftWingDown, numberString);
-    cliPrint(numberString);
-    cliPrint(", ");
-    ftoa(rightWingDown, numberString);
-    cliPrint(numberString);
-    cliPrint(", ");
-    ftoa(eepromConfig.accelScaleFactor[YAXIS], numberString);
-    cliPrint(numberString);
-    cliPrint(", ");
-    ftoa(eepromConfig.accelBias[YAXIS], numberString);
-    cliPrint(numberString);
-    cliPrint(", ");
-    ftoa((leftWingDown - eepromConfig.accelBias[YAXIS]) * eepromConfig.accelScaleFactor[YAXIS], numberString);
-    cliPrint(numberString);
-    cliPrint(", ");
-    ftoa((rightWingDown - eepromConfig.accelBias[YAXIS]) * eepromConfig.accelScaleFactor[YAXIS], numberString);
-    cliPrint(numberString);
-    cliPrint("\n\n");
-
-    ftoa(upSideDown, numberString);
-    cliPrint(numberString);
-    cliPrint(", ");
-    ftoa(rightSideUp, numberString);
-    cliPrint(numberString);
-    cliPrint(", ");
-    ftoa(eepromConfig.accelScaleFactor[ZAXIS], numberString);
-    cliPrint(numberString);
-    cliPrint(", ");
-    ftoa(eepromConfig.accelBias[ZAXIS], numberString);
-    cliPrint(numberString);
-    cliPrint(", ");
-    ftoa((upSideDown - eepromConfig.accelBias[ZAXIS]) * eepromConfig.accelScaleFactor[ZAXIS], numberString);
-    cliPrint(numberString);
-    cliPrint(", ");
-    ftoa((rightSideUp - eepromConfig.accelBias[ZAXIS]) * eepromConfig.accelScaleFactor[ZAXIS], numberString);
-    cliPrint(numberString);
-    cliPrint("\n");
-
-    cliPrint("\nAccel Calibration Complete.\n");
 
     accelCalibrating = false;
 }

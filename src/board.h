@@ -58,7 +58,7 @@
 
 #include "pid.h"
 
-#include "aq32Plus.h"
+#include "aq32PlusF3.h"
 
 #include "drv_cli.h"
 #include "drv_gps.h"

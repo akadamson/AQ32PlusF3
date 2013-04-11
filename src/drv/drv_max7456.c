@@ -378,8 +378,7 @@ void downloadMax7456Font(void)
 
     for (ch = 0; ch < 256; ch++)
     {
-        itoa(ch, numberString, 10);
-        cliPrint(numberString);
+        cliPrintF("%d3", ch);
         writeNVMcharacter(ch, 64*ch);
         delay(30);
         cliPrint(" Done\n");

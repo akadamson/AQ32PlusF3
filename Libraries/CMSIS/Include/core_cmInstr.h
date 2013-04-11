@@ -1,8 +1,8 @@
 /**************************************************************************//**
  * @file     core_cmInstr.h
  * @brief    CMSIS Cortex-M Core Instruction Access Header File
- * @version  V3.00
- * @date     07. February 2012
+ * @version  V3.01
+ * @date     06. March 2012
  *
  * @note
  * Copyright (C) 2009-2012 ARM Limited. All rights reserved.

@@ -49,6 +49,11 @@
 // MISO PB14
 // MOSI PB15
 
+// SPI3
+// SCK  PB3
+// MISO PB4
+// MOSI PB5
+
 ///////////////////////////////////////////////////////////////////////////////
 // SPI Defines and Variables
 ///////////////////////////////////////////////////////////////////////////////
@@ -74,6 +79,17 @@
 #define SPI2_MOSI_PIN         GPIO_Pin_15
 #define SPI2_MOSI_PIN_SOURCE  GPIO_PinSource15
 #define SPI2_MOSI_CLK         RCC_AHBPeriph_GPIOB
+
+#define SPI3_GPIO             GPIOB
+#define SPI3_SCK_PIN          GPIO_Pin_3
+#define SPI3_SCK_PIN_SOURCE   GPIO_PinSource3
+#define SPI3_SCK_CLK          RCC_AHBPeriph_GPIOB
+#define SPI3_MISO_PIN         GPIO_Pin_4
+#define SPI3_MISO_PIN_SOURCE  GPIO_PinSource4
+#define SPI3_MISO_CLK         RCC_AHBPeriph_GPIOB
+#define SPI3_MOSI_PIN         GPIO_Pin_5
+#define SPI3_MOSI_PIN_SOURCE  GPIO_PinSource5
+#define SPI3_MOSI_CLK         RCC_AHBPeriph_GPIOB
 
 static volatile uint16_t spi1ErrorCount = 0;
 static volatile uint16_t spi2ErrorCount = 0;
@@ -157,6 +173,27 @@ void spiInit(SPI_TypeDef *SPIx)
         GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_NOPULL;
 
         GPIO_Init(SPI2_GPIO, &GPIO_InitStructure);
+    }
+
+    ///////////////////////////////////
+
+    if (SPIx == SPI3)
+    {
+    	RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI3, ENABLE);
+    	RCC_AHBPeriphClockCmd(SPI3_SCK_CLK | SPI3_MISO_CLK | SPI3_MOSI_CLK, ENABLE);
+
+        GPIO_PinAFConfig(SPI3_GPIO, SPI3_SCK_PIN_SOURCE,  GPIO_AF_6);
+	    GPIO_PinAFConfig(SPI3_GPIO, SPI3_MISO_PIN_SOURCE, GPIO_AF_6);
+	    GPIO_PinAFConfig(SPI3_GPIO, SPI3_MOSI_PIN_SOURCE, GPIO_AF_6);
+
+	    // Init pins
+        GPIO_InitStructure.GPIO_Pin   = SPI3_SCK_PIN | SPI3_MISO_PIN | SPI3_MOSI_PIN;
+        GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_AF;
+        GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+        GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+        GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_NOPULL;
+
+        GPIO_Init(SPI3_GPIO, &GPIO_InitStructure);
     }
 
     ///////////////////////////////////

@@ -54,13 +54,15 @@ void timingFunctionsInit(void)
 
     TIM_TimeBaseStructure.TIM_Period            = 0xFFFF;              // Just roll over counter at max value
     TIM_TimeBaseStructure.TIM_Prescaler         = 36 - 1;              // 72 MHz / 36 = 1 MHz = 0.5 uSec Tick
-    //TIM_TimeBaseStructure.TIM_ClockDivision     = TIM_CKD_DIV1;
-    //TIM_TimeBaseStructure.TIM_CounterMode       = TIM_CounterMode_Up;
-    //TIM_TimeBaseStructure.TIM_RepititionCounter = 0x0000;
+  //TIM_TimeBaseStructure.TIM_ClockDivision     = TIM_CKD_DIV1;
+  //TIM_TimeBaseStructure.TIM_CounterMode       = TIM_CounterMode_Up;
+  //TIM_TimeBaseStructure.TIM_RepititionCounter = 0x0000;
 
     TIM_TimeBaseInit(TIM6, &TIM_TimeBaseStructure);
+    TIM_TimeBaseInit(TIM7, &TIM_TimeBaseStructure);
 
     TIM_Cmd(TIM6, ENABLE);
+    TIM_Cmd(TIM7, ENABLE);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

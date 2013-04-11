@@ -52,14 +52,14 @@ uint8_t rcActive = false;
 static struct TIM_Channel { TIM_TypeDef *tim;
                             uint16_t    channel;
                             uint16_t    cc;
-                          } Channels[] = { { TIM16, TIM_Channel_1, TIM_IT_CC1 },
-                                           { TIM1,  TIM_Channel_1, TIM_IT_CC1 },
-                                           { TIM1,  TIM_Channel_2, TIM_IT_CC2 },
-                                           { TIM2,  TIM_Channel_2, TIM_IT_CC2 },
-                                           { TIM2,  TIM_Channel_3, TIM_IT_CC3 },
-                                           { TIM2,  TIM_Channel_4, TIM_IT_CC4 },
-                                           { TIM3,  TIM_Channel_1, TIM_IT_CC1 },
-                                           { TIM3,  TIM_Channel_2, TIM_IT_CC2 }, };
+                          } Channels[] = { { TIM1,  TIM_Channel_1, TIM_IT_CC1 },
+                                           { TIM16, TIM_Channel_1, TIM_IT_CC1 },
+                                           { TIM17, TIM_Channel_1, TIM_IT_CC1 },
+                                           { TIM8,  TIM_Channel_1, TIM_IT_CC1 },
+                                           { TIM8,  TIM_Channel_2, TIM_IT_CC2 },
+                                           { TIM8,  TIM_Channel_3, TIM_IT_CC3 },
+                                           { TIM15, TIM_Channel_1, TIM_IT_CC1 },
+                                           { TIM15, TIM_Channel_2, TIM_IT_CC2 }, };
 
 static struct PWM_State { uint8_t  state;          // 0 = looking for rising edge, 1 = looking for falling edge
                           uint16_t riseTime;       // Timer value at rising edge of pulse
@@ -211,23 +211,30 @@ static void parallelPWM_IRQHandler(TIM_TypeDef *tim)
 
 void TIM1_CC_IRQHandler(void)
 {
-    parallelPWM_IRQHandler(TIM1);
+    if (eepromConfig.receiverType == SERIAL_PWM)
+        serialPWM_IRQHandler(TIM1);
+    else
+        parallelPWM_IRQHandler(TIM1);
 }
 
-void TIM2_IRQHandler(void)
-{
-    parallelPWM_IRQHandler(TIM2);
-}
-void TIM3_IRQHandler(void)
-{
-    parallelPWM_IRQHandler(TIM3);
-}
 void TIM1_UP_TIM16_IRQHandler(void)
 {
-    if (eepromConfig.receiverType == SERIAL_PWM)
-        serialPWM_IRQHandler(TIM16);
-    else
-        parallelPWM_IRQHandler(TIM16);
+    parallelPWM_IRQHandler(TIM16);
+}
+
+void TIM1_TRG_COM_TIM17_IRQHandler(void)
+{
+    parallelPWM_IRQHandler(TIM17);
+}
+
+void TIM8_CC_IRQHandler(void)
+{
+    parallelPWM_IRQHandler(TIM8);
+}
+
+void TIM1_BRK_TIM15_IRQHandler(void)
+{
+    parallelPWM_IRQHandler(TIM15);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -295,11 +302,11 @@ void rxInit(void)
     if (eepromConfig.receiverType == SERIAL_PWM)
     {
         // Serial PWM Input
-    	// TIM16_CH1 PB8
+    	// TIM1_CH1 PA8
 
-        RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOB, ENABLE);
+        RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOA, ENABLE);
 
-		RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM16,  ENABLE);
+		RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM1,  ENABLE);
 
 		// preset channels to center
 		for (i = 0; i < 8; i++)
@@ -311,11 +318,11 @@ void rxInit(void)
         GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
 	    GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_NOPULL;
 
-        GPIO_Init(GPIOB, &GPIO_InitStructure);
+        GPIO_Init(GPIOA, &GPIO_InitStructure);
 
-        GPIO_PinAFConfig(GPIOB, GPIO_PinSource8, GPIO_AF_4);
+        GPIO_PinAFConfig(GPIOA, GPIO_PinSource8, GPIO_AF_4);
 
-        NVIC_InitStructure.NVIC_IRQChannel                   = TIM1_UP_TIM16_IRQn;
+        NVIC_InitStructure.NVIC_IRQChannel                   = TIM1_CC_IRQn;
         NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;
         NVIC_InitStructure.NVIC_IRQChannelSubPriority        = 0;
         NVIC_InitStructure.NVIC_IRQChannelCmd                = ENABLE;
@@ -323,10 +330,10 @@ void rxInit(void)
         NVIC_Init(&NVIC_InitStructure);
 
         TIM_TimeBaseStructure.TIM_Prescaler         = 36 - 1;
-		//TIM_TimeBaseStructure.TIM_CounterMode       = TIM_CounterMode_Up;
+	  //TIM_TimeBaseStructure.TIM_CounterMode       = TIM_CounterMode_Up;
 		TIM_TimeBaseStructure.TIM_Period            = 0xFFFF;
-		//TIM_TimeBaseStructure.TIM_ClockDivision     = TIM_CKD_DIV1;
-		//TIM_TimeBaseStructure.TIM_RepetitionCounter = 0x0000;
+	  //TIM_TimeBaseStructure.TIM_ClockDivision     = TIM_CKD_DIV1;
+	  //TIM_TimeBaseStructure.TIM_RepetitionCounter = 0x0000;
 
 		TIM_TimeBaseInit(TIM4, &TIM_TimeBaseStructure);
 
@@ -336,10 +343,10 @@ void rxInit(void)
         TIM_ICInitStructure.TIM_ICPrescaler = TIM_ICPSC_DIV1;
         TIM_ICInitStructure.TIM_ICFilter    = 0x0;
 
-        TIM_ICInit(TIM16, &TIM_ICInitStructure);
+        TIM_ICInit(TIM1, &TIM_ICInitStructure);
 
-        TIM_ITConfig(TIM16, TIM_IT_CC1, ENABLE);
-        TIM_Cmd(TIM16, ENABLE);
+        TIM_ITConfig(TIM1, TIM_IT_CC1, ENABLE);
+        TIM_Cmd(TIM1, ENABLE);
     }
 
     ///////////////////////////////////
@@ -347,29 +354,33 @@ void rxInit(void)
     else if (eepromConfig.receiverType == PARALLEL_PWM)
     {
         // Parallel PWM Inputs
-    	// RX1  TIM16_CH1 PB8
-    	// RX2  TIM1_CH1  PA8
-    	// RX3  TIM1_CH2  PA9
-    	// RX4  TIM2_CH2  PA1
-    	// RX5  TIM2_CH3  PB10
-    	// RX6  TIM2_CH4  PB11
-    	// RX7  TIM3_CH1  PC6
-    	// RX8  TIM3_CH2  PA4
+    	// RX1  TIM1_CH1   PA8
+    	// RX2  TIM16_CH1  PB8
+    	// RX3  TIM17_CH1  PB9
+    	// RX4  TIM8_CH1   PC6
+    	// RX5  TIM8_CH2   PC7
+    	// RX6  TIM8_CH3   PC8
+    	// RX7  TIM15_CH1  PF9
+    	// RX8  TIM15_CH2  PF10
 
 		RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOA, ENABLE);
         RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOB, ENABLE);
         RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOC, ENABLE);
+        RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOF, ENABLE);
 
         RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM1,  ENABLE);
-        RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2,  ENABLE);
-        RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3,  ENABLE);
         RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM16, ENABLE);
+        RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM17, ENABLE);
+        RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM8,  ENABLE);
+        RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM15, ENABLE);
 
         // preset channels to center
         for (i = 0; i < 8; i++)
             Inputs[i].pulseWidth = RX_PULSE_1p5MS;
 
-        GPIO_InitStructure.GPIO_Pin   = GPIO_Pin_1 | GPIO_Pin_4 | GPIO_Pin_8 | GPIO_Pin_9;
+        ///////////////////////////////
+
+        GPIO_InitStructure.GPIO_Pin   = GPIO_Pin_8;
         GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_AF;
         GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
         GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
@@ -377,26 +388,30 @@ void rxInit(void)
 
 	    GPIO_Init(GPIOA, &GPIO_InitStructure);
 
-        GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8 | GPIO_Pin_10 | GPIO_Pin_11;
+        GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8 | GPIO_Pin_9;
 
         GPIO_Init(GPIOB, &GPIO_InitStructure);
 
-        GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6;
+        GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7 | GPIO_Pin_8;
 
         GPIO_Init(GPIOC, &GPIO_InitStructure);
 
-    	GPIO_PinAFConfig(GPIOA, GPIO_PinSource1,  GPIO_AF_1);
-	    GPIO_PinAFConfig(GPIOA, GPIO_PinSource4,  GPIO_AF_2);
-	    GPIO_PinAFConfig(GPIOA, GPIO_PinSource8,  GPIO_AF_11);
-	    GPIO_PinAFConfig(GPIOA, GPIO_PinSource9,  GPIO_AF_11);
+        GPIO_InitStructure.GPIO_Pin = GPIO_Pin_9 | GPIO_Pin_10;
 
-        GPIO_PinAFConfig(GPIOB, GPIO_PinSource8,  GPIO_AF_4);
-        GPIO_PinAFConfig(GPIOB, GPIO_PinSource10, GPIO_AF_1);
-        GPIO_PinAFConfig(GPIOB, GPIO_PinSource11, GPIO_AF_1);
+        GPIO_Init(GPIOF, & GPIO_InitStructure);
 
-        GPIO_PinAFConfig(GPIOC, GPIO_PinSource6,  GPIO_AF_2);
+    	GPIO_PinAFConfig(GPIOA, GPIO_PinSource8,  GPIO_AF_2);
+	    GPIO_PinAFConfig(GPIOB, GPIO_PinSource8,  GPIO_AF_4);
+	    GPIO_PinAFConfig(GPIOB, GPIO_PinSource9,  GPIO_AF_4);
+	    GPIO_PinAFConfig(GPIOC, GPIO_PinSource6,  GPIO_AF_2);
+        GPIO_PinAFConfig(GPIOC, GPIO_PinSource7,  GPIO_AF_2);
+        GPIO_PinAFConfig(GPIOC, GPIO_PinSource8,  GPIO_AF_2);
+        GPIO_PinAFConfig(GPIOF, GPIO_PinSource9,  GPIO_AF_2);
+        GPIO_PinAFConfig(GPIOF, GPIO_PinSource10, GPIO_AF_2);
 
-        // Input timers on TIM1, TIM2, TIM3, and TIM16 for PWM
+        ///////////////////////////////
+
+        // Input timers on TIM1, TIM16, TIM17, TIM8, and TIM15 for PWM
         NVIC_InitStructure.NVIC_IRQChannel                   = TIM1_CC_IRQn;
         NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;
 	    NVIC_InitStructure.NVIC_IRQChannelSubPriority        = 0;
@@ -404,41 +419,53 @@ void rxInit(void)
 
         NVIC_Init(&NVIC_InitStructure);
 
-        NVIC_InitStructure.NVIC_IRQChannel                   = TIM2_IRQn;
-        //NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;
-        //NVIC_InitStructure.NVIC_IRQChannelSubPriority        = 0;
-        //NVIC_InitStructure.NVIC_IRQChannelCmd                = ENABLE;
-
-        NVIC_Init(&NVIC_InitStructure);
-
-        NVIC_InitStructure.NVIC_IRQChannel                   = TIM3_IRQn;
-        //NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;
-	    //NVIC_InitStructure.NVIC_IRQChannelSubPriority        = 0;
-        //NVIC_InitStructure.NVIC_IRQChannelCmd                = ENABLE;
-
-        NVIC_Init(&NVIC_InitStructure);
-
         NVIC_InitStructure.NVIC_IRQChannel                   = TIM1_UP_TIM16_IRQn;
-        //NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;
-	    //NVIC_InitStructure.NVIC_IRQChannelSubPriority        = 0;
-        //NVIC_InitStructure.NVIC_IRQChannelCmd                = ENABLE;
+      //NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;
+      //NVIC_InitStructure.NVIC_IRQChannelSubPriority        = 0;
+      //NVIC_InitStructure.NVIC_IRQChannelCmd                = ENABLE;
 
         NVIC_Init(&NVIC_InitStructure);
 
-        // TIM1, TIM2, TIM3 and TIM16 timebase
+        NVIC_InitStructure.NVIC_IRQChannel                   = TIM1_TRG_COM_TIM17_IRQn;
+      //NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;
+	  //NVIC_InitStructure.NVIC_IRQChannelSubPriority        = 0;
+      //NVIC_InitStructure.NVIC_IRQChannelCmd                = ENABLE;
+
+        NVIC_Init(&NVIC_InitStructure);
+
+        NVIC_InitStructure.NVIC_IRQChannel                   = TIM8_CC_IRQn;
+      //NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;
+	  //NVIC_InitStructure.NVIC_IRQChannelSubPriority        = 0;
+      //NVIC_InitStructure.NVIC_IRQChannelCmd                = ENABLE;
+
+        NVIC_Init(&NVIC_InitStructure);
+
+        NVIC_InitStructure.NVIC_IRQChannel                   = TIM1_BRK_TIM15_IRQn;
+      //NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;
+	  //NVIC_InitStructure.NVIC_IRQChannelSubPriority        = 0;
+      //NVIC_InitStructure.NVIC_IRQChannelCmd                = ENABLE;
+
+        NVIC_Init(&NVIC_InitStructure);
+
+        ///////////////////////////////
+
+        // TIM1, TIM16, TIM17, TIM8, and TIM15 timebase
         TIM_TimeBaseStructure.TIM_Prescaler         = 36 - 1;
-        //TIM_TimeBaseStructure.TIM_CounterMode       = TIM_CounterMode_Up;
+      //TIM_TimeBaseStructure.TIM_CounterMode       = TIM_CounterMode_Up;
         TIM_TimeBaseStructure.TIM_Period            = 0xFFFF;
-        //TIM_TimeBaseStructure.TIM_ClockDivision     = TIM_CKD_DIV1;
-        //TIM_TimeBaseStructure.TIM_RepetitionCounter = 0x0000;
+      //TIM_TimeBaseStructure.TIM_ClockDivision     = TIM_CKD_DIV1;
+        TIM_TimeBaseStructure.TIM_RepetitionCounter = 0x0000;
 
         TIM_TimeBaseInit(TIM1,  &TIM_TimeBaseStructure);
-        TIM_TimeBaseInit(TIM2,  &TIM_TimeBaseStructure);
-        TIM_TimeBaseInit(TIM3,  &TIM_TimeBaseStructure);
         TIM_TimeBaseInit(TIM16, &TIM_TimeBaseStructure);
+        TIM_TimeBaseInit(TIM17, &TIM_TimeBaseStructure);
+        TIM_TimeBaseInit(TIM8,  &TIM_TimeBaseStructure);
+        TIM_TimeBaseInit(TIM15, &TIM_TimeBaseStructure);
+
+        ///////////////////////////////
 
         // Parallel PWM Input capture
-        //TIM_ICInitStructure.TIM_Channel     = TIM_Channel_1;
+      //TIM_ICInitStructure.TIM_Channel     = TIM_Channel_1;
         TIM_ICInitStructure.TIM_ICPolarity  = TIM_ICPolarity_Rising;
         TIM_ICInitStructure.TIM_ICSelection = TIM_ICSelection_DirectTI;
         TIM_ICInitStructure.TIM_ICPrescaler = TIM_ICPSC_DIV1;
@@ -450,15 +477,19 @@ void rxInit(void)
             TIM_ICInit(Channels[i].tim, &TIM_ICInitStructure);
         }
 
-        TIM_ITConfig(TIM1,  TIM_IT_CC1 | TIM_IT_CC2, ENABLE);
-        TIM_ITConfig(TIM2,  TIM_IT_CC2 | TIM_IT_CC3 | TIM_IT_CC4, ENABLE);
-        TIM_ITConfig(TIM3,  TIM_IT_CC1 | TIM_IT_CC2, ENABLE);
-        TIM_ITConfig(TIM16, TIM_IT_CC1, ENABLE);
+        ///////////////////////////////
+
+        TIM_ITConfig(TIM1,  TIM_IT_CC1,                           ENABLE);
+        TIM_ITConfig(TIM16, TIM_IT_CC1,                           ENABLE);
+        TIM_ITConfig(TIM17, TIM_IT_CC1,                           ENABLE);
+        TIM_ITConfig(TIM8,  TIM_IT_CC1 | TIM_IT_CC2 | TIM_IT_CC3, ENABLE);
+        TIM_ITConfig(TIM15, TIM_IT_CC1 | TIM_IT_CC2,              ENABLE);
 
         TIM_Cmd(TIM1,  ENABLE);
-        TIM_Cmd(TIM2,  ENABLE);
-        TIM_Cmd(TIM3,  ENABLE);
         TIM_Cmd(TIM16, ENABLE);
+        TIM_Cmd(TIM17, ENABLE);
+        TIM_Cmd(TIM8,  ENABLE);
+        TIM_Cmd(TIM15, ENABLE);
 	}
 
 	///////////////////////////////////

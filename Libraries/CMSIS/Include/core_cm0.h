@@ -1,8 +1,8 @@
 /**************************************************************************//**
  * @file     core_cm0.h
  * @brief    CMSIS Cortex-M0 Core Peripheral Access Layer Header File
- * @version  V3.00
- * @date     27. January 2012
+ * @version  V3.01
+ * @date     13. March 2012
  *
  * @note
  * Copyright (C) 2009-2012 ARM Limited. All rights reserved.
@@ -33,15 +33,15 @@
 
 /** \page CMSIS_MISRA_Exceptions  MISRA-C:2004 Compliance Exceptions
   CMSIS violates the following MISRA-C:2004 rules:
-  
+
    \li Required Rule 8.5, object/function definition in header file.<br>
-     Function definitions in header files are used to allow 'inlining'. 
+     Function definitions in header files are used to allow 'inlining'.
 
    \li Required Rule 18.4, declaration of union type or object of union type: '{...}'.<br>
      Unions are used for effective representation of core registers.
-   
+
    \li Advisory Rule 19.7, Function-like macro defined.<br>
-     Function-like macros are used to allow more efficient code. 
+     Function-like macros are used to allow more efficient code.
  */
 
 
@@ -54,7 +54,7 @@
 
 /*  CMSIS CM0 definitions */
 #define __CM0_CMSIS_VERSION_MAIN  (0x03)                                   /*!< [31:16] CMSIS HAL main version   */
-#define __CM0_CMSIS_VERSION_SUB   (0x00)                                   /*!< [15:0]  CMSIS HAL sub version    */
+#define __CM0_CMSIS_VERSION_SUB   (0x01)                                   /*!< [15:0]  CMSIS HAL sub version    */
 #define __CM0_CMSIS_VERSION       ((__CM0_CMSIS_VERSION_MAIN << 16) | \
                                     __CM0_CMSIS_VERSION_SUB          )     /*!< CMSIS HAL version number         */
 
@@ -103,7 +103,9 @@
   #endif
 
 #elif defined ( __TASKING__ )
-    /* add preprocessor checks */
+  #if defined __FPU_VFP__
+    #error "Compiler generates FPU instructions for a device without an FPU (check __FPU_PRESENT)"
+  #endif
 #endif
 
 #include <stdint.h>                      /* standard types definitions                      */
@@ -138,7 +140,7 @@
 /* IO definitions (access restrictions to peripheral registers) */
 /**
     \defgroup CMSIS_glob_defs CMSIS Global Defines
- 
+
     <strong>IO Type Qualifiers</strong> are used
     \li to specify the access to peripheral variables.
     \li for automatic generation of peripheral register debug information.
@@ -519,7 +521,7 @@ __STATIC_INLINE void NVIC_DisableIRQ(IRQn_Type IRQn)
     for the specified interrupt.
 
     \param [in]      IRQn  Interrupt number.
-    
+
     \return             0  Interrupt status is not pending.
     \return             1  Interrupt status is pending.
  */
@@ -555,11 +557,11 @@ __STATIC_INLINE void NVIC_ClearPendingIRQ(IRQn_Type IRQn)
 
 /** \brief  Set Interrupt Priority
 
-    The function sets the priority of an interrupt. 
+    The function sets the priority of an interrupt.
 
     \note The priority cannot be set for every core interrupt.
 
-    \param [in]      IRQn  Interrupt number. 
+    \param [in]      IRQn  Interrupt number.
     \param [in]  priority  Priority to set.
  */
 __STATIC_INLINE void NVIC_SetPriority(IRQn_Type IRQn, uint32_t priority)
@@ -624,15 +626,15 @@ __STATIC_INLINE void NVIC_SystemReset(void)
 /** \brief  System Tick Configuration
 
     The function initializes the System Timer and its interrupt, and starts the System Tick Timer.
-    Counter is in free running mode to generate periodic interrupts.   
+    Counter is in free running mode to generate periodic interrupts.
 
     \param [in]  ticks  Number of ticks between two interrupts.
-    
+
     \return          0  Function succeeded.
     \return          1  Function failed.
-    
-    \note     When the variable <b>__Vendor_SysTickConfig</b> is set to 1, then the 
-    function <b>SysTick_Config</b> is not included. In this case, the file <b><i>device</i>.h</b> 
+
+    \note     When the variable <b>__Vendor_SysTickConfig</b> is set to 1, then the
+    function <b>SysTick_Config</b> is not included. In this case, the file <b><i>device</i>.h</b>
     must contain a vendor-specific implementation of this function.
 
  */
