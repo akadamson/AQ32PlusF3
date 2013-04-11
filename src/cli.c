@@ -369,9 +369,9 @@ void cliCom(void)
 
         case 'n': // GPS Stats
             if (sensors.gpsFix == FIX_2D)
-                cliPrint(" 2D Fix,  ");
+                cliPrint(" 2D Fix, ");
             else if (sensors.gpsFix == FIX_3D)
-                cliPrint(" 3D Fix,  ");
+                cliPrint(" 3D Fix, ");
             else if (sensors.gpsFix == FIX_2D_SBAS)
             	cliPrint("2D SBAS, ");
             else if (sensors.gpsFix == FIX_3D_SBAS)
@@ -473,6 +473,7 @@ void cliCom(void)
 
             validCliCommand = false;
             break;
+
         ///////////////////////////////
 
         case 'v': // ESC PWM Outputs
