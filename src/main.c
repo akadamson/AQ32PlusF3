@@ -225,7 +225,6 @@ int main(void)
             bodyAccelToEarthAccel();
             vertCompFilter(dt100Hz);
 
-            // High Speed Telemetry Test Code Begin
             if ( highSpeedTelem1Enabled == true )
             {
             	// 500 Hz Accels
@@ -270,7 +269,15 @@ int main(void)
             	        			                     sensors.attitude500Hz[PITCH],
             	        			                     sensors.attitude500Hz[YAW  ]);
             }
-            // High Speed Telemetry Test Code End
+
+            if ( highSpeedTelem7Enabled == true )
+            {
+               	// Vertical Variables
+            	telemetryPrintF("%9.4f, %9.4f, %9.4f, %9.4f\n", earthAxisAccels[ZAXIS],
+            			                                        sensors.pressureAlt10Hz,
+            			                                        hDotEstimate,
+            			                                        hEstimate);
+            }
 
             executionTime100Hz = micros() - currentTime;
         }

@@ -49,7 +49,7 @@ void magCalibration()
 	uint16_t calibrationCounter = 0;
 	uint16_t population[2][3];
 
-	float    d[3000][3];       // 3000 Samples = 60 seconds of data at 50 Hz
+	float    d[600][3];       // 600 Samples = 60 seconds of data at 10 Hz
 	float    sphereOrigin[3];
 	float    sphereRadius;
 
@@ -67,7 +67,7 @@ void magCalibration()
 
     cliRead();
 
-    while ((cliAvailable() == false) && (calibrationCounter <= 3000))
+    while ((cliAvailable() == false) && (calibrationCounter <= 600))
 	{
 		if (readMag() == true)
 		{
@@ -78,7 +78,7 @@ void magCalibration()
 			calibrationCounter++;
 		}
 
-		delay(20);
+		delay(100);
 	}
 
     cliPrintF("\n\nMagnetometer Bias Calculation, %3ld samples collected out of 600 max)\n", calibrationCounter);

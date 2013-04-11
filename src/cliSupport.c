@@ -903,8 +903,6 @@ void sensorCLI()
             ///////////////////////////
 
             case 'a': // Sensor Data
-                cliPrint("\n");
-
                 cliPrintF("\nAccel Scale Factor:        %9.4f, %9.4f, %9.4f\n", eepromConfig.accelScaleFactor[XAXIS],
                                                 		                        eepromConfig.accelScaleFactor[YAXIS],
                                                 		                        eepromConfig.accelScaleFactor[ZAXIS]);
