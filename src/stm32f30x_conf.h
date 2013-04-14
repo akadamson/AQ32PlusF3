@@ -39,6 +39,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 
+#include "stm32f30x_adc.h"
 #include "stm32f30x_dma.h"
 #include "stm32f30x_flash.h"
 #include "stm32f30x_gpio.h"

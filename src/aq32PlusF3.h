@@ -346,6 +346,15 @@ typedef struct eepromConfig_t
 
     float   magVar;                // + east, - west
 
+    ///////////////////////////////////
+
+    float   batteryVoltageDivider;
+
+    ///////////////////////////////////
+
+    uint8_t armCount;
+    uint8_t disarmCount;
+
 } eepromConfig_t;
 
 extern eepromConfig_t eepromConfig;

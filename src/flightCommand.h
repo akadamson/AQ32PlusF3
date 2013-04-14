@@ -65,6 +65,7 @@ extern uint8_t headingHoldEngaged;
 
 extern uint8_t armed;
 extern uint8_t armingTimer;
+extern uint8_t disarmingTimer;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Altitude Hold State Variables

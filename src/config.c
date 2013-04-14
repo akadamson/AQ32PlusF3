@@ -405,6 +405,11 @@ void checkFirstTime(bool eepromReset)
         eepromConfig.gpsType              =  NO_GPS;
         eepromConfig.magVar               =  9.033333f * D2R;  // Albuquerque, NM Mag Var 9 degrees 2 minutes (+East, - West)
 
+        eepromConfig.batteryVoltageDivider = (10.0f + 1.0f) / 1.0f;
+
+        eepromConfig.armCount              = 50;
+        eepromConfig.disarmCount           = 0;
+
         writeEEPROM();
 	}
 }

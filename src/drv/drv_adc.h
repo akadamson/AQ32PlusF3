@@ -38,65 +38,27 @@
 #pragma once
 
 ///////////////////////////////////////////////////////////////////////////////
-
-#include <stdbool.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <math.h>
-#include <ctype.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <errno.h>
-
+//  ADC Initialization
 ///////////////////////////////////////////////////////////////////////////////
 
-#include "stm32f30x.h"
-#include "stm32f30x_conf.h"
+void adcInit(void);
 
 ///////////////////////////////////////////////////////////////////////////////
+//  Compute and return battery voltage
+///////////////////////////////////////////////////////////////////////////////
 
-#include "pid.h"
+float batteryVoltage(void);
 
-#include "aq32PlusF3.h"
+///////////////////////////////////////////////////////////////////////////////
+//  Return converted differential pressure value
+///////////////////////////////////////////////////////////////////////////////
 
-#include "drv_adc.h"
-#include "drv_cli.h"
-#include "drv_gps.h"
-#include "drv_i2c.h"
-#include "drv_led.h"
-#include "drv_max7456.h"
-#include "drv_pwmESC.h"
-#include "drv_pwmServo.h"
-#include "drv_rx.h"
-#include "drv_spi.h"
-#include "drv_system.h"
-#include "drv_telemetry.h"
-#include "drv_timingFunctions.h"
+uint16_t convertedDiffPressure(void);
 
-#include "l3gd20.h"
-#include "lsm303dlhc.h"
+///////////////////////////////////////////////////////////////////////////////
+//  Return converted analog mux value
+///////////////////////////////////////////////////////////////////////////////
 
-#include "accelCalibration.h"
-#include "cli.h"
-#include "cliSupport.h"
-#include "computeAxisCommands.h"
-#include "config.h"
-#include "coordinateTransforms.h"
-#include "escCalibration.h"
-#include "flightCommand.h"
-#include "gps.h"
-#include "gpsMediaTek19.h"
-#include "gpsNMEA.h"
-#include "gpsUblox.h"
-#include "linearAlgebra.h"
-#include "lowPassFilter.h"
-#include "MargAHRS.h"
-#include "magCalibration.h"
-#include "mixer.h"
-#include "osdWidgets.h"
-#include "rfTelem.h"
-#include "utilities.h"
-#include "vertCompFilter.h"
+uint16_t convertedAnalogMux(void);
 
 ///////////////////////////////////////////////////////////////////////////////

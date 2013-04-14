@@ -357,7 +357,7 @@ void cliCom(void)
        ///////////////////////////////
 
         case 'm': // GPS Data
-        	cliPrintF("%12.7f, %12.7f, %7.2f, %6.2g, %6.2f\n", sensors.gpsLatitude  * R2D,
+        	cliPrintF("%12.7f, %12.7f, %7.2f, %6.2f, %6.2f\n", sensors.gpsLatitude  * R2D,
         			                                           sensors.gpsLongitude * R2D,
         			                                           sensors.gpsAltitude,
         			                                           sensors.gpsGroundSpeed,
@@ -379,7 +379,7 @@ void cliCom(void)
             else
                 cliPrint(" No Fix, ");
 
-            cliPrintF("%2ld, %8ld, %9.2f, $5.2f\n", sensors.gpsNumSats,
+            cliPrintF("%2ld, %8ld, %9.2f, %5.2f\n", sensors.gpsNumSats,
             		                                sensors.gpsDate,
             		                                sensors.gpsTime,
             		                                sensors.gpsHdop);
@@ -477,14 +477,13 @@ void cliCom(void)
         ///////////////////////////////
 
         case 'v': // ESC PWM Outputs
-        	cliPrintF("%4ld, ", TIM17->CCR1);
         	cliPrintF("%4ld, ", TIM4->CCR1 );
         	cliPrintF("%4ld, ", TIM4->CCR2 );
         	cliPrintF("%4ld, ", TIM4->CCR3 );
         	cliPrintF("%4ld, ", TIM4->CCR4 );
-        	cliPrintF("%4ld, ", TIM8->CCR1 );
-        	cliPrintF("%4ld, ", TIM8->CCR2 );
-        	cliPrintF("%4ld\n", TIM8->CCR3 );
+        	cliPrintF("%4ld, ", TIM2->CCR2 );
+        	cliPrintF("%4ld, ", TIM2->CCR3 );
+        	cliPrintF("%4ld\n", TIM2->CCR4 );
 
         	validCliCommand = false;
             break;
@@ -492,8 +491,9 @@ void cliCom(void)
         ///////////////////////////////
 
         case 'w': // Servo PWM Outputs
-        	cliPrintF("%4ld, ", TIM15->CCR1);
-        	cliPrintF("%4ld\n", TIM15->CCR2);
+        	cliPrintF("%4ld, ", TIM3->CCR3);
+        	cliPrintF("%4ld, ", TIM3->CCR4);
+        	cliPrintF("%4ld\n", TIM3->CCR2);
 
             validCliCommand = false;
             break;

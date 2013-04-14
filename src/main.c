@@ -314,8 +314,18 @@ int main(void)
 			if (execUp == false)
 			    execUpCount++;
 
-			if (execUpCount == 5)
+			if ((execUpCount == 5) && (execUp == false))
+			{
 			    execUp = true;
+			    RED_N_LED_OFF;
+			    ORANGE_NE_LED_OFF;
+			    GREEN_E_LED_OFF;
+			    BLUE_SE_LED_OFF;
+			    RED_S_LED_OFF;
+			    ORANGE_SW_LED_OFF;
+			    GREEN_W_LED_OFF;
+			    BLUE_NW_LED_OFF;
+			}
 
 			executionTime1Hz = micros() - currentTime;
         }
