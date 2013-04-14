@@ -940,6 +940,7 @@ void sensorCLI()
                 cliPrintF("KiMag (MARG):              %9.4f\n",   eepromConfig.KiMag);
                 cliPrintF("hdot est/h est Comp Fil A: %9.4f\n",   eepromConfig.compFilterA);
                 cliPrintF("hdot est/h est Comp Fil B: %9.4f\n",   eepromConfig.compFilterB);
+                cliPrintF("Battery Voltage Divider:   %9.4f\n\n", eepromConfig.batteryVoltageDivider);
 
                 validQuery = false;
                 break;
@@ -962,7 +963,16 @@ void sensorCLI()
                 validQuery = true;
                 break;
 
-			///////////////////////////
+            ///////////////////////////
+
+            case 'v': // Set Battery Voltage Divider
+                eepromConfig.batteryVoltageDivider = readFloatCLI();
+
+                sensorQuery = 'a';
+                validQuery = true;
+                break;
+
+            ///////////////////////////
 
 			case 'x':
 			    cliPrint("\nExiting Sensor CLI....\n\n");
@@ -1034,8 +1044,8 @@ void sensorCLI()
 			   	cliPrint("'c' Magnetometer Calibration               'C' Set kpAcc/kiAcc                      CKpAcc;KiAcc\n");
 			   	cliPrint("                                           'D' Set kpMag/kiMag                      DKpMag;KiMag\n");
 			   	cliPrint("                                           'E' Set h dot est/h est Comp Filter A/B  EA;B\n");
-			   	cliPrint("                                           'W' Write EEPROM Parameters\n");
-			   	cliPrint("'x' Exit Sensor CLI                        '?' Command Summary\n");
+			   	cliPrint("'v' Battery Voltage Divider                'W' Write EEPROM Parameters\n");
+			    cliPrint("'x' Exit Sensor CLI                        '?' Command Summary\n");
 			    cliPrint("\n");
 	    	    break;
 

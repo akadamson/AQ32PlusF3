@@ -276,22 +276,22 @@ void systemInit(void)
     setupFourthOrder100Hz();
 
     RED_N_LED_ON;
-    delay(1500);
+    delay(2500);
     ORANGE_NE_LED_ON;
-    delay(1500);
+    delay(2500);
     GREEN_E_LED_ON;
-    delay(1500);
+    delay(2500);
 
     initGPS();
 
     BLUE_SE_LED_ON;
-    delay(1500);
+    delay(2500);
     RED_S_LED_ON;
-    delay(1500);
+    delay(2500);
     ORANGE_SW_LED_ON;
-    delay(1500);
+    delay(2500);
     GREEN_W_LED_ON;
-    delay(1500);
+    delay(2500);
     BLUE_NW_LED_ON;
 
     initAccel();

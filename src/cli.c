@@ -515,7 +515,9 @@ void cliCom(void)
         ///////////////////////////////
 
         case 'z':
-            cliQuery = 'x';
+            cliPrintF("%5.2f, %4ld, %4ld\n", batteryVoltage(),
+            		                         convertedDiffPressure(),
+            		                         convertedAnalogMux());
             break;
 
         ///////////////////////////////
