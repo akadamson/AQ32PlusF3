@@ -940,6 +940,13 @@ void sensorCLI()
                 cliPrintF("KiMag (MARG):              %9.4f\n",   eepromConfig.KiMag);
                 cliPrintF("hdot est/h est Comp Fil A: %9.4f\n",   eepromConfig.compFilterA);
                 cliPrintF("hdot est/h est Comp Fil B: %9.4f\n",   eepromConfig.compFilterB);
+
+                cliPrint("Magnetic Variation:          ");
+                if (eepromConfig.magVar >= 0.0f)
+                    cliPrintF("E%6.4f\n",  eepromConfig.magVar * R2D);
+                else
+                    cliPrintF("W%6.4f\n", -eepromConfig.magVar * R2D);
+
                 cliPrintF("Battery Voltage Divider:   %9.4f\n\n", eepromConfig.batteryVoltageDivider);
 
                 validQuery = false;
@@ -958,15 +965,6 @@ void sensorCLI()
 
             case 'c': // Magnetometer Calibration
                 magCalibration();
-
-                sensorQuery = 'a';
-                validQuery = true;
-                break;
-
-            ///////////////////////////
-
-            case 'v': // Set Battery Voltage Divider
-                eepromConfig.batteryVoltageDivider = readFloatCLI();
 
                 sensorQuery = 'a';
                 validQuery = true;
@@ -1030,6 +1028,15 @@ void sensorCLI()
 
             ///////////////////////////
 
+            case 'V': // Set Battery Voltage Divider
+                eepromConfig.batteryVoltageDivider = readFloatCLI();
+
+                sensorQuery = 'a';
+                validQuery = true;
+                break;
+
+            ///////////////////////////
+
             case 'W': // Write EEPROM Parameters
                 cliPrint("\nWriting EEPROM Parameters....\n\n");
                 writeEEPROM();
@@ -1044,7 +1051,9 @@ void sensorCLI()
 			   	cliPrint("'c' Magnetometer Calibration               'C' Set kpAcc/kiAcc                      CKpAcc;KiAcc\n");
 			   	cliPrint("                                           'D' Set kpMag/kiMag                      DKpMag;KiMag\n");
 			   	cliPrint("                                           'E' Set h dot est/h est Comp Filter A/B  EA;B\n");
-			   	cliPrint("'v' Battery Voltage Divider                'W' Write EEPROM Parameters\n");
+			   	cliPrint("                                           'M' Set Mag Variation (+ East, - West)   MMagVar\n");
+		        cliPrint("                                           'V' Set Battery Voltage Divider          VbatVoltDivider\n");
+			   	cliPrint("                                           'W' Write EEPROM Parameters\n");
 			    cliPrint("'x' Exit Sensor CLI                        '?' Command Summary\n");
 			    cliPrint("\n");
 	    	    break;
@@ -1061,7 +1070,9 @@ void sensorCLI()
 
 void gpsCLI()
 {
-    uint8_t  gpsQuery;
+	USART_InitTypeDef USART_InitStructure;
+
+	uint8_t  gpsQuery;
     uint8_t  validQuery = false;
 
     cliBusy = true;
@@ -1114,6 +1125,8 @@ void gpsCLI()
 
 					///////////////
 				}
+
+                cliPrintF("GPS Baud Rate: %6ld\n\n", eepromConfig.gpsBaudRate);
 
                 validQuery = false;
                 break;
@@ -1170,6 +1183,21 @@ void gpsCLI()
 
             ///////////////////////////
 
+            case 'S': // Read GPS Baud Rate
+                eepromConfig.gpsBaudRate = (uint16_t)readFloatCLI();
+
+                USART_StructInit(&USART_InitStructure);
+
+                USART_InitStructure.USART_BaudRate = eepromConfig.gpsBaudRate;
+
+                USART_Init(USART2, &USART_InitStructure);
+
+                gpsQuery = 'a';
+                validQuery = true;
+        	    break;
+
+            ///////////////////////////
+
             case 'W': // Write EEPROM Parameters
                 cliPrint("\nWriting EEPROM Parameters....\n\n");
                 writeEEPROM();
@@ -1183,6 +1211,7 @@ void gpsCLI()
 			   	cliPrint("                                           'B' Set GPS Type to MediaTek 3329 Binary\n");
 			   	cliPrint("                                           'C' Set GPS Type to MediaTek 3329 NMEA\n");
 			   	cliPrint("                                           'D' Set GPS Type to UBLOX\n");
+			   	cliPrint("                                           'S' Set GPS Baud Rate\n");
 			   	cliPrint("                                           'W' Write EEPROM Parameters\n");
 			   	cliPrint("'x' Exit GPS CLI                           '?' Command Summary\n");
 			    cliPrint("\n");

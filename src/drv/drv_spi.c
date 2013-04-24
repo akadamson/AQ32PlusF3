@@ -93,6 +93,7 @@
 
 static volatile uint16_t spi1ErrorCount = 0;
 static volatile uint16_t spi2ErrorCount = 0;
+static volatile uint16_t spi3ErrorCount = 0;
 
 ///////////////////////////////////////////////////////////////////////////////
 // SPI Initialize
@@ -143,7 +144,7 @@ void spiInit(SPI_TypeDef *SPIx)
         SPI_InitStructure.SPI_CPOL              = SPI_CPOL_Low;
         SPI_InitStructure.SPI_CPHA              = SPI_CPHA_1Edge;
         SPI_InitStructure.SPI_NSS               = SPI_NSS_Soft;
-        SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_8;
+        SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_4;  // 36/4 = 9 MHz SPI Clock
         SPI_InitStructure.SPI_FirstBit          = SPI_FirstBit_MSB;
         SPI_InitStructure.SPI_CRCPolynomial     = 7;
 
@@ -161,9 +162,9 @@ void spiInit(SPI_TypeDef *SPIx)
     	RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI2, ENABLE);
     	RCC_AHBPeriphClockCmd(SPI2_SCK_CLK | SPI2_MISO_CLK | SPI2_MOSI_CLK, ENABLE);
 
-        GPIO_PinAFConfig(SPI2_GPIO, SPI2_SCK_PIN_SOURCE,  GPIO_AF_6);
-	    GPIO_PinAFConfig(SPI2_GPIO, SPI2_MISO_PIN_SOURCE, GPIO_AF_6);
-	    GPIO_PinAFConfig(SPI2_GPIO, SPI2_MOSI_PIN_SOURCE, GPIO_AF_6);
+        GPIO_PinAFConfig(SPI2_GPIO, SPI2_SCK_PIN_SOURCE,  GPIO_AF_5);
+	    GPIO_PinAFConfig(SPI2_GPIO, SPI2_MISO_PIN_SOURCE, GPIO_AF_5);
+	    GPIO_PinAFConfig(SPI2_GPIO, SPI2_MOSI_PIN_SOURCE, GPIO_AF_5);
 
 	    // Init pins
         GPIO_InitStructure.GPIO_Pin   = SPI2_SCK_PIN | SPI2_MISO_PIN | SPI2_MOSI_PIN;
@@ -173,6 +174,36 @@ void spiInit(SPI_TypeDef *SPIx)
         GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_NOPULL;
 
         GPIO_Init(SPI2_GPIO, &GPIO_InitStructure);
+
+        RCC_AHBPeriphClockCmd(MS5611_CS_GPIO_CLK, ENABLE);
+
+	    GPIO_InitStructure.GPIO_Pin   = MS5611_CS_PIN;
+		GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_OUT;
+		GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+		GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+		GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_NOPULL;
+
+		GPIO_Init(MS5611_CS_GPIO, &GPIO_InitStructure);
+
+		GPIO_SetBits(MS5611_CS_GPIO, MS5611_CS_PIN);
+
+		SPI_I2S_DeInit(SPI2);
+
+        SPI_InitStructure.SPI_Direction         = SPI_Direction_2Lines_FullDuplex;
+        SPI_InitStructure.SPI_Mode              = SPI_Mode_Master;
+        SPI_InitStructure.SPI_DataSize          = SPI_DataSize_8b;
+        SPI_InitStructure.SPI_CPOL              = SPI_CPOL_Low;
+        SPI_InitStructure.SPI_CPHA              = SPI_CPHA_1Edge;
+        SPI_InitStructure.SPI_NSS               = SPI_NSS_Soft;
+        SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_2;  // 36/2 = 18 MHz SPI Clock
+        SPI_InitStructure.SPI_FirstBit          = SPI_FirstBit_MSB;
+        SPI_InitStructure.SPI_CRCPolynomial     = 7;
+
+        SPI_Init(SPI2, &SPI_InitStructure);
+
+        SPI_RxFIFOThresholdConfig(MS5611_SPI, SPI_RxFIFOThreshold_QF);
+
+        SPI_Cmd(SPI2, ENABLE);
     }
 
     ///////////////////////////////////
@@ -194,7 +225,34 @@ void spiInit(SPI_TypeDef *SPIx)
         GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_NOPULL;
 
         GPIO_Init(SPI3_GPIO, &GPIO_InitStructure);
-    }
+
+        GPIO_InitStructure.GPIO_Pin   = MAX7456_CS_PIN;
+		GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_OUT;
+		GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+        GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+	    GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_NOPULL;
+
+		GPIO_Init(MAX7456_CS_GPIO, &GPIO_InitStructure);
+
+		GPIO_SetBits(MAX7456_CS_GPIO, MAX7456_CS_PIN);
+
+		SPI_StructInit(&SPI_InitStructure);
+
+        SPI_I2S_DeInit(SPI3);
+
+      //SPI_InitStructure.SPI_Direction         = SPI_Direction_2Lines_FullDuplex;
+        SPI_InitStructure.SPI_Mode              = SPI_Mode_Master;
+      //SPI_InitStructure.SPI_DataSize          = SPI_DataSize_8b;
+        SPI_InitStructure.SPI_CPOL              = SPI_CPOL_High;
+        SPI_InitStructure.SPI_CPHA              = SPI_CPHA_2Edge;
+        SPI_InitStructure.SPI_NSS               = SPI_NSS_Soft;
+        SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_4;
+      //SPI_InitStructure.SPI_FirstBit          = SPI_FirstBit_MSB;
+      //SPI_InitStructure.SPI_CRCPolynomial     = 7;
+
+        SPI_Init(SPI3, &SPI_InitStructure);
+
+        SPI_Cmd(SPI3, ENABLE);    }
 
     ///////////////////////////////////
 }
@@ -205,17 +263,21 @@ void spiInit(SPI_TypeDef *SPIx)
 
 uint32_t spiTimeoutUserCallback(SPI_TypeDef *SPIx)
 {
-	GPIO_SetBits(RED_N_LED_GPIO, RED_N_LED_PIN);
+	RED_S_LED_ON;
 
 	if (SPIx == SPI1)
 	{
 		spi1ErrorCount++;
 		return spi1ErrorCount;
 	}
-	else
+	else if (SPIx == SPI2)
 	{
 		spi2ErrorCount++;
 		return spi2ErrorCount;
+	}
+	else
+	{    spi3ErrorCount++;
+	     return spi3ErrorCount;
 	}
 }
 
@@ -310,8 +372,10 @@ uint16_t spiGetErrorCounter(SPI_TypeDef *SPIx)
 {
     if (SPIx == SPI1)
     	return spi1ErrorCount;
-    else
+    else if (SPIx == SPI2)
         return spi2ErrorCount;
+    else
+    	return spi3ErrorCount;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

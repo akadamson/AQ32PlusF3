@@ -70,7 +70,7 @@ static volatile uint16_t i2c2ErrorCount = 0;
 
 uint32_t i2cTimeoutUserCallback(I2C_TypeDef *I2Cx)
 {
-	GPIO_SetBits(RED_N_LED_GPIO, RED_N_LED_PIN);
+	RED_N_LED_ON;
 
 	if (I2Cx == I2C1)
 	{

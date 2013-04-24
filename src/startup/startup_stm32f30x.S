@@ -156,7 +156,7 @@ Reboot_Loader:                          // HJI 11/9/2012
         str     r0, [r6]                // HJI 11/9/2012
         
         // Reboot to ROM                // HJI 11/9/2012
-        ldr     r0, =0x1FFF0000         // HJI 11/9/2012
+        ldr     r0, =0x1FFF0000         // HJI 4/18/2013
         ldr     sp,[r0, #0]             // HJI 11/9/2012
         ldr     r0,[r0, #4]             // HJI 11/9/2012
         bx      r0                      // HJI 11/9/2012

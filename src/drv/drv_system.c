@@ -170,6 +170,21 @@ void SysTick_Handler(void)
                 accelSummedSamples100Hz[index] = accelSum100Hz[index];
                 accelSum100Hz[index] = 0.0f;
             }
+
+            if (frameCounter == COUNT_100HZ)
+            {
+                readTemperatureRequestPressure();
+            }
+            else if (frameCounter == FRAME_COUNT)
+            {
+                readPressureRequestTemperature();
+            }
+            else
+            {
+                readPressureRequestPressure();
+            }
+
+            d1Sum += d1.value;
         }
 
         ///////////////////////////////
@@ -268,6 +283,8 @@ void systemInit(void)
     pwmServoInit(eepromConfig.servoPwmRate);
     rxInit();
     spiInit(SPI1);
+    spiInit(SPI2);
+    spiInit(SPI3);
     telemetryInit();
     timingFunctionsInit();
 
@@ -297,6 +314,7 @@ void systemInit(void)
     initAccel();
     initGyro();
     initMag();
+    initPressure();
 
     initMax7456();
 }

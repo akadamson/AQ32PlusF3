@@ -61,8 +61,8 @@ volatile uint8_t rx4Buffer[UART4_BUFFER_SIZE];
 uint32_t rx4DMAPos = 0;
 
 volatile uint8_t tx4Buffer[UART4_BUFFER_SIZE];
-uint16_t tx4BufferTail = 0;
-uint16_t tx4BufferHead = 0;
+volatile uint16_t tx4BufferTail = 0;
+volatile uint16_t tx4BufferHead = 0;
 
 ///////////////////////////////////////////////////////////////////////////////
 // UART4 Transmit via DMA
@@ -247,7 +247,14 @@ void telemetryWrite(uint8_t ch)
 void telemetryPrint(char *str)
 {
     while (*str)
-	    telemetryWrite(*(str++));
+    {
+    	tx4Buffer[tx4BufferHead] = *str++;
+    	tx4BufferHead = (tx4BufferHead + 1) % UART4_BUFFER_SIZE;
+    }
+
+    // if DMA wasn't enabled, enable it
+    if (!(DMA2_Channel5->CCR & 1))
+        uart4TxDMA();
 }
 
 ///////////////////////////////////////////////////////////////////////////////

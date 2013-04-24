@@ -63,7 +63,7 @@ uint16_t adc2ConvertedValues[3] =  { 0, 0, 0 };
 
 ///////////////////////////////////////
 
-#define VOLTS_PER_BIT   3.3f / 4096.0f
+#define VOLTS_PER_BIT   (3.3f / 4096.0f)
 
 ///////////////////////////////////////////////////////////////////////////////
 //  ADC Initialization
@@ -83,7 +83,7 @@ void adcInit(void)
 
     ///////////////////////////////////
 
-    RCC_ADCCLKConfig(RCC_ADC12PLLCLK_Div256);  // PLLCLK divided by 256
+    RCC_ADCCLKConfig(RCC_ADC12PLLCLK_Div256);  // 72 MHz divided by 256 = 281.25 kHz
 
     RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA2,  ENABLE);
     RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOC, ENABLE);
@@ -91,17 +91,19 @@ void adcInit(void)
 
     ///////////////////////////////////
 
+    DMA_DeInit(DMA2_Channel1);
+
     DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)&ADC2->DR;
     DMA_InitStructure.DMA_MemoryBaseAddr     = (uint32_t)adc2ConvertedValues;
-  //DMA_InitStructure.DMA_DIR                = DMA_DIR_PeripheralSRC;
+    DMA_InitStructure.DMA_DIR                = DMA_DIR_PeripheralSRC;
     DMA_InitStructure.DMA_BufferSize         = 3;
-  //DMA_InitStructure.DMA_PeripheralInc      = DMA_PeripheralInc_Disable;
+    DMA_InitStructure.DMA_PeripheralInc      = DMA_PeripheralInc_Disable;
     DMA_InitStructure.DMA_MemoryInc          = DMA_MemoryInc_Enable;
     DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_HalfWord;
     DMA_InitStructure.DMA_MemoryDataSize     = DMA_MemoryDataSize_HalfWord;
     DMA_InitStructure.DMA_Mode               = DMA_Mode_Circular;
     DMA_InitStructure.DMA_Priority           = DMA_Priority_High;
-  //DMA_InitStructure.DMA_M2M                = DMA_M2M_Disable;
+    DMA_InitStructure.DMA_M2M                = DMA_M2M_Disable;
 
     DMA_Init(DMA2_Channel1, &DMA_InitStructure);
 
@@ -130,7 +132,7 @@ void adcInit(void)
     ADC_CommonInitStructure.ADC_Mode             = ADC_Mode_Independent;
     ADC_CommonInitStructure.ADC_Clock            = ADC_Clock_AsynClkMode;
     ADC_CommonInitStructure.ADC_DMAAccessMode    = ADC_DMAAccessMode_Disabled;
-    ADC_CommonInitStructure.ADC_DMAMode          = ADC_DMAMode_OneShot;
+    ADC_CommonInitStructure.ADC_DMAMode          = ADC_DMAMode_Circular;
     ADC_CommonInitStructure.ADC_TwoSamplingDelay = 0;
 
     ADC_CommonInit(ADC2, &ADC_CommonInitStructure);
@@ -150,15 +152,17 @@ void adcInit(void)
 
     ///////////////////////////////////
 
+    ADC_Cmd(ADC2, ENABLE);
+
+    //while(!ADC_GetFlagStatus(ADC2, ADC_FLAG_RDY));
+
     ADC_RegularChannelConfig(ADC2, DIFF_PRESSURE_CHANNEL, 1, ADC_SampleTime_181Cycles5);
     ADC_RegularChannelConfig(ADC2, ANALOG_MUX_CHANNEL,    2, ADC_SampleTime_181Cycles5);
     ADC_RegularChannelConfig(ADC2, VBATT_CHANNEL,         3, ADC_SampleTime_181Cycles5);
 
-    ADC_DMACmd(ADC2, ENABLE);
+    ADC_DMAConfig(ADC2, ADC_DMAMode_Circular);
 
     ADC_DMACmd(ADC2, ENABLE);
-
-    ADC_Cmd(ADC2, ENABLE);
 
     ADC_StartConversion(ADC2);
 }

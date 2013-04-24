@@ -76,6 +76,7 @@
 
 #include "l3gd20.h"
 #include "lsm303dlhc.h"
+#include "ms5611_SPI.h"
 
 #include "accelCalibration.h"
 #include "cli.h"

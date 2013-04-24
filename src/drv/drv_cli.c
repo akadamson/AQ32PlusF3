@@ -62,8 +62,8 @@ volatile uint8_t rx1Buffer[UART1_BUFFER_SIZE];
 uint32_t rx1DMAPos = 0;
 
 volatile uint8_t tx1Buffer[UART1_BUFFER_SIZE];
-uint32_t tx1BufferTail = 0;
-uint32_t tx1BufferHead = 0;
+volatile uint32_t tx1BufferTail = 0;
+volatile uint32_t tx1BufferHead = 0;
 
 ///////////////////////////////////////////////////////////////////////////////
 // UART1 Transmit via DMA
@@ -242,7 +242,7 @@ void cliWrite(uint8_t ch)
     tx1Buffer[tx1BufferHead] = ch;
     tx1BufferHead = (tx1BufferHead + 1) % UART1_BUFFER_SIZE;
 
-    // if DMA wasn't enabled, fire it up
+    // if DMA wasn't enabled, enable it
     if (!(DMA1_Channel4->CCR & 1))
         uart1TxDMA();
 }
@@ -254,7 +254,14 @@ void cliWrite(uint8_t ch)
 void cliPrint(char *str)
 {
     while (*str)
-        cliWrite(*(str++));
+    {
+    	tx1Buffer[tx1BufferHead] = *str++;
+    	tx1BufferHead = (tx1BufferHead + 1) % UART1_BUFFER_SIZE;
+    }
+
+    // if DMA wasn't enabled, enable it
+    if (!(DMA1_Channel4->CCR & 1))
+        uart1TxDMA();
 }
 
 ///////////////////////////////////////////////////////////////////////////////

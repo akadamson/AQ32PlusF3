@@ -115,6 +115,12 @@ int main(void)
 			    magDataUpdate = true;
             }
 
+        	d1Average = d1Sum / 10;
+        	d1Sum = 0;
+        	calculateTemperature();
+        	calculatePressureAltitude();
+
+        	pressureAltValid = true;
         	switch (eepromConfig.gpsType)
 			{
 			    ///////////////////////

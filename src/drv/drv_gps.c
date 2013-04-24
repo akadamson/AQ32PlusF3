@@ -61,8 +61,8 @@ volatile uint8_t rx2Buffer[UART2_BUFFER_SIZE];
 uint32_t rx2DMAPos = 0;
 
 volatile uint8_t tx2Buffer[UART2_BUFFER_SIZE];
-uint16_t tx2BufferTail = 0;
-uint16_t tx2BufferHead = 0;
+volatile uint16_t tx2BufferTail = 0;
+volatile uint16_t tx2BufferHead = 0;
 
 ///////////////////////////////////////////////////////////////////////////////
 // UART2 Transmit via DMA
@@ -132,7 +132,7 @@ void gpsInit(void)
 
     NVIC_Init(&NVIC_InitStructure);
 
-    USART_InitStructure.USART_BaudRate            = 115200;
+    USART_InitStructure.USART_BaudRate            = eepromConfig.gpsBaudRate;
     USART_InitStructure.USART_WordLength          = USART_WordLength_8b;
     USART_InitStructure.USART_StopBits            = USART_StopBits_1;
     USART_InitStructure.USART_Parity              = USART_Parity_No;
@@ -272,7 +272,14 @@ void gpsWrite(uint8_t ch)
 void gpsPrint(char *str)
 {
     while (*str)
-	    gpsWrite(*(str++));
+    {
+    	tx2Buffer[tx2BufferHead] = *str++;
+    	tx2BufferHead = (tx2BufferHead + 1) % UART2_BUFFER_SIZE;
+    }
+
+    // if DMA wasn't enabled, enable it
+    if (!(DMA1_Channel7->CCR & 1))
+        uart2TxDMA();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
