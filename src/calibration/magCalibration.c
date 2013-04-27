@@ -1,7 +1,7 @@
 /*
-  October 2012
+  December 2012
 
-  aq32Plus Rev -
+  aq32Plus_F3 Rev -
 
   Copyright (c) 2012 John Ihlein.  All rights reserved.
 
@@ -15,8 +15,9 @@
   4)MultiWii
   5)S.O.H. Madgwick
   6)UAVX
+  7)STM DiscoveryF3 demonstration software
 
-  Designed to run on the AQ32 Flight Control Board
+  Designed to run on the DiscoveryF3 board
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -30,7 +31,7 @@
 
   You should have received a copy of the GNU General Public License
   along with this program. If not, see <http://www.gnu.org/licenses/>.
- */
+*/
 
 ///////////////////////////////////////////////////////////////////////////////
 

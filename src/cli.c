@@ -515,9 +515,8 @@ void cliCom(void)
         ///////////////////////////////
 
         case 'z':
-            cliPrintF("%5.2f, %4ld, %4ld\n", batteryVoltage(),
-            		                         convertedDiffPressure(),
-            		                         convertedAnalogMux());
+            cliPrintF("%5.2f, %4ld\n", batteryVoltage(),
+            		                   convertedDiffPressure());
             break;
 
         ///////////////////////////////
@@ -907,7 +906,7 @@ void cliCom(void)
 
    		    cliPrint("\n");
    		    cliPrint("'y' ESC Calibration                        'Y' Not Used\n");
-   		    cliPrint("'z' Not Used                               'Z' Not Used\n");
+   		    cliPrint("'z' ADC Values                             'Z' Not Used\n");
    		    cliPrint("'1' High Speed Telemetry 1 Enable\n");
    		    cliPrint("'2' High Speed Telemetry 2 Enable\n");
    		    cliPrint("'3' High Speed Telemetry 3 Enable\n");

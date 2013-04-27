@@ -42,16 +42,11 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #define DIFF_PRESSURE_CONVERTED_VALUE  0
-#define ANALOG_MUX_CONVERTED_VALUE     1
-#define VBATT_CONVERTED_VALUE          2
+#define VBATT_CONVERTED_VALUE          1
 
 #define DIFF_PRESSURE_PIN      GPIO_Pin_3
 #define DIFF_PRESSURE_GPIO     GPIOC
 #define DIFF_PRESSURE_CHANNEL  ADC_Channel_9
-
-#define ANALOG_MUX_PIN         GPIO_Pin_4
-#define ANALOG_MUX_GPIO        GPIOC
-#define ANALOG_MUX_CHANNEL     ADC_Channel_5
 
 #define VBATT_PIN              GPIO_Pin_0
 #define VBATT_GPIO             GPIOC
@@ -59,7 +54,7 @@
 
 ///////////////////////////////////////
 
-uint16_t adc2ConvertedValues[3] =  { 0, 0, 0 };
+uint16_t adc2ConvertedValues[2] =  { 0, 0 };
 
 ///////////////////////////////////////
 
@@ -96,7 +91,7 @@ void adcInit(void)
     DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)&ADC2->DR;
     DMA_InitStructure.DMA_MemoryBaseAddr     = (uint32_t)adc2ConvertedValues;
     DMA_InitStructure.DMA_DIR                = DMA_DIR_PeripheralSRC;
-    DMA_InitStructure.DMA_BufferSize         = 3;
+    DMA_InitStructure.DMA_BufferSize         = 2;
     DMA_InitStructure.DMA_PeripheralInc      = DMA_PeripheralInc_Disable;
     DMA_InitStructure.DMA_MemoryInc          = DMA_MemoryInc_Enable;
     DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_HalfWord;
@@ -111,7 +106,7 @@ void adcInit(void)
 
     ///////////////////////////////////
 
-    GPIO_InitStructure.GPIO_Pin   = DIFF_PRESSURE_PIN | ANALOG_MUX_PIN | VBATT_PIN;
+    GPIO_InitStructure.GPIO_Pin   = DIFF_PRESSURE_PIN | VBATT_PIN;
     GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_AN;
     GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_NOPULL ;
 
@@ -146,7 +141,7 @@ void adcInit(void)
     ADC_InitStructure.ADC_DataAlign             = ADC_DataAlign_Right;
     ADC_InitStructure.ADC_OverrunMode           = ADC_OverrunMode_Disable;
     ADC_InitStructure.ADC_AutoInjMode           = ADC_AutoInjec_Disable;
-    ADC_InitStructure.ADC_NbrOfRegChannel       = 3;
+    ADC_InitStructure.ADC_NbrOfRegChannel       = 2;
 
     ADC_Init(ADC2, &ADC_InitStructure);
 
@@ -157,8 +152,7 @@ void adcInit(void)
     //while(!ADC_GetFlagStatus(ADC2, ADC_FLAG_RDY));
 
     ADC_RegularChannelConfig(ADC2, DIFF_PRESSURE_CHANNEL, 1, ADC_SampleTime_181Cycles5);
-    ADC_RegularChannelConfig(ADC2, ANALOG_MUX_CHANNEL,    2, ADC_SampleTime_181Cycles5);
-    ADC_RegularChannelConfig(ADC2, VBATT_CHANNEL,         3, ADC_SampleTime_181Cycles5);
+    ADC_RegularChannelConfig(ADC2, VBATT_CHANNEL,         2, ADC_SampleTime_181Cycles5);
 
     ADC_DMAConfig(ADC2, ADC_DMAMode_Circular);
 
@@ -183,15 +177,6 @@ float batteryVoltage(void)
 uint16_t convertedDiffPressure(void)
 {
 	return adc2ConvertedValues[DIFF_PRESSURE_CONVERTED_VALUE];
-}
-
-///////////////////////////////////////////////////////////////////////////////
-//  Return converted analog mux value
-///////////////////////////////////////////////////////////////////////////////
-
-uint16_t convertedAnalogMux(void)
-{
-	return adc2ConvertedValues[ANALOG_MUX_CONVERTED_VALUE];
 }
 
 ///////////////////////////////////////////////////////////////////////////////
