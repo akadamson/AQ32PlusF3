@@ -97,9 +97,9 @@ void pwmEscInit(uint16_t escPwmRate)
 	GPIO_PinAFConfig(GPIOD, GPIO_PinSource13, GPIO_AF_2);
 	GPIO_PinAFConfig(GPIOD, GPIO_PinSource14, GPIO_AF_2);
 	GPIO_PinAFConfig(GPIOD, GPIO_PinSource15, GPIO_AF_2);
-	GPIO_PinAFConfig(GPIOA, GPIO_PinSource1,  GPIO_AF_2);
-	GPIO_PinAFConfig(GPIOA, GPIO_PinSource2,  GPIO_AF_2);
-	GPIO_PinAFConfig(GPIOA, GPIO_PinSource3,  GPIO_AF_2);
+	GPIO_PinAFConfig(GPIOA, GPIO_PinSource1,  GPIO_AF_1);
+	GPIO_PinAFConfig(GPIOA, GPIO_PinSource2,  GPIO_AF_1);
+	GPIO_PinAFConfig(GPIOA, GPIO_PinSource3,  GPIO_AF_1);
 
 	///////////////////////////////////
 

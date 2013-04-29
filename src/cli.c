@@ -515,8 +515,8 @@ void cliCom(void)
         ///////////////////////////////
 
         case 'z':
-            cliPrintF("%5.2f, %4ld\n", batteryVoltage(),
-            		                   convertedDiffPressure());
+            cliPrintF("%5.2f, %5.2f\n", batteryVoltage(),
+                                        differentialPressure());
             break;
 
         ///////////////////////////////

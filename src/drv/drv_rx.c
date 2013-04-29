@@ -320,7 +320,7 @@ void rxInit(void)
 
         GPIO_Init(GPIOA, &GPIO_InitStructure);
 
-        GPIO_PinAFConfig(GPIOA, GPIO_PinSource8, GPIO_AF_4);
+        GPIO_PinAFConfig(GPIOA, GPIO_PinSource8, GPIO_AF_6);
 
         NVIC_InitStructure.NVIC_IRQChannel                   = TIM1_CC_IRQn;
         NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;
@@ -400,14 +400,14 @@ void rxInit(void)
 
         GPIO_Init(GPIOF, & GPIO_InitStructure);
 
-    	GPIO_PinAFConfig(GPIOA, GPIO_PinSource8,  GPIO_AF_2);
-	    GPIO_PinAFConfig(GPIOB, GPIO_PinSource8,  GPIO_AF_4);
-	    GPIO_PinAFConfig(GPIOB, GPIO_PinSource9,  GPIO_AF_4);
-	    GPIO_PinAFConfig(GPIOC, GPIO_PinSource6,  GPIO_AF_2);
-        GPIO_PinAFConfig(GPIOC, GPIO_PinSource7,  GPIO_AF_2);
-        GPIO_PinAFConfig(GPIOC, GPIO_PinSource8,  GPIO_AF_2);
-        GPIO_PinAFConfig(GPIOF, GPIO_PinSource9,  GPIO_AF_2);
-        GPIO_PinAFConfig(GPIOF, GPIO_PinSource10, GPIO_AF_2);
+    	GPIO_PinAFConfig(GPIOA, GPIO_PinSource8,  GPIO_AF_6);
+	    GPIO_PinAFConfig(GPIOB, GPIO_PinSource8,  GPIO_AF_1);
+	    GPIO_PinAFConfig(GPIOB, GPIO_PinSource9,  GPIO_AF_1);
+	    GPIO_PinAFConfig(GPIOC, GPIO_PinSource6,  GPIO_AF_4);
+        GPIO_PinAFConfig(GPIOC, GPIO_PinSource7,  GPIO_AF_4);
+        GPIO_PinAFConfig(GPIOC, GPIO_PinSource8,  GPIO_AF_4);
+        GPIO_PinAFConfig(GPIOF, GPIO_PinSource9,  GPIO_AF_3);
+        GPIO_PinAFConfig(GPIOF, GPIO_PinSource10, GPIO_AF_3);
 
         ///////////////////////////////
 
