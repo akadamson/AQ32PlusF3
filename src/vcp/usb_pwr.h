@@ -1,10 +1,10 @@
 /**
   ******************************************************************************
-  * @file    platform_config.h
+  * @file    usb_pwr.h
   * @author  MCD Application Team
   * @version V4.0.0
   * @date    21-January-2013
-  * @brief   Evaluation board specific configuration file.
+  * @brief   Connection/disconnection & power management header
   ******************************************************************************
   * @attention
   *
@@ -16,8 +16,8 @@
   *
   *        http://www.st.com/software_license_agreement_liberty_v2
   *
-  * Unless required by applicable law or agreed to in writing, software
-  * distributed under the License is distributed on an "AS IS" BASIS,
+  * Unless required by applicable law or agreed to in writing, software 
+  * distributed under the License is distributed on an "AS IS" BASIS, 
   * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   * See the License for the specific language governing permissions and
   * limitations under the License.
@@ -27,22 +27,46 @@
 
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __PLATFORM_CONFIG_H
-#define __PLATFORM_CONFIG_H
+#ifndef __USB_PWR_H
+#define __USB_PWR_H
 
 /* Includes ------------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
+typedef enum _RESUME_STATE
+{
+  RESUME_EXTERNAL,
+  RESUME_INTERNAL,
+  RESUME_LATER,
+  RESUME_WAIT,
+  RESUME_START,
+  RESUME_ON,
+  RESUME_OFF,
+  RESUME_ESOF
+} RESUME_STATE;
+
+typedef enum _DEVICE_STATE
+{
+  UNCONNECTED,
+  ATTACHED,
+  POWERED,
+  SUSPENDED,
+  ADDRESSED,
+  CONFIGURED
+} DEVICE_STATE;
+
 /* Exported constants --------------------------------------------------------*/
-
-/*Unique Devices IDs register set*/
-
-#define         ID1          (0x1FFFF7AC)
-#define         ID2          (0x1FFFF7B0)
-#define         ID3          (0x1FFFF7B4)
-
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
+void Suspend(void);
+void Resume_Init(void);
+void Resume(RESUME_STATE eResumeSetVal);
+RESULT PowerOn(void);
+RESULT PowerOff(void);
 
-#endif /* __PLATFORM_CONFIG_H */
+/* External variables --------------------------------------------------------*/
+extern  __IO uint32_t bDeviceState; /* USB device status */
+extern __IO bool fSuspendEnabled;  /* true when suspend is possible */
+
+#endif  /*__USB_PWR_H*/
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
