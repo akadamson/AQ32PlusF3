@@ -29,7 +29,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f30x_it.h"
-
+#include "usb_istr.h"  // HJI
 /** @addtogroup Template_Project
   * @{
   */

@@ -55,12 +55,8 @@
 #include "stm32f30x_conf.h"
 
 #include "hw_config.h"
-#include "platform_config.h"
-#include "usb_conf.h"
-#include "usb_desc.h"
-#include "usb_istr.h"
-#include "usb_prop.h"
 #include "usb_lib.h"
+#include "usb_desc.h"
 #include "usb_pwr.h"
 
 ///////////////////////////////////////////////////////////////////////////////

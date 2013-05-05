@@ -31,6 +31,7 @@
 #define __HW_CONFIG_H
 
 /* Includes ------------------------------------------------------------------*/
+#include "stm32f30x.h"  // HJI
 #include "platform_config.h"
 #include "usb_type.h"
 

@@ -31,6 +31,7 @@
 #define __USB_TYPE_H
 
 /* Includes ------------------------------------------------------------------*/
+#include <stdbool.h>  // HJI
 #include "usb_conf.h"
 
 /* Exported types ------------------------------------------------------------*/
@@ -40,13 +41,10 @@
 #endif
 
 // HJI typedef enum
-// HJI {
-// HJI   FALSE = 0, TRUE  = !FALSE
-// HJI }
+enum {  // HJI
+  FALSE = 0, TRUE  = !FALSE
+};
 // HJI bool;
-
-#define FALSE 0  // HJI
-#define TRUE  1  // HJI
 
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */

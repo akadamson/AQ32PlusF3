@@ -27,7 +27,6 @@
 
 
 /* Includes ------------------------------------------------------------------*/
-#include "board.h"  // HJI
 #include "usb_lib.h"
 #include "usb_conf.h"
 #include "usb_prop.h"
