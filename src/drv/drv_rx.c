@@ -105,14 +105,14 @@ static void serialPWM_IRQHandler(TIM_TypeDef *tim)
     static uint16_t last = 0;
     static uint8_t  chan = 0;
 
-    if (TIM_GetITStatus(tim, TIM_IT_CC4) == SET)
+    if (TIM_GetITStatus(tim, TIM_IT_CC1) == SET)
     {
         last = now;
         now = TIM_GetCapture4(tim);
         rcActive = true;
     }
 
-    TIM_ClearITPendingBit(tim, TIM_IT_CC4);
+    TIM_ClearITPendingBit(tim, TIM_IT_CC1);
 
     diff = now - last;
 
