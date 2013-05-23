@@ -274,11 +274,6 @@ void systemInit(void)
 
     ledInit();
 
-    Set_System();
-    Set_USBClock();
-    USB_Interrupts_Config();
-    USB_Init();
-
     adcInit();
     cliInit();
     gpsInit();

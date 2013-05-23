@@ -43,8 +43,8 @@
 /* Private variables ---------------------------------------------------------*/
 extern __IO uint32_t packet_sent;
 extern __IO uint32_t packet_receive;
-extern __IO uint8_t Receive_Buffer[64];
-uint32_t Receive_length;
+// HJI extern __IO uint8_t Receive_Buffer[64];
+// HJI uint32_t Receive_length;
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
@@ -68,6 +68,7 @@ void EP1_IN_Callback (void)
 * Output         : None.
 * Return         : None.
 *******************************************************************************/
+
 void EP3_OUT_Callback(void)
 {
   packet_receive = 1;

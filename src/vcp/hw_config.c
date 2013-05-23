@@ -41,17 +41,20 @@
 /* Private variables ---------------------------------------------------------*/
 ErrorStatus HSEStartUpStatus;
 EXTI_InitTypeDef EXTI_InitStructure;
-extern __IO uint32_t packet_sent;
-extern __IO uint8_t Send_Buffer[VIRTUAL_COM_PORT_DATA_SIZE] ;
-extern __IO  uint32_t packet_receive;
-extern __IO uint8_t Receive_length;
+// HJI extern __IO uint32_t packet_sent;
+// HJI extern __IO uint8_t Send_Buffer[VIRTUAL_COM_PORT_DATA_SIZE] ;
+// HJI extern __IO  uint32_t packet_receive;
+
+uint32_t Receive_length;
 
 uint8_t Receive_Buffer[64];
+
 uint32_t Send_length;
 static void IntToUnicode (uint32_t value , uint8_t *pbuf , uint8_t len);
+
 /* Extern variables ----------------------------------------------------------*/
 
-extern LINE_CODING linecoding;
+// HJI extern LINE_CODING linecoding;
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
@@ -159,7 +162,7 @@ void Leave_LowPowerMode(void)
   {
     bDeviceState = ATTACHED;
   }
-    /*Enable SystemCoreClock*/
+  /*Enable SystemCoreClock*/
   SystemInit();
 }
 
@@ -284,7 +287,7 @@ uint32_t CDC_Send_DATA (uint8_t *ptrBuffer, uint8_t Send_length)
   if(Send_length < VIRTUAL_COM_PORT_DATA_SIZE)
   {
     /*Sent flag*/
-    packet_sent = 0;
+    // HJI packet_sent = 0;
     /* send  packet to PMA*/
     UserToPMABufferCopy((unsigned char*)ptrBuffer, ENDP1_TXADDR, Send_length);
     SetEPTxCount(ENDP1, Send_length);
@@ -307,7 +310,7 @@ uint32_t CDC_Send_DATA (uint8_t *ptrBuffer, uint8_t Send_length)
 uint32_t CDC_Receive_DATA(void)
 {
   /*Receive flag*/
-  packet_receive = 0;
+  // HJI packet_receive = 0;
   SetEPRxValid(ENDP3);
   return 1 ;
 }
