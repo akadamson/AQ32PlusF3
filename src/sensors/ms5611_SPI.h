@@ -51,13 +51,19 @@
 
 #define DISABLE_MS5611      GPIO_SetBits(MS5611_CS_GPIO,   MS5611_CS_PIN)
 
-extern uint32_t d1Average;
-
-extern uint32_t d1Sum;
-
 extern uint32andUint8_t d1;
 
-extern uint8_t pressureAltValid;
+extern uint32_t d1Value;
+
+extern uint32andUint8_t d2;
+
+extern uint32_t d2Value;
+
+extern int32_t ms5611Temperature;
+
+extern uint8_t newPressureReading;
+
+extern uint8_t newTemperatureReading;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Read Temperature Request Pressure

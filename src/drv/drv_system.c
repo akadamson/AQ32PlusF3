@@ -170,21 +170,6 @@ void SysTick_Handler(void)
                 accelSummedSamples100Hz[index] = accelSum100Hz[index];
                 accelSum100Hz[index] = 0.0f;
             }
-
-            if (frameCounter == COUNT_100HZ)
-            {
-                readTemperatureRequestPressure();
-            }
-            else if (frameCounter == FRAME_COUNT)
-            {
-                readPressureRequestTemperature();
-            }
-            else
-            {
-                readPressureRequestPressure();
-            }
-
-            d1Sum += d1.value;
         }
 
         ///////////////////////////////
@@ -288,10 +273,6 @@ void systemInit(void)
     telemetryInit();
     timingFunctionsInit();
 
-    initPID();
-    setupFourthOrder500Hz();
-    setupFourthOrder100Hz();
-
     RED_N_LED_ON;
     delay(2500);
     ORANGE_NE_LED_ON;
@@ -317,6 +298,10 @@ void systemInit(void)
     initPressure();
 
     initMax7456();
+
+    initFirstOrderFilter();
+
+    initPID();
 }
 
 ///////////////////////////////////////////////////////////////////////////////

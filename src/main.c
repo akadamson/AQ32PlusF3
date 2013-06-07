@@ -80,7 +80,7 @@ int main(void)
 			if (eepromConfig.osdEnabled)
 			{
 				if (eepromConfig.osdDisplayAlt)
-				    displayAltitude(sensors.pressureAlt10Hz, 0.0f, DISENGAGED);
+				    displayAltitude(sensors.pressureAlt50Hz, 0.0f, DISENGAGED);
 
 				if (eepromConfig.osdDisplayAH)
 				    displayArtificialHorizon(sensors.attitude500Hz[ROLL], sensors.attitude500Hz[PITCH], flightMode);
@@ -115,12 +115,6 @@ int main(void)
 			    magDataUpdate = true;
             }
 
-        	d1Average = d1Sum / 10;
-        	d1Sum = 0;
-        	calculateTemperature();
-        	calculatePressureAltitude();
-
-        	pressureAltValid = true;
         	switch (eepromConfig.gpsType)
 			{
 			    ///////////////////////
@@ -177,11 +171,11 @@ int main(void)
 			sensors.accel500Hz[YAXIS] =  ((float)accelSummedSamples500Hz[YAXIS] / 2.0f - eepromConfig.accelBias[YAXIS]) * eepromConfig.accelScaleFactor[YAXIS];
 			sensors.accel500Hz[ZAXIS] = -((float)accelSummedSamples500Hz[ZAXIS] / 2.0f - eepromConfig.accelBias[ZAXIS]) * eepromConfig.accelScaleFactor[ZAXIS];
 
-            sensors.accel500Hz[XAXIS] = computeFourthOrder500Hz(sensors.accel500Hz[XAXIS], &fourthOrder500Hz[AX_FILTER]);
-            sensors.accel500Hz[YAXIS] = computeFourthOrder500Hz(sensors.accel500Hz[YAXIS], &fourthOrder500Hz[AY_FILTER]);
-            sensors.accel500Hz[ZAXIS] = computeFourthOrder500Hz(sensors.accel500Hz[ZAXIS], &fourthOrder500Hz[AZ_FILTER]);
+			sensors.accel500Hz[XAXIS] = firstOrderFilter(sensors.accel500Hz[XAXIS], &firstOrderFilters[ACCEL500HZ_X_LOWPASS]);
+			sensors.accel500Hz[YAXIS] = firstOrderFilter(sensors.accel500Hz[YAXIS], &firstOrderFilters[ACCEL500HZ_Y_LOWPASS]);
+			sensors.accel500Hz[ZAXIS] = firstOrderFilter(sensors.accel500Hz[ZAXIS], &firstOrderFilters[ACCEL500HZ_Z_LOWPASS]);
 
-            sensors.gyro500Hz[ROLL ] =  ((float)gyroSummedSamples500Hz[ROLL]  / 2.0f - gyroRTBias[ROLL ]) * GYRO_SCALE_FACTOR;
+			sensors.gyro500Hz[ROLL ] =  ((float)gyroSummedSamples500Hz[ROLL]  / 2.0f - gyroRTBias[ROLL ]) * GYRO_SCALE_FACTOR;
 			sensors.gyro500Hz[PITCH] =  ((float)gyroSummedSamples500Hz[PITCH] / 2.0f - gyroRTBias[PITCH]) * GYRO_SCALE_FACTOR;
             sensors.gyro500Hz[YAW  ] = -((float)gyroSummedSamples500Hz[YAW]   / 2.0f - gyroRTBias[YAW  ]) * GYRO_SCALE_FACTOR;
 
@@ -223,9 +217,32 @@ int main(void)
 			sensors.accel100Hz[YAXIS] =  ((float)accelSummedSamples100Hz[YAXIS] / 10.0f - eepromConfig.accelBias[YAXIS]) * eepromConfig.accelScaleFactor[YAXIS];
 			sensors.accel100Hz[ZAXIS] = -((float)accelSummedSamples100Hz[ZAXIS] / 10.0f - eepromConfig.accelBias[ZAXIS]) * eepromConfig.accelScaleFactor[ZAXIS];
 
-        	sensors.accel100Hz[XAXIS] = computeFourthOrder100Hz(sensors.accel100Hz[XAXIS], &fourthOrder100Hz[AX_FILTER]);
-            sensors.accel100Hz[YAXIS] = computeFourthOrder100Hz(sensors.accel100Hz[YAXIS], &fourthOrder100Hz[AY_FILTER]);
-            sensors.accel100Hz[ZAXIS] = computeFourthOrder100Hz(sensors.accel100Hz[ZAXIS], &fourthOrder100Hz[AZ_FILTER]);
+			sensors.accel100Hz[XAXIS] = firstOrderFilter(sensors.accel100Hz[XAXIS], &firstOrderFilters[ACCEL100HZ_X_LOWPASS]);
+			sensors.accel100Hz[YAXIS] = firstOrderFilter(sensors.accel100Hz[YAXIS], &firstOrderFilters[ACCEL100HZ_Y_LOWPASS]);
+			sensors.accel100Hz[ZAXIS] = firstOrderFilter(sensors.accel100Hz[ZAXIS], &firstOrderFilters[ACCEL100HZ_Z_LOWPASS]);
+
+            if (!newTemperatureReading)
+			{
+				readTemperatureRequestPressure();
+			    newTemperatureReading = true;
+			}
+			else
+			{
+			    readPressureRequestTemperature();
+			    newPressureReading = true;
+			}
+
+            if (newTemperatureReading && newPressureReading)
+            {
+                d1Value = d1.value;
+                d2Value = d2.value;
+
+                calculateTemperature();
+                calculatePressureAltitude();
+
+                newTemperatureReading = false;
+                newPressureReading    = false;
+            }
 
             createRotationMatrix();
             bodyAccelToEarthAccel();
@@ -280,7 +297,7 @@ int main(void)
             {
                	// Vertical Variables
             	telemetryPrintF("%9.4f, %9.4f, %9.4f, %9.4f\n", earthAxisAccels[ZAXIS],
-            			                                        sensors.pressureAlt10Hz,
+            			                                        sensors.pressureAlt50Hz,
             			                                        hDotEstimate,
             			                                        hEstimate);
             }

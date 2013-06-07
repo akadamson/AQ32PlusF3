@@ -1,3 +1,9 @@
+6/7/2013
+-Added DSP Library call for matrix math function in cordinateTransforms.c
+-Deleted 4th order lowpass filter, added firstOrderFilter
+-Updates to MS5611 sensor to match AQ32Plus procesing
+-Move MS5611 calls from systick ISR to 100 Hz loop
+
 5/22/2013
 -Changed serial pwm timer 1 channel 4 to timer 1 channel 1 in drv_rx.c
 

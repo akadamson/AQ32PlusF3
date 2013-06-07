@@ -39,8 +39,11 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 
-#define     PI 3.14159265f
-#define TWO_PI 6.28318531f
+#ifndef PI
+    #define PI  3.14159265358979f
+#endif
+
+#define TWO_PI (2.0f * PI)
 
 #define D2R (PI / 180.0f)
 
@@ -50,7 +53,7 @@
 
 #define EARTH_RADIUS 6371000f
 
-#define SQR(x)  (x * x)
+#define SQR(x)  ((x) * (x))
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -106,7 +109,7 @@ typedef struct sensors_t
     float attitude500Hz[3];
     float gyro500Hz[3];
     float mag10Hz[3];
-    float pressureAlt10Hz;
+    float pressureAlt50Hz;
 
     float    gpsLatitude;
     float    gpsLongitude;
