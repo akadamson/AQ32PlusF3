@@ -54,6 +54,8 @@
 #include "stm32f30x.h"
 #include "stm32f30x_conf.h"
 
+#include "arm_math.h"
+
 #include "hw_config.h"
 #include "usb_lib.h"
 #include "usb_desc.h"
@@ -90,13 +92,13 @@
 #include "config.h"
 #include "coordinateTransforms.h"
 #include "escCalibration.h"
+#include "firstOrderFilter.h"
 #include "flightCommand.h"
 #include "gps.h"
 #include "gpsMediaTek19.h"
 #include "gpsNMEA.h"
 #include "gpsUblox.h"
 #include "linearAlgebra.h"
-#include "lowPassFilter.h"
 #include "MargAHRS.h"
 #include "magCalibration.h"
 #include "mixer.h"
