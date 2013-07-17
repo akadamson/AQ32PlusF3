@@ -113,48 +113,8 @@ LoopFillZerobss:
 LoopForever:
     b LoopForever
     
-.equ	RCC_AHBENR,	    0x40021014  // HJI 11/9/2012
-.equ	GPIOE_CLK_MASK,	    0x00200000  // HJI 11/9/2012
-
-.equ    GPIOE_MODER,        0x48001000  // HJI 11/9/2012
-.equ    GPIOE_MODE_MASK,    0x11110000  // HJI 11/9/2012
-
-.equ    GPIOE_OTYPER,       0x48001004  // HJI 11/9/2012
-.equ    GPIOE_OTYPE_MASK,   0x00000000  // HJI 11/9/2012
-
-.equ    GPIOE_OSPEEDR,      0x48001008  // HJI 11/9/2012
-.equ    GPIOE_OSPEED_MASK,  0x00000000  // HJI 11/9/2012
-
-.equ    GPIOE_ODR,          0x48001014  // HJI 11/9/2012
-.equ    GPIOE_OD_MASK,      0x00005500  // HJI 11/9/2012
-
 Reboot_Loader:                          // HJI 11/9/2012
 
-        // RCC Enable GPIOE Clock       // HJI 11/9/2012
-        ldr     r6, =RCC_AHBENR         // HJI 11/9/2012
-        ldr     r0, =GPIOE_CLK_MASK     // HJI 11/9/2012
-        str     r0, [r6];               // HJI 11/9/2012
-        
-        // Set GPIOE 8-15 as Outputs    // HJI 11/9/2012
-        ldr     r6, =GPIOE_MODER        // HJI 11/9/2012
-        ldr     r0, =GPIOE_MODE_MASK    // HJI 11/9/2012
-        str     r0, [r6]                // HJI 11/9/2012
-        
-        // Set GPIOE 8-15 as Push-Pull  // HJI 11/9/2012
-        ldr     r6, =GPIOE_OTYPER       // HJI 11/9/2012
-        ldr     r0, =GPIOE_OTYPE_MASK   // HJI 11/9/2012
-        str     r0, [r6]                // HJI 11/9/2012
-        
-        // Set GPIOE 8-15 at 2 MHz      // HJI 11/9/2012
-        ldr     r6, =GPIOE_OSPEEDR      // HJI 11/9/2012
-        ldr     r0, =GPIOE_OSPEED_MASK  // HJI 11/9/2012
-        str     r0, [r6]                // HJI 11/9/2012
-        
-        // Set GPIOE 8-15 High          // HJI 11/9/2012
-        ldr     r6, =GPIOE_ODR          // HJI 11/9/2012
-        ldr     r0, =GPIOE_OD_MASK      // HJI 11/9/2012
-        str     r0, [r6]                // HJI 11/9/2012
-        
         // Reboot to ROM                // HJI 11/9/2012
         ldr     r0, =0x1FFFD800         // HJI 4/26/2013
         ldr     sp,[r0, #0]             // HJI 11/9/2012

@@ -16,8 +16,8 @@
   *
   *        http://www.st.com/software_license_agreement_liberty_v2
   *
-  * Unless required by applicable law or agreed to in writing, software 
-  * distributed under the License is distributed on an "AS IS" BASIS, 
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an "AS IS" BASIS,
   * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   * See the License for the specific language governing permissions and
   * limitations under the License.
@@ -41,10 +41,6 @@
 #define VCOMPORT_IN_FRAME_INTERVAL             5
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-extern __IO uint32_t packet_sent;
-extern __IO uint32_t packet_receive;
-// HJI extern __IO uint8_t Receive_Buffer[64];
-// HJI uint32_t Receive_length;
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
@@ -58,7 +54,7 @@ extern __IO uint32_t packet_receive;
 
 void EP1_IN_Callback (void)
 {
-  packet_sent = 1;
+    packetSent = 0;
 }
 
 /*******************************************************************************
@@ -71,9 +67,8 @@ void EP1_IN_Callback (void)
 
 void EP3_OUT_Callback(void)
 {
-  packet_receive = 1;
-  Receive_length = GetEPRxCount(ENDP3);
-  PMAToUserBufferCopy((unsigned char*)Receive_Buffer, ENDP3_RXADDR, Receive_length);
+    receiveLength = GetEPRxCount(ENDP3);
+    PMAToUserBufferCopy((unsigned char*)receiveBuffer, ENDP3_RXADDR, receiveLength);
 }
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

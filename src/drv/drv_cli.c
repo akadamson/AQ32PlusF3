@@ -38,6 +38,10 @@
 #include "board.h"
 
 ///////////////////////////////////////////////////////////////////////////////
+
+#define USB_TIMEOUT  50
+
+///////////////////////////////////////////////////////////////////////////////
 // CLI Initialization
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -50,13 +54,12 @@ void cliInit(void)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// CLI Avaialble
+// CLI Available
 ///////////////////////////////////////////////////////////////////////////////
 
-uint16_t cliAvailable(void)
+uint32_t cliAvailable(void)
 {
-    CDC_Receive_DATA();
-    return (Receive_length  != 0) ? true : false;
+    return receiveLength;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -65,7 +68,16 @@ uint16_t cliAvailable(void)
 
 uint8_t cliRead(void)
 {
-    return Receive_Buffer[0];
+    uint8_t buf[1];
+
+    uint32_t rxed = 0;
+
+    while (rxed < 1)
+    {
+        rxed += CDC_Receive_DATA((uint8_t*)buf + rxed, 1 - rxed);
+    }
+
+    return buf[0];
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -74,7 +86,34 @@ uint8_t cliRead(void)
 
 void cliPrint(char *str)
 {
-	CDC_Send_DATA((unsigned char*)str, strlen(str));
+    uint32_t len;
+    uint32_t oldTxed;
+    uint32_t start;
+    uint32_t txed;
+
+    if (!(usbIsConnected() && usbIsConfigured()) || !str)
+    {
+	    return;
+	}
+
+	len     = strlen(str);
+
+	txed    = 0;
+	oldTxed = 0;
+
+	start   = millis();
+
+	while (txed < len && (millis() - start < USB_TIMEOUT))
+	{
+	    txed += CDC_Send_DATA((uint8_t*)str + txed, len - txed);
+
+	    if (oldTxed != txed)
+	    {
+	        start = millis();
+	    }
+
+	    oldTxed = txed;
+	}
 }
 
 ///////////////////////////////////////////////////////////////////////////////

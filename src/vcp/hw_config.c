@@ -27,8 +27,8 @@
 
 /* Includes ------------------------------------------------------------------*/
 
-#include "board.h"         // HJI
-#include "stm32f30x_it.h"  // HJI
+#include "board.h"
+#include "stm32f30x_it.h"
 #include "usb_lib.h"
 #include "usb_prop.h"
 #include "usb_desc.h"
@@ -39,22 +39,22 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
+
 ErrorStatus HSEStartUpStatus;
+
 EXTI_InitTypeDef EXTI_InitStructure;
-// HJI extern __IO uint32_t packet_sent;
-// HJI extern __IO uint8_t Send_Buffer[VIRTUAL_COM_PORT_DATA_SIZE] ;
-// HJI extern __IO  uint32_t packet_receive;
 
-uint32_t Receive_length;
+__IO uint32_t packetSent = 0;
 
-uint8_t Receive_Buffer[64];
+uint32_t receiveLength;
 
-uint32_t Send_length;
+uint8_t  receiveBuffer[64];
+
+uint32_t sendLength;
+
 static void IntToUnicode (uint32_t value , uint8_t *pbuf , uint8_t len);
 
 /* Extern variables ----------------------------------------------------------*/
-
-// HJI extern LINE_CODING linecoding;
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
@@ -193,36 +193,6 @@ NVIC_InitTypeDef NVIC_InitStructure;
 }
 
 /*******************************************************************************
-* Function Name  : USB_Cable_Config
-* Description    : Software Connection/Disconnection of USB Cable
-* Input          : None.
-* Return         : Status
-*******************************************************************************/
-void USB_Cable_Config (FunctionalState NewState)
-{
-#if defined(STM32L1XX_MD) || defined (STM32L1XX_HD)|| (STM32L1XX_MD_PLUS)
-  if (NewState != DISABLE)
-  {
-    STM32L15_USB_CONNECT;
-  }
-  else
-  {
-    STM32L15_USB_DISCONNECT;
-  }
-
-#else /* USE_STM3210B_EVAL or USE_STM3210E_EVAL */
-  if (NewState != DISABLE)
-  {
-    // HJI GPIO_ResetBits(USB_DISCONNECT, USB_DISCONNECT_PIN);
-  }
-  else
-  {
-    // HJI GPIO_SetBits(USB_DISCONNECT, USB_DISCONNECT_PIN);
-  }
-#endif /* STM32L1XX_MD */
-}
-
-/*******************************************************************************
 * Function Name  : Get_SerialNum.
 * Description    : Create the serial number string descriptor.
 * Input          : None.
@@ -281,23 +251,30 @@ static void IntToUnicode (uint32_t value , uint8_t *pbuf , uint8_t len)
 * Output         : None.
 * Return         : None.
 *******************************************************************************/
-uint32_t CDC_Send_DATA (uint8_t *ptrBuffer, uint8_t Send_length)
+uint32_t CDC_Send_DATA (uint8_t *ptrBuffer, uint8_t sendLength)
 {
-  /*if max buffer is Not reached*/
-  if(Send_length < VIRTUAL_COM_PORT_DATA_SIZE)
-  {
-    /*Sent flag*/
-    // HJI packet_sent = 0;
-    /* send  packet to PMA*/
-    UserToPMABufferCopy((unsigned char*)ptrBuffer, ENDP1_TXADDR, Send_length);
-    SetEPTxCount(ENDP1, Send_length);
-    SetEPTxValid(ENDP1);
-  }
-  else
-  {
-    return 0;
-  }
-  return 1;
+    /* Last transmission hasn't finished, abort */
+    if (packetSent)
+    {
+        return 0;
+    }
+
+	// We can only put 64 bytes in the buffer
+	if (sendLength > 64 / 2)
+	{
+	    sendLength = 64 / 2;
+	}
+
+	// Try to load some bytes if we can
+	if (sendLength)
+	{
+	    UserToPMABufferCopy(ptrBuffer, ENDP1_TXADDR, sendLength);
+	    SetEPTxCount(ENDP1, sendLength);
+	    packetSent += sendLength;
+	    SetEPTxValid(ENDP1);
+	}
+
+	return sendLength;
 }
 
 /*******************************************************************************
@@ -307,12 +284,58 @@ uint32_t CDC_Send_DATA (uint8_t *ptrBuffer, uint8_t Send_length)
 * Output         : None.
 * Return         : None.
 *******************************************************************************/
-uint32_t CDC_Receive_DATA(void)
+uint32_t CDC_Receive_DATA(uint8_t* recvBuf, uint32_t len)
 {
-  /*Receive flag*/
-  // HJI packet_receive = 0;
-  SetEPRxValid(ENDP3);
-  return 1 ;
+    static uint8_t offset = 0;
+    uint8_t i;
+
+    if (len > receiveLength)
+    {
+        len = receiveLength;
+    }
+
+
+    for (i=0;i<len;i++)
+    {
+        recvBuf[i] = (uint8_t)(receiveBuffer[i+offset]);
+    }
+
+    receiveLength -= len;
+    offset += len;
+
+    /* re-enable the rx endpoint which we had set to receive 0 bytes */
+    if (receiveLength == 0)
+    {
+        SetEPRxCount(ENDP3,64);
+        SetEPRxStatus(ENDP3,EP_RX_VALID);
+        offset = 0;
+    }
+
+    return len;
+}
+
+/*******************************************************************************
+* Function Name  : usbIsConfigured.
+* Description    : Determies if USB VCP is configured or not
+* Input          : None.
+* Output         : None.
+* Return         : True if configured.
+*******************************************************************************/
+uint8_t usbIsConfigured()
+{
+    return (bDeviceState == CONFIGURED);
+}
+
+/*******************************************************************************
+* Function Name  : usbIsConnected.
+* Description    : Determines if USB VCP is connected ot not
+* Input          : None.
+* Output         : None.
+* Return         : True if conencted.
+*******************************************************************************/
+uint8_t usbIsConnected()
+{
+    return (bDeviceState != UNCONNECTED);
 }
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

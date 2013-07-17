@@ -16,8 +16,8 @@
   *
   *        http://www.st.com/software_license_agreement_liberty_v2
   *
-  * Unless required by applicable law or agreed to in writing, software 
-  * distributed under the License is distributed on an "AS IS" BASIS, 
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an "AS IS" BASIS,
   * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   * See the License for the specific language governing permissions and
   * limitations under the License.
@@ -65,9 +65,6 @@ RESULT PowerOn(void)
 {
   uint16_t wRegVal;
 
-  /*** cable plugged-in ? ***/
-  USB_Cable_Config(ENABLE);
-
   /*** CNTR_PWDN = 0 ***/
   wRegVal = CNTR_FRES;
   _SetCNTR(wRegVal);
@@ -80,7 +77,7 @@ RESULT PowerOn(void)
   /*** Set interrupt mask ***/
   wInterrupt_Mask = CNTR_RESETM | CNTR_SUSPM | CNTR_WKUPM;
   _SetCNTR(wInterrupt_Mask);
-  
+
   return USB_SUCCESS;
 }
 
@@ -97,8 +94,6 @@ RESULT PowerOff()
   _SetCNTR(CNTR_FRES);
   /* clear interrupt status register */
   _SetISTR(0);
-  /* Disable the Pull-Up*/
-  USB_Cable_Config(DISABLE);
   /* switch-off device */
   _SetCNTR(CNTR_FRES + CNTR_PDWN);
   /* sw variables reset */
@@ -122,46 +117,46 @@ void Suspend(void)
   __IO uint32_t savePWR_CR=0;
 	/* suspend preparation */
 	/* ... */
-	
+
 	/*Store CNTR value */
-	wCNTR = _GetCNTR();  
+	wCNTR = _GetCNTR();
 
     /* This a sequence to apply a force RESET to handle a robustness case */
-    
+
 	/*Store endpoints registers status */
     for (i=0;i<8;i++) EP[i] = _GetENDPOINT(i);
-	
+
 	/* unmask RESET flag */
 	wCNTR|=CNTR_RESETM;
 	_SetCNTR(wCNTR);
-	
+
 	/*apply FRES */
 	wCNTR|=CNTR_FRES;
 	_SetCNTR(wCNTR);
-	
+
 	/*clear FRES*/
 	wCNTR&=~CNTR_FRES;
 	_SetCNTR(wCNTR);
-	
+
 	/*poll for RESET flag in ISTR*/
 	while((_GetISTR()&ISTR_RESET) == 0);
-	
+
 	/* clear RESET flag in ISTR */
 	_SetISTR((uint16_t)CLR_RESET);
-	
+
 	/*restore Enpoints*/
 	for (i=0;i<8;i++)
 	_SetENDPOINT(i, EP[i]);
-	
+
 	/* Now it is safe to enter macrocell in suspend mode */
 	wCNTR |= CNTR_FSUSP;
 	_SetCNTR(wCNTR);
-	
+
 	/* force low-power mode in the macrocell */
 	wCNTR = _GetCNTR();
 	wCNTR |= CNTR_LPMODE;
 	_SetCNTR(wCNTR);
-	
+
 	/*prepare entry in low power mode (STOP mode)*/
 	/* Select the regulator state in STOP mode*/
 	savePWR_CR = PWR->CR;
@@ -176,7 +171,7 @@ void Suspend(void)
 #if defined (STM32F30X) || defined (STM32F37X)
         SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
 #else
-        SCB->SCR |= SCB_SCR_SLEEPDEEP;       
+        SCB->SCR |= SCB_SCR_SLEEPDEEP;
 #endif
 	/* enter system in STOP mode, only when wakeup flag in not set */
 	if((_GetISTR()&ISTR_WKUP)==0)
@@ -184,9 +179,9 @@ void Suspend(void)
 		__WFI();
 		/* Reset SLEEPDEEP bit of Cortex System Control Register */
 #if defined (STM32F30X) || defined (STM32F37X)
-                SCB->SCR &= (uint32_t)~((uint32_t)SCB_SCR_SLEEPDEEP_Msk); 
+                SCB->SCR &= (uint32_t)~((uint32_t)SCB_SCR_SLEEPDEEP_Msk);
 #else
-                SCB->SCR &= (uint32_t)~((uint32_t)SCB_SCR_SLEEPDEEP); 
+                SCB->SCR &= (uint32_t)~((uint32_t)SCB_SCR_SLEEPDEEP);
 #endif
 	}
 	else
@@ -197,18 +192,18 @@ void Suspend(void)
         wCNTR = _GetCNTR();
         wCNTR&=~CNTR_FSUSP;
         _SetCNTR(wCNTR);
-		
-		/*restore sleep mode configuration */ 
+
+		/*restore sleep mode configuration */
 		/* restore Power regulator config in sleep mode*/
 		PWR->CR = savePWR_CR;
-		
+
 		/* Reset SLEEPDEEP bit of Cortex System Control Register */
-#if defined (STM32F30X) || defined (STM32F37X)		
+#if defined (STM32F30X) || defined (STM32F37X)
                 SCB->SCR &= (uint32_t)~((uint32_t)SCB_SCR_SLEEPDEEP_Msk);
 #else
                 SCB->SCR &= (uint32_t)~((uint32_t)SCB_SCR_SLEEPDEEP);
 #endif
-              
+
     }
 }
 
@@ -222,7 +217,7 @@ void Suspend(void)
 void Resume_Init(void)
 {
   uint16_t wCNTR;
-  
+
   /* ------------------ ONLY WITH BUS-POWERED DEVICES ---------------------- */
   /* restart the clocks */
   /* ...  */
@@ -230,8 +225,8 @@ void Resume_Init(void)
   /* CNTR_LPMODE = 0 */
   wCNTR = _GetCNTR();
   wCNTR &= (~CNTR_LPMODE);
-  _SetCNTR(wCNTR);    
-  
+  _SetCNTR(wCNTR);
+
   /* restore full power */
   /* ... on connected devices */
   Leave_LowPowerMode();
@@ -240,7 +235,7 @@ void Resume_Init(void)
   _SetCNTR(IMR_MSK);
 
   /* reverse suspend preparation */
-  /* ... */ 
+  /* ... */
 
 }
 
@@ -296,7 +291,7 @@ void Resume(RESUME_STATE eResumeSetVal)
       ResumeS.eState = RESUME_ON;
       ResumeS.bESOFcnt = 10;
       break;
-    case RESUME_ON:    
+    case RESUME_ON:
       ResumeS.bESOFcnt--;
       if (ResumeS.bESOFcnt == 0)
       {

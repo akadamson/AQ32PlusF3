@@ -16,8 +16,8 @@
   *
   *        http://www.st.com/software_license_agreement_liberty_v2
   *
-  * Unless required by applicable law or agreed to in writing, software 
-  * distributed under the License is distributed on an "AS IS" BASIS, 
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an "AS IS" BASIS,
   * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   * See the License for the specific language governing permissions and
   * limitations under the License.
@@ -76,9 +76,6 @@ void (*pEpInt_OUT[7])(void) =
 *******************************************************************************/
 void USB_Istr(void)
 {
-    uint32_t i=0;
- __IO uint32_t EP[8];
-  
   wIstr = _GetISTR();
 
 #if (IMR_MSK & ISTR_SOF)
@@ -92,8 +89,8 @@ void USB_Istr(void)
 #endif
   }
 #endif
-  /*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*/  
-  
+  /*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*/
+
 #if (IMR_MSK & ISTR_CTR)
   if (wIstr & ISTR_CTR & wInterrupt_Mask)
   {
@@ -105,7 +102,7 @@ void USB_Istr(void)
 #endif
   }
 #endif
-  /*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*/  
+  /*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*/
 #if (IMR_MSK & ISTR_RESET)
   if (wIstr & ISTR_RESET & wInterrupt_Mask)
   {
@@ -176,40 +173,40 @@ void USB_Istr(void)
   {
     /* clear ESOF flag in ISTR */
     _SetISTR((uint16_t)CLR_ESOF);
-    
+
     if ((_GetFNR()&FNR_RXDP)!=0)
     {
       /* increment ESOF counter */
       esof_counter ++;
-      
+
       /* test if we enter in ESOF more than 3 times with FSUSP =0 and RXDP =1=>> possible missing SUSP flag*/
       if ((esof_counter >3)&&((_GetCNTR()&CNTR_FSUSP)==0))
-      {           
+      {
         /* this a sequence to apply a force RESET*/
-      
+
         /*Store CNTR value */
-        wCNTR = _GetCNTR(); 
-      
+        wCNTR = _GetCNTR();
+
         /*Store endpoints registers status */
         for (i=0;i<8;i++) EP[i] = _GetENDPOINT(i);
-      
+
         /*apply FRES */
         wCNTR|=CNTR_FRES;
         _SetCNTR(wCNTR);
- 
+
         /*clear FRES*/
         wCNTR&=~CNTR_FRES;
         _SetCNTR(wCNTR);
-      
+
         /*poll for RESET flag in ISTR*/
         while((_GetISTR()&ISTR_RESET) == 0);
         /* clear RESET flag in ISTR */
         _SetISTR((uint16_t)CLR_RESET);
-   
+
        /*restore Enpoints*/
         for (i=0;i<8;i++)
         _SetENDPOINT(i, EP[i]);
-      
+
         esof_counter = 0;
       }
     }
@@ -217,7 +214,7 @@ void USB_Istr(void)
     {
         esof_counter = 0;
     }
-    
+
     /* resume handling timing is made with ESOFs */
     Resume(RESUME_ESOF); /* request without change of the machine state */
 

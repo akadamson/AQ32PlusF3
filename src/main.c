@@ -49,9 +49,6 @@ heading_t      heading;
 
 uint16_t       timerValue;
 
-uint32_t packet_sent=1;
-uint32_t packet_receive=1;
-
 ///////////////////////////////////////////////////////////////////////////////
 
 int main(void)

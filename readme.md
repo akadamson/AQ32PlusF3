@@ -1,3 +1,7 @@
+7/17/2013
+-Added CMSIS 3.2
+-VCP fully functional
+
 5/22/2013
 -VCP transmit works, VCP receive still needs work
 

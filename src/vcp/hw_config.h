@@ -31,18 +31,19 @@
 #define __HW_CONFIG_H
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32f30x.h"  // HJI
-#include "platform_config.h"
+#include "stm32f30x.h"
 #include "usb_type.h"
 
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
+#define ID1  (0x1FFFF7AC)
+#define ID2  (0x1FFFF7B0)
+#define ID3  (0x1FFFF7B4)
 /* Exported macro ------------------------------------------------------------*/
 /* Exported define -----------------------------------------------------------*/
+
 #define MASS_MEMORY_START     0x04002000
 #define BULK_MAX_PACKET_SIZE  0x00000040
-#define LED_ON                0xF0
-#define LED_OFF               0xFF
 
 /* Exported functions ------------------------------------------------------- */
 void Set_System(void);
@@ -50,17 +51,22 @@ void Set_USBClock(void);
 void Enter_LowPowerMode(void);
 void Leave_LowPowerMode(void);
 void USB_Interrupts_Config(void);
-void USB_Cable_Config (FunctionalState NewState);
 void Get_SerialNum(void);
-void LCD_Control(void);
 
-uint32_t CDC_Send_DATA (uint8_t *ptrBuffer, uint8_t Send_length);
-uint32_t CDC_Receive_DATA(void);
+uint32_t CDC_Send_DATA(uint8_t *ptrBuffer, uint8_t sendLength);
+
+uint32_t CDC_Receive_DATA(uint8_t* recvBuf, uint32_t len);
+
+uint8_t usbIsConfigured();
+
+uint8_t usbIsConnected();
 
 /* External variables --------------------------------------------------------*/
 
-extern uint32_t Receive_length;
-extern uint8_t  Receive_Buffer[64];
+extern __IO uint32_t packetSent;
+
+extern uint32_t receiveLength;
+extern uint8_t  receiveBuffer[64];
 
 #endif  /*__HW_CONFIG_H*/
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
