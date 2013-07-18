@@ -171,9 +171,9 @@ int main(void)
 			sensors.accel500Hz[YAXIS] =  ((float)accelSummedSamples500Hz[YAXIS] / 2.0f - eepromConfig.accelBias[YAXIS]) * eepromConfig.accelScaleFactor[YAXIS];
 			sensors.accel500Hz[ZAXIS] = -((float)accelSummedSamples500Hz[ZAXIS] / 2.0f - eepromConfig.accelBias[ZAXIS]) * eepromConfig.accelScaleFactor[ZAXIS];
 
-			sensors.accel500Hz[XAXIS] = firstOrderFilter(sensors.accel500Hz[XAXIS], &firstOrderFilters[ACCEL500HZ_X_LOWPASS]);
-			sensors.accel500Hz[YAXIS] = firstOrderFilter(sensors.accel500Hz[YAXIS], &firstOrderFilters[ACCEL500HZ_Y_LOWPASS]);
-			sensors.accel500Hz[ZAXIS] = firstOrderFilter(sensors.accel500Hz[ZAXIS], &firstOrderFilters[ACCEL500HZ_Z_LOWPASS]);
+            sensors.accel500Hz[XAXIS] = firstOrderFilter(sensors.accel500Hz[XAXIS], &firstOrderFilters[ACCEL500HZ_X_LOWPASS]);
+            sensors.accel500Hz[YAXIS] = firstOrderFilter(sensors.accel500Hz[YAXIS], &firstOrderFilters[ACCEL500HZ_Y_LOWPASS]);
+            sensors.accel500Hz[ZAXIS] = firstOrderFilter(sensors.accel500Hz[ZAXIS], &firstOrderFilters[ACCEL500HZ_Z_LOWPASS]);
 
 			sensors.gyro500Hz[ROLL ] =  ((float)gyroSummedSamples500Hz[ROLL]  / 2.0f - gyroRTBias[ROLL ]) * GYRO_SCALE_FACTOR;
 			sensors.gyro500Hz[PITCH] =  ((float)gyroSummedSamples500Hz[PITCH] / 2.0f - gyroRTBias[PITCH]) * GYRO_SCALE_FACTOR;
@@ -221,17 +221,6 @@ int main(void)
 			sensors.accel100Hz[YAXIS] = firstOrderFilter(sensors.accel100Hz[YAXIS], &firstOrderFilters[ACCEL100HZ_Y_LOWPASS]);
 			sensors.accel100Hz[ZAXIS] = firstOrderFilter(sensors.accel100Hz[ZAXIS], &firstOrderFilters[ACCEL100HZ_Z_LOWPASS]);
 
-            if (!newTemperatureReading)
-			{
-				readTemperatureRequestPressure();
-			    newTemperatureReading = true;
-			}
-			else
-			{
-			    readPressureRequestTemperature();
-			    newPressureReading = true;
-			}
-
             if (newTemperatureReading && newPressureReading)
             {
                 d1Value = d1.value;
@@ -244,7 +233,7 @@ int main(void)
                 newPressureReading    = false;
             }
 
-            createRotationMatrix();
+			createRotationMatrix();
             bodyAccelToEarthAccel();
             vertCompFilter(dt100Hz);
 

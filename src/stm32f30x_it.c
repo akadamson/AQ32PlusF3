@@ -1,11 +1,11 @@
 /**
   ******************************************************************************
-  * @file    Project/STM32F30x_StdPeriph_Templates/stm32f30x_it.c 
+  * @file    Project/STM32F30x_StdPeriph_Templates/stm32f30x_it.c
   * @author  MCD Application Team
   * @version V1.0.0
   * @date    23-October-2012
   * @brief   Main Interrupt Service Routines.
-  *          This file provides template for all exceptions handler and 
+  *          This file provides template for all exceptions handler and
   *          peripherals interrupt service routine.
   ******************************************************************************
   * @attention
@@ -18,8 +18,8 @@
   *
   *        http://www.st.com/software_license_agreement_liberty_v2
   *
-  * Unless required by applicable law or agreed to in writing, software 
-  * distributed under the License is distributed on an "AS IS" BASIS, 
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an "AS IS" BASIS,
   * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   * See the License for the specific language governing permissions and
   * limitations under the License.
@@ -28,8 +28,10 @@
   */
 
 /* Includes ------------------------------------------------------------------*/
+
 #include "stm32f30x_it.h"
-// HJI #include "main.h"
+
+#include "usb_istr.h"
 
 /** @addtogroup Template_Project
   * @{
@@ -144,6 +146,26 @@ void PendSV_Handler(void)
 // HJI   TimingDelay_Decrement();
 // HJI }
 
+/**
+  * @brief  This function handles USB Low Priority interrupts.
+  * @param  None
+  * @retval None
+  */
+void USB_LP_CAN1_RX0_IRQHandler(void)
+{
+  USB_Istr();
+}
+
+/**
+  * @brief  This function handles USB WakeUp interrupt request.
+  * @param  None
+  * @retval None
+  */
+void USBWakeUp_IRQHandler(void)
+{
+  EXTI_ClearITPendingBit(EXTI_Line18);
+}
+
 /******************************************************************************/
 /*                 STM32F30x Peripherals Interrupt Handlers                   */
 /*  Add here the Interrupt Handler for the used peripheral(s) (PPP), for the  */
@@ -162,7 +184,7 @@ void PendSV_Handler(void)
 
 /**
   * @}
-  */ 
+  */
 
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

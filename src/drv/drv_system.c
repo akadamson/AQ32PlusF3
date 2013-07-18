@@ -213,16 +213,25 @@ void SysTick_Handler(void)
 
 ///////////////////////////////////////////////////////////////////////////////
 // System Time in Microseconds
+//
+// Note: This can be called from within IRQ Handlers, so uses LDREX/STREX.
+// If a higher priority IRQ or DMA or anything happens the STREX will fail
+// and restart the loop. Otherwise the same number that was read is harmlessly
+// written back.
 ///////////////////////////////////////////////////////////////////////////////
 
 uint32_t micros(void)
 {
     register uint32_t oldCycle, cycle, timeMs;
-    __disable_irq();
-    cycle = *DWT_CYCCNT;
-    oldCycle = sysTickCycleCounter;
-    timeMs = sysTickUptime;
-    __enable_irq();
+
+    do
+    {
+        timeMs = __LDREXW(&sysTickUptime);
+        cycle = *DWT_CYCCNT;
+        oldCycle = sysTickCycleCounter;
+    }
+    while ( __STREXW( timeMs , &sysTickUptime ) );
+
     return (timeMs * 1000) + (cycle - oldCycle) / usTicks;
 }
 
@@ -273,6 +282,9 @@ void systemInit(void)
     telemetryInit();
     timingFunctionsInit();
 
+    initPID();
+    initFirstOrderFilter();
+
     RED_N_LED_ON;
     delay(2500);
     ORANGE_NE_LED_ON;
@@ -298,10 +310,6 @@ void systemInit(void)
     initPressure();
 
     initMax7456();
-
-    initFirstOrderFilter();
-
-    initPID();
 }
 
 ///////////////////////////////////////////////////////////////////////////////

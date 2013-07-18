@@ -94,7 +94,6 @@ void bodyAccelToEarthAccel(void)
     earthAxisAccels[YAXIS] = firstOrderFilter(earthAxisAccels[YAXIS], &firstOrderFilters[EARTH_AXIS_ACCEL_Y_HIGHPASS]);
     earthAxisAccels[ZAXIS] = firstOrderFilter(earthAxisAccels[ZAXIS], &firstOrderFilters[EARTH_AXIS_ACCEL_Z_HIGHPASS]);
 }
-
 ///////////////////////////////////////////////////////////////////////////////
 
 

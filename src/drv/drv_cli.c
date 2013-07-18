@@ -39,65 +39,7 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 
-/*
-    DMA UART routines idea lifted from AutoQuad
-    Copyright © 2011  Bill Nesbitt
-*/
-
-///////////////////////////////////////////////////////////////////////////////
-// UART1 Defines and Variables
-///////////////////////////////////////////////////////////////////////////////
-
-#define UART1_TX_PIN        GPIO_Pin_9
-#define UART1_RX_PIN        GPIO_Pin_5
-#define UART1_TX_GPIO       GPIOA
-#define UART1_RX_GPIO       GPIOC
-#define UART1_TX_PINSOURCE  GPIO_PinSource9
-#define UART1_RX_PINSOURCE  GPIO_PinSource5
-
-#define UART1_BUFFER_SIZE 2048
-
-// Receive buffer, circular DMA
-volatile uint8_t rx1Buffer[UART1_BUFFER_SIZE];
-uint32_t rx1DMAPos = 0;
-
-volatile uint8_t tx1Buffer[UART1_BUFFER_SIZE];
-volatile uint32_t tx1BufferTail = 0;
-volatile uint32_t tx1BufferHead = 0;
-
-///////////////////////////////////////////////////////////////////////////////
-// UART1 Transmit via DMA
-///////////////////////////////////////////////////////////////////////////////
-
-static void uart1TxDMA(void)
-{
-    DMA1_Channel4->CMAR = (uint32_t) & tx1Buffer[tx1BufferTail];
-    if (tx1BufferHead > tx1BufferTail)
-    {
-        DMA1_Channel4->CNDTR = tx1BufferHead - tx1BufferTail;
-        tx1BufferTail = tx1BufferHead;
-    }
-    else
-    {
-        DMA1_Channel4->CNDTR = UART1_BUFFER_SIZE - tx1BufferTail;
-        tx1BufferTail = 0;
-    }
-
-    DMA_Cmd(DMA1_Channel4, ENABLE);
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// UART1 TX Complete Interrupt Handler
-///////////////////////////////////////////////////////////////////////////////
-
-void DMA1_Channel4_IRQHandler(void)
-{
-    DMA_ClearITPendingBit(DMA1_IT_TC4);
-    DMA_Cmd(DMA1_Channel4, DISABLE);
-
-    if (tx1BufferHead != tx1BufferTail)
-        uart1TxDMA();
-}
+#define USB_TIMEOUT  50
 
 ///////////////////////////////////////////////////////////////////////////////
 // CLI Initialization
@@ -105,106 +47,19 @@ void DMA1_Channel4_IRQHandler(void)
 
 void cliInit(void)
 {
-    GPIO_InitTypeDef  GPIO_InitStructure;
-    USART_InitTypeDef USART_InitStructure;
-    DMA_InitTypeDef   DMA_InitStructure;
-    NVIC_InitTypeDef  NVIC_InitStructure;
-
-    RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOA,    ENABLE);
-    RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOC,    ENABLE);
-    RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1,     ENABLE);
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);
-
-    GPIO_InitStructure.GPIO_Pin   = UART1_TX_PIN;
-    GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_AF;
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-    GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_UP;
-
-    GPIO_PinAFConfig(UART1_TX_GPIO, UART1_TX_PINSOURCE, GPIO_AF_7);
-
-    GPIO_Init(UART1_TX_GPIO, &GPIO_InitStructure);
-
-    GPIO_InitStructure.GPIO_Pin   = UART1_RX_PIN;
-
-    GPIO_PinAFConfig(UART1_RX_GPIO, UART1_RX_PINSOURCE, GPIO_AF_7);
-
-    GPIO_Init(UART1_RX_GPIO, &GPIO_InitStructure);
-
-    // DMA TX Interrupt
-    NVIC_InitStructure.NVIC_IRQChannel                   = DMA1_Channel4_IRQn;
-    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
-    NVIC_InitStructure.NVIC_IRQChannelSubPriority        = 1;
-    NVIC_InitStructure.NVIC_IRQChannelCmd                = ENABLE;
-
-    NVIC_Init(&NVIC_InitStructure);
-
-    USART_InitStructure.USART_BaudRate            = 115200;
-    USART_InitStructure.USART_WordLength          = USART_WordLength_8b;
-    USART_InitStructure.USART_StopBits            = USART_StopBits_1;
-    USART_InitStructure.USART_Parity              = USART_Parity_No;
-    USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
-    USART_InitStructure.USART_Mode                = USART_Mode_Rx | USART_Mode_Tx;
-
-    USART_Init(USART1, &USART_InitStructure);
-
-    // Receive DMA into a circular buffer
-
-    DMA_DeInit(DMA1_Channel5);
-
-    DMA_InitStructure.DMA_BufferSize         = UART1_BUFFER_SIZE;
-	DMA_InitStructure.DMA_DIR                = DMA_DIR_PeripheralSRC;
-	DMA_InitStructure.DMA_M2M                = DMA_M2M_Disable;
-	DMA_InitStructure.DMA_MemoryBaseAddr     = (uint32_t)rx1Buffer;
-	DMA_InitStructure.DMA_MemoryDataSize     = DMA_MemoryDataSize_Byte;
-	DMA_InitStructure.DMA_MemoryInc          = DMA_MemoryInc_Enable;
-	DMA_InitStructure.DMA_Mode               = DMA_Mode_Circular;
-	DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)&USART1->RDR;
-	DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
-	DMA_InitStructure.DMA_PeripheralInc      = DMA_PeripheralInc_Disable;
-    DMA_InitStructure.DMA_Priority           = DMA_Priority_Medium;
-
-    DMA_Init(DMA1_Channel5, &DMA_InitStructure);
-
-    DMA_Cmd(DMA1_Channel5, ENABLE);
-
-    USART_DMACmd(USART1, USART_DMAReq_Rx, ENABLE);
-
-    rx1DMAPos = DMA_GetCurrDataCounter(DMA1_Channel5);
-
-    // Transmit DMA
-    DMA_DeInit(DMA1_Channel4);
-
-    DMA_InitStructure.DMA_BufferSize         = UART1_BUFFER_SIZE;
-	DMA_InitStructure.DMA_DIR                = DMA_DIR_PeripheralDST;
-	DMA_InitStructure.DMA_M2M                = DMA_M2M_Disable;
-	DMA_InitStructure.DMA_MemoryBaseAddr     = (uint32_t)tx1Buffer;
-	DMA_InitStructure.DMA_MemoryDataSize     = DMA_MemoryDataSize_Byte;
-	DMA_InitStructure.DMA_MemoryInc          = DMA_MemoryInc_Enable;
-	DMA_InitStructure.DMA_Mode               = DMA_Mode_Normal;
-	DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t) &USART1->TDR;
-	DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
-	DMA_InitStructure.DMA_PeripheralInc      = DMA_PeripheralInc_Disable;
-    DMA_InitStructure.DMA_Priority           = DMA_Priority_Medium;
-
-    DMA_Init(DMA1_Channel4, &DMA_InitStructure);
-
-    DMA_ITConfig(DMA1_Channel4, DMA_IT_TC, ENABLE);
-
-    DMA1_Channel4->CNDTR = 0;
-
-    USART_DMACmd(USART1, USART_DMAReq_Tx, ENABLE);
-
-    USART_Cmd(USART1, ENABLE);
+	Set_System();
+	Set_USBClock();
+	USB_Interrupts_Config();
+	USB_Init();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// CLI Avaialble
+// CLI Available
 ///////////////////////////////////////////////////////////////////////////////
 
-uint16_t cliAvailable(void)
+uint32_t cliAvailable(void)
 {
-    return (DMA_GetCurrDataCounter(DMA1_Channel5) != rx1DMAPos) ? true : false;
+    return receiveLength;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -213,38 +68,16 @@ uint16_t cliAvailable(void)
 
 uint8_t cliRead(void)
 {
-    uint8_t ch;
+    uint8_t buf[1];
 
-    ch = rx1Buffer[UART1_BUFFER_SIZE - rx1DMAPos];
-    // go back around the buffer
-    if (--rx1DMAPos == 0)
-        rx1DMAPos = UART1_BUFFER_SIZE;
+    uint32_t rxed = 0;
 
-    return ch;
-}
+    while (rxed < 1)
+    {
+        rxed += CDC_Receive_DATA((uint8_t*)buf + rxed, 1 - rxed);
+    }
 
-///////////////////////////////////////////////////////////////////////////////
-// CLI Read Poll
-///////////////////////////////////////////////////////////////////////////////
-
-uint8_t cliReadPoll(void)
-{
-    while (!cliAvailable()); // wait for some bytes
-    return cliRead();
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// CLI Write
-///////////////////////////////////////////////////////////////////////////////
-
-void cliWrite(uint8_t ch)
-{
-    tx1Buffer[tx1BufferHead] = ch;
-    tx1BufferHead = (tx1BufferHead + 1) % UART1_BUFFER_SIZE;
-
-    // if DMA wasn't enabled, enable it
-    if (!(DMA1_Channel4->CCR & 1))
-        uart1TxDMA();
+    return buf[0];
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -253,15 +86,34 @@ void cliWrite(uint8_t ch)
 
 void cliPrint(char *str)
 {
-    while (*str)
-    {
-    	tx1Buffer[tx1BufferHead] = *str++;
-    	tx1BufferHead = (tx1BufferHead + 1) % UART1_BUFFER_SIZE;
-    }
+    uint32_t len;
+    uint32_t oldTxed;
+    uint32_t start;
+    uint32_t txed;
 
-    // if DMA wasn't enabled, enable it
-    if (!(DMA1_Channel4->CCR & 1))
-        uart1TxDMA();
+    if (!(usbIsConnected() && usbIsConfigured()) || !str)
+    {
+	    return;
+	}
+
+	len     = strlen(str);
+
+	txed    = 0;
+	oldTxed = 0;
+
+	start   = millis();
+
+	while (txed < len && (millis() - start < USB_TIMEOUT))
+	{
+	    txed += CDC_Send_DATA((uint8_t*)str + txed, len - txed);
+
+	    if (oldTxed != txed)
+	    {
+	        start = millis();
+	    }
+
+	    oldTxed = txed;
+	}
 }
 
 ///////////////////////////////////////////////////////////////////////////////
