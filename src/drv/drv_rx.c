@@ -335,7 +335,7 @@ void rxInit(void)
 	  //TIM_TimeBaseStructure.TIM_ClockDivision     = TIM_CKD_DIV1;
 	  //TIM_TimeBaseStructure.TIM_RepetitionCounter = 0x0000;
 
-		TIM_TimeBaseInit(TIM4, &TIM_TimeBaseStructure);
+		TIM_TimeBaseInit(TIM1, &TIM_TimeBaseStructure);
 
         TIM_ICInitStructure.TIM_Channel     = TIM_Channel_1;
         TIM_ICInitStructure.TIM_ICPolarity  = TIM_ICPolarity_Rising;
