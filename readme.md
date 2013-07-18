@@ -1,3 +1,7 @@
+7/18/2013
+-Added setup folder with copy of .cproject
+-Added .cproject to .gitignore
+
 7/17/2013
 -Added CMSIS 3.2
 -VCP fully functional
