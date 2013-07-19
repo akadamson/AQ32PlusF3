@@ -1,5 +1,6 @@
 
 7/18/2013
+-Cleanup drv_pwmEsc.c to support 6 ESCs
 -Corrected TIM4 typo in serial pwm rx init to TIM1
 -Commited merge of VCP branch back onto Master branch
 -Added setup folder with copy of .cproject

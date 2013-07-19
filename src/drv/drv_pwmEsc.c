@@ -49,8 +49,7 @@ static volatile uint32_t *OutputChannels[] = { &(TIM4->CCR1),
 	                                           &(TIM4->CCR3),
 	                                           &(TIM4->CCR4),
                                                &(TIM2->CCR2),
-                                               &(TIM2->CCR3),
-                                               &(TIM2->CCR4),};
+                                               &(TIM2->CCR3)};
 
 ///////////////////////////////////////////////////////////////////////////////
 // PWM ESC Initialization
@@ -62,10 +61,6 @@ void pwmEscInit(uint16_t escPwmRate)
     TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
     TIM_OCInitTypeDef        TIM_OCInitStructure;
 
-    GPIO_StructInit(&GPIO_InitStructure);
-    TIM_TimeBaseStructInit(&TIM_TimeBaseStructure);
-    TIM_OCStructInit(&TIM_OCInitStructure);
-
     // Outputs
     // ESC PWM1  TIM4_CH1  PD12
     // ESC PWM2  TIM4_CH2  PD13
@@ -73,7 +68,6 @@ void pwmEscInit(uint16_t escPwmRate)
     // ESC PWM4  TIM4_CH4  PD15
     // ESC PWM5  TIM2_CH2  PA1
     // ESC PWM6  TIM2_CH3  PA2
-    // ESC PWM7  TIM2_CH4  PA3
 
     RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOD, ENABLE);
     RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOA, ENABLE);
@@ -84,12 +78,12 @@ void pwmEscInit(uint16_t escPwmRate)
     GPIO_InitStructure.GPIO_Pin   = GPIO_Pin_12 | GPIO_Pin_13 | GPIO_Pin_14 | GPIO_Pin_15;
     GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_AF;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-  //GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-  //GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_NOPULL;
+    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+    GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_NOPULL;
 
  	GPIO_Init(GPIOD, &GPIO_InitStructure);
 
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_1 | GPIO_Pin_2 | GPIO_Pin_3;
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_1 | GPIO_Pin_2;
 
  	GPIO_Init(GPIOA, &GPIO_InitStructure);
 
@@ -99,7 +93,6 @@ void pwmEscInit(uint16_t escPwmRate)
 	GPIO_PinAFConfig(GPIOD, GPIO_PinSource15, GPIO_AF_2);
 	GPIO_PinAFConfig(GPIOA, GPIO_PinSource1,  GPIO_AF_1);
 	GPIO_PinAFConfig(GPIOA, GPIO_PinSource2,  GPIO_AF_1);
-	GPIO_PinAFConfig(GPIOA, GPIO_PinSource3,  GPIO_AF_1);
 
 	///////////////////////////////////
 
@@ -107,22 +100,21 @@ void pwmEscInit(uint16_t escPwmRate)
 
     TIM_TimeBaseStructure.TIM_Period            = (uint16_t)(2000000 / escPwmRate) - 1;
     TIM_TimeBaseStructure.TIM_Prescaler         = 36 - 1;
-  //TIM_TimeBaseStructure.TIM_ClockDivision     = TIM_CKD_DIV1;
-  //TIM_TimeBaseStructure.TIM_CounterMode       = TIM_CounterMode_Up;
-  //TIM_TimeBaseStructure.TIM_RepititionCounter = 0x0000;
+    TIM_TimeBaseStructure.TIM_ClockDivision     = TIM_CKD_DIV1;
+    TIM_TimeBaseStructure.TIM_CounterMode       = TIM_CounterMode_Up;
+    TIM_TimeBaseStructure.TIM_RepetitionCounter = 0x0000;
 
     TIM_TimeBaseInit(TIM4, &TIM_TimeBaseStructure);
     TIM_TimeBaseInit(TIM2, &TIM_TimeBaseStructure);
-    TIM_TimeBaseInit(TIM3, &TIM_TimeBaseStructure);
 
     TIM_OCInitStructure.TIM_OCMode       = TIM_OCMode_PWM2;
     TIM_OCInitStructure.TIM_OutputState  = TIM_OutputState_Enable;
-  //TIM_OCInitStructure.TIM_OutputNState = TIM_OutputNState_Disable;
+    TIM_OCInitStructure.TIM_OutputNState = TIM_OutputNState_Disable;
     TIM_OCInitStructure.TIM_Pulse        = ESC_PULSE_1MS;
     TIM_OCInitStructure.TIM_OCPolarity   = TIM_OCPolarity_Low;
-  //TIM_OCInitStructure.TIM_OCNPolarity  = TIM_OCPolarity_High;
+    TIM_OCInitStructure.TIM_OCNPolarity  = TIM_OCPolarity_High;
     TIM_OCInitStructure.TIM_OCIdleState  = TIM_OCIdleState_Set;
-  //TIM_OCInitStructure.TIM_OCNIdleState = TIM_OCNIdleState_Reset;
+    TIM_OCInitStructure.TIM_OCNIdleState = TIM_OCNIdleState_Reset;
 
     TIM_OC1Init(TIM4,  &TIM_OCInitStructure);
     TIM_OC2Init(TIM4,  &TIM_OCInitStructure);
@@ -131,16 +123,12 @@ void pwmEscInit(uint16_t escPwmRate)
 
     TIM_OC2Init(TIM2,  &TIM_OCInitStructure);
     TIM_OC3Init(TIM2,  &TIM_OCInitStructure);
-    TIM_OC4Init(TIM2,  &TIM_OCInitStructure);
 
     TIM_Cmd(TIM4, ENABLE);
     TIM_Cmd(TIM2, ENABLE);
-    TIM_Cmd(TIM3, ENABLE);
 
     TIM_CtrlPWMOutputs(TIM4, ENABLE);
     TIM_CtrlPWMOutputs(TIM2, ENABLE);
-    TIM_CtrlPWMOutputs(TIM3, ENABLE);
-
 }
 
 ///////////////////////////////////////////////////////////////////////////////
