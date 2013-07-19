@@ -170,6 +170,17 @@ void SysTick_Handler(void)
                 accelSummedSamples100Hz[index] = accelSum100Hz[index];
                 accelSum100Hz[index] = 0.0f;
             }
+
+            if (!newTemperatureReading)
+			{
+				readTemperatureRequestPressure();
+			    newTemperatureReading = true;
+			}
+			else
+			{
+			    readPressureRequestTemperature();
+			    newPressureReading = true;
+			}
         }
 
         ///////////////////////////////

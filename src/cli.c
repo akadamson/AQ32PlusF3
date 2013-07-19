@@ -482,8 +482,7 @@ void cliCom(void)
         	cliPrintF("%4ld, ", TIM4->CCR3 );
         	cliPrintF("%4ld, ", TIM4->CCR4 );
         	cliPrintF("%4ld, ", TIM2->CCR2 );
-        	cliPrintF("%4ld, ", TIM2->CCR3 );
-        	cliPrintF("%4ld\n", TIM2->CCR4 );
+        	cliPrintF("%4ld\n", TIM2->CCR3 );
 
         	validCliCommand = false;
             break;
